@@ -1,0 +1,394 @@
+openapi: 3.0.0
+info:  
+  title: Optimizely Server API
+  description: Optimizely.
+  termsOfService: http://optimizely.com/terms/
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: https://api.optimizely.com
+    description: "Hosted Optimizely Decision Service"
+paths:
+  /stats:
+    get:
+      summary: Server metrics
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stat'
+  /experiments:
+    get:
+      summary: Return all experiments
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Experiment'
+  /experiments/{experimentKey}:
+    get:
+      summary: Return variation for a given user and experiment
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/activate:
+    post:
+      summary: Return variation for an experiment and track impression
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/decision:
+    get:
+      summary: Return variation decision for an experiment
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/variations/{variationKey}:
+    get:
+      summary: Return variation for a given user and experiment
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+        - name: variationKey
+          in: path
+          required: true
+          description: Variation Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /features:
+    get:
+      summary: Return all features
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                description: List of features
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feature'
+  /features/{featureKey}:
+    get:
+      summary: Return the feature 
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '404':
+          description: Experiment does not exist
+  /features/{featureKey}/activate:
+    post:
+      summary: Return the feature and track impression
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '204':
+          description: Feature not enabled
+        '404':
+          description: Feature does not exist
+  /features/{featureKey}/decision:
+    get:
+      summary: Return the decided feature variant
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+        - name: variationKey
+          in: path
+          required: true
+          description: Key of the variation we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '204':
+          description: Feature not enabled
+        '404':
+          description: Feature does not exist
+  /features/{featureKey}/variations/{variationKey}:
+    get:
+      summary: Return the feature variant
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+        - name: variationKey
+          in: path
+          required: true
+          description: Key of the variation we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '404':
+          description: Feature does not exist or variation DNE
+  /track/{eventName}:
+    post:
+      summary: Track event endpoint
+      parameters:
+        - name: eventName
+          in: path
+          required: true
+          description: Name of the event to be tracked
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+  /users:
+    get:
+      summary: List of Users
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                description: List of features
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /users/{userId}:
+    get:
+      summary: Visitor detail
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/{userId}/attributes:
+    get:
+      summary: List of attributes for a given user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/{userId}/experiments:
+    get:
+      summary: List of stored experiences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Experiment'
+  /users/{userId}/experiments/{experimentKey}:
+    get:
+      summary: List of stored experiences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+components:
+  schemas:
+    Stat:
+      properties:
+        name:
+          type: string
+        value:
+          type: integer
+      # Both properties are required
+      required:  
+        - name
+        - value
+    Experiment:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    Variation:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    Feature:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    FeatureVariation:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    User:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
