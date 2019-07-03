@@ -60,7 +60,7 @@ paths:
           description: Experiment does not exist
   /experiments/{experimentKey}/activate:
     post:
-      summary: Return variation for an experiment and track impression
+      summary: Return variation for an experiment and record impression
       operationId: activateExperiment
       description: todo
       parameters:
@@ -194,7 +194,7 @@ paths:
           description: Experiment does not exist
   /features/{featureKey}/activate:
     post:
-      summary: Return the feature and track impression
+      summary: Return the feature and record impression
       operationId: activateFeature
       parameters:
         - name: featureKey
