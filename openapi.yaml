@@ -304,96 +304,6 @@ paths:
       responses:
         '200':
           description: Valid response
-  /users:
-    get:
-      summary: List of Users
-      operationId: listUsers
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                description: List of features
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-  /users/{userId}:
-    get:
-      summary: Visitor detail
-      operationId: getUser
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-  /users/{userId}/attributes:
-    get:
-      summary: List of attributes for a given user.
-      operationId: listUserAttributes
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-  /users/{userId}/experiments:
-    get:
-      summary: List of stored experiences
-      operationId: listUserExperiments
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Experiment'
-  /users/{userId}/experiments/{experimentKey}:
-    get:
-      summary: Get previous experiment decision.
-      operationId: getUserExperiment
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: experimentKey
-          in: path
-          required: true
-          description: Key of the experiment we're activating
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Experiment'
 components:
   schemas:
     Stat:
@@ -437,16 +347,6 @@ components:
         - id
         - key
     FeatureVariation:
-      properties:
-        id:
-          type: integer
-        key:
-          type: string
-      # Both properties are required
-      required:  
-        - id
-        - key
-    User:
       properties:
         id:
           type: integer
