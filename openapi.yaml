@@ -14,6 +14,7 @@ paths:
   /stats:
     get:
       summary: Server metrics
+      operationId: getStats
       responses:
         '200':
           description: Valid response
@@ -26,6 +27,7 @@ paths:
   /experiments:
     get:
       summary: Return all experiments
+      operationId: listExperiments
       responses:
         '200':
           description: Valid response
@@ -38,6 +40,7 @@ paths:
   /experiments/{experimentKey}:
     get:
       summary: Return variation for a given user and experiment
+      operationId: getExperiment
       description: todo
       parameters:
         - name: experimentKey
@@ -58,6 +61,7 @@ paths:
   /experiments/{experimentKey}/activate:
     post:
       summary: Return variation for an experiment and track impression
+      operationId: activateExperiment
       description: todo
       parameters:
         - name: experimentKey
@@ -80,6 +84,7 @@ paths:
   /experiments/{experimentKey}/decision:
     get:
       summary: Return variation decision for an experiment
+      operationId: getExperimentDecision
       description: todo
       parameters:
         - name: experimentKey
@@ -99,9 +104,35 @@ paths:
           description: No content, user not included in the experiment
         '404':
           description: Experiment does not exist
+  /experiments/{experimentKey}/variations:
+    get:
+      summary: Return variation for a given user and experiment
+      operationId: listExperimentVariations
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
   /experiments/{experimentKey}/variations/{variationKey}:
     get:
       summary: Return variation for a given user and experiment
+      operationId: getExperimentVariation
       description: todo
       parameters:
         - name: experimentKey
@@ -130,6 +161,7 @@ paths:
   /features:
     get:
       summary: Return all features
+      operationId: listFeatures
       responses:
         '200':
           description: Valid response
@@ -142,7 +174,8 @@ paths:
                   $ref: '#/components/schemas/Feature'
   /features/{featureKey}:
     get:
-      summary: Return the feature 
+      summary: Return the feature
+      operationId: getFeature
       parameters:
         - name: featureKey
           in: path
@@ -162,6 +195,7 @@ paths:
   /features/{featureKey}/activate:
     post:
       summary: Return the feature and track impression
+      operationId: activateFeature
       parameters:
         - name: featureKey
           in: path
@@ -183,6 +217,7 @@ paths:
   /features/{featureKey}/decision:
     get:
       summary: Return the decided feature variant
+      operationId: getFeatureDecision
       parameters:
         - name: featureKey
           in: path
@@ -207,9 +242,32 @@ paths:
           description: Feature not enabled
         '404':
           description: Feature does not exist
+  /features/{featureKey}/variations:
+    get:
+      summary: Return feature variations
+      operationId: listFeatureVariations
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureVariation'
+        '404':
+          description: Feature does not exist or variations DNE
   /features/{featureKey}/variations/{variationKey}:
     get:
       summary: Return the feature variant
+      operationId: getFeatureVariation
       parameters:
         - name: featureKey
           in: path
@@ -235,6 +293,7 @@ paths:
   /track/{eventName}:
     post:
       summary: Track event endpoint
+      operationId: trackEvent
       parameters:
         - name: eventName
           in: path
@@ -248,6 +307,7 @@ paths:
   /users:
     get:
       summary: List of Users
+      operationId: listUsers
       responses:
         '200':
           description: Valid response
@@ -261,6 +321,7 @@ paths:
   /users/{userId}:
     get:
       summary: Visitor detail
+      operationId: getUser
       parameters:
         - name: userId
           in: path
@@ -277,6 +338,7 @@ paths:
   /users/{userId}/attributes:
     get:
       summary: List of attributes for a given user.
+      operationId: listUserAttributes
       parameters:
         - name: userId
           in: path
@@ -293,6 +355,7 @@ paths:
   /users/{userId}/experiments:
     get:
       summary: List of stored experiences
+      operationId: listUserExperiments
       parameters:
         - name: userId
           in: path
@@ -310,7 +373,8 @@ paths:
                   $ref: '#/components/schemas/Experiment'
   /users/{userId}/experiments/{experimentKey}:
     get:
-      summary: List of stored experiences
+      summary: Get previous experiment decision.
+      operationId: getUserExperiment
       parameters:
         - name: userId
           in: path
