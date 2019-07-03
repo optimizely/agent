@@ -10,10 +10,8 @@ brew install openapi-generator
 ```
 
 ## Code Generation
-To determine which generators are available:
-```
-openapi-generator
-```
+To determine which generators are available you can execute `openapi-generator` without any arguments or refer to the generate source [docs](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/README.md):
+
 Types of generators are either CLIENT, SERVER, DOCUMENTATION, SCHEMA and CONFIG.
 
 You can use the helper script `generate.sh` to experiment with the various generated assets.
