@@ -1,15 +1,15 @@
-# sidedoor
+# Optimizely Sidedoor
 Exploratory project for developing a service version of the Optimizely SDK.
 
-# Prerequisits
-This repo currently depends heavily on openapi and openapi codegen.
+## Prerequisites
+This repo currently depends heavily on [OpenAPI](https://swagger.io/specification/) and [OpenAPI Generator](https://github.com/openapitools/openapi-generator).
 
-To install the openapi generator on OSX:
+To install the OpenAPI Generator on OSX:
 ```
 brew install openapi-generator
 ```
 
-# Generate
+## Code Generation
 To determine which generators are available:
 ```
 openapi-generator
