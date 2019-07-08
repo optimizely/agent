@@ -1,0 +1,358 @@
+openapi: 3.0.0
+info:  
+  title: Optimizely Server API
+  description: Optimizely.
+  termsOfService: http://optimizely.com/terms/
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: https://api.optimizely.com
+    description: "Hosted Optimizely Decision Service"
+paths:
+  /stats:
+    get:
+      summary: Server metrics
+      operationId: getStats
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stat'
+  /experiments:
+    get:
+      summary: Return all experiments
+      operationId: listExperiments
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Experiment'
+  /experiments/{experimentKey}:
+    get:
+      summary: Return variation for a given user and experiment
+      operationId: getExperiment
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/activate:
+    post:
+      summary: Return variation for an experiment and record impression
+      operationId: activateExperiment
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/decision:
+    get:
+      summary: Return variation decision for an experiment
+      operationId: getExperimentDecision
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/variations:
+    get:
+      summary: Return variation for a given user and experiment
+      operationId: listExperimentVariations
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /experiments/{experimentKey}/variations/{variationKey}:
+    get:
+      summary: Return variation for a given user and experiment
+      operationId: getExperimentVariation
+      description: todo
+      parameters:
+        - name: experimentKey
+          in: path
+          required: true
+          description: Key of the experiment we're activating
+          schema:
+            type: string
+        - name: variationKey
+          in: path
+          required: true
+          description: Variation Key of the experiment we're activating
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /features:
+    get:
+      summary: Return all features
+      operationId: listFeatures
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                description: List of features
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feature'
+  /features/{featureKey}:
+    get:
+      summary: Return the feature
+      operationId: getFeature
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '404':
+          description: Experiment does not exist
+  /features/{featureKey}/activate:
+    post:
+      summary: Return the feature and record impression
+      operationId: activateFeature
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '204':
+          description: Feature not enabled
+        '404':
+          description: Feature does not exist
+  /features/{featureKey}/decision:
+    get:
+      summary: Return the decided feature variant
+      operationId: getFeatureDecision
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+        - name: variationKey
+          in: path
+          required: true
+          description: Key of the variation we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '204':
+          description: Feature not enabled
+        '404':
+          description: Feature does not exist
+  /features/{featureKey}/variations:
+    get:
+      summary: Return feature variations
+      operationId: listFeatureVariations
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureVariation'
+        '404':
+          description: Feature does not exist or variations DNE
+  /features/{featureKey}/variations/{variationKey}:
+    get:
+      summary: Return the feature variant
+      operationId: getFeatureVariation
+      parameters:
+        - name: featureKey
+          in: path
+          required: true
+          description: Key of the feature we're fetching
+          schema:
+            type: string
+        - name: variationKey
+          in: path
+          required: true
+          description: Key of the variation we're fetching
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '404':
+          description: Feature does not exist or variation DNE
+  /track/{eventName}:
+    post:
+      summary: Track event endpoint
+      operationId: trackEvent
+      parameters:
+        - name: eventName
+          in: path
+          required: true
+          description: Name of the event to be tracked
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Valid response
+components:
+  schemas:
+    Stat:
+      properties:
+        name:
+          type: string
+        value:
+          type: integer
+      # Both properties are required
+      required:  
+        - name
+        - value
+    Experiment:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    Variation:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    Feature:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
+    FeatureVariation:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+      # Both properties are required
+      required:  
+        - id
+        - key
