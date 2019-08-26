@@ -203,6 +203,12 @@ paths:
           description: Key of the feature we're fetching
           schema:
             type: string
+        - name: userId
+          in: query
+          required: true
+          description: Id for the user being bucketed.
+          schema:
+            type: string
       responses:
         '200':
           description: Valid response
@@ -225,10 +231,10 @@ paths:
           description: Key of the feature we're fetching
           schema:
             type: string
-        - name: variationKey
-          in: path
+        - name: userId
+          in: query
           required: true
-          description: Key of the variation we're fetching
+          description: Id for the user being bucketed.
           schema:
             type: string
       responses:
@@ -301,6 +307,12 @@ paths:
           description: Name of the event to be tracked
           schema:
             type: string
+        - name: userId
+          in: query
+          required: true
+          description: Id for the user being tracked.
+          schema:
+            type: string
       responses:
         '200':
           description: Valid response
@@ -322,6 +334,10 @@ components:
           type: integer
         key:
           type: string
+        variations:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Variation'
       # Both properties are required
       required:  
         - id
@@ -342,6 +358,14 @@ components:
           type: integer
         key:
           type: string
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+        variations:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FeatureVariation'
       # Both properties are required
       required:  
         - id
@@ -352,6 +376,10 @@ components:
           type: integer
         key:
           type: string
+        variables:
+          type: object
+          additionalProperties:
+            type: string
       # Both properties are required
       required:  
         - id
