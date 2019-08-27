@@ -16,5 +16,5 @@ Types of generators are either CLIENT, SERVER, DOCUMENTATION, SCHEMA and CONFIG.
 
 You can use the helper script `generate.sh` to experiment with the various generated assets.
 ```
-./generate.sh <GENERATOR_NAME>
+scripts/generate.sh <GENERATOR_NAME>
 ```
