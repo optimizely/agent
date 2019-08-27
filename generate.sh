@@ -5,4 +5,4 @@ NAME=$1
 
 mkdir $NAME
 cd $NAME
-openapi-generator generate -g $NAME -i ../openapi.yaml
+openapi-generator generate -g $NAME -i ../openapi.yaml -c ../config.json
