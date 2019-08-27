@@ -358,6 +358,8 @@ components:
           type: integer
         key:
           type: string
+        enabled:
+          type: boolean
         variables:
           type: object
           additionalProperties:
