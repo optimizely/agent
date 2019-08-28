@@ -1,5 +1,9 @@
 include .env
 
+# The name of the executable (default is current directory name)
+TARGET := $(shell basename "$(PWD)")
+.DEFAULT_GOAL := $(TARGET)  # TODO make a help
+
 # Go parameters
 GOCMD=go
 GOBIN=bin
@@ -7,27 +11,32 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
-BINARY_NAME=sidedoor
-BINARY_UNIX=$(BINARY_NAME)_unix
+BINARY_UNIX=$(TARGET)_unix
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
 
+# Use linker flags to provide version/build settings to the target
+LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
+
 all: test build
-build: 
-	$(GOBUILD) -o $(GOBIN)/$(BINARY_NAME) cmd/sidedoor/main.go 
+$(TARGET): 
+	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
+build: $(TARGET)
+	@true
 test: 
 	$(GOTEST) -v ./...
 clean: 
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
-run: build
-	$(GOBIN)/$(BINARY_NAME)
-deps:
+run: $(TARGET)
+	$(GOBIN)/$(TARGET)
+install:
 	$(GOGET) github.com/go-chi/chi
 	$(GOGET) github.com/go-chi/render
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/client
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/entities
 generate-api:
 	scripts/generate.sh $(ARG)
-
+help:
+	echo "TODO"

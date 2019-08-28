@@ -1,6 +1,16 @@
 # Optimizely Sidedoor
 Exploratory project for developing a service version of the Optimizely SDK.
 
+## Installing, Building and Running
+The following `make` targets can be used to build and run the application:
+* build - builds sidedoor and installs binary in bin/sidedoor
+* test - recursively tests all .go files
+* run - builds and executes the sidedoor binary
+* clean - runs `go clean` and removes the bin/ dir
+* install - runs `go get` to install all dependencies
+* generate-api - generates APIs from the swagger spec
+
+
 ## Client Generation
 
 ### Prerequisites
@@ -15,6 +25,7 @@ To determine which generators are available you can execute `openapi-generator` 
 
 Types of generators are either CLIENT, SERVER, DOCUMENTATION, SCHEMA and CONFIG.
 
+### Generating
 You can use the helper script `generate.sh` to experiment with the various generated assets.
 ```
 scripts/generate.sh <GENERATOR_NAME>
