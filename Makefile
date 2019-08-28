@@ -2,7 +2,7 @@ include .env
 
 # The name of the executable (default is current directory name)
 TARGET := $(shell basename "$(PWD)")
-.DEFAULT_GOAL := $(TARGET)  # TODO make a help
+.DEFAULT_GOAL := help
 
 # Go parameters
 GOCMD=go
@@ -19,24 +19,33 @@ MAKEFLAGS += --silent
 # Use linker flags to provide version/build settings to the target
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
-all: test build
-$(TARGET): 
+all: test build ## all
+$(TARGET):
 	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
-build: $(TARGET)
+
+build: $(TARGET) ## build
 	@true
-test: 
-	$(GOTEST) -v ./...
-clean: 
+
+clean: ## clean
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
-run: $(TARGET)
-	$(GOBIN)/$(TARGET)
-install:
+
+generate-api: ## generate-api
+	scripts/generate.sh $(ARG)
+
+install: ## install
 	$(GOGET) github.com/go-chi/chi
 	$(GOGET) github.com/go-chi/render
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/client
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/entities
-generate-api:
-	scripts/generate.sh $(ARG)
-help:
-	echo "TODO"
+
+run: $(TARGET) ## run
+	$(GOBIN)/$(TARGET)
+
+test: ## test
+	$(GOTEST) -v ./...
+
+.PHONY: all build test clean run install generate-api help
+
+help:  ## help
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
