@@ -28,4 +28,6 @@ deps:
 	$(GOGET) github.com/go-chi/render
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/client
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/entities
+generate-api:
+	scripts/generate.sh $(ARG)
 
