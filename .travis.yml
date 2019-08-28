@@ -17,9 +17,14 @@ jobs:
         - mkdir -p $GOPATH
 
 script:
+  # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
   - mkdir -p $GOPATH/src/github.com/optimizely
   - ln -s $TRAVIS_BUILD_DIR $GOPATH/src/github.com/optimizely/sidedoor
   - cd $GOPATH/src/github.com/optimizely/sidedoor/cmd/sidedoor && go get && go build -o $GOPATH/bin/sidedoor
   - ls -al $GOPATH/bin/sidedoor
   - if [[ `which md5` ]]; then md5 $GOPATH/bin/sidedoor; else md5sum $GOPATH/bin/sidedoor; fi
+  # now we're going to create packages
+  - $TRAVIS_BUILD_DIR/scripts/devops_create_packages.sh
+  # upload packages to artifactory
+  - $TRAVIS_BUILD_DIR/scripts/devops_upload_packages.sh

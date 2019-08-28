@@ -30,6 +30,9 @@ clean: ## clean
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
 
+devops_build_fpm_centos: ## build fpm_centos image for packaging
+	docker build -f scripts/dockerfiles/Dockerfile.fpm_centos -t fpm_centos ${GOPATH}/bin
+
 generate-api: ## generate-api
 	scripts/generate.sh $(ARG)
 
