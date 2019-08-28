@@ -30,7 +30,6 @@ You can use the helper script `generate.sh` to experiment with the various gener
 ```
 scripts/generate.sh <GENERATOR_NAME>
 ```
-
 We also provide a Make task `generate-api`:
 ```
 make generate-api ARG-<GENERATOR_NAME>
