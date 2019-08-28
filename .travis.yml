@@ -18,8 +18,8 @@ jobs:
 
 script:
   - eval "$(gimme)"
-  - go get github.com/optimizely/go-sdk
-  - ln -s $TRAVIS_BUILD_DIR $GOPATH/src/github.com/optimizely/go-testapp
-  - cd $GOPATH/src/github.com/optimizely/go-testapp/app && go get
-  - ls -al $GOPATH/bin/app
-  - if [[ `which md5` ]]; then md5 $GOPATH/bin/app; else md5sum $GOPATH/bin/app; fi
+  - mkdir -p $GOPATH/src/github.com/optimizely
+  - ln -s $TRAVIS_BUILD_DIR $GOPATH/src/github.com/optimizely/sidedoor
+  - cd $GOPATH/src/github.com/optimizely/sidedoor/cmd/sidedoor && go get && go build -o $GOPATH/bin/sidedoor
+  - ls -al $GOPATH/bin/sidedoor
+  - if [[ `which md5` ]]; then md5 $GOPATH/bin/sidedoor; else md5sum $GOPATH/bin/sidedoor; fi
