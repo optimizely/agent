@@ -10,22 +10,15 @@
 package main
 
 import (
-	"log"
 	"net/http"
+	"log"
 
-	// WARNING!
-	// Change this to a fully-qualified import path
-	// once you place this file into your project.
-	// For example,
-	//
-	//    sw "github.com/myname/myrepo/optlyd"
-	//
-	"github.com/optimizely/sidedoor/pkg/http"
+	"github.com/optimizely/sidedoor/pkg/api"
 )
 
 func main() {
 	log.Printf("Server started")
-	router := router.NewRouter()
+	router := api.NewRouter()
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
-package optlyd
+package models
 
-import (
-	"net/http"
+type Feature struct {
+	ID int32 `json:"id,enabled,omitempty"`
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-)
+	Key string `json:"key"`
 
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	Enabled bool `json:"enabled"`
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
-	})
+	Variables map[string]string `json:"variables,omitempty"`
 
-	// r.Post("/features/activate", ActivateAllFeatures)
-	r.Post("/features/{featureKey}/activate", ActivateFeature)
-	r.Post("/track", TrackEvent)
-	return r
+	Variations map[string]FeatureVariation `json:"variations,omitempty"`
 }
