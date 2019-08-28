@@ -35,7 +35,7 @@ type Context struct {
 
 func NewContext(ID string, Attributes map[string]interface{}) *Context {
 	userContext := entities.UserContext{
-		ID: ID,
+		ID:         ID,
 		Attributes: Attributes,
 	}
 	context := &Context{
@@ -61,16 +61,19 @@ func getOptimizely() *client.OptimizelyClient {
 
 	// TODO handle failure to prevent deadlocks.
 	once.Do(func() { // <-- atomic, does not allow repeating
+		sdkKey := os.Getenv("SDK_KEY")
+		fmt.Printf("Fetiching client for SDK Key: %s\n", sdkKey)
+
 		optimizelyFactory := &client.OptimizelyFactory{
 			// TODO parameterize
-			SDKKey: os.Getenv("SDK_KEY"),
+			SDKKey: sdkKey,
 		}
 
 		var err error
 		optlyClient, err = optimizelyFactory.StaticClient()
 
 		if err != nil {
-			fmt.Printf("Error instantiating client: %s", err)
+			fmt.Printf("Error instantiating client: %s\n", err)
 			return
 		}
 	})
