@@ -1,15 +1,23 @@
 # Optimizely Sidedoor
 Exploratory project for developing a service version of the Optimizely SDK.
 
+## Package Structure
+Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
+
+* **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
+* **cmd** - Main applications for this project.
+* **bin** - Compiled application binaries.
+* **pkg** - Library code that can be used by other applications
+* **scripts** - Scripts to perform various build, install, analysis, etc operations.
+
 ## Installing, Building and Running
 The following `make` targets can be used to build and run the application:
-* build - builds sidedoor and installs binary in bin/sidedoor
-* test - recursively tests all .go files
-* run - builds and executes the sidedoor binary
-* clean - runs `go clean` and removes the bin/ dir
-* install - runs `go get` to install all dependencies
-* generate-api - generates APIs from the swagger spec
-
+* **build** - builds sidedoor and installs binary in bin/sidedoor
+* **test** - recursively tests all .go files
+* **run** - builds and executes the sidedoor binary
+* **clean** - runs `go clean` and removes the bin/ dir
+* **install** - runs `go get` to install all dependencies
+* **generate-api** - generates APIs from the swagger spec
 
 ## Client Generation
 
