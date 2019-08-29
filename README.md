@@ -10,7 +10,7 @@ Following best practice for go project layout as defined [here](https://github.c
 * **pkg** - Library code that can be used by other applications
 * **scripts** - Scripts to perform various build, install, analysis, etc operations.
 
-## Installing, Building and Running
+## Make targets
 The following `make` targets can be used to build and run the application:
 * **build** - builds sidedoor and installs binary in bin/sidedoor
 * **test** - recursively tests all .go files
@@ -18,6 +18,16 @@ The following `make` targets can be used to build and run the application:
 * **clean** - runs `go clean` and removes the bin/ dir
 * **install** - runs `go get` to install all dependencies
 * **generate-api** - generates APIs from the swagger spec
+
+## Running locally
+Currently the Optimizely SDK Key is sourced from an `SDK_KEY` environment variable. For local development you can add a `.env` file into the package root:
+
+Ex:
+```
+SDK_KEY=<YOUR-KEY-KEY>
+```
+
+This file will get loaded via the `Makefile` configuration script.
 
 ## Client Generation
 
