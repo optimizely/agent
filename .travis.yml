@@ -26,5 +26,6 @@ script:
   - if [[ `which md5` ]]; then md5 $GOPATH/bin/sidedoor; else md5sum $GOPATH/bin/sidedoor; fi
   # now we're going to create packages
   - $TRAVIS_BUILD_DIR/scripts/devops_create_packages.sh
+  - ls -al *.rpm *.deb
   # upload packages to artifactory
   - $TRAVIS_BUILD_DIR/scripts/devops_upload_packages.sh
