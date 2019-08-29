@@ -1,15 +1,15 @@
-include .env
-
 # The name of the executable (default is current directory name)
 TARGET := $(shell basename "$(PWD)")
 .DEFAULT_GOAL := $(TARGET)  # TODO make a help
 
+GO111MODULE:=on
+
 # Go parameters
 GOCMD=go
 GOBIN=bin
-GOBUILD=$(GOCMD) build
+GOBUILD=GO111MODULE=$(GO111MODULE) $(GOCMD) build
 GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
+GOTEST=GO111MODULE=$(GO111MODULE) $(GOCMD) test
 GOGET=$(GOCMD) get
 BINARY_UNIX=$(TARGET)_unix
 
@@ -24,18 +24,13 @@ $(TARGET):
 	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
 build: $(TARGET)
 	@true
-test: 
+test: build
 	$(GOTEST) -v ./...
 clean: 
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
 run: $(TARGET)
 	$(GOBIN)/$(TARGET)
-install:
-	$(GOGET) github.com/go-chi/chi
-	$(GOGET) github.com/go-chi/render
-	$(GOGET) github.com/optimizely/go-sdk/optimizely/client
-	$(GOGET) github.com/optimizely/go-sdk/optimizely/entities
 generate-api:
 	scripts/generate.sh $(ARG)
 help:
