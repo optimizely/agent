@@ -7,25 +7,27 @@ GO111MODULE:=on
 # Go parameters
 GOCMD=go
 GOBIN=bin
-GOBUILD=GO111MODULE=$(GO111MODULE) $(GOCMD) build
+GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
-GOTEST=GO111MODULE=$(GO111MODULE) $(GOCMD) test
+GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 BINARY_UNIX=$(TARGET)_unix
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
 
-# Use linker flags to provide version/build settings to the target
-LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
+# Use linker flags to strip debugging info from the binary.
+# -s Omit the symbol table and debug information.
+# -w Omit the DWARF symbol table.
+LDFLAGS=-ldflags "-s -w"
 
 all: test build
 $(TARGET): 
-	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
+	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
 build: $(TARGET)
 	@true
 test: build
-	$(GOTEST) -v ./...
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
 clean: 
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
