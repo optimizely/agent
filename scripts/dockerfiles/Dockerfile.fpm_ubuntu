@@ -1,0 +1,12 @@
+FROM ruby
+
+RUN gem install fpm pleaserun
+
+WORKDIR /workdir
+
+COPY sidedoor /workdir
+
+RUN fpm -s pleaserun -t deb -n sidedoor_initscripts --pleaserun-name sidedoor -v 0.1.0 /usr/bin/sidedoor
+RUN fpm -s dir -t deb -n sidedoor -v 0.1.0 /workdir/sidedoor=/usr/bin/
+
+CMD ["/bin/bash"]

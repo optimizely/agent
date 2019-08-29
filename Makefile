@@ -33,8 +33,14 @@ clean: ## clean
 devops_build_fpm_centos: ## build fpm_centos image for packaging
 	docker build -f scripts/dockerfiles/Dockerfile.fpm_centos -t fpm_centos ${GOPATH}/bin
 
+devops_build_fpm_ubuntu: ## build fpm_centos image for packaging
+	docker build -f scripts/dockerfiles/Dockerfile.fpm_ubuntu -t fpm_ubuntu ${GOPATH}/bin
+
 devops_get_fpm_centos: ## get generated rpm
 	docker run -v $(PWD):/output -it fpm_centos bash -c "cp *.rpm /output"
+
+devops_get_fpm_ubuntu: ## get generated deb
+	docker run -v $(PWD):/output -it fpm_ubuntu bash -c "cp *.deb /output"
 
 generate-api: ## generate-api
 	scripts/generate.sh $(ARG)
