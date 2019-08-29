@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
- package handlers
 
- import (
+// Package handlers //
+package handlers
+
+import (
 	"net/http"
- 
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
- 
+
 	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
@@ -31,7 +33,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("userId")
 
 	if userID == "" {
-		//render.JSON(w, r, ErrInvalidRequest(errors.New("missing userID")))
+
 		render.JSON(w, r, render.M{
 			"error": "missing userID",
 		})
@@ -40,7 +42,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 
 	context := optimizely.NewContext(userID, map[string]interface{}{})
 
-	enabled, err := context.IsFeatureEnabled(featureKey);
+	enabled, err := context.IsFeatureEnabled(featureKey)
 
 	if err != nil {
 		render.JSON(w, r, render.M{

@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
+
+// Package api //
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -30,7 +33,9 @@ func NewRouter() *chi.Mux {
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+		if _, err := w.Write([]byte("pong")); err != nil {
+			log.Fatal("unable to write response")
+		}
 	})
 
 	// r.Post("/features/activate", ActivateAllFeatures)

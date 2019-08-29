@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
+
+// Package models //
 package models
 
 type Feature struct {
-	ID int32 `json:"id,enabled,omitempty"`
-
-	Key string `json:"key"`
-
-	Enabled bool `json:"enabled"`
-
-	Variables map[string]string `json:"variables,omitempty"`
-
+	Key        string                      `json:"key"`
+	Variables  map[string]string           `json:"variables,omitempty"`
 	Variations map[string]FeatureVariation `json:"variations,omitempty"`
+	ID         int32                       `json:"id,enabled,omitempty"`
+	Enabled    bool                        `json:"enabled"`
 }
