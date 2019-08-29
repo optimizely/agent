@@ -1,9 +1,7 @@
+# Environment variables
+.env
+
 # Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
 bin/
 
 # Test binary, built with `go test -c`
@@ -14,3 +12,4 @@ bin/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
