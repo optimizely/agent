@@ -5,6 +5,7 @@ if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   cd $TRAVIS_BUILD_DIR
   make devops_build_fpm_centos
   make devops_get_fpm_centos
+  ls -al *.rpm
 elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
   echo "we're on osx"
 else
