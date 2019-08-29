@@ -20,11 +20,11 @@ The following `make` targets can be used to build and run the application:
 * **generate-api** - generates APIs from the swagger spec
 
 ## Running locally
-Currently the Optimizely SDK Key is sourced from an `SDK_KEY` environment variable. For local development you can add a `.env` file into the package root:
+Currently the Optimizely SDK Key is sourced from an `SDK_KEY` environment variable. For local development you can export your `SDK_KEY` or prefix the `make run` command.
 
 Ex:
 ```
-SDK_KEY=<YOUR-KEY-KEY>
+SDK_KEY=<YOUR-KEY-KEY> make run
 ```
 
 This file will get loaded via the `Makefile` configuration script.
