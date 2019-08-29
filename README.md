@@ -1,7 +1,37 @@
 # Optimizely Sidedoor
 Exploratory project for developing a service version of the Optimizely SDK.
 
-## Prerequisites
+## Package Structure
+Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
+
+* **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
+* **cmd** - Main applications for this project.
+* **bin** - Compiled application binaries.
+* **pkg** - Library code that can be used by other applications
+* **scripts** - Scripts to perform various build, install, analysis, etc operations.
+
+## Make targets
+The following `make` targets can be used to build and run the application:
+* **build** - builds sidedoor and installs binary in bin/sidedoor
+* **test** - recursively tests all .go files
+* **run** - builds and executes the sidedoor binary
+* **clean** - runs `go clean` and removes the bin/ dir
+* **install** - runs `go get` to install all dependencies
+* **generate-api** - generates APIs from the swagger spec
+
+## Running locally
+Currently the Optimizely SDK Key is sourced from an `SDK_KEY` environment variable. For local development you can add a `.env` file into the package root:
+
+Ex:
+```
+SDK_KEY=<YOUR-KEY-KEY>
+```
+
+This file will get loaded via the `Makefile` configuration script.
+
+## Client Generation
+
+### Prerequisites
 This repo currently depends heavily on [OpenAPI](https://swagger.io/specification/) and [OpenAPI Generator](https://github.com/openapitools/openapi-generator) (a [fork](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/migration-from-swagger-codegen.md) of swagger-codegen).
 
 To install the OpenAPI Generator on OSX:
@@ -9,12 +39,16 @@ To install the OpenAPI Generator on OSX:
 brew install openapi-generator
 ```
 
-## Code Generation
 To determine which generators are available you can execute `openapi-generator` without any arguments or refer to the generator source [docs](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/README.md):
 
 Types of generators are either CLIENT, SERVER, DOCUMENTATION, SCHEMA and CONFIG.
 
+### Generating
 You can use the helper script `generate.sh` to experiment with the various generated assets.
 ```
-./generate.sh <GENERATOR_NAME>
+scripts/generate.sh <GENERATOR_NAME>
+```
+We also provide a Make task `generate-api`:
+```
+make generate-api ARG-<GENERATOR_NAME>
 ```
