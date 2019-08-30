@@ -29,6 +29,9 @@ $(TARGET):
 build: $(TARGET) ## build
 	@true
 
+test: build
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
+
 clean: ## clean
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
