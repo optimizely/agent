@@ -22,25 +22,29 @@ MAKEFLAGS += --silent
 # -w Omit the DWARF symbol table.
 LDFLAGS=-ldflags "-s -w"
 
-all: test build
+all: test build ## all
 $(TARGET): 
 	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
+
 build: $(TARGET)
 	@true
-test: build
-	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
-clean: 
+
+clean: ## clean
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
-run: $(TARGET)
-	$(GOBIN)/$(TARGET)
+
+generate-api: ## generate-api
+	scripts/generate.sh $(ARG)
+
+install: ## install
+	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
+
 lint:
 	$(GOLINT) run --out-format=tab --tests=false pkg/...
 	$(GOLINT) run --out-format=tab --tests=false cmd/...
 
-install:
-	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
-generate-api:
-	scripts/generate.sh $(ARG)
-help:
-	echo "TODO"
+run: $(TARGET) ## run
+	$(GOBIN)/$(TARGET)
+
+help: ## help
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
