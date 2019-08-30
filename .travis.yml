@@ -20,7 +20,7 @@ script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
   - pushd $TRAVIS_BUILD_DIR && make all && popd
-  - ls -al $TRAVIS_BIULD_DIR/bin/sidedoor
+  - ls -al $TRAVIS_BUILD_DIR/bin/sidedoor
   # now we're going to create packages
   - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
   # upload packages to artifactory
