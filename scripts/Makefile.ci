@@ -7,7 +7,7 @@ ci_build_fpm_ubuntu: ## build fpm_centos image for packaging
 	docker build -f scripts/dockerfiles/Dockerfile.fpm_ubuntu -t fpm_ubuntu ${TRAVIS_BUILD_DIR}/bin
 
 ci_get_fpm_centos: ## get generated rpm
-	docker run -v ${TRAVIS_BUILD_DIR}/ci:/output -it fpm_centos bash -c "cp *.rpm /output"
+	docker run -v /tmp/output_packages:/output -it fpm_centos bash -c "cp *.rpm /output"
 
 ci_get_fpm_ubuntu: ## get generated deb
-	docker run -v ${TRAVIS_BUILD_DIR}/ci:/output -it fpm_ubuntu bash -c "cp *.deb /output"
+	docker run -v /tmp/output_packages:/output -it fpm_ubuntu bash -c "cp *.deb /output"

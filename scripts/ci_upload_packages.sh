@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd $TRAVIS_BUILD_DIR/ci
+# this directory gets created by ci_create_packages.sh when it is shared into the container's /output directory
+cd /tmp/output_packages
 
 if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   echo "we're on linux"
