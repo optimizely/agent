@@ -1,6 +1,6 @@
 # The name of the executable (default is current directory name)
 TARGET := $(shell basename "$(PWD)")
-.DEFAULT_GOAL := $(TARGET)  # TODO make a help
+.DEFAULT_GOAL := help
 
 GO111MODULE:=on
 
