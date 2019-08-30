@@ -11,6 +11,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
+GOLINT=golangci-lint
 BINARY_UNIX=$(TARGET)_unix
 
 # Make is verbose in Linux. Make it silent.
@@ -31,11 +32,15 @@ clean:
 	rm -rf $(GOBIN)
 run: $(TARGET)
 	$(GOBIN)/$(TARGET)
+lint:
+	$(GOLINT) run --out-format=tab --tests=false pkg/...
+
 install:
 	$(GOGET) github.com/go-chi/chi
 	$(GOGET) github.com/go-chi/render
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/client
 	$(GOGET) github.com/optimizely/go-sdk/optimizely/entities
+	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
 generate-api:
 	scripts/generate.sh $(ARG)
 help:
