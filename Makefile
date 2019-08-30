@@ -39,7 +39,7 @@ generate-api: ## generate-api
 install: ## install
 	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
 
-lint:
+lint: ## lint
 	$(GOLINT) run --out-format=tab --tests=false pkg/...
 	$(GOLINT) run --out-format=tab --tests=false cmd/...
 
