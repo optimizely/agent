@@ -1,4 +1,6 @@
-language: minimal
+language: go
+go:
+  - 1.12.x
 
 jobs:
 
