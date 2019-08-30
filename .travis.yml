@@ -16,11 +16,9 @@ jobs:
         - HOMEBREW_NO_AUTO_UPDATE=1 brew install gimme
         - mkdir -p $GOPATH
 
-install:
+script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-
-script:
   - make all
 
 after_success:
