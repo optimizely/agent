@@ -36,6 +36,7 @@ run: $(TARGET)
 	$(GOBIN)/$(TARGET)
 lint:
 	$(GOLINT) run --out-format=tab --tests=false pkg/...
+	$(GOLINT) run --out-format=tab --tests=false cmd/...
 
 install:
 	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
