@@ -29,31 +29,27 @@ linters-settings:
 linters:
  disable-all: true
  enable:
-   - megacheck
-   - golint
-   - govet
-   - unconvert
-   - megacheck
-   - structcheck
-   - gas
-   - gocyclo
+   - deadcode
    - dupl
+   - gas
+   - gocritic
+   - gocyclo
+   - golint
+   - gosimple
+   - govet
+   - ineffassign
+   - maligned
+   - megacheck
    - misspell
+   - nakedret
+   - prealloc
+   - scopelint
+   - structcheck
+   - stylecheck
+   - typecheck
+   - unconvert
    - unparam
    - varcheck
-   - deadcode
-   - typecheck
-   - ineffassign
-   - varcheck
-   - stylecheck
-   #- gochecknoinits
-   - scopelint
-   - gocritic
-   - golint
-   - nakedret
-   - gosimple
-   - prealloc 
-   - maligned
  fast: false
 
 run:
