@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 cd $TRAVIS_BUILD_DIR/ci
 

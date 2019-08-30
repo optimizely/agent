@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   echo "we're on linux"
