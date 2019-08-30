@@ -23,10 +23,10 @@ MAKEFLAGS += --silent
 LDFLAGS=-ldflags "-s -w"
 
 all: test build ## all
-$(TARGET): 
+$(TARGET):
 	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
 
-build: $(TARGET)
+build: $(TARGET) ## build
 	@true
 
 clean: ## clean
@@ -45,6 +45,8 @@ lint:
 
 run: $(TARGET) ## run
 	$(GOBIN)/$(TARGET)
+
+include scripts/Makefile.ci
 
 include scripts/Makefile.ci
 

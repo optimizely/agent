@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $TRAVIS_BUILD_DIR
+cd $TRAVIS_BUILD_DIR/ci
 
 if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   echo "we're on linux"
