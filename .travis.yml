@@ -16,11 +16,14 @@ jobs:
         - HOMEBREW_NO_AUTO_UPDATE=1 brew install gimme
         - mkdir -p $GOPATH
 
-script:
+install:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-  - pushd $TRAVIS_BUILD_DIR && make all && popd
-  - ls -al $TRAVIS_BUILD_DIR/bin/sidedoor
+
+script:
+  - make all
+
+after_success:
   # now we're going to create packages
   - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
   # upload packages to artifactory
