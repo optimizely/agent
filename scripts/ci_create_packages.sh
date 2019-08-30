@@ -10,6 +10,7 @@ if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   make ci_get_fpm_ubuntu
 elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
   echo "we're on osx"
+  mkdir /tmp/output_packages # make osx happy
 else
   echo "we're lost!"
 fi
