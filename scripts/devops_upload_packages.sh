@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd $TRAVIS_BUILD_DIR
+
 if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   echo "we're on linux"
   for deb in `ls *.deb`; do
