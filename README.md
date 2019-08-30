@@ -17,6 +17,7 @@ The following `make` targets can be used to build and run the application:
 * **run** - builds and executes the sidedoor binary
 * **clean** - runs `go clean` and removes the bin/ dir
 * **install** - runs `go get` to install all dependencies
+* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **generate-api** - generates APIs from the swagger spec
 
 ## Running locally
