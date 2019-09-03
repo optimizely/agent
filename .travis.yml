@@ -18,7 +18,10 @@ jobs:
       dist: xenial
       env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
       script:
-        - make ci_coveralls
+        - make cover COVER_FILE=coverage.txt
+      after_success:
+        # Replace with coveralls if/when the repo is made public
+        - bash <(curl -s https://codecov.io/bash)
 
     - stage: build
       if: branch = master AND type = push OR commit_message = PUBLISH

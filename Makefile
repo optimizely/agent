@@ -2,9 +2,10 @@
 TARGET := $(shell basename "$(PWD)")
 .DEFAULT_GOAL := help
 
-GO111MODULE:=on
+COVER_FILE := cover.out
 
 # Go parameters
+GO111MODULE:=on
 GOCMD=go
 GOBIN=bin
 GOBUILD=$(GOCMD) build
@@ -30,10 +31,10 @@ build: $(TARGET) ## builds and installs binary in bin/
 	@true
 
 cover:
-	GO111MODULE=$(GO111MODULE) $(GOTEST) -v -race ./... -coverprofile=cover.out
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -v -race ./... -coverprofile=$(COVER_FILE)
 
 cover-html: cover
-	$(GOCMD) tool cover -html=cover.out
+	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 clean: ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN)
