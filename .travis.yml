@@ -1,0 +1,28 @@
+language: minimal
+
+jobs:
+
+  include:
+
+    - stage: build
+      os: linux
+      dist: xenial
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
+
+    -
+      os: osx
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=darwin GIMME_ARCH=amd64 GOPATH=$HOME/gopath
+      install:
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew install gimme
+        - mkdir -p $GOPATH
+
+script:
+  # https://github.com/travis-ci/gimme
+  - eval "$(gimme)"
+  - make all
+
+after_success:
+  # now we're going to create packages
+  - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+  # upload packages to artifactory
+  - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh

@@ -1,6 +1,6 @@
 # The name of the executable (default is current directory name)
 TARGET := $(shell basename "$(PWD)")
-.DEFAULT_GOAL := $(TARGET)  # TODO make a help
+.DEFAULT_GOAL := help
 
 GO111MODULE:=on
 
@@ -22,25 +22,34 @@ MAKEFLAGS += --silent
 # -w Omit the DWARF symbol table.
 LDFLAGS=-ldflags "-s -w"
 
-all: test build
-$(TARGET): 
+all: test build ## all
+$(TARGET):
 	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
-build: $(TARGET)
+
+build: $(TARGET) ## build
 	@true
+
 test: build
 	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
-clean: 
+
+clean: ## clean
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
-run: $(TARGET)
-	$(GOBIN)/$(TARGET)
-lint:
+
+generate-api: ## generate-api
+	scripts/generate.sh $(ARG)
+
+install: ## install
+	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
+
+lint: ## lint
 	$(GOLINT) run --out-format=tab --tests=false pkg/...
 	$(GOLINT) run --out-format=tab --tests=false cmd/...
 
-install:
-	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
-generate-api:
-	scripts/generate.sh $(ARG)
-help:
-	echo "TODO"
+run: $(TARGET) ## run
+	$(GOBIN)/$(TARGET)
+
+include scripts/Makefile.ci
+
+help: ## help
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
