@@ -14,7 +14,7 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely go-sdk
+// Package optimizely wraps the Optimizely SDK
 package optimizely
 
 import (
@@ -71,7 +71,7 @@ func getOptimizely() *client.OptimizelyClient {
 		logger := log.WithFields(log.Fields{
 			"sdkKey": sdkKey,
 		})
-		logger.Info("Fetiching new OptimizelyClient")
+		logger.Info("Fetching new OptimizelyClient")
 
 		optimizelyFactory := &client.OptimizelyFactory{
 			// TODO parameterize
@@ -82,7 +82,7 @@ func getOptimizely() *client.OptimizelyClient {
 		optlyClient, err = optimizelyFactory.StaticClient()
 
 		if err != nil {
-			logger.Error("Fetiching new OptimizelyClient", err)
+			logger.Error("Initializing OptimizelyClient", err)
 			return
 		}
 	})

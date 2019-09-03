@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
+
 // Package optimizely //
 package optimizely
 
@@ -24,6 +25,7 @@ import (
 
 var levelMap = make(map[logging.LogLevel]log.Level)
 
+// init overrides the Optimizely SDK logger with a logrus implementation.
 func init() {
 	levelMap[logging.LogLevelDebug]   = log.DebugLevel
 	levelMap[logging.LogLevelInfo]    = log.InfoLevel
