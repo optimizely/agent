@@ -4,25 +4,52 @@ jobs:
 
   include:
 
-    - stage: build
+    - stage: test
+      name: lint
       os: linux
       dist: xenial
       env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
+      script:
+        - make lint
 
-    -
+    - stage: test
+      name: unit
+      os: linux
+      dist: xenial
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
+      script:
+        - make cover COVER_FILE=coverage.txt
+      after_success:
+        # Replace with coveralls if/when the repo is made public
+        - bash <(curl -s https://codecov.io/bash)
+
+    - stage: build
+      if: branch = master AND type = push OR commit_message = PUBLISH
+      name: linux
+      os: linux
+      dist: xenial
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
+      script:
+        # now we're going to create packages
+        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+        # upload packages to artifactory
+        - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+
+    - stage: build
+      if: branch = master AND type = push OR commit_message = PUBLISH
+      name: osx
       os: osx
       env: GIMME_GO_VERSION=1.12.9 GIMME_OS=darwin GIMME_ARCH=amd64 GOPATH=$HOME/gopath
       install:
         - HOMEBREW_NO_AUTO_UPDATE=1 brew install gimme
         - mkdir -p $GOPATH
+      script:
+        # now we're going to create packages
+        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+        # upload packages to artifactory
+        - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
 
-script:
+before_script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-  - make all
-
-after_success:
-  # now we're going to create packages
-  - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
-  # upload packages to artifactory
-  - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+  - make build

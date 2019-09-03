@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/optimizely/sidedoor.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/sidedoor)
+[![codecov](https://codecov.io/gh/optimizely/sidedoor/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/sidedoor)
 # Optimizely Sidedoor
 Exploratory project for developing a service version of the Optimizely SDK.
 
@@ -13,12 +15,12 @@ Following best practice for go project layout as defined [here](https://github.c
 ## Make targets
 The following `make` targets can be used to build and run the application:
 * **build** - builds sidedoor and installs binary in bin/sidedoor
-* **test** - recursively tests all .go files
-* **run** - builds and executes the sidedoor binary
 * **clean** - runs `go clean` and removes the bin/ dir
 * **install** - runs `go get` to install all dependencies
-* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **generate-api** - generates APIs from the swagger spec
+* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
+* **run** - builds and executes the sidedoor binary
+* **test** - recursively tests all .go files
 
 ## Running locally
 Currently the Optimizely SDK Key is sourced from an `SDK_KEY` environment variable. For local development you can export your `SDK_KEY` or prefix the `make run` command.

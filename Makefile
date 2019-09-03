@@ -2,9 +2,10 @@
 TARGET := $(shell basename "$(PWD)")
 .DEFAULT_GOAL := help
 
-GO111MODULE:=on
+COVER_FILE := cover.out
 
 # Go parameters
+GO111MODULE:=on
 GOCMD=go
 GOBIN=bin
 GOBUILD=$(GOCMD) build
@@ -26,28 +27,34 @@ all: test build ## all
 $(TARGET):
 	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
 
-build: $(TARGET) ## build
+build: $(TARGET) ## builds and installs binary in bin/
 	@true
 
-test: build
-	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
+cover:
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -v -race ./... -coverprofile=$(COVER_FILE)
 
-clean: ## clean
+cover-html: cover
+	$(GOCMD) tool cover -html=$(COVER_FILE)
+
+clean: ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN)
 	rm -rf $(GOBIN)
 
-generate-api: ## generate-api
+generate-api: ## generates APIs from the swagger spec
 	scripts/generate.sh $(ARG)
 
-install: ## install
+install: ## runs `go get` to install all dependencies
 	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
 
-lint: ## lint
+lint: install ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false pkg/...
 	$(GOLINT) run --out-format=tab --tests=false cmd/...
 
-run: $(TARGET) ## run
+run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
+
+test: ## recursively tests all .go files
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
 
 include scripts/Makefile.ci
 

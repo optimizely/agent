@@ -17,6 +17,7 @@
 // Package models //
 package models
 
+// Feature Model
 type Feature struct {
 	Key        string                      `json:"key"`
 	Variables  map[string]string           `json:"variables,omitempty"`
