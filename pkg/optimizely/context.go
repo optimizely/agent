@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
+
+// Package optimizely wraps the Optimizely go-sdk
 package optimizely
 
 import (
@@ -28,15 +30,17 @@ import (
 var once sync.Once
 var optlyClient *client.OptimizelyClient
 
+// Context encapsulates the user and optimizely sdk
 type Context struct {
 	userContext *entities.UserContext
 	optlyClient *client.OptimizelyClient
 }
 
-func NewContext(ID string, Attributes map[string]interface{}) *Context {
+// NewContext creates a new UserContext and shared OptimizelyClient
+func NewContext(id string, attributes map[string]interface{}) *Context {
 	userContext := entities.UserContext{
-		ID:         ID,
-		Attributes: Attributes,
+		ID:         id,
+		Attributes: attributes,
 	}
 	context := &Context{
 		userContext: &userContext,
@@ -46,6 +50,7 @@ func NewContext(ID string, Attributes map[string]interface{}) *Context {
 	return context
 }
 
+// IsFeatureEnabled calls the OptimizelyClient with the current UserContext
 func (context *Context) IsFeatureEnabled(featureKey string) (bool, error) {
 	app := context.optlyClient
 

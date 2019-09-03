@@ -17,6 +17,7 @@
 // Package models //
 package models
 
+// FeatureVariation Model
 type FeatureVariation struct {
 	ID        int32             `json:"id"`
 	Key       string            `json:"key"`

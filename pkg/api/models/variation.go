@@ -17,6 +17,7 @@
 // Package models //
 package models
 
+// Variation Model
 type Variation struct {
 	ID  int32  `json:"id"`
 	Key string `json:"key"`

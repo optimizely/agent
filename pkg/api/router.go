@@ -38,8 +38,6 @@ func NewRouter() *chi.Mux {
 		}
 	})
 
-	// r.Post("/features/activate", ActivateAllFeatures)
 	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
-	// r.Post("/track", handlers.TrackEvent)
 	return r
 }

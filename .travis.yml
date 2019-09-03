@@ -46,7 +46,7 @@ jobs:
         # upload packages to artifactory
         - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
 
-install:
+before_script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-  - make all
+  - make build
