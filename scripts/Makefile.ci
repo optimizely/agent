@@ -11,3 +11,9 @@ ci_get_fpm_centos: ## get generated rpm
 
 ci_get_fpm_ubuntu: ## get generated deb
 	docker run -v /tmp/output_packages:/output -it fpm_ubuntu bash -c "cp *.deb /output"
+
+ci_install:  ## install ci dependencies
+	$(GOGET) github.com/mattn/goveralls
+
+ci_coveralls: cover ci_install ## upload coverage report to coveralls
+	${GOPATH}/bin/goveralls -coverprofile=cover.out -service=travis-ci
