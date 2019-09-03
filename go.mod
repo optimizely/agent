@@ -7,6 +7,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/optimizely/go-sdk v0.1.0
-	github.com/stretchr/testify v1.4.0 // indirect
+	github.com/sirupsen/logrus v1.4.2
+	github.com/stretchr/testify v1.4.0
 	github.com/twmb/murmur3 v1.0.0 // indirect
 )

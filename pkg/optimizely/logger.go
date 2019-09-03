@@ -13,54 +13,50 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
-
-// Package handlers //
-package handlers
+// Package optimizely //
+package optimizely
 
 import (
-	"net/http"
-
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-
-	"github.com/optimizely/sidedoor/pkg/api/models"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/go-sdk/optimizely/logging"
 )
 
-// ActivateFeature - Return the feature and record impression
-func ActivateFeature(w http.ResponseWriter, r *http.Request) {
-	featureKey := chi.URLParam(r, "featureKey")
-	userID := r.URL.Query().Get("userId")
+var levelMap = make(map[logging.LogLevel]log.Level)
 
-	if userID == "" {
-		log.Error("Invalid request, missing userId")
-		render.JSON(w, r, render.M{
-			"error": "missing userId",
-		})
-		return
+func init() {
+	levelMap[logging.LogLevelDebug]   = log.DebugLevel
+	levelMap[logging.LogLevelInfo]    = log.InfoLevel
+	levelMap[logging.LogLevelWarning] = log.WarnLevel
+	levelMap[logging.LogLevelError]   = log.ErrorLevel
+
+	logger := log.New()
+	logger.SetLevel(log.InfoLevel)
+
+	logConsumer := &LogrusLogConsumer{
+		logger: logger,
 	}
 
-	context := optimizely.NewContext(userID, map[string]interface{}{})
-	enabled, err := context.IsFeatureEnabled(featureKey)
+	logging.SetLogger(logConsumer)
+}
 
-	if err != nil {
-		log.WithFields(log.Fields{
-			"featureKey": featureKey,
-			"userID": userID,
-		}).Error("Calling isFeatureEnabled")
+// Logger interface is primarily used to fascilitate testing
+type Logger interface {
+	Log(log.Level, ...interface{})
+	SetLevel(log.Level)
+}
 
-		render.JSON(w, r, render.M{
-			"error": err,
-		})
-		return
-	}
+// LogrusLogConsumer is an implementation of the OptimizelyLogConsumer that wraps a logrus logger
+type LogrusLogConsumer struct {
+	logger Logger
+}
 
-	feature := &models.Feature{
-		Enabled: enabled,
-		Key:     featureKey,
-	}
+// Log logs the message if it's log level is higher than or equal to the logger's set level
+func (l *LogrusLogConsumer) Log(level logging.LogLevel, message string) {
+	l.logger.Log(levelMap[level], message)
+}
 
-	render.JSON(w, r, feature)
+// SetLogLevel changes the log level to the given level
+func (l *LogrusLogConsumer) SetLogLevel(level logging.LogLevel) {
+	l.logger.SetLevel(levelMap[level])
 }
