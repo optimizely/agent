@@ -14,14 +14,15 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely go-sdk
+// Package optimizely wraps the Optimizely SDK
 package optimizely
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
@@ -67,7 +68,8 @@ func getOptimizely() *client.OptimizelyClient {
 	// TODO handle failure to prevent deadlocks.
 	once.Do(func() { // <-- atomic, does not allow repeating
 		sdkKey := os.Getenv("SDK_KEY")
-		fmt.Printf("Fetiching client for SDK Key: %s\n", sdkKey)
+		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
+		sublogger.Info().Msg("Fetching new OptimizelyClient")
 
 		optimizelyFactory := &client.OptimizelyFactory{
 			// TODO parameterize
@@ -78,7 +80,7 @@ func getOptimizely() *client.OptimizelyClient {
 		optlyClient, err = optimizelyFactory.StaticClient()
 
 		if err != nil {
-			fmt.Printf("Error instantiating client: %s\n", err)
+			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
 			return
 		}
 	})
