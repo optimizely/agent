@@ -18,62 +18,50 @@
 package optimizely
 
 import (
+	"bytes"
 	"testing"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 
 	"github.com/optimizely/go-sdk/optimizely/logging"
 	"github.com/stretchr/testify/assert"
 )
 
-type TestLogger struct {
-	filterLevel  log.Level
-	messageLevel log.Level
-	messages     []interface{}
-}
-
-func (l *TestLogger) Log(level log.Level, messages...interface{}) {
-	l.messageLevel = level
-	l.messages = messages
-}
-
-func (l *TestLogger) SetLevel(level log.Level) {
-	l.filterLevel = level
-}
-
 func TestLog(t *testing.T) {
-	logger := new(TestLogger)
-	logrusLogConsumer := &LogrusLogConsumer{logger: logger}
+	out := &bytes.Buffer{}
+	logger := zerolog.New(out).Level(zerolog.DebugLevel)
+	logConsumer := &LogConsumer{logger: &logger}
 
-	logrusLogConsumer.Log(logging.LogLevelDebug, "debug")
-	assert.Equal(t, logger.messageLevel, log.DebugLevel)
-	assert.Equal(t, logger.messages[0], "debug")
+	logConsumer.Log(logging.LogLevelDebug, "debug")
+	assert.Equal(t, "{\"level\":\"debug\",\"message\":\"debug\"}\n", string(out.Bytes()))
+	out.Reset()
 
-	logrusLogConsumer.Log(logging.LogLevelInfo, "info")
-	assert.Equal(t, logger.messageLevel, log.InfoLevel)
-	assert.Equal(t, logger.messages[0], "info")
+	logConsumer.Log(logging.LogLevelInfo, "info")
+	assert.Equal(t, "{\"level\":\"info\",\"message\":\"info\"}\n", string(out.Bytes()))
+	out.Reset()
 
-	logrusLogConsumer.Log(logging.LogLevelWarning, "warn")
-	assert.Equal(t, logger.messageLevel, log.WarnLevel)
-	assert.Equal(t, logger.messages[0], "warn")
+	logConsumer.Log(logging.LogLevelWarning, "warn")
+	assert.Equal(t, "{\"level\":\"warn\",\"message\":\"warn\"}\n", string(out.Bytes()))
+	out.Reset()
 
-	logrusLogConsumer.Log(logging.LogLevelError, "error")
-	assert.Equal(t, logger.messageLevel, log.ErrorLevel)
-	assert.Equal(t, logger.messages[0], "error")
+	logConsumer.Log(logging.LogLevelError, "error")
+	assert.Equal(t, "{\"level\":\"error\",\"message\":\"error\"}\n", string(out.Bytes()))
+	out.Reset()
 }
 
 func TestSetLevel(t *testing.T) {
-	logger := new(TestLogger)
-	logrusLogConsumer := &LogrusLogConsumer{logger: logger}
+	out := &bytes.Buffer{}
+	logger := zerolog.New(out)
+	logConsumer := &LogConsumer{logger: &logger}
 
-	logrusLogConsumer.SetLogLevel(logging.LogLevelDebug)
-	assert.Equal(t, logger.filterLevel, log.DebugLevel)
+	logConsumer.SetLogLevel(logging.LogLevelDebug)
+	assert.Equal(t, zerolog.DebugLevel, logConsumer.logger.GetLevel())
 
-	logrusLogConsumer.SetLogLevel(logging.LogLevelInfo)
-	assert.Equal(t, logger.filterLevel, log.InfoLevel)
+	logConsumer.SetLogLevel(logging.LogLevelInfo)
+	assert.Equal(t, zerolog.InfoLevel, logConsumer.logger.GetLevel())
 
-	logrusLogConsumer.SetLogLevel(logging.LogLevelWarning)
-	assert.Equal(t, logger.filterLevel, log.WarnLevel)
+	logConsumer.SetLogLevel(logging.LogLevelWarning)
+	assert.Equal(t, zerolog.WarnLevel, logConsumer.logger.GetLevel())
 
-	logrusLogConsumer.SetLogLevel(logging.LogLevelError)
-	assert.Equal(t, logger.filterLevel, log.ErrorLevel)
+	logConsumer.SetLogLevel(logging.LogLevelError)
+	assert.Equal(t, zerolog.ErrorLevel, logConsumer.logger.GetLevel())
 }

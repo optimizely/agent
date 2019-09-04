@@ -20,7 +20,7 @@ package handlers
 import (
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -35,7 +35,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("userId")
 
 	if userID == "" {
-		log.Error("Invalid request, missing userId")
+		log.Error().Msg("Invalid request, missing userId")
 		render.JSON(w, r, render.M{
 			"error": "missing userId",
 		})
@@ -46,11 +46,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	enabled, err := context.IsFeatureEnabled(featureKey)
 
 	if err != nil {
-		log.WithFields(log.Fields{
-			"featureKey": featureKey,
-			"userID": userID,
-		}).Error("Calling isFeatureEnabled")
-
+		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling isFeatureEnabled")
 		render.JSON(w, r, render.M{
 			"error": err,
 		})

@@ -22,7 +22,7 @@ import (
 	"os"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
@@ -68,10 +68,8 @@ func getOptimizely() *client.OptimizelyClient {
 	// TODO handle failure to prevent deadlocks.
 	once.Do(func() { // <-- atomic, does not allow repeating
 		sdkKey := os.Getenv("SDK_KEY")
-		logger := log.WithFields(log.Fields{
-			"sdkKey": sdkKey,
-		})
-		logger.Info("Fetching new OptimizelyClient")
+		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
+		sublogger.Info().Msg("Fetching new OptimizelyClient")
 
 		optimizelyFactory := &client.OptimizelyFactory{
 			// TODO parameterize
@@ -82,7 +80,7 @@ func getOptimizely() *client.OptimizelyClient {
 		optlyClient, err = optimizelyFactory.StaticClient()
 
 		if err != nil {
-			logger.Error("Initializing OptimizelyClient", err)
+			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
 			return
 		}
 	})
