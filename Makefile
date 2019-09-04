@@ -1,5 +1,5 @@
 # The name of the executable (default is current directory name)
-TARGET := $(shell basename "$(PWD)")
+TARGET := sidedoor
 .DEFAULT_GOAL := help
 
 COVER_FILE := cover.out
