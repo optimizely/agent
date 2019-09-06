@@ -43,7 +43,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	}
 
 	context := optimizely.NewContext(userID, map[string]interface{}{})
-	enabled, err := context.IsFeatureEnabled(featureKey)
+	enabled, variables, err := context.GetFeature(featureKey)
 
 	if err != nil {
 		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling isFeatureEnabled")
@@ -54,8 +54,9 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	}
 
 	feature := &models.Feature{
-		Enabled: enabled,
-		Key:     featureKey,
+		Enabled:   enabled,
+		Key:       featureKey,
+		Variables: variables,
 	}
 
 	render.JSON(w, r, feature)

@@ -20,6 +20,7 @@ package optimizely
 import (
 	"os"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/go-sdk/optimizely/logging"
 )
@@ -33,7 +34,7 @@ func init() {
 	levelMap[logging.LogLevelWarning] = zerolog.WarnLevel
 	levelMap[logging.LogLevelError]   = zerolog.ErrorLevel
 
-	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
+	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	logConsumer := &LogConsumer{
 		logger: &logger,
 	}

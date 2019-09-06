@@ -62,6 +62,16 @@ func (context *Context) IsFeatureEnabled(featureKey string) (bool, error) {
 	return app.IsFeatureEnabled(featureKey, *context.userContext)
 }
 
+// GetFeature calls the OptimizelyClient with the current UserContext
+func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
+	app := context.optlyClient
+	if app == nil {
+		return enabled, variableMap, errors.New("invalid optimizely instance")
+	}
+
+	return app.GetFeatureVariableMap(featureKey, *context.userContext)
+}
+
 // TODO Support multiple SDK keys
 func getOptimizely() *client.OptimizelyClient {
 
