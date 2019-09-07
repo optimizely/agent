@@ -35,6 +35,12 @@ This file will get loaded via the `Makefile` configuration script.
 ## Client Generation
 
 ### Prerequisites
+
+Install go on OSX:
+```
+brew install go
+```
+
 This repo currently depends heavily on [OpenAPI](https://swagger.io/specification/) and [OpenAPI Generator](https://github.com/openapitools/openapi-generator) (a [fork](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/migration-from-swagger-codegen.md) of swagger-codegen).
 
 To install the OpenAPI Generator on OSX:
@@ -53,5 +59,5 @@ scripts/generate.sh <GENERATOR_NAME>
 ```
 We also provide a Make task `generate-api`:
 ```
-make generate-api ARG-<GENERATOR_NAME>
+make generate-api ARG=<GENERATOR_NAME>
 ```
