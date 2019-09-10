@@ -4,6 +4,9 @@
 # Binaries for programs and plugins
 bin/
 
+# Generators created from OpenAPI spec
+generated/
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -12,4 +15,3 @@ bin/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-
