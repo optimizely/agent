@@ -5,8 +5,8 @@ NAME=$1
 
 INPUT_FILE="$PWD/api/openapi-spec/openapi.yaml"
 
-mkdir -p generators/$NAME
-cd generator/$NAME
+mkdir -p generated/$NAME
+cd generated/$NAME
 openapi-generator generate -g $NAME -i $INPUT_FILE
 cd -
 

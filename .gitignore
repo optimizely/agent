@@ -5,7 +5,7 @@
 bin/
 
 # Generators created from OpenAPI spec
-generators/
+generated/
 
 # Test binary, built with `go test -c`
 *.test
