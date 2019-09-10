@@ -10,7 +10,7 @@ COPY sidedoor /workdir
 
 RUN fpm -v $VERSION -n sidedoor -s pleaserun -t dir /usr/bin/sidedoor
 RUN fpm -v $VERSION -s dir -t dir -n sidedoor /workdir/sidedoor=/usr/bin/
-RUN echo "!#/bin/sh\nsh /usr/share/pleaserun/sidedoor/cleanup.sh\nrm -rf /usr/share/pleaserun/sidedoor/cleanup.sh\n" > /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh
+RUN echo "#!/bin/sh\nsh /usr/share/pleaserun/sidedoor/cleanup.sh\nrm -rf /usr/share/pleaserun/sidedoor/cleanup.sh\n" > /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh
 RUN fpm -v $VERSION -n sidedoor -s dir -t deb --after-install /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/install.sh --before-remove /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh /workdir/sidedoor=/usr/bin/ /workdir/sidedoor.dir/usr/share/pleaserun/=/usr/share/pleaserun
 
 CMD ["/bin/bash"]
