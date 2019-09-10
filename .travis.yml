@@ -1,5 +1,8 @@
 language: minimal
 
+env:
+  VERSION=0.1.0
+
 jobs:
 
   include:
@@ -24,7 +27,7 @@ jobs:
         - bash <(curl -s https://codecov.io/bash)
 
     - stage: build
-      if: branch = master AND type = push OR commit_message = PUBLISH
+      #if: branch = master AND type = push OR commit_message = PUBLISH
       name: linux
       os: linux
       dist: xenial
