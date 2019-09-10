@@ -1,7 +1,5 @@
 FROM ruby
 
-ARG VERSION
-
 RUN gem install fpm pleaserun
 
 WORKDIR /workdir

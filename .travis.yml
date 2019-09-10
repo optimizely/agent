@@ -1,7 +1,8 @@
 language: minimal
 
 env:
-  VERSION=0.1.0
+  global:
+    VERSION: 0.1.0
 
 jobs:
 
