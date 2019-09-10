@@ -7,7 +7,7 @@ cd /tmp/output_packages
 if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   echo "we're on linux"
   for deb in `ls *.deb`; do
-    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_PASSWORD}" -XPUT "https://optimizely.jfrog.io/optimizely/deb-optimizely/pool/$deb;deb.distribution=xenial;deb.component=main;deb.architecture=amd64" -T $deb
+    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_PASSWORD}" -XPUT "https://optimizely.jfrog.io/optimizely/deb-optimizely/pool/$deb;deb.distribution=xenial-optimizely;deb.distribution=bionic-optimizely;deb.component=main;deb.architecture=amd64" -T $deb
   done
   for rpm in `ls *.rpm`; do
     curl -H "X-JFrog-Art-Api:${ARTIFACTORY_PASSWORD}" -XPUT https://optimizely.jfrog.io/optimizely/rpm-optimizely/ -T $rpm
