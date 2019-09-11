@@ -14,33 +14,45 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package api //
-package api
+// Package handlers //
+package handlers
 
 import (
-	"log"
+	"encoding/json"
+	"io/ioutil"
+	"mime"
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-
-	"github.com/optimizely/sidedoor/pkg/api/handlers"
+	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/rs/zerolog/log"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+// UserEvent - Process a user event
+func UserEvent(w http.ResponseWriter, r *http.Request) {
+	reqContentType := r.Header.Get("Content-Type")
+	reqMediaType, _, err := mime.ParseMediaType(reqContentType)
+	if err != nil || reqMediaType != "application/json" {
+		log.Error().Err(err).Str("Content-Type", reqContentType).Msg("Invalid Content-Type")
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("pong")); err != nil {
-			log.Fatal("unable to write response")
-		}
-	})
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
+	var userEvent event.UserEvent
+	err = json.Unmarshal(body, &userEvent)
+	if err != nil {
+		log.Error().Err(err).Msg("Error unmarshaling request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	r.Post("/events/userEvent", handlers.UserEvent)
+	// TODO: Do something with userEvent
 
-	return r
+	w.WriteHeader(http.StatusNoContent)
 }
