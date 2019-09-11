@@ -35,20 +35,20 @@ func UserEvent(w http.ResponseWriter, r *http.Request) {
 	reqMediaType, _, err := mime.ParseMediaType(reqContentType)
 	if err != nil || reqMediaType != "application/json" {
 		log.Error().Err(err).Str("Content-Type", reqContentType).Str("parsed media type", reqMediaType).Msg("Invalid Content-Type")
+		render.Status(r, http.StatusUnsupportedMediaType)
 		render.JSON(w, r, render.M{
 			"error": "Invalid content-type",
 		})
-		render.Status(r, http.StatusUnsupportedMediaType)
 		return
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Error reading request body")
+		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, render.M{
 			"error": "Error reading request body",
 		})
-		render.Status(r, http.StatusInternalServerError)
 		return
 	}
 
@@ -61,6 +61,9 @@ func UserEvent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error().Err(err).Msg("Error unmarshaling request body")
 		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Error unmarshaling request body",
+		})
 		return
 	}
 
