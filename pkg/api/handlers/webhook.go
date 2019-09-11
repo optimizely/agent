@@ -16,8 +16,11 @@
 
 package handlers
 
-import "net/http"
+import (
+	"github.com/go-chi/render"
+	"net/http"
+)
 
 func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
-	return
+	render.JSON(w, r, true)
 }

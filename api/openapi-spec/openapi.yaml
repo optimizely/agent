@@ -36,14 +36,8 @@ paths:
             schema:
               $ref: "#/components/schemas/WebhookRequest"
       responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebhookResponse'
-        '400':
-          description: Webhook message could not be verified
+        '204':
+          description: No content. Webhook message received and processed.
   /experiments:
     get:
       summary: Return all experiments
@@ -379,12 +373,6 @@ components:
         - timestamp
         - event
         - data
-    WebhookResponse:
-      properties:
-        status:
-          type: boolean
-      required:
-        - status
     Experiment:
       properties:
         id:
