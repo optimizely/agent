@@ -21,11 +21,9 @@ type TestConfig struct {
 func (TestConfig) GetEventByKey(string) (entities.Event, error) {
 	return entities.Event{ExperimentIds: []string{"15402980349"}, ID: "15368860886", Key: "sample_conversion"}, nil
 }
-
 func (TestConfig) GetFeatureByKey(string) (entities.Feature, error) {
 	return entities.Feature{}, nil
 }
-
 func (TestConfig) GetProjectID() string {
 	return "15389410617"
 }

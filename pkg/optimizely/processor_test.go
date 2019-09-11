@@ -3,11 +3,9 @@ package optimizely
 import (
 	"encoding/json"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/optimizely/go-sdk/optimizely"
 	"github.com/optimizely/go-sdk/optimizely/entities"
@@ -24,11 +22,9 @@ type TestConfig struct {
 func (TestConfig) GetEventByKey(string) (entities.Event, error) {
 	return entities.Event{ExperimentIds: []string{"15402980349"}, ID: "15368860886", Key: "sample_conversion"}, nil
 }
-
 func (TestConfig) GetFeatureByKey(string) (entities.Feature, error) {
 	return entities.Feature{}, nil
 }
-
 func (TestConfig) GetProjectID() string {
 	return "15389410617"
 }
@@ -54,30 +50,17 @@ func (TestConfig) GetClientVersion() string {
 	return "1.0.0"
 }
 
-func RandomString(len int) string {
-	bytes := make([]byte, len)
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < len; i++ {
-		bytes[i] = byte(65 + rand.Intn(25)) //A=65 and Z = 65+25
-	}
-	return string(bytes)
-}
-
-var userID = RandomString(10)
+var userID = "user1"
 var userContext = entities.UserContext{
 	ID:         userID,
 	Attributes: make(map[string]interface{}),
 }
 
 func TestProcessEvent(t *testing.T) {
-
 	config := TestConfig{}
 
 	wasCalled := false
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte(""))
-		wasCalled = true
-
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			t.Errorf("Error reading request body")
@@ -90,6 +73,11 @@ func TestProcessEvent(t *testing.T) {
 		assert.Equal(t, "campaign_activated", sentEvent.Impression.Key)
 		assert.Equal(t, config.GetProjectID(), sentEvent.EventContext.ProjectID)
 		assert.Equal(t, config.GetRevision(), sentEvent.EventContext.Revision)
+
+		rw.WriteHeader(http.StatusNoContent)
+		rw.Write([]byte(""))
+		wasCalled = true
+
 	}))
 	defer server.Close()
 
@@ -97,12 +85,11 @@ func TestProcessEvent(t *testing.T) {
 	experiment.Key = "background_experiment"
 	experiment.LayerID = "15399420423"
 	experiment.ID = "15402980349"
-
 	variation := entities.Variation{}
 	variation.Key = "variation_a"
 	variation.ID = "15410990633"
-
 	userEvent := event.CreateImpressionUserEvent(config, experiment, variation, userContext)
+
 	processor := SidedoorEventProcessor{
 		URL: server.URL,
 	}
