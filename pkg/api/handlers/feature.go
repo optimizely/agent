@@ -29,6 +29,34 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
+// ListFeatures - List all features
+func ListFeatures(w http.ResponseWriter, r *http.Request) {
+	features, err := optimizely.ListFeatures()
+	if err != nil {
+		render.JSON(w, r, render.M{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	render.JSON(w, r, features)
+}
+
+// GetFeature - Get requested feature
+func GetFeature(w http.ResponseWriter, r *http.Request) {
+	featureKey := chi.URLParam(r, "featureKey")
+
+	feature, err := optimizely.GetFeature(featureKey)
+	if err != nil {
+		render.JSON(w, r, render.M{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	render.JSON(w, r, feature)
+}
+
 // ActivateFeature - Return the feature and record impression
 func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
@@ -46,7 +74,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	enabled, variables, err := context.GetFeature(featureKey)
 
 	if err != nil {
-		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling isFeatureEnabled")
+		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling ActivateFeature")
 		render.JSON(w, r, render.M{
 			"error": err,
 		})

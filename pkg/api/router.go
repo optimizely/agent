@@ -18,12 +18,12 @@
 package api
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 )
@@ -35,14 +35,21 @@ func NewRouter() *chi.Mux {
 
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("pong")); err != nil {
-			log.Fatal("unable to write response")
+			log.Fatal().Msg("unable to write response")
 		}
 	})
 
-	//r.Get("/features/{featureKey}/activate", handlers.ActivateFeature)
-	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
-
 	r.With(middleware.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
+
+	r.Route("/features", func(r chi.Router) {
+		r.Get("/", handlers.ListFeatures)
+
+		r.Route("/{featureKey}", func(r chi.Router) {
+			// TODO r.Use(FeatureCtx)
+			r.Get("/", handlers.GetFeature)
+			r.Post("/activate", handlers.ActivateFeature)
+		})
+	})
 
 	return r
 }

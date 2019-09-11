@@ -19,17 +19,10 @@ package optimizely
 
 import (
 	"errors"
-	"os"
-	"sync"
-
-	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
-
-var once sync.Once
-var optlyClient *client.OptimizelyClient
 
 // Context encapsulates the user and optimizely sdk
 type Context struct {
@@ -45,7 +38,7 @@ func NewContext(id string, attributes map[string]interface{}) *Context {
 	}
 	context := &Context{
 		userContext: &userContext,
-		optlyClient: getOptimizely(),
+		optlyClient: GetOptimizely(),
 	}
 
 	return context
@@ -70,30 +63,4 @@ func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap
 	}
 
 	return app.GetFeatureVariableMap(featureKey, *context.userContext)
-}
-
-// TODO Support multiple SDK keys
-func getOptimizely() *client.OptimizelyClient {
-
-	// TODO handle failure to prevent deadlocks.
-	once.Do(func() { // <-- atomic, does not allow repeating
-		sdkKey := os.Getenv("SDK_KEY")
-		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
-		sublogger.Info().Msg("Fetching new OptimizelyClient")
-
-		optimizelyFactory := &client.OptimizelyFactory{
-			// TODO parameterize
-			SDKKey: sdkKey,
-		}
-
-		var err error
-		optlyClient, err = optimizelyFactory.StaticClient()
-
-		if err != nil {
-			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
-			return
-		}
-	})
-
-	return optlyClient
 }
