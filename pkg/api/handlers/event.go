@@ -23,6 +23,8 @@ import (
 	"mime"
 	"net/http"
 
+	"github.com/go-chi/render"
+
 	"github.com/optimizely/go-sdk/optimizely/event"
 	"github.com/rs/zerolog/log"
 )
@@ -33,26 +35,37 @@ func UserEvent(w http.ResponseWriter, r *http.Request) {
 	reqMediaType, _, err := mime.ParseMediaType(reqContentType)
 	if err != nil || reqMediaType != "application/json" {
 		log.Error().Err(err).Str("Content-Type", reqContentType).Str("parsed media type", reqMediaType).Msg("Invalid Content-Type")
-		w.WriteHeader(http.StatusUnsupportedMediaType)
+		render.JSON(w, r, render.M{
+			"error": "Invalid content-type",
+		})
+		render.Status(r, http.StatusUnsupportedMediaType)
 		return
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Error reading request body")
-		w.WriteHeader(http.StatusInternalServerError)
+		render.JSON(w, r, render.M{
+			"error": "Error reading request body",
+		})
+		render.Status(r, http.StatusInternalServerError)
 		return
 	}
+
+	// TODO: Should we decode the body into interface{} and do validation
+	// of that? And then only create a UserEvent after validation?
+	// Or implement UnmarshalJSON for event.UserEvent, and do it all in there?
 
 	var userEvent event.UserEvent
 	err = json.Unmarshal(body, &userEvent)
 	if err != nil {
 		log.Error().Err(err).Msg("Error unmarshaling request body")
-		w.WriteHeader(http.StatusBadRequest)
+		render.Status(r, http.StatusBadRequest)
 		return
 	}
 
 	// TODO: Do something with userEvent
 
-	w.WriteHeader(http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
+	render.JSON(w, r, render.M{})
 }
