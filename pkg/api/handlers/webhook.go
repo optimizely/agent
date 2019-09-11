@@ -17,10 +17,22 @@
 package handlers
 
 import (
-	"github.com/go-chi/render"
+	"encoding/json"
+	"github.com/optimizely/sidedoor/pkg/api/models"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
 func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
-	render.JSON(w, r, true)
+	decodedWebhookMsg := json.NewDecoder(r.Body)
+	var webhookMsg models.WebhookMessage
+	err := decodedWebhookMsg.Decode(&webhookMsg)
+
+	if err != nil {
+		log.Error().Msg("Invalid webhook message received.")
+		return
+	}
+
+	// TODO: Set project config here after creating ability on Go SDK's polling config manager
+	return
 }

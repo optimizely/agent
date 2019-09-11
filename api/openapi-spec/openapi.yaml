@@ -24,7 +24,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Stat'
-  /optimizely/webhook:
+  /webhooks/optimizely:
     post:
       summary: Incoming webhook message from Optimizely
       operationId: handleWebhook
@@ -342,7 +342,7 @@ components:
       required:  
         - name
         - value
-    WebhookData:
+    DatafileUpdateData:
       properties:
         revision:
           type: integer
@@ -367,7 +367,7 @@ components:
           enum:
             - project.datafile_updated
         data:
-          $ref: '#/components/schemas/WebhookData'
+          $ref: '#/components/schemas/DatafileUpdateData    '
       required:
         - project_id
         - timestamp

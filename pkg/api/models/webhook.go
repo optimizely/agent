@@ -14,5 +14,21 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely //
-package optimizely
+// Package models //
+package models
+
+// Datafile update data model
+type DatafileUpdateData struct {
+	Revision       int32    `json:"revision"`
+	OriginURL      string   `json:"origin_url"`
+	CDNUrl         string   `json:"cdn_url"`
+	Environment    string   `json:"environment"`
+}
+
+// Webhook message model
+type WebhookMessage struct {
+	ProjectId    int64  		    `json:"project_id"`
+	Timestamp    int64  			`json:"timestamp"`
+	Event        string 			`json:"event"`
+	Data         DatafileUpdateData `json:"data"`
+}
