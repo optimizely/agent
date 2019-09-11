@@ -69,6 +69,5 @@ func UserEvent(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Do something with userEvent
 
-	render.Status(r, http.StatusNoContent)
-	render.JSON(w, r, render.M{})
+	w.WriteHeader(http.StatusNoContent)
 }
