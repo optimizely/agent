@@ -4,16 +4,14 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/optimizely/go-sdk/optimizely"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/stretchr/testify/assert"
 )
 
 type TestConfig struct {
@@ -53,35 +51,21 @@ func (TestConfig) GetClientVersion() string {
 	return "1.0.0"
 }
 
-func RandomString(len int) string {
-	bytes := make([]byte, len)
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < len; i++ {
-		bytes[i] = byte(65 + rand.Intn(25)) //A=65 and Z = 65+25
-	}
-	return string(bytes)
-}
-
-var userID = RandomString(10)
+var userID = "user1"
 var userContext = entities.UserContext{
 	ID:         userID,
 	Attributes: make(map[string]interface{}),
 }
 
 func TestHandleUserEvent(t *testing.T) {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
 	config := TestConfig{}
-
 	experiment := entities.Experiment{}
 	experiment.Key = "background_experiment"
 	experiment.LayerID = "15399420423"
 	experiment.ID = "15402980349"
-
 	variation := entities.Variation{}
 	variation.Key = "variation_a"
 	variation.ID = "15410990633"
-
 	userEvent := event.CreateImpressionUserEvent(config, experiment, variation, userContext)
 	jsonValue, _ := json.Marshal(userEvent)
 	req, err := http.NewRequest("POST", "/events/userEvent", bytes.NewBuffer(jsonValue))
@@ -90,30 +74,10 @@ func TestHandleUserEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(UserEvent)
-
-	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
-	// directly and pass in our Request and ResponseRecorder.
 	handler.ServeHTTP(rr, req)
 
-	// Check the status code is what we expect.
-	if status := rr.Code; status != http.StatusNoContent {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
-
-	body := rr.Body.String()
-	fmt.Println(body)
-
-	if body != "" {
-		t.Errorf("Body was not an empty string")
-	}
-	// Check the response body is what we expect.
-	// expected := `{"alive": true}`
-	// if rr.Body.String() != expected {
-	// 	t.Errorf("handler returned unexpected body: got %v want %v",
-	// 		rr.Body.String(), expected)
-	// }
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+	assert.Equal(t, "", rr.Body.String())
 }

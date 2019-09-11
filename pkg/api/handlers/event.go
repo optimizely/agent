@@ -29,12 +29,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const jsonContentType = "application/json"
+
 // UserEvent - Process a user event
 func UserEvent(w http.ResponseWriter, r *http.Request) {
 	reqContentType := r.Header.Get("Content-Type")
 	reqMediaType, _, err := mime.ParseMediaType(reqContentType)
-	if err != nil || reqMediaType != "application/json" {
-		log.Error().Err(err).Str("Content-Type", reqContentType).Str("parsed media type", reqMediaType).Msg("Invalid Content-Type")
+	if err != nil || reqMediaType != jsonContentType {
+		log.Error().Err(err).Str("Content-Type", reqContentType).Msg("Invalid Content-Type")
 		render.Status(r, http.StatusUnsupportedMediaType)
 		render.JSON(w, r, render.M{
 			"error": "Invalid content-type",
