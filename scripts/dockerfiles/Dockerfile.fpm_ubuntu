@@ -1,12 +1,17 @@
-FROM ruby
+FROM ubuntu:18.04
 
-RUN gem install fpm pleaserun
+ARG DEBIAN_FRONTEND=noninteractive
+ARG VERSION
+
+RUN apt-get -y update && apt-get -y install ruby ruby-dev build-essential
+RUN gem install --no-ri --no-rdoc fpm pleaserun
 
 WORKDIR /workdir
 
 COPY sidedoor /workdir
 
-RUN fpm -s pleaserun -t deb -n sidedoor_initscripts --pleaserun-name sidedoor -v 0.1.0 /usr/bin/sidedoor
-RUN fpm -s dir -t deb -n sidedoor -v 0.1.0 /workdir/sidedoor=/usr/bin/
+RUN fpm -v $VERSION -s pleaserun -t dir -n sidedoor /usr/bin/sidedoor
+RUN echo "#!/bin/sh\nsh /usr/share/pleaserun/sidedoor/cleanup.sh\nrm -rf /usr/share/pleaserun/sidedoor/cleanup.sh\n" > /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh
+RUN fpm -v $VERSION -n sidedoor -s dir -t deb --after-install /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/install.sh --before-remove /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh /workdir/sidedoor=/usr/bin/ /workdir/sidedoor.dir/usr/share/pleaserun/=/usr/share/pleaserun
 
 CMD ["/bin/bash"]
