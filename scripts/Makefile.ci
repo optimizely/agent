@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 ci_build_fpm_centos: ## build fpm_centos image for packaging
-	docker build -f scripts/dockerfiles/Dockerfile.fpm_centos -t fpm_centos ${TRAVIS_BUILD_DIR}/bin
+	docker build --build-arg VERSION -f scripts/dockerfiles/Dockerfile.fpm_centos -t fpm_centos ${TRAVIS_BUILD_DIR}/bin
 
 ci_build_fpm_ubuntu: ## build fpm_centos image for packaging
 	docker build --build-arg VERSION -f scripts/dockerfiles/Dockerfile.fpm_ubuntu -t fpm_ubuntu ${TRAVIS_BUILD_DIR}/bin

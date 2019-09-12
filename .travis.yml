@@ -1,9 +1,5 @@
 language: minimal
 
-env:
-  global:
-    VERSION: 0.1.0
-
 jobs:
 
   include:
@@ -28,25 +24,11 @@ jobs:
         - bash <(curl -s https://codecov.io/bash)
 
     - stage: build
-      if: branch = master AND type = push OR commit_message = PUBLISH
+      if: type = push AND tag IS present
       name: linux
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
-      script:
-        # now we're going to create packages
-        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
-        # upload packages to artifactory
-        - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
-
-    - stage: build
-      if: branch = master AND type = push OR commit_message = PUBLISH
-      name: osx
-      os: osx
-      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=darwin GIMME_ARCH=amd64 GOPATH=$HOME/gopath
-      install:
-        - HOMEBREW_NO_AUTO_UPDATE=1 brew install gimme
-        - mkdir -p $GOPATH
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64 VERSION=$TRAVIS_TAG
       script:
         # now we're going to create packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
