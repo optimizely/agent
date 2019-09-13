@@ -1,0 +1,9 @@
+FROM golang:1.12.9
+
+WORKDIR /go/src/github.com/optimizely/sidedoor
+COPY . .
+RUN make ci_build_alpine
+
+FROM alpine:3.7
+COPY --from=0 /go/src/github.com/optimizely/sidedoor/bin/sidedoor /sidedoor
+CMD ["/sidedoor"]
