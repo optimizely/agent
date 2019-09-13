@@ -4,7 +4,7 @@ ci_build_static_binary: ## build static binary
 	CGO_ENABLED=0 GOOS=linux GO111MODULE=$(GO111MODULE) $(GOBUILD) -a -ldflags '-extldflags "-static"' -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
 
 ci_build_dockerimage: ## build docker image of sidedoor
-	docker build -f scripts/dockerfiles/Dockerfile.static -t sidedoor:${VERSION} -t sidedoor:latest .
+	docker build -f scripts/dockerfiles/Dockerfile.static -t optimizely-docker.jfrog.io/sidedoor:${VERSION} -t optimizely-docker.jfrog.io/sidedoor:latest .
 
 ci_build_fpm_centos: ## build fpm_centos image for packaging
 	docker build --build-arg VERSION -f scripts/dockerfiles/Dockerfile.fpm_centos -t fpm_centos ${TRAVIS_BUILD_DIR}/bin
