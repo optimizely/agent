@@ -23,6 +23,13 @@ jobs:
         # Replace with coveralls if/when the repo is made public
         - bash <(curl -s https://codecov.io/bash)
 
+    - stage: buildtest
+      os: linux
+      dist: xenial
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64 VERSION=$TRAVIS_TAG
+      script:
+        - make ci_build_dockerimage
+
     - stage: build
       if: type = push AND tag IS present
       name: linux
