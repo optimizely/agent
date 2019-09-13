@@ -8,6 +8,7 @@ if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   make ci_get_fpm_centos
   make ci_build_fpm_ubuntu
   make ci_get_fpm_ubuntu
+  make ci_build_dockerimage
 elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
   echo "we're on osx"
   mkdir /tmp/output_packages # make osx happy
