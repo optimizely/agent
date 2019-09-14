@@ -20,7 +20,6 @@ package handlers
 import (
 	"encoding/json"
 	"io/ioutil"
-	"mime"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -33,17 +32,6 @@ const jsonContentType = "application/json"
 
 // UserEvent - Process a user event
 func UserEvent(w http.ResponseWriter, r *http.Request) {
-	reqContentType := r.Header.Get("Content-Type")
-	reqMediaType, _, err := mime.ParseMediaType(reqContentType)
-	if err != nil || reqMediaType != jsonContentType {
-		log.Error().Err(err).Str("Content-Type", reqContentType).Msg("Invalid Content-Type")
-		render.Status(r, http.StatusUnsupportedMediaType)
-		render.JSON(w, r, render.M{
-			"error": "Invalid content-type",
-		})
-		return
-	}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Error reading request body")

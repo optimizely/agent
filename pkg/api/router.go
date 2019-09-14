@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
@@ -40,7 +41,7 @@ func NewRouter() *chi.Mux {
 
 	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
 
-	r.Post("/events/user-event", handlers.UserEvent)
+	r.With(middleware.AllowContentType("application/json")).Post("/events/user-event", handlers.UserEvent)
 
 	return r
 }
