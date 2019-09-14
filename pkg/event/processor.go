@@ -46,12 +46,11 @@ func (s *SidedoorEventProcessor) ProcessEvent(userEvent event.UserEvent) error {
 		log.Error().Err(err).Msg("Error sending request")
 		return err
 	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.Warn().Str("URL", s.URL).Err(closeErr).Msg("Error closing response body")
+		}
+	}()
 
-	err = resp.Body.Close()
-	if err != nil {
-		log.Error().Err(err).Msg("Error closing response body")
-		return err
-	}
-
-	return nil
+	return err
 }
