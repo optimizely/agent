@@ -40,7 +40,7 @@ func NewRouter() *chi.Mux {
 
 	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
 
-	r.Post("/events/userEvent", handlers.UserEvent)
+	r.Post("/events/user-event", handlers.UserEvent)
 
 	return r
 }

@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely //
-package optimizely
+// Package event //
+package event
 
 import (
 	"bytes"
