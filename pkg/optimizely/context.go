@@ -62,5 +62,5 @@ func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap
 		return enabled, variableMap, errors.New("invalid optimizely instance")
 	}
 
-	return app.GetFeatureVariableMap(featureKey, *context.userContext)
+	return app.GetAllFeatureVariables(featureKey, *context.userContext)
 }
