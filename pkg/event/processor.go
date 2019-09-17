@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/optimizely/go-sdk/optimizely/event"
 	"github.com/rs/zerolog/log"
@@ -28,9 +29,21 @@ import (
 
 const jsonContentType = "application/json"
 
+const timeout = 5 * time.Second
+
 // SidedoorEventProcessor - sends events to sidedoor API
 type SidedoorEventProcessor struct {
-	URL string
+	client http.Client
+	URL    string
+}
+
+// NewSidedoorEventProcessor - Create a SidedoorEventProcessor of the given URL, with a default client that sets a 5 second request timeout
+func NewSidedoorEventProcessor(url string) *SidedoorEventProcessor {
+	client := http.Client{Timeout: timeout}
+	return &SidedoorEventProcessor{
+		client: client,
+		URL:    url,
+	}
 }
 
 // ProcessEvent - send event to sidedoor API
@@ -41,7 +54,7 @@ func (s *SidedoorEventProcessor) ProcessEvent(userEvent event.UserEvent) error {
 		return err
 	}
 
-	resp, err := http.Post(s.URL, jsonContentType, bytes.NewBuffer(jsonValue))
+	resp, err := s.client.Post(s.URL, jsonContentType, bytes.NewBuffer(jsonValue))
 	if err != nil {
 		log.Error().Err(err).Msg("Error sending request")
 		return err
