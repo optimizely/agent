@@ -62,8 +62,6 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 	userID := r.URL.Query().Get("userId")
 
-	chi.
-
 	if userID == "" {
 		log.Error().Msg("Invalid request, missing userId")
 		render.JSON(w, r, render.M{

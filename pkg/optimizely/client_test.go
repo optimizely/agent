@@ -29,28 +29,30 @@ import (
 type ClientTestSuite struct {
 	suite.Suite
 	client *ClientHolder
+	testClient *optimizelytest.TestClient
 }
 
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *ClientTestSuite) SetupTest() {
-	testClient := optimizelytest.NewTestClient()
-	testClient.ProjectConfig.FeatureMap["one"] = entities.Feature{Key: "one"}
-	testClient.ProjectConfig.FeatureMap["two"] = entities.Feature{Key: "two"}
-
+	testClient := optimizelytest.NewClient()
+	suite.testClient = testClient
 	suite.client = ClientWithOptimizelyClient(testClient.OptimizelyClient)
 }
 
 func (suite *ClientTestSuite) TestListFeatures() {
+	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
+	suite.testClient.AddFeature(entities.Feature{Key: "k2"})
 	features, err := suite.client.ListFeatures()
 	suite.Nil(err)
 	suite.Equal(2, len(features))
 }
 
 func (suite *ClientTestSuite) TestGetFeature() {
-	actual, err := suite.client.GetFeature("one")
+	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
+	actual, err := suite.client.GetFeature("k1")
 	suite.Nil(err)
-	suite.Equal(actual, entities.Feature{Key: "one"})
+	suite.Equal(actual, entities.Feature{Key: "k1"})
 }
 
 // In order for 'go test' to run this suite, we need to create

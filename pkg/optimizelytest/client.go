@@ -28,8 +28,8 @@ type TestClient struct {
 	OptimizelyClient *client.OptimizelyClient
 }
 
-func NewTestClient() (*TestClient) {
-	projectConfig := NewTestProjectConfig()
+func NewClient() (*TestClient) {
+	projectConfig := NewConfig()
 
 	options := client.Options{
 		ProjectConfigManager: config.NewStaticProjectConfigManager(projectConfig),
@@ -42,6 +42,10 @@ func NewTestClient() (*TestClient) {
 		ProjectConfig:		projectConfig, 
 		OptimizelyClient:	optlyClient,
 	}
+}
+
+func (t TestClient) AddFeature(feature entities.Feature) {
+	t.ProjectConfig.AddFeature(feature)
 }
 
 func (t *TestClient) AddFeatureRollout(feature entities.Feature) {

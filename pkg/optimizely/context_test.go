@@ -34,7 +34,7 @@ type ContextTestSuite struct {
 }
 
 func (suite *ContextTestSuite) SetupTest() {
-	suite.testClient = optimizelytest.NewTestClient()
+	suite.testClient = optimizelytest.NewClient()
 	suite.context =  NewContextWithOptimizely("userId", make(map[string]interface{}), suite.testClient.OptimizelyClient)
 }
 

@@ -210,7 +210,7 @@ func (c TestProjectConfig) getNextID() (nextID string) {
 }
 
 // NewTestProjectConfig initializes a new datafile from a json byte array using the default JSON datafile parser
-func NewTestProjectConfig() *TestProjectConfig {
+func NewConfig() *TestProjectConfig {
 	config := &TestProjectConfig{
 		AccountID:            "accountId",
 		AnonymizeIP:          true,

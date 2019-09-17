@@ -30,7 +30,7 @@ import (
 var once sync.Once
 var optlyClient *client.OptimizelyClient
 
-// ClientHolder contains
+// ClientHolder wraps an instance of the OptimizelyClient to provide higher level functionality
 type ClientHolder struct {
 	optlyClient *client.OptimizelyClient
 }
@@ -50,7 +50,6 @@ func ClientWithOptimizelyClient(optimizelyClient *client.OptimizelyClient) (clie
 // ListFeatures returns all available features
 func (c *ClientHolder) ListFeatures() (features []entities.Feature, err error) {
 	projectConfig, err := c.optlyClient.GetProjectConfig()
-
 	if err != nil {
 		return features, err
 	}
@@ -62,7 +61,6 @@ func (c *ClientHolder) ListFeatures() (features []entities.Feature, err error) {
 // GetFeature returns the feature definition
 func (c *ClientHolder) GetFeature(featureKey string) (feature entities.Feature, err error) {
 	projectConfig, err := c.optlyClient.GetProjectConfig()
-
 	if err != nil {
 		return feature, err
 	}
