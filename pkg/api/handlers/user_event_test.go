@@ -14,7 +14,7 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// handlers_test.go
+// Package handlers //
 package handlers
 
 import (
@@ -73,13 +73,15 @@ var userContext = entities.UserContext{
 
 func TestHandleUserEvent(t *testing.T) {
 	config := TestConfig{}
-	experiment := entities.Experiment{}
-	experiment.Key = "background_experiment"
-	experiment.LayerID = "15399420423"
-	experiment.ID = "15402980349"
-	variation := entities.Variation{}
-	variation.Key = "variation_a"
-	variation.ID = "15410990633"
+	experiment := entities.Experiment{
+		Key:     "background_experiment",
+		LayerID: "15399420423",
+		ID:      "15402980349",
+	}
+	variation := entities.Variation{
+		Key: "variation_a",
+		ID:  "15410990633",
+	}
 	userEvent := event.CreateImpressionUserEvent(config, experiment, variation, userContext)
 	jsonValue, _ := json.Marshal(userEvent)
 	req, err := http.NewRequest("POST", "/events/userEvent", bytes.NewBuffer(jsonValue))

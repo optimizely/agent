@@ -55,15 +55,17 @@ func (s *SidedoorEventProcessor) ProcessEvent(userEvent event.UserEvent) error {
 	}
 
 	resp, err := s.client.Post(s.URL, jsonContentType, bytes.NewBuffer(jsonValue))
+	if resp != nil {
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Warn().Str("URL", s.URL).Err(closeErr).Msg("Error closing response body")
+			}
+		}()
+	}
 	if err != nil {
 		log.Error().Err(err).Msg("Error sending request")
 		return err
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			log.Warn().Str("URL", s.URL).Err(closeErr).Msg("Error closing response body")
-		}
-	}()
 
 	return err
 }
