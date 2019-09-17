@@ -3,7 +3,7 @@ language: minimal
 branches:
   only:
   - master
-  - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+  - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 jobs:
 
