@@ -28,8 +28,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const jsonContentType = "application/json"
-
 // UserEvent - Process a user event
 func UserEvent(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
