@@ -2,7 +2,7 @@ FROM golang:1.13-alpine3.10
 RUN apk add --no-cache make gcc libc-dev
 WORKDIR /go/src/github.com/optimizely/sidedoor
 COPY . .
-RUN make all
+RUN make build
 
 FROM alpine:3.10
 COPY --from=0 /go/src/github.com/optimizely/sidedoor/bin/sidedoor /sidedoor
