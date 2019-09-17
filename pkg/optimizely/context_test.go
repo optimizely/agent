@@ -30,15 +30,12 @@ import (
 type ContextTestSuite struct {
 	suite.Suite
 	context *Context
+	testClient *optimizelytest.TestClient
 }
 
 func (suite *ContextTestSuite) SetupTest() {
-	testClient := optimizelytest.NewTestClient()
-	rolloutFeature := entities.Feature{Key: "basic"}
-	testClient.AddFeatureRollout(rolloutFeature)
-	testClient.ProjectConfig.FeatureMap["withVars"] = entities.Feature{Key: "withVars"}
-
-	suite.context =  NewContextWithOptimizely("userId", make(map[string]interface{}), testClient.OptimizelyClient)
+	suite.testClient = optimizelytest.NewTestClient()
+	suite.context =  NewContextWithOptimizely("userId", make(map[string]interface{}), suite.testClient.OptimizelyClient)
 }
 
 func (suite *ContextTestSuite) TestGetNonExistentFeature() {
@@ -49,14 +46,26 @@ func (suite *ContextTestSuite) TestGetNonExistentFeature() {
 }
 
 func (suite *ContextTestSuite) TestGetBasicFeature() {
+	basicFeature := entities.Feature{Key: "basic"}
+	suite.testClient.AddFeatureRollout(basicFeature)
 	enabled, variableMap, err := suite.context.GetFeature("basic")
+
 	suite.Nil(err)
 	suite.True(enabled)
 	suite.Equal(0, len(variableMap))
 }
 
-func (suite *ContextTestSuite) TestGetFeatureWithVariables() {
-	enabled, variableMap, err := suite.context.GetFeature("withVars")
+func (suite *ContextTestSuite) TestGetAdvancedFeature() {
+	var1 := entities.Variable{Key: "var1", DefaultValue: "val1"}
+	var2 := entities.Variable{Key: "var2", DefaultValue: "val2"}
+	advancedFeature := entities.Feature{
+		Key: "advanced",
+		Variables: []entities.Variable{var1, var2},
+	}
+
+	suite.testClient.AddFeatureRollout(advancedFeature)
+	enabled, variableMap, err := suite.context.GetFeature("advanced")
+
 	suite.Nil(err)
 	suite.True(enabled)
 	suite.Equal(2, len(variableMap))
