@@ -14,47 +14,31 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
-package optimizely
+// Package optimizelytest //
+package optimizelytest
 
 import (
-	"errors"
-
 	"github.com/optimizely/go-sdk/optimizely/client"
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/optimizely/config"
 )
 
-// Context encapsulates the user and optimizely sdk
-type Context struct {
-	userContext *entities.UserContext
-	optlyClient *client.OptimizelyClient
+type TestClient struct {
+	ProjectConfig    *TestProjectConfig
+	OptimizelyClient *client.OptimizelyClient
 }
 
-// NewContext creates a new UserContext and shared OptimizelyClient
-func NewContext(id string, attributes map[string]interface{}) *Context {
-	return NewContextWithOptimizely(id, attributes, GetOptimizely())
-}
+func NewClient() (*TestClient) {
+	projectConfig := NewTestProjectConfig()
 
-// NewContextWithOptimizely creates a new UserContext and a given OptimizelyClient
-func NewContextWithOptimizely(id string, attributes map[string]interface{}, optlyClient *client.OptimizelyClient) *Context {
-	userContext := entities.UserContext{
-		ID:         id,
-		Attributes: attributes,
-	}
-	context := &Context{
-		userContext: &userContext,
-		optlyClient: optlyClient,
+	options := client.Options{
+		ProjectConfigManager: config.NewStaticProjectConfigManager(projectConfig),
 	}
 
-	return context
-}
+	factory := client.OptimizelyFactory{}
+	optlyClient, _ := factory.ClientWithOptions(options)
 
-// GetFeature calls the OptimizelyClient with the current UserContext
-func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
-	app := context.optlyClient
-	if app == nil {
-		return enabled, variableMap, errors.New("invalid optimizely instance")
+	return &TestClient{
+		ProjectConfig:		projectConfig, 
+		OptimizelyClient:	optlyClient,
 	}
-
-	return app.GetAllFeatureVariables(featureKey, *context.userContext)
 }

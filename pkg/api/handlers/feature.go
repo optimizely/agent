@@ -31,7 +31,7 @@ import (
 
 // ListFeatures - List all features
 func ListFeatures(w http.ResponseWriter, r *http.Request) {
-	features, err := optimizely.ListFeatures()
+	features, err := optimizely.Client().ListFeatures()
 	if err != nil {
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
@@ -46,7 +46,7 @@ func ListFeatures(w http.ResponseWriter, r *http.Request) {
 func GetFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 
-	feature, err := optimizely.GetFeature(featureKey)
+	feature, err := optimizely.Client().GetFeature(featureKey)
 	if err != nil {
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
@@ -61,6 +61,8 @@ func GetFeature(w http.ResponseWriter, r *http.Request) {
 func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 	userID := r.URL.Query().Get("userId")
+
+	chi.
 
 	if userID == "" {
 		log.Error().Msg("Invalid request, missing userId")

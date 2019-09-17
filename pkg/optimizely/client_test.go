@@ -14,47 +14,47 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
+// Package optimizely //
 package optimizely
 
 import (
-	"errors"
+	"testing"
 
-	"github.com/optimizely/go-sdk/optimizely/client"
+	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+
 	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/stretchr/testify/suite"
 )
 
-// Context encapsulates the user and optimizely sdk
-type Context struct {
-	userContext *entities.UserContext
-	optlyClient *client.OptimizelyClient
+type ClientTestSuite struct {
+	suite.Suite
+	client *ClientHolder
 }
 
-// NewContext creates a new UserContext and shared OptimizelyClient
-func NewContext(id string, attributes map[string]interface{}) *Context {
-	return NewContextWithOptimizely(id, attributes, GetOptimizely())
+// Make sure that VariableThatShouldStartAtFive is set to five
+// before each test
+func (suite *ClientTestSuite) SetupTest() {
+	testClient := optimizelytest.NewClient()
+	testClient.ProjectConfig.FeatureMap["one"] = entities.Feature{Key: "one"}
+	testClient.ProjectConfig.FeatureMap["two"] = entities.Feature{Key: "two"}
+
+	suite.client = ClientWithOptimizelyClient(testClient.OptimizelyClient)
 }
 
-// NewContextWithOptimizely creates a new UserContext and a given OptimizelyClient
-func NewContextWithOptimizely(id string, attributes map[string]interface{}, optlyClient *client.OptimizelyClient) *Context {
-	userContext := entities.UserContext{
-		ID:         id,
-		Attributes: attributes,
-	}
-	context := &Context{
-		userContext: &userContext,
-		optlyClient: optlyClient,
-	}
-
-	return context
+func (suite *ClientTestSuite) TestListFeatures() {
+	features, err := suite.client.ListFeatures()
+	suite.Nil(err)
+	suite.Equal(2, len(features))
 }
 
-// GetFeature calls the OptimizelyClient with the current UserContext
-func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
-	app := context.optlyClient
-	if app == nil {
-		return enabled, variableMap, errors.New("invalid optimizely instance")
-	}
+func (suite *ClientTestSuite) TestGetFeature() {
+	actual, err := suite.client.GetFeature("one")
+	suite.Nil(err)
+	suite.Equal(actual, entities.Feature{Key: "one"})
+}
 
-	return app.GetAllFeatureVariables(featureKey, *context.userContext)
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestClientTestSuite(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
 }
