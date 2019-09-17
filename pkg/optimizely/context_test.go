@@ -33,11 +33,9 @@ type ContextTestSuite struct {
 }
 
 func (suite *ContextTestSuite) SetupTest() {
-	testClient := optimizelytest.NewClient()
-	testClient.ProjectConfig.FeatureMap["basic"] = entities.Feature{
-		Key: "basic",
-		
-	}
+	testClient := optimizelytest.NewTestClient()
+	rolloutFeature := entities.Feature{Key: "basic"}
+	testClient.AddFeatureRollout(rolloutFeature)
 	testClient.ProjectConfig.FeatureMap["withVars"] = entities.Feature{Key: "withVars"}
 
 	suite.context =  NewContextWithOptimizely("userId", make(map[string]interface{}), testClient.OptimizelyClient)

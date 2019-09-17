@@ -34,7 +34,7 @@ type ClientTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *ClientTestSuite) SetupTest() {
-	testClient := optimizelytest.NewClient()
+	testClient := optimizelytest.NewTestClient()
 	testClient.ProjectConfig.FeatureMap["one"] = entities.Feature{Key: "one"}
 	testClient.ProjectConfig.FeatureMap["two"] = entities.Feature{Key: "two"}
 

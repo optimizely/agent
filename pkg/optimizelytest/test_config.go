@@ -20,6 +20,7 @@ package optimizelytest
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
@@ -40,6 +41,7 @@ type TestProjectConfig struct {
 	RolloutMap           map[string]entities.Rollout
 	AnonymizeIP          bool
 	BotFiltering         bool
+	nextID               int
 }
 
 // GetProjectID returns projectID
@@ -166,6 +168,45 @@ func (c TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) 
 func (c TestProjectConfig) AddFeature(feature entities.Feature) *TestProjectConfig {
 	c.FeatureMap[feature.Key] = feature
 	return &c
+}
+
+func (c TestProjectConfig) AddFeatureRollout(feature entities.Feature) *TestProjectConfig {
+	experimentID := c.getNextID()
+	rolloutID := c.getNextID()
+	variationID := c.getNextID()
+	layerID := c.getNextID()
+
+	variation := entities.Variation{
+		Key:            "rollout_var",
+		ID:             variationID,
+		FeatureEnabled: true,
+	}
+
+	experiment := entities.Experiment{
+		Key:        "background_experiment",
+		LayerID:    layerID,
+		ID:         experimentID,
+		Variations: map[string]entities.Variation{variationID: variation},
+		TrafficAllocation: []entities.Range{
+			entities.Range{EntityID: variationID, EndOfRange: 10000},
+		},
+	}
+
+	rollout := entities.Rollout{
+		ID:          rolloutID,
+		Experiments: []entities.Experiment{experiment},
+	}
+
+	c.RolloutMap[rolloutID] = rollout
+
+	feature.Rollout = rollout
+	c.FeatureMap[feature.Key] = feature
+	return &c
+}
+
+func (c TestProjectConfig) getNextID() (nextID string) {
+	c.nextID++
+	return strconv.Itoa(c.nextID)
 }
 
 // NewTestProjectConfig initializes a new datafile from a json byte array using the default JSON datafile parser

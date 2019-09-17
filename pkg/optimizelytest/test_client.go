@@ -20,6 +20,7 @@ package optimizelytest
 import (
 	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/config"
+	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
 type TestClient struct {
@@ -27,7 +28,7 @@ type TestClient struct {
 	OptimizelyClient *client.OptimizelyClient
 }
 
-func NewClient() (*TestClient) {
+func NewTestClient() (*TestClient) {
 	projectConfig := NewTestProjectConfig()
 
 	options := client.Options{
@@ -41,4 +42,8 @@ func NewClient() (*TestClient) {
 		ProjectConfig:		projectConfig, 
 		OptimizelyClient:	optlyClient,
 	}
+}
+
+func (t *TestClient) AddFeatureRollout(feature entities.Feature) {
+	t.ProjectConfig.AddFeatureRollout(feature)
 }
