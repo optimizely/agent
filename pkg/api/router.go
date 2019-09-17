@@ -41,7 +41,7 @@ func NewRouter() *chi.Mux {
 
 	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
 
-	r.With(middleware.AllowContentType("application/json")).Post("/events/user-event", handlers.UserEvent)
+	r.With(middleware.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
 
 	return r
 }

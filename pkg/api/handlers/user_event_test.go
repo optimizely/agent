@@ -84,7 +84,7 @@ func TestHandleUserEvent(t *testing.T) {
 	}
 	userEvent := event.CreateImpressionUserEvent(config, experiment, variation, userContext)
 	jsonValue, _ := json.Marshal(userEvent)
-	req, err := http.NewRequest("POST", "/events/userEvent", bytes.NewBuffer(jsonValue))
+	req, err := http.NewRequest("POST", "/user-event", bytes.NewBuffer(jsonValue))
 	req.Header["Content-Type"] = []string{"application/json"}
 	if err != nil {
 		t.Fatal(err)
