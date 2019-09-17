@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO: Figure out how to share test code
+// TODO(Matt): Use shared test package when available
 
 type TestConfig struct {
 	optimizely.ProjectConfig
