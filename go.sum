@@ -146,6 +146,8 @@ github.com/optimizely/go-sdk v0.0.0-20190911181535-6be32229be14/go.mod h1:x5Egb+
 github.com/optimizely/go-sdk v0.2.0 h1:XbMSxdUYwDa+ct35OWg8iZCvMBFDErK28ggfRl/tUr4=
 github.com/optimizely/go-sdk v0.2.1-0.20190912220003-9e60d00834df h1:KblBss2IC4L+J0zd22V8wc6F1TL2Q3uCri2+XFiqUG4=
 github.com/optimizely/go-sdk v0.2.1-0.20190912220003-9e60d00834df/go.mod h1:x5Egb+oUnyle4m30UbL1+RrvyP97MFdjGaZsA0v7yvk=
+github.com/optimizely/go-sdk v0.2.1-0.20190918172141-90b15a691119 h1:sykQ+1pXbbL5ZiMVbHpZwNR3u7QvWvhWPqTgkc61/mg=
+github.com/optimizely/go-sdk v0.2.1-0.20190918172141-90b15a691119/go.mod h1:x5Egb+oUnyle4m30UbL1+RrvyP97MFdjGaZsA0v7yvk=
 github.com/pelletier/go-toml v1.1.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
