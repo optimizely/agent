@@ -42,6 +42,7 @@ func NewRouter() *chi.Mux {
 	r.With(middleware.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
 
 	r.Route("/features", func(r chi.Router) {
+		r.Use(handlers.OptimizelyCtx)
 		r.Get("/", handlers.ListFeatures)
 
 		r.Route("/{featureKey}", func(r chi.Router) {

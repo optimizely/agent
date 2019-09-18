@@ -31,7 +31,13 @@ import (
 
 // ListFeatures - List all features
 func ListFeatures(w http.ResponseWriter, r *http.Request) {
-	features, err := optimizely.NewClient().ListFeatures()
+	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
+	if !ok {
+		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
+		return
+	}
+
+	features, err := optlyClient.ListFeatures()
 	if err != nil {
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
@@ -44,9 +50,14 @@ func ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 // GetFeature - Get requested feature
 func GetFeature(w http.ResponseWriter, r *http.Request) {
-	featureKey := chi.URLParam(r, "featureKey")
+	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
+	if !ok {
+		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
+		return
+	}
 
-	feature, err := optimizely.NewClient().GetFeature(featureKey)
+	featureKey := chi.URLParam(r, "featureKey")
+	feature, err := optlyClient.GetFeature(featureKey)
 	if err != nil {
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
@@ -70,6 +81,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO replace with middleware for testability
 	context := optimizely.NewContext(userID, map[string]interface{}{})
 	enabled, variables, err := context.GetFeature(featureKey)
 
