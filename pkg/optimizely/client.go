@@ -30,26 +30,26 @@ import (
 var once sync.Once
 var optlyClient *client.OptimizelyClient
 
-// ClientHolder wraps an instance of the OptimizelyClient to provide higher level functionality
-type ClientHolder struct {
-	optlyClient *client.OptimizelyClient
+// OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
+type OptlyClient struct {
+	*client.OptimizelyClient
 }
 
 // Client returns a ClientHolder reference providing higher level access to the OptimizelyClient
-func Client() (client *ClientHolder) {
+func Client() (client *OptlyClient) {
 	return ClientWithOptimizelyClient(GetOptimizely())
 }
 
 // ClientWithOptimizelyClient returns a ClientHolder reference providing higher level access to the OptimizelyClient
-func ClientWithOptimizelyClient(optimizelyClient *client.OptimizelyClient) (client *ClientHolder) {
-	return &ClientHolder{
-		optlyClient: optimizelyClient,
+func ClientWithOptimizelyClient(optimizelyClient *client.OptimizelyClient) (client *OptlyClient) {
+	return &OptlyClient{
+		optimizelyClient,
 	}
 }
 
 // ListFeatures returns all available features
-func (c *ClientHolder) ListFeatures() (features []entities.Feature, err error) {
-	projectConfig, err := c.optlyClient.GetProjectConfig()
+func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
+	projectConfig, err := c.GetProjectConfig()
 	if err != nil {
 		return features, err
 	}
@@ -59,8 +59,8 @@ func (c *ClientHolder) ListFeatures() (features []entities.Feature, err error) {
 }
 
 // GetFeature returns the feature definition
-func (c *ClientHolder) GetFeature(featureKey string) (feature entities.Feature, err error) {
-	projectConfig, err := c.optlyClient.GetProjectConfig()
+func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, err error) {
+	projectConfig, err := c.GetProjectConfig()
 	if err != nil {
 		return feature, err
 	}

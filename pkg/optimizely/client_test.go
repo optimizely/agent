@@ -28,7 +28,7 @@ import (
 
 type ClientTestSuite struct {
 	suite.Suite
-	client *ClientHolder
+	client *OptlyClient
 	testClient *optimizelytest.TestClient
 }
 
