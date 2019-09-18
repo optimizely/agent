@@ -14,47 +14,68 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely //
-package optimizely
+// Package handlers //
+package handlers
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
 	"github.com/optimizely/go-sdk/optimizely/entities"
 	"github.com/stretchr/testify/suite"
 )
 
-type ClientTestSuite struct {
+type FeatureTestSuite struct {
 	suite.Suite
-	client *OptlyClient
+	optlyClient     *optimizely.OptlyClient
 	testClient *optimizelytest.TestClient
 }
 
-func (suite *ClientTestSuite) SetupTest() {
+// Setup Middleware
+func (suite *FeatureTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.client = &OptlyClient{testClient.OptimizelyClient}
+	suite.optlyClient = &optimizely.OptlyClient{testClient.OptimizelyClient}
 }
 
-func (suite *ClientTestSuite) TestListFeatures() {
-	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
-	suite.testClient.AddFeature(entities.Feature{Key: "k2"})
-	features, err := suite.client.ListFeatures()
+func (suite *FeatureTestSuite) TestListFeatures() {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	suite.testClient.AddFeature(entities.Feature{Key: "one"})
+	req, err := http.NewRequest("GET", "/features", nil)
 	suite.Nil(err)
-	suite.Equal(2, len(features))
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ListFeatures)
+
+	ctx := context.WithValue(req.Context(), "optlyClient", suite.optlyClient)
+	handler.ServeHTTP(rr, req.WithContext(ctx))
+
+	suite.Equal(http.StatusOK, rr.Code)
+	suite.Equal("[{\"ID\":\"\",\"Key\":\"one\",\"FeatureExperiments\":null,\"Rollout\":{\"ID\":\"\",\"Experiments\":null},\"Variables\":null}]\n", rr.Body.String())
 }
 
-func (suite *ClientTestSuite) TestGetFeature() {
-	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
-	actual, err := suite.client.GetFeature("k1")
+func (suite *FeatureTestSuite) TestListFeaturesMissingCtx() {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/features", nil)
 	suite.Nil(err)
-	suite.Equal(actual, entities.Feature{Key: "k1"})
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ListFeatures)
+	handler.ServeHTTP(rr, req)
+
+	suite.Equal(http.StatusUnprocessableEntity, rr.Code)
+	suite.Equal("OptlyClient not available\n", rr.Body.String())
 }
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestClientTestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
+func TestFeatureTestSuite(t *testing.T) {
+	suite.Run(t, new(FeatureTestSuite))
 }
