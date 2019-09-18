@@ -31,7 +31,7 @@ import (
 
 // ListFeatures - List all features
 func ListFeatures(w http.ResponseWriter, r *http.Request) {
-	features, err := optimizely.Client().ListFeatures()
+	features, err := optimizely.NewClient().ListFeatures()
 	if err != nil {
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
@@ -46,7 +46,7 @@ func ListFeatures(w http.ResponseWriter, r *http.Request) {
 func GetFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 
-	feature, err := optimizely.Client().GetFeature(featureKey)
+	feature, err := optimizely.NewClient().GetFeature(featureKey)
 	if err != nil {
 		render.JSON(w, r, render.M{
 			"error": err.Error(),

@@ -165,11 +165,13 @@ func (c TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) 
 	return entities.Group{}, errors.New(errMessage)
 }
 
+// AddFeature adds the feature to the FeatureMap
 func (c TestProjectConfig) AddFeature(feature entities.Feature) *TestProjectConfig {
 	c.FeatureMap[feature.Key] = feature
 	return &c
 }
 
+// AddFeatureRollout adds the feature and supporting entities to complete the rollout modeling
 func (c TestProjectConfig) AddFeatureRollout(feature entities.Feature) *TestProjectConfig {
 	experimentID := c.getNextID()
 	rolloutID := c.getNextID()
@@ -209,7 +211,7 @@ func (c TestProjectConfig) getNextID() (nextID string) {
 	return strconv.Itoa(c.nextID)
 }
 
-// NewTestProjectConfig initializes a new datafile from a json byte array using the default JSON datafile parser
+// NewConfig initializes a new datafile from a json byte array using the default JSON datafile parser
 func NewConfig() *TestProjectConfig {
 	config := &TestProjectConfig{
 		AccountID:            "accountId",

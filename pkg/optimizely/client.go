@@ -23,27 +23,22 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/optimizely/go-sdk/optimizely/client"
+	optimizelyclient "github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
 var once sync.Once
-var optlyClient *client.OptimizelyClient
+var optlyClient *optimizelyclient.OptimizelyClient
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
-	*client.OptimizelyClient
+	*optimizelyclient.OptimizelyClient
 }
 
-// Client returns a ClientHolder reference providing higher level access to the OptimizelyClient
-func Client() (client *OptlyClient) {
-	return ClientWithOptimizelyClient(GetOptimizely())
-}
-
-// ClientWithOptimizelyClient returns a ClientHolder reference providing higher level access to the OptimizelyClient
-func ClientWithOptimizelyClient(optimizelyClient *client.OptimizelyClient) (client *OptlyClient) {
+// NewClient returns an OptlyClient reference providing higher level access to the OptimizelyClient
+func NewClient() (client *OptlyClient) {
 	return &OptlyClient{
-		optimizelyClient,
+		GetOptimizely(),
 	}
 }
 
@@ -70,7 +65,7 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 
 // GetOptimizely returns an instance of OptimizelyClient
 // TODO Support multiple SDK keys
-func GetOptimizely() *client.OptimizelyClient {
+func GetOptimizely() *optimizelyclient.OptimizelyClient {
 
 	// Short circuit for testing
 	if optlyClient != nil {
@@ -83,7 +78,7 @@ func GetOptimizely() *client.OptimizelyClient {
 		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
 		sublogger.Info().Msg("Fetching new OptimizelyClient")
 
-		optimizelyFactory := &client.OptimizelyFactory{
+		optimizelyFactory := &optimizelyclient.OptimizelyFactory{
 			// TODO parameterize
 			SDKKey: sdkKey,
 		}
