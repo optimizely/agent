@@ -22,7 +22,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/optimizely/sidedoor/pkg/webhook/pkg/models"
+	"github.com/optimizely/sidedoor/pkg/webhook/pkg/api/models"
 )
 
 func HandleWebhook(w http.ResponseWriter, r *http.Request)  {

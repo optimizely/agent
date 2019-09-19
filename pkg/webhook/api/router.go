@@ -20,7 +20,7 @@ package api
 import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	handlers2 "github.com/optimizely/sidedoor/pkg/webhook/pkg/handlers"
+	handlers2 "github.com/optimizely/sidedoor/pkg/webhook/pkg/api/handlers"
 )
 
 // NewRouter returns HTTP API router
