@@ -27,8 +27,8 @@ type DatafileUpdateData struct {
 
 // WebhookMessage model which represents any message received from Optimizely
 type WebhookMessage struct {
-	ProjectId    int64				`json:"project_id"`
-	Timestamp    int64				`json:"timestamp"`
-	Event        string				`json:"event"`
-	Data         DatafileUpdateData	`json:"data"`
+	ProjectId    int64					`json:"project_id"`
+	Timestamp    int64					`json:"timestamp"`
+	Event        string					`json:"event"`
+	Data         DatafileUpdateData		`json:"data"`
 }
