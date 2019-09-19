@@ -14,34 +14,48 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package api //
-package api
+// Package handlers //
+package handlers
 
 import (
-	"log"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/api/handlers"
+	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/rs/zerolog/log"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+// UserEvent - Process a user event
+func UserEvent(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading request body")
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, render.M{
+			"error": "Error reading request body",
+		})
+		return
+	}
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("pong")); err != nil {
-			log.Fatal("unable to write response")
-		}
-	})
+	// TODO: Should we decode the body into interface{} and do validation
+	// of that? And then only create a UserEvent after validation?
+	// Or implement UnmarshalJSON for event.UserEvent, and do it all in there?
 
-	r.Post("/features/{featureKey}/activate", handlers.ActivateFeature)
+	var userEvent event.UserEvent
+	err = json.Unmarshal(body, &userEvent)
+	if err != nil {
+		log.Error().Err(err).Msg("Error unmarshaling request body")
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Error unmarshaling request body",
+		})
+		return
+	}
 
-	r.With(middleware.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
+	// TODO: Do something with userEvent
 
-	return r
+	w.WriteHeader(http.StatusNoContent)
 }
