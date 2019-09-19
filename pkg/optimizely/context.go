@@ -49,12 +49,19 @@ func NewContextWithOptimizely(id string, attributes map[string]interface{}, optl
 	return context
 }
 
-// GetFeature calls the OptimizelyClient with the current UserContext
+// ActivateFeature calls the OptimizelyClient with the current UserContext and tracks an impression
+func (context *Context) ActivateFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
+	// TODO implement impression tracking if this is a feature test This will probably done in the
+	// go-sdk with something like GetAllFeatureVariablesAndTrack :)
+	return context.GetFeature(featureKey)
+}
+
+// GetFeature calls the OptimizelyClient with the current UserContext this does NOT track experiment conversions
 func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
-	app := context.optlyClient
-	if app == nil {
+	oc := context.optlyClient
+	if oc == nil {
 		return enabled, variableMap, errors.New("invalid optimizely instance")
 	}
 
-	return app.GetAllFeatureVariables(featureKey, *context.userContext)
+	return oc.GetAllFeatureVariables(featureKey, *context.userContext)
 }

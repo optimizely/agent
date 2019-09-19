@@ -20,9 +20,9 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/rs/zerolog/log"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -86,7 +86,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 
 	// TODO replace with middleware for testability
 	context := optimizely.NewContext(userID, map[string]interface{}{})
-	enabled, variables, err := context.GetFeature(featureKey)
+	enabled, variables, err := context.ActivateFeature(featureKey)
 
 	if err != nil {
 		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling ActivateFeature")
