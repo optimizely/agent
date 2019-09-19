@@ -27,38 +27,55 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
+	"github.com/go-chi/chi"
 	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type FeatureTestSuite struct {
 	suite.Suite
-	optlyClient *optimizely.OptlyClient
-	testClient  *optimizelytest.TestClient
+	tc  *optimizelytest.TestClient
+	mux *chi.Mux
 }
 
-// Setup Middleware
+// Setup Mux
 func (suite *FeatureTestSuite) SetupTest() {
+
 	testClient := optimizelytest.NewClient()
-	suite.testClient = testClient
-	suite.optlyClient = &optimizely.OptlyClient{testClient.OptimizelyClient}
+	optlyClient := &optimizely.OptlyClient{testClient.OptimizelyClient}
+
+	optimizelymw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "optlyClient", optlyClient)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	mux := chi.NewMux()
+
+	mux.Use(optimizelymw)
+	mux.Get("/features", ListFeatures)
+	mux.Get("/features/{featureKey}", GetFeature)
+
+	suite.mux = mux
+	suite.tc = testClient
 }
 
 func (suite *FeatureTestSuite) TestListFeatures() {
 	feature := entities.Feature{Key: "one"}
-	suite.testClient.AddFeature(feature)
+	suite.tc.AddFeature(feature)
 
+	// Add appropriate context
 	req, err := http.NewRequest("GET", "/features", nil)
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(ListFeatures)
-
-	// Add appropriate context
-	ctx := context.WithValue(req.Context(), "optlyClient", suite.optlyClient)
-	handler.ServeHTTP(rr, req.WithContext(ctx))
+	suite.mux.ServeHTTP(rr, req)
 
 	suite.Equal(http.StatusOK, rr.Code)
+
+	suite.NoError(err)
 
 	// Unmarshal response
 	var actual []entities.Feature
@@ -69,22 +86,68 @@ func (suite *FeatureTestSuite) TestListFeatures() {
 	suite.Equal(feature, actual[0])
 }
 
-func (suite *FeatureTestSuite) TestListFeaturesMissingCtx() {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
-	req, err := http.NewRequest("GET", "/features", nil)
+func (suite *FeatureTestSuite) TestGetFeature() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeature(feature)
+
+	req, err := http.NewRequest("GET", "/features/one", nil)
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(ListFeatures)
-	handler.ServeHTTP(rr, req)
+	suite.mux.ServeHTTP(rr, req)
 
-	suite.Equal(http.StatusUnprocessableEntity, rr.Code)
-	suite.Equal("OptlyClient not available\n", rr.Body.String())
+	suite.Equal(http.StatusOK, rr.Code)
+
+	// Unmarshal response
+	var actual entities.Feature
+	err = json.Unmarshal(rr.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.Equal(feature, actual)
+}
+
+func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/features/dne", nil)
+	suite.Nil(err)
+
+	rr := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rr, req)
+
+	suite.Equal(http.StatusInternalServerError, rr.Code)
+	// TODO create an actual error response model
+	//suite.Equal("{\"error\":\"Feature with key one not found\"}\n", rr.Body.String())
 }
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestFeatureTestSuite(t *testing.T) {
 	suite.Run(t, new(FeatureTestSuite))
+}
+
+func TestListFeaturesMissingCtx(t *testing.T) {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/features", nil)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	http.HandlerFunc(ListFeatures).ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
+	assert.Equal(t, "OptlyClient not available\n", rr.Body.String())
+}
+
+func TestGetFeatureMissingCtx(t *testing.T) {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/features/one", nil)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	http.HandlerFunc(GetFeature).ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
+	assert.Equal(t, "OptlyClient not available\n", rr.Body.String())
 }

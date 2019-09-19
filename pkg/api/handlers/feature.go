@@ -21,7 +21,6 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
@@ -39,6 +38,7 @@ func ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 	features, err := optlyClient.ListFeatures()
 	if err != nil {
+		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
 		})
@@ -59,6 +59,8 @@ func GetFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 	feature, err := optlyClient.GetFeature(featureKey)
 	if err != nil {
+		// TODO need to disinguish between an error and DNE
+		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, render.M{
 			"error": err.Error(),
 		})
@@ -75,6 +77,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 
 	if userID == "" {
 		log.Error().Msg("Invalid request, missing userId")
+		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, render.M{
 			"error": "missing userId",
 		})
@@ -87,6 +90,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling ActivateFeature")
+		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, render.M{
 			"error": err,
 		})
