@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
@@ -40,7 +40,7 @@ func NewRouter() *chi.Mux {
 		}
 	})
 
-	r.With(middleware.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
+	r.With(chimw.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(middleware.OptimizelyCtx)
