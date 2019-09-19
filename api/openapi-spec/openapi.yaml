@@ -24,20 +24,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Stat'
-  /webhooks/optimizely:
-    post:
-      summary: Incoming webhook message from Optimizely
-      operationId: handleWebhook
-      requestBody:
-        description: Webhook message received from Optimizely
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebhookRequest"
-      responses:
-        '204':
-          description: No content. Webhook message received and processed.
   /experiments:
     get:
       summary: Return all experiments
@@ -342,37 +328,6 @@ components:
       required:  
         - name
         - value
-    DatafileUpdateData:
-      properties:
-        revision:
-          type: integer
-        origin_url:
-          type: string
-        cdn_url:
-          type: string
-        environment:
-          type: string
-      required:
-        - revision
-        - origin_url
-        - cdn_url
-    WebhookRequest:
-      properties:
-        project_id:
-          type: number
-        timestamp:
-          type: number
-        event:
-          type: string
-          enum:
-            - project.datafile_updated
-        data:
-          $ref: '#/components/schemas/DatafileUpdateData    '
-      required:
-        - project_id
-        - timestamp
-        - event
-        - data
     Experiment:
       properties:
         id:
