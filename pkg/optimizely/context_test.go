@@ -50,7 +50,7 @@ func (suite *ContextTestSuite) TestGetBasicFeature() {
 	suite.testClient.AddFeatureRollout(basicFeature)
 	enabled, variableMap, err := suite.context.GetFeature("basic")
 
-	suite.Nil(err)
+	suite.NoError(err)
 	suite.True(enabled)
 	suite.Equal(0, len(variableMap))
 }
@@ -66,7 +66,7 @@ func (suite *ContextTestSuite) TestGetAdvancedFeature() {
 	suite.testClient.AddFeatureRollout(advancedFeature)
 	enabled, variableMap, err := suite.context.GetFeature("advanced")
 
-	suite.Nil(err)
+	suite.NoError(err)
 	suite.True(enabled)
 	suite.Equal(2, len(variableMap))
 }

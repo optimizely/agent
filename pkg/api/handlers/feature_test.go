@@ -19,6 +19,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,8 +33,8 @@ import (
 
 type FeatureTestSuite struct {
 	suite.Suite
-	optlyClient     *optimizely.OptlyClient
-	testClient *optimizelytest.TestClient
+	optlyClient *optimizely.OptlyClient
+	testClient  *optimizelytest.TestClient
 }
 
 // Setup Middleware
@@ -44,20 +45,28 @@ func (suite *FeatureTestSuite) SetupTest() {
 }
 
 func (suite *FeatureTestSuite) TestListFeatures() {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
-	suite.testClient.AddFeature(entities.Feature{Key: "one"})
+	feature := entities.Feature{Key: "one"}
+	suite.testClient.AddFeature(feature)
+
 	req, err := http.NewRequest("GET", "/features", nil)
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(ListFeatures)
 
+	// Add appropriate context
 	ctx := context.WithValue(req.Context(), "optlyClient", suite.optlyClient)
 	handler.ServeHTTP(rr, req.WithContext(ctx))
 
 	suite.Equal(http.StatusOK, rr.Code)
-	suite.Equal("[{\"ID\":\"\",\"Key\":\"one\",\"FeatureExperiments\":null,\"Rollout\":{\"ID\":\"\",\"Experiments\":null},\"Variables\":null}]\n", rr.Body.String())
+
+	// Unmarshal response
+	var actual []entities.Feature
+	err = json.Unmarshal(rr.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.Equal(1, len(actual))
+	suite.Equal(feature, actual[0])
 }
 
 func (suite *FeatureTestSuite) TestListFeaturesMissingCtx() {

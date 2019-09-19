@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"os"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -29,10 +30,10 @@ var levelMap = make(map[logging.LogLevel]zerolog.Level)
 
 // init overrides the Optimizely SDK logger with a logrus implementation.
 func init() {
-	levelMap[logging.LogLevelDebug]   = zerolog.DebugLevel
-	levelMap[logging.LogLevelInfo]    = zerolog.InfoLevel
+	levelMap[logging.LogLevelDebug] = zerolog.DebugLevel
+	levelMap[logging.LogLevelInfo] = zerolog.InfoLevel
 	levelMap[logging.LogLevelWarning] = zerolog.WarnLevel
-	levelMap[logging.LogLevelError]   = zerolog.ErrorLevel
+	levelMap[logging.LogLevelError] = zerolog.ErrorLevel
 
 	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	logConsumer := &LogConsumer{

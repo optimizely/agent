@@ -26,6 +26,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
 )
 
 // NewRouter returns HTTP API router
@@ -42,7 +43,7 @@ func NewRouter() *chi.Mux {
 	r.With(middleware.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
 
 	r.Route("/features", func(r chi.Router) {
-		r.Use(handlers.OptimizelyCtx)
+		r.Use(middleware.OptimizelyCtx)
 		r.Get("/", handlers.ListFeatures)
 
 		r.Route("/{featureKey}", func(r chi.Router) {

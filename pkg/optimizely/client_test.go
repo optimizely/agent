@@ -42,14 +42,14 @@ func (suite *ClientTestSuite) TestListFeatures() {
 	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
 	suite.testClient.AddFeature(entities.Feature{Key: "k2"})
 	features, err := suite.client.ListFeatures()
-	suite.Nil(err)
+	suite.NoError(err)
 	suite.Equal(2, len(features))
 }
 
 func (suite *ClientTestSuite) TestGetFeature() {
 	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
 	actual, err := suite.client.GetFeature("k1")
-	suite.Nil(err)
+	suite.NoError(err)
 	suite.Equal(actual, entities.Feature{Key: "k1"})
 }
 
