@@ -18,14 +18,16 @@ package handlers
 
 import (
 	"encoding/json"
-	models2 "github.com/optimizely/sidedoor/pkg/webhook/pkg/models"
-	"github.com/rs/zerolog/log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/optimizely/sidedoor/pkg/webhook/pkg/models"
 )
 
 func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
 	decodedWebhookMsg := json.NewDecoder(r.Body)
-	var webhookMsg models2.WebhookMessage
+	var webhookMsg models.WebhookMessage
 	err := decodedWebhookMsg.Decode(&webhookMsg)
 
 	if err != nil {
