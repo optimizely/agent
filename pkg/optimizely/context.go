@@ -18,49 +18,25 @@
 package optimizely
 
 import (
-	"errors"
-
-	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
-// Context encapsulates the user and optimizely sdk
-type Context struct {
-	userContext *entities.UserContext
-	optlyClient *client.OptimizelyClient
+// OptlyContext encapsulates the user context.
+// TODO Add support for User Profile Service
+type OptlyContext struct {
+	UserContext *entities.UserContext
 }
 
-// NewContext creates a new UserContext and shared OptimizelyClient
-func NewContext(id string, attributes map[string]interface{}) *Context {
-	return NewContextWithOptimizely(id, attributes, GetOptimizely())
-}
-
-// NewContextWithOptimizely creates a new UserContext and a given OptimizelyClient
-func NewContextWithOptimizely(id string, attributes map[string]interface{}, optlyClient *client.OptimizelyClient) *Context {
+// NewContext creates the base Context for a user
+func NewContext(id string, attributes map[string]interface{}) *OptlyContext {
 	userContext := entities.UserContext{
 		ID:         id,
 		Attributes: attributes,
 	}
-	context := &Context{
-		userContext: &userContext,
-		optlyClient: optlyClient,
+
+	ctx := &OptlyContext{
+		UserContext: &userContext,
 	}
 
-	return context
-}
-
-// GetAndTrackFeature calls the OptimizelyClient with the current UserContext and tracks an impression
-func (context *Context) GetAndTrackFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
-	// TODO implement impression tracking. Not sure if this is sdk or sidedoor responsibility
-	return context.GetFeature(featureKey)
-}
-
-// GetFeature calls the OptimizelyClient with the current UserContext this does NOT track experiment conversions
-func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
-	oc := context.optlyClient
-	if oc == nil {
-		return enabled, variableMap, errors.New("invalid optimizely instance")
-	}
-
-	return oc.GetAllFeatureVariables(featureKey, *context.userContext)
+	return ctx
 }

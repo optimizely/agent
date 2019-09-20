@@ -26,15 +26,34 @@ import (
 
 type contextKey string
 
-// OptimizelyCtx adds Optimizely to the request context
-func OptimizelyCtx(next http.Handler) http.Handler {
+// OptlyClientKey is the context key for the OptlyClient
+const OptlyClientKey = contextKey("optlyClient")
+
+// OptlyMiddleware encapsulates middleware associated with an OptlyClient
+type OptlyContext struct {
+	cache optimizely.Cache
+}
+
+// ClientCtx adds Optimizely to the request context
+func (ctx *OptlyContext) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyClient := optimizely.NewClient()
-		if optlyClient == nil {
+
+		sdkKey := r.Header.Get("X-OPTLY-SDK-KEY")
+
+		var err error
+		var optlyClient *optimizely.OptlyClient
+		if sdkKey == "" {
+			optlyClient, err = ctx.cache.GetDefault()
+		} else {
+			optlyClient, err = ctx.cache.Get(sdkKey)
+		}
+
+		if err != nil {
 			http.Error(w, "Failed to instantiate Optimizely", http.StatusInternalServerError)
 			return
 		}
-		ctx := context.WithValue(r.Context(), contextKey("optlyClient"), optlyClient)
+
+		ctx := context.WithValue(r.Context(), OptlyClientKey, optlyClient)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

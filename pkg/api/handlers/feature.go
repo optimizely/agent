@@ -28,8 +28,11 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
+// FeatureHandler implements the FeatureApi interface
+type FeatureHandler struct{}
+
 // ListFeatures - List all features
-func ListFeatures(w http.ResponseWriter, r *http.Request) {
+func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
 	if !ok {
 		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
@@ -49,7 +52,7 @@ func ListFeatures(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFeature - Get requested feature
-func GetFeature(w http.ResponseWriter, r *http.Request) {
+func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
 	if !ok {
 		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
@@ -71,7 +74,13 @@ func GetFeature(w http.ResponseWriter, r *http.Request) {
 }
 
 // ActivateFeature - Return the feature and record impression
-func ActivateFeature(w http.ResponseWriter, r *http.Request) {
+func (h *FeatureHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
+	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
+	if !ok {
+		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
+		return
+	}
+
 	featureKey := chi.URLParam(r, "featureKey")
 	userID := r.URL.Query().Get("userId")
 
@@ -86,7 +95,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 
 	// TODO replace with middleware for testability
 	context := optimizely.NewContext(userID, map[string]interface{}{})
-	enabled, variables, err := context.GetAndTrackFeature(featureKey)
+	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, context)
 
 	if err != nil {
 		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling ActivateFeature")

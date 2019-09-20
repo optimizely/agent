@@ -27,10 +27,29 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	// "github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
+// Router defines the configuration parameters for Router.
+type RouterOptions struct {
+	middleware   middleware.OptlyMiddleware
+	featureAPI   handlers.FeatureAPI
+	userEventAPI handlers.UserEventAPI
+}
+
+// NewDefaultRouter creates a new router with the default backing optimizely.Cache
+func NewDefaultRouter() *chi.Mux {
+	spec := &RouterOptions{
+		middleware:   new(middleware.OptlyContext),
+		featureAPI:   new(handlers.FeatureHandler),
+		userEventAPI: new(handlers.UserEventHandler),
+	}
+
+	return NewRouter(spec)
+}
+
+// NewRouter returns HTTP API router backed by an optimizely.Cache implementation
+func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
@@ -40,16 +59,16 @@ func NewRouter() *chi.Mux {
 		}
 	})
 
-	r.With(chimw.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
+	r.With(chimw.AllowContentType("application/json")).Post("/user-event", opt.userEventAPI.AddUserEvent)
 
 	r.Route("/features", func(r chi.Router) {
-		r.Use(middleware.OptimizelyCtx)
-		r.Get("/", handlers.ListFeatures)
+		r.Use(opt.middleware.ClientCtx)
+		r.Get("/", opt.featureAPI.ListFeatures)
 
 		r.Route("/{featureKey}", func(r chi.Router) {
 			// TODO r.Use(FeatureCtx)
-			r.Get("/", handlers.GetFeature)
-			r.Post("/activate", handlers.ActivateFeature)
+			r.Get("/", opt.featureAPI.GetFeature)
+			r.Post("/activate", opt.featureAPI.ActivateFeature)
 		})
 	})
 
