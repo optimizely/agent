@@ -433,9 +433,9 @@ components:
         client_name:
           type: string
         anonymize_ip:
-          type: bool
+          type: boolean
         bot_filtering:
-          type: bool
+          type: boolean
       required:
         - revision
         - account_id
@@ -450,7 +450,10 @@ components:
           type: string
         key:
           type: string
-        # TODO: attributes
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitorAttribute'
         variation_id:
           type: string
         campaign_id:
@@ -472,7 +475,10 @@ components:
         revenue:
           type: integer
           format: int64
-        # TODO: attributes
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitorAttribute'
         # TODO: tags
         value:
           type: number
@@ -483,3 +489,15 @@ components:
         - variation_id
         - campaign_id
         - experiment_id
+    VisitorAttribute:
+      properties:
+        value:
+          # XXX: I can't figure out how to say this can be either of string,
+          # number, or boolean.
+          type: string
+        key:
+          type: string
+        attribute_type:
+          type: string
+        entity_id:
+          type: string
