@@ -86,7 +86,7 @@ func ActivateFeature(w http.ResponseWriter, r *http.Request) {
 
 	// TODO replace with middleware for testability
 	context := optimizely.NewContext(userID, map[string]interface{}{})
-	enabled, variables, err := context.ActivateFeature(featureKey)
+	enabled, variables, err := context.GetAndTrackFeature(featureKey)
 
 	if err != nil {
 		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling ActivateFeature")

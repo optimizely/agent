@@ -49,10 +49,9 @@ func NewContextWithOptimizely(id string, attributes map[string]interface{}, optl
 	return context
 }
 
-// ActivateFeature calls the OptimizelyClient with the current UserContext and tracks an impression
-func (context *Context) ActivateFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
-	// TODO implement impression tracking if this is a feature test This will probably done in the
-	// go-sdk with something like GetAllFeatureVariablesAndTrack :)
+// GetAndTrackFeature calls the OptimizelyClient with the current UserContext and tracks an impression
+func (context *Context) GetAndTrackFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
+	// TODO implement impression tracking. Not sure if this is sdk or sidedoor responsibility
 	return context.GetFeature(featureKey)
 }
 
