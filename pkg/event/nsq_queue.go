@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2019, Optimizely, Inc. and contributors                        *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package event //
 package event
 
 import (
@@ -6,14 +23,15 @@ import (
 	"github.com/nsqio/go-nsq"
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/rs/zerolog/log"
 	snsq "github.com/segmentio/nsq-go"
 )
 
-const NSQ_CONSUMER_CHANNEL string = "optimizely"
-const NSQ_LISTEN_SPEC string = "localhost:4150"
-const NSQ_TOPIC string = "user_event"
+const NsqConsumerChannel string = "optimizely"
+const NsqListenSpec string = "localhost:4150"
+const NsqTopic string = "user_event"
 
-var embedded_nsqd *nsqd.NSQD = nil
+var embeddedNSQD *nsqd.NSQD = nil
 
 var done = make(chan bool)
 
@@ -26,7 +44,9 @@ type NSQQueue struct {
 // Get returns queue for given count size
 func (i *NSQQueue) Get(count int) []interface{} {
 
-	events := []interface{}{}
+	var (
+		events = make([]interface{}, count)
+	)
 
 	messages := i.messages.Get(count)
 	for _, message := range messages {
@@ -42,26 +62,36 @@ func (i *NSQQueue) Get(count int) []interface{} {
 
 // Add appends item to queue
 func (i *NSQQueue) Add(item interface{}) {
-	event, ok := item.(event.UserEvent)
+	userEvent, ok := item.(event.UserEvent)
 	if !ok {
 		// cannot add non-user events
 		return
 	}
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
-	enc.Encode(event)
+	err := enc.Encode(userEvent)
+	if err != nil {
+		log.Error().Err(err).Msg("Error encoding event")
+	}
+
 	if i.p != nil {
-		i.p.Publish(NSQ_TOPIC, buf.Bytes())
+		err := i.p.Publish(NsqTopic, buf.Bytes())
+		if err != nil {
+			log.Error().Err(err).Msg("Error publishing event")
+		}
 	}
 }
 
 func (i *NSQQueue) decodeMessage(body []byte) event.UserEvent {
 	reader := bytes.NewReader(body)
 	dec := gob.NewDecoder(reader)
-	event := event.UserEvent{}
-	dec.Decode(&event)
+	userEvent := event.UserEvent{}
+	err := dec.Decode(&userEvent)
+	if err != nil {
+		log.Error().Err(err).Msg("Error decoding event")
+	}
 
-	return event
+	return userEvent
 }
 
 // Remove removes item from queue and returns elements slice
@@ -89,21 +119,22 @@ func (i *NSQQueue) Size() int {
 func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer bool, startConsumer bool) event.Queue {
 
 	// Run nsqd embedded
-	if embedded_nsqd == nil && startDaemon {
+	if embeddedNSQD == nil && startDaemon {
 		go func() {
-			// running an nsqd with all of the default options
+			// running an NSQD with all of the default options
 			// (as if you ran it from the command line with no flags)
 			// is literally these three lines of code. the nsqd
 			// binary mainly wraps up the handling of command
 			// line args and does something similar
-			if embedded_nsqd == nil {
+			if embeddedNSQD == nil {
 				opts := nsqd.NewOptions()
-				embedded_nsqd, err := nsqd.New(opts)
+				var err error
+				embeddedNSQD, err = nsqd.New(opts)
 				if err == nil {
-					embedded_nsqd.Main()
+					embeddedNSQD.Main()
 					// wait until we are told to continue and exit
 					<-done
-					embedded_nsqd.Exit()
+					embeddedNSQD.Exit()
 				}
 			}
 		}()
@@ -123,8 +154,8 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer b
 	var consumer *snsq.Consumer = nil
 	if startConsumer {
 		consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
-			Topic:       NSQ_TOPIC,
-			Channel:     NSQ_CONSUMER_CHANNEL,
+			Topic:       NsqTopic,
+			Channel:     NsqConsumerChannel,
 			Address:     address,
 			MaxInFlight: queueSize,
 		})
@@ -146,6 +177,6 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer b
 
 //NewNSQueueDefault returns a default implementation of the NSQueue
 func NewNSQueueDefault() event.Queue {
-	return NewNSQueue(100, NSQ_LISTEN_SPEC, true, true, true)
+	return NewNSQueue(100, NsqListenSpec, true, true, true)
 }
 
