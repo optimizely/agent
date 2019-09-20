@@ -55,12 +55,44 @@ func (context *Context) GetAndTrackFeature(featureKey string) (enabled bool, var
 	return context.GetFeature(featureKey)
 }
 
+<<<<<<< HEAD
 // GetFeature calls the OptimizelyClient with the current UserContext this does NOT track experiment conversions
 func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
 	oc := context.optlyClient
 	if oc == nil {
 		return enabled, variableMap, errors.New("invalid optimizely instance")
 	}
+=======
+
+// SetOptimizely sets the Optimizely client
+func SetOptimizely() {
+	sdkKey := os.Getenv("SDK_KEY")
+	sublogger := log.With().Str("sdkKey", sdkKey).Logger()
+	sublogger.Info().Msg("Fetching new OptimizelyClient")
+
+	optimizelyFactory := &client.OptimizelyFactory{
+		// TODO parameterize
+		SDKKey: sdkKey,
+	}
+
+	var err error
+	// TODO: Currently we are re-setting the entire client. Need to change this to only set config.
+	optlyClient, err = optimizelyFactory.StaticClient()
+
+	if err != nil {
+		sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
+		return
+	}
+}
+
+// TODO Support multiple SDK keys
+func getOptimizely() *client.OptimizelyClient {
+
+	// TODO handle failure to prevent deadlocks.
+	once.Do(func() { // <-- atomic, does not allow repeating
+		SetOptimizely()
+	})
+>>>>>>> More changes
 
 	return oc.GetAllFeatureVariables(featureKey, *context.userContext)
 }

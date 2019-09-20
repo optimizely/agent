@@ -15,34 +15,3 @@
  ***************************************************************************/
 
 package handlers
-
-import (
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
-
-	"github.com/rs/zerolog/log"
-
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-
-	"github.com/optimizely/sidedoor/pkg/webhook/pkg/api/models"
-)
-
-func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Error().Msg("Invalid webhook message received.")
-		return
-	}
-
-	var webhookMsg models.WebhookMessage
-	err = json.Unmarshal(body, &webhookMsg)
-	if err != nil {
-		log.Error().Msg("Invalid webhook message received.")
-		return
-	}
-
-	// TODO: Update to directly set config on config manager
-	optimizely.SetOptimizely()
-	return
-}
