@@ -45,17 +45,11 @@ func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
 	processor.ProcessEvent(impression)
 	processor.ProcessEvent(impression)
 
-	result, ok := processor.(*event.QueueingEventProcessor)
+	time.Sleep(3000 * time.Millisecond)
 
-	if ok {
-		time.Sleep(3000 * time.Millisecond)
+	assert.NotNil(t, processor.Ticker)
 
-		assert.NotNil(t, result.Ticker)
-
-		assert.Equal(t, 0, result.EventsCount())
-	} else {
-		assert.Equal(t, true, false)
-	}
+	assert.Equal(t, 0, processor.EventsCount())
 
 }
 
@@ -70,9 +64,8 @@ func (f *MockDispatcher) DispatchEvent(event event.LogEvent) (bool, error) {
 
 func TestNSQEventProcessor_ProcessBatch(t *testing.T) {
 	exeCtx := utils.NewCancelableExecutionCtx()
-	processor := &event.QueueingEventProcessor{MaxQueueSize: 100, FlushInterval: 100, Q: NewNSQueueDefault(), EventDispatcher: &MockDispatcher{}}
-	processor.BatchSize = 10
-	processor.StartTicker(exeCtx.GetContext())
+	processor := NewEventProcessorNSQ(exeCtx, 10, 100)
+	processor.EventDispatcher = &MockDispatcher{}
 
 	impression := BuildTestImpressionEvent()
 	conversion := BuildTestConversionEvent()
