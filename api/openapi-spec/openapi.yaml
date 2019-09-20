@@ -479,7 +479,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VisitorAttribute'
-        # TODO: tags
+        tags:
+          type: object
+          additionalProperties: true
         value:
           type: number
           format: double
@@ -491,13 +493,15 @@ components:
         - experiment_id
     VisitorAttribute:
       properties:
-        value:
-          # XXX: I can't figure out how to say this can be either of string,
-          # number, or boolean.
-          type: string
+        value: {}
         key:
           type: string
         attribute_type:
           type: string
         entity_id:
           type: string
+      required:
+        - value
+        - key
+        - attribute_type
+        - entity_id
