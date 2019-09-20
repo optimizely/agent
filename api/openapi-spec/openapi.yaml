@@ -416,7 +416,6 @@ components:
           format: int64
         uuid:
           type: string
-        # event_context is optional
         context:
           $ref: '#/components/schemas/UserEventContext'
         visitor_id:
