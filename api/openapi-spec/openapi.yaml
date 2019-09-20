@@ -407,14 +407,19 @@ components:
         uuid:
           type: string
         # event_context is optional
-        event_context:
+        context:
           $ref: '#/components/schemas/UserEventContext'
         visitor_id:
           type: string
+        impression:
+          $ref: '#/components/schemas/ImpressionEvent'
+        conversion:
+          $ref: '#/components/schemas/ConversionEvent'
       required:
         - timestamp
         - uuid
         - visitor_id
+        - context
     UserEventContext:
       properties:
         revision:
@@ -428,10 +433,53 @@ components:
         client_name:
           type: string
         anonymize_ip:
-          type: string
+          type: bool
         bot_filtering:
-          type: string
+          type: bool
       required:
         - revision
         - account_id
+        - client_version
         - project_id
+        - client_name
+        - anonymize_ip
+        - bot_filtering
+    ImpressionEvent:
+      properties:
+        entity_id:
+          type: string
+        key:
+          type: string
+        # TODO: attributes
+        variation_id:
+          type: string
+        campaign_id:
+          type: string
+        experiment_id:
+          type: string
+      required:
+        - entity_id
+        - key
+        - variation_id
+        - campaign_id
+        - experiment_id
+    ConversionEvent:
+      properties:
+        entity_id:
+          type: string
+        key:
+          type: string
+        revenue:
+          type: integer
+          format: int64
+        # TODO: attributes
+        # TODO: tags
+        value:
+          type: number
+          format: double
+      required:
+        - entity_id
+        - key
+        - variation_id
+        - campaign_id
+        - experiment_id
