@@ -18,9 +18,6 @@
 package optimizely
 
 import (
-	"os"
-	"sync"
-
 	"github.com/rs/zerolog/log"
 
 	optimizelyclient "github.com/optimizely/go-sdk/optimizely/client"
@@ -28,27 +25,17 @@ import (
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
-var once sync.Once
-var optlyClient *optimizelyclient.OptimizelyClient
-
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager *optimizelyconfig.PollingProjectConfigManager
 }
 
-// NewClient returns an OptlyClient reference providing higher level access to the OptimizelyClient
-func NewClient() (client *OptlyClient) {
-	return &OptlyClient{
-		GetOptimizely(),
-		nil,
-	}
-}
-
 // ListFeatures returns all available features
 func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 	projectConfig, err := c.GetProjectConfig()
 	if err != nil {
+		log.Error().Err(err).Msg("Attempting to ListFeatures")
 		return features, err
 	}
 
@@ -60,6 +47,7 @@ func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, err error) {
 	projectConfig, err := c.GetProjectConfig()
 	if err != nil {
+		log.Error().Err(err).Str("featureKey", featureKey).Msg("Attempting to GetFeature")
 		return feature, err
 	}
 
@@ -73,34 +61,13 @@ func (c *OptlyClient) UpdateConfig() {
 	}
 }
 
-// GetOptimizely returns an instance of OptimizelyClient
-// TODO Support multiple SDK keys
-func GetOptimizely() *optimizelyclient.OptimizelyClient {
+// GetAndTrackFeatureWithContext calls the OptimizelyClient with the current OptlyContext this does NOT track experiment conversions
+func (c *OptlyClient) GetAndTrackFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
+	// TODO add tracking
+	return c.GetFeatureWithContext(featureKey, ctx)
+}
 
-	// Short circuit for testing
-	if optlyClient != nil {
-		return optlyClient
-	}
-
-	// TODO handle failure to prevent deadlocks.
-	once.Do(func() { // <-- atomic, does not allow repeating
-		sdkKey := os.Getenv("SDK_KEY")
-		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
-		sublogger.Info().Msg("Fetching new OptimizelyClient")
-
-		optimizelyFactory := &optimizelyclient.OptimizelyFactory{
-			// TODO parameterize
-			SDKKey: sdkKey,
-		}
-
-		var err error
-		optlyClient, err = optimizelyFactory.StaticClient()
-
-		if err != nil {
-			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
-			return
-		}
-	})
-
-	return optlyClient
+// GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext this does NOT track experiment conversions
+func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
+	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
 }

@@ -24,6 +24,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	// "github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -47,16 +48,18 @@ func (suite *FeatureTestSuite) SetupTest() {
 
 	optimizelymw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// TODO figure out why using the middleware constant doesn't work :/
 			ctx := context.WithValue(r.Context(), "optlyClient", optlyClient)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 
 	mux := chi.NewMux()
+	featureAPI := new(FeatureHandler)
 
 	mux.Use(optimizelymw)
-	mux.Get("/features", ListFeatures)
-	mux.Get("/features/{featureKey}", GetFeature)
+	mux.Get("/features", featureAPI.ListFeatures)
+	mux.Get("/features/{featureKey}", featureAPI.GetFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -133,7 +136,7 @@ func TestListFeaturesMissingCtx(t *testing.T) {
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	http.HandlerFunc(ListFeatures).ServeHTTP(rr, req)
+	http.HandlerFunc(new(FeatureHandler).ListFeatures).ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
 	assert.Equal(t, "OptlyClient not available\n", rr.Body.String())
@@ -146,7 +149,7 @@ func TestGetFeatureMissingCtx(t *testing.T) {
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	http.HandlerFunc(GetFeature).ServeHTTP(rr, req)
+	http.HandlerFunc(new(FeatureHandler).GetFeature).ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
 	assert.Equal(t, "OptlyClient not available\n", rr.Body.String())

@@ -25,7 +25,7 @@ import (
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
 type TestClient struct {
-	projectConfig    *TestProjectConfig
+	ProjectConfig    *TestProjectConfig
 	OptimizelyClient *client.OptimizelyClient
 }
 
@@ -41,17 +41,17 @@ func NewClient() *TestClient {
 	optlyClient, _ := factory.ClientWithOptions(options)
 
 	return &TestClient{
-		projectConfig:    projectConfig,
+		ProjectConfig:    projectConfig,
 		OptimizelyClient: optlyClient,
 	}
 }
 
 // AddFeature is a helper method for adding features to the ProjectConfig to fascilitate testing.
 func (t TestClient) AddFeature(feature entities.Feature) {
-	t.projectConfig.AddFeature(feature)
+	t.ProjectConfig.AddFeature(feature)
 }
 
 // AddFeatureRollout is a helper method for adding feature rollouts to the ProjectConfig to fascilitate testing.
 func (t *TestClient) AddFeatureRollout(feature entities.Feature) {
-	t.projectConfig.AddFeatureRollout(feature)
+	t.ProjectConfig.AddFeatureRollout(feature)
 }

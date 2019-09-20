@@ -18,6 +18,7 @@
 package optimizely
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
@@ -28,7 +29,8 @@ import (
 
 type ClientTestSuite struct {
 	suite.Suite
-	client *OptlyClient
+	client     *OptlyClient
+	context    *OptlyContext
 	testClient *optimizelytest.TestClient
 }
 
@@ -36,6 +38,7 @@ func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
 	suite.client = &OptlyClient{testClient.OptimizelyClient, nil}
+	suite.context = NewContext("userId", make(map[string]interface{}))
 }
 
 func (suite *ClientTestSuite) TestListFeatures() {
@@ -51,6 +54,51 @@ func (suite *ClientTestSuite) TestGetFeature() {
 	actual, err := suite.client.GetFeature("k1")
 	suite.NoError(err)
 	suite.Equal(actual, entities.Feature{Key: "k1"})
+}
+
+func (suite *ClientTestSuite) TestGetNonExistentFeature() {
+	_, _, err := suite.client.GetFeatureWithContext("DNE", suite.context)
+	if !suite.Error(err) {
+		suite.Equal(fmt.Errorf("Feature with key DNE not found"), err)
+	}
+}
+
+func (suite *ClientTestSuite) TestGetAndTrackFeatureWithContext() {
+	basicFeature := entities.Feature{Key: "basic"}
+	suite.testClient.AddFeatureRollout(basicFeature)
+	enabled, variableMap, err := suite.client.GetAndTrackFeatureWithContext("basic", suite.context)
+
+	suite.NoError(err)
+	suite.True(enabled)
+	suite.Equal(0, len(variableMap))
+
+	// TODO add assertion that a tracking call was sent for FeatureTest
+}
+
+func (suite *ClientTestSuite) TestGetBasicFeature() {
+	basicFeature := entities.Feature{Key: "basic"}
+	suite.testClient.AddFeatureRollout(basicFeature)
+	enabled, variableMap, err := suite.client.GetFeatureWithContext("basic", suite.context)
+
+	suite.NoError(err)
+	suite.True(enabled)
+	suite.Equal(0, len(variableMap))
+}
+
+func (suite *ClientTestSuite) TestGetAdvancedFeature() {
+	var1 := entities.Variable{Key: "var1", DefaultValue: "val1"}
+	var2 := entities.Variable{Key: "var2", DefaultValue: "val2"}
+	advancedFeature := entities.Feature{
+		Key:       "advanced",
+		Variables: []entities.Variable{var1, var2},
+	}
+
+	suite.testClient.AddFeatureRollout(advancedFeature)
+	enabled, variableMap, err := suite.client.GetFeatureWithContext("advanced", suite.context)
+
+	suite.NoError(err)
+	suite.True(enabled)
+	suite.Equal(2, len(variableMap))
 }
 
 // In order for 'go test' to run this suite, we need to create

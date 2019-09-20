@@ -17,8 +17,61 @@
 // Package api //
 package api
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/go-chi/chi"
+	// "github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+
+	"github.com/stretchr/testify/suite"
+)
+
+type MockOptlyMiddleware struct{}
+
+func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+	return next
+}
+
+type MockFeatureAPI struct{}
+
+func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request)    {}
+func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request)      {}
+func (m *MockFeatureAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
+
+type MockUserEventAPI struct{}
+
+func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) {}
+
+type RouterTestSuite struct {
+	suite.Suite
+	tc  *optimizelytest.TestClient
+	mux *chi.Mux
+	// opt *RouterOptions
+}
+
+func (suite *RouterTestSuite) SetupTest() {
+	testClient := optimizelytest.NewClient()
+	suite.tc = testClient
+	// client := &optimizely.OptlyClient{testClient.OptimizelyClient}
+
+	opts := &RouterOptions{
+		featureAPI:   new(MockFeatureAPI),
+		userEventAPI: new(MockUserEventAPI),
+		middleware:   new(MockOptlyMiddleware),
+	}
+
+	suite.mux = NewRouter(opts)
+}
+
+func (suite *RouterTestSuite) TestRouter() {
+	r := httptest.NewRequest("GET", "/", nil)
+	rr := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rr, r)
+}
 
 func TestRouter(t *testing.T) {
-	// TODO figure out the best way to test the router.
+	suite.Run(t, new(RouterTestSuite))
 }

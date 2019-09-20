@@ -16,15 +16,15 @@
 package main
 
 import (
-	"net/http"
 	"log"
+	"net/http"
 
 	"github.com/optimizely/sidedoor/pkg/api"
 )
 
 func main() {
 	log.Printf("Server started")
-	router := api.NewRouter()
+	router := api.NewDefaultRouter()
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
