@@ -1,11 +1,13 @@
 package event
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/entities"
-	"github.com/optimizely/go-sdk/optimizely/event"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/optimizely/go-sdk/optimizely/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func BuildTestImpressionEvent() event.UserEvent {
@@ -33,7 +35,9 @@ func BuildTestConversionEvent() event.UserEvent {
 }
 
 func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
-	processor := NewEventProcessorNSQ(100, 100)
+	exeCtx := utils.NewCancelableExecutionCtx()
+
+	processor := NewEventProcessorNSQ(exeCtx, 100, 100)
 
 	impression := BuildTestImpressionEvent()
 
@@ -59,15 +63,16 @@ type MockDispatcher struct {
 	Events []event.LogEvent
 }
 
-func (f *MockDispatcher) DispatchEvent(event event.LogEvent, callback func(success bool)) {
+func (f *MockDispatcher) DispatchEvent(event event.LogEvent) (bool, error) {
 	f.Events = append(f.Events, event)
-	callback(true)
+	return true, nil
 }
 
 func TestNSQEventProcessor_ProcessBatch(t *testing.T) {
+	exeCtx := utils.NewCancelableExecutionCtx()
 	processor := &event.QueueingEventProcessor{MaxQueueSize: 100, FlushInterval: 100, Q: NewNSQueueDefault(), EventDispatcher: &MockDispatcher{}}
 	processor.BatchSize = 10
-	processor.StartTicker()
+	processor.StartTicker(exeCtx.GetContext())
 
 	impression := BuildTestImpressionEvent()
 	conversion := BuildTestConversionEvent()
