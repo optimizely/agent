@@ -515,9 +515,3 @@ components:
         - key
         - attribute_type
         - entity_id
-    UserEventErrorResponse:
-      properties:
-        error:
-          type: string
-          description: Error message
-
