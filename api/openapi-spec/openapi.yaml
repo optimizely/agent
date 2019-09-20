@@ -323,6 +323,16 @@ paths:
       responses:
           '204':
             description: Valid response
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+                      description: Error message
       requestBody:
         required: true
         content:
@@ -505,3 +515,9 @@ components:
         - key
         - attribute_type
         - entity_id
+    UserEventErrorResponse:
+      properties:
+        error:
+          type: string
+          description: Error message
+
