@@ -18,43 +18,43 @@
 package optimizely
 
 import (
-	"os"
+	"testing"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
-	"github.com/optimizely/go-sdk/optimizely/logging"
+	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/stretchr/testify/suite"
 )
 
-var levelMap = make(map[logging.LogLevel]zerolog.Level)
-
-// init overrides the Optimizely SDK logger with a logrus implementation.
-func init() {
-	levelMap[logging.LogLevelDebug] = zerolog.DebugLevel
-	levelMap[logging.LogLevelInfo] = zerolog.InfoLevel
-	levelMap[logging.LogLevelWarning] = zerolog.WarnLevel
-	levelMap[logging.LogLevelError] = zerolog.ErrorLevel
-
-	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	logConsumer := &LogConsumer{
-		logger: &logger,
-	}
-
-	logging.SetLogger(logConsumer)
+type ClientTestSuite struct {
+	suite.Suite
+	client *OptlyClient
+	testClient *optimizelytest.TestClient
 }
 
-// LogConsumer is an implementation of the OptimizelyLogConsumer that wraps a zerolog logger
-type LogConsumer struct {
-	logger *zerolog.Logger
+func (suite *ClientTestSuite) SetupTest() {
+	testClient := optimizelytest.NewClient()
+	suite.testClient = testClient
+	suite.client = &OptlyClient{testClient.OptimizelyClient}
 }
 
-// Log logs the message if it's log level is higher than or equal to the logger's set level
-func (l *LogConsumer) Log(level logging.LogLevel, message string) {
-	l.logger.WithLevel(levelMap[level]).Msg(message)
+func (suite *ClientTestSuite) TestListFeatures() {
+	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
+	suite.testClient.AddFeature(entities.Feature{Key: "k2"})
+	features, err := suite.client.ListFeatures()
+	suite.NoError(err)
+	suite.Equal(2, len(features))
 }
 
-// SetLogLevel changes the log level to the given level
-func (l *LogConsumer) SetLogLevel(level logging.LogLevel) {
-	childLogger := l.logger.Level(levelMap[level])
-	l.logger = &childLogger
+func (suite *ClientTestSuite) TestGetFeature() {
+	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
+	actual, err := suite.client.GetFeature("k1")
+	suite.NoError(err)
+	suite.Equal(actual, entities.Feature{Key: "k1"})
+}
+
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestClientTestSuite(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
 }

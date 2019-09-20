@@ -19,17 +19,10 @@ package optimizely
 
 import (
 	"errors"
-	"os"
-	"sync"
-
-	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
-
-var once sync.Once
-var optlyClient *client.OptimizelyClient
 
 // Context encapsulates the user and optimizely sdk
 type Context struct {
@@ -39,51 +32,35 @@ type Context struct {
 
 // NewContext creates a new UserContext and shared OptimizelyClient
 func NewContext(id string, attributes map[string]interface{}) *Context {
+	return NewContextWithOptimizely(id, attributes, GetOptimizely())
+}
+
+// NewContextWithOptimizely creates a new UserContext and a given OptimizelyClient
+func NewContextWithOptimizely(id string, attributes map[string]interface{}, optlyClient *client.OptimizelyClient) *Context {
 	userContext := entities.UserContext{
 		ID:         id,
 		Attributes: attributes,
 	}
 	context := &Context{
 		userContext: &userContext,
-		optlyClient: getOptimizely(),
+		optlyClient: optlyClient,
 	}
 
 	return context
 }
 
-// IsFeatureEnabled calls the OptimizelyClient with the current UserContext
-func (context *Context) IsFeatureEnabled(featureKey string) (bool, error) {
-	app := context.optlyClient
-
-	if app == nil {
-		return false, errors.New("invalid optimizely instance")
-	}
-
-	return app.IsFeatureEnabled(featureKey, *context.userContext)
+// GetAndTrackFeature calls the OptimizelyClient with the current UserContext and tracks an impression
+func (context *Context) GetAndTrackFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
+	// TODO implement impression tracking. Not sure if this is sdk or sidedoor responsibility
+	return context.GetFeature(featureKey)
 }
 
-// TODO Support multiple SDK keys
-func getOptimizely() *client.OptimizelyClient {
+// GetFeature calls the OptimizelyClient with the current UserContext this does NOT track experiment conversions
+func (context *Context) GetFeature(featureKey string) (enabled bool, variableMap map[string]string, err error) {
+	oc := context.optlyClient
+	if oc == nil {
+		return enabled, variableMap, errors.New("invalid optimizely instance")
+	}
 
-	// TODO handle failure to prevent deadlocks.
-	once.Do(func() { // <-- atomic, does not allow repeating
-		sdkKey := os.Getenv("SDK_KEY")
-		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
-		sublogger.Info().Msg("Fetching new OptimizelyClient")
-
-		optimizelyFactory := &client.OptimizelyFactory{
-			// TODO parameterize
-			SDKKey: sdkKey,
-		}
-
-		var err error
-		optlyClient, err = optimizelyFactory.StaticClient()
-
-		if err != nil {
-			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
-			return
-		}
-	})
-
-	return optlyClient
+	return oc.GetAllFeatureVariables(featureKey, *context.userContext)
 }

@@ -17,41 +17,8 @@
 // Package api //
 package api
 
-import (
-	"net/http"
+import "testing"
 
-	"github.com/go-chi/chi"
-	chimw "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
-
-	"github.com/optimizely/sidedoor/pkg/api/handlers"
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
-)
-
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("pong")); err != nil {
-			log.Fatal().Msg("unable to write response")
-		}
-	})
-
-	r.With(chimw.AllowContentType("application/json")).Post("/user-event", handlers.UserEvent)
-
-	r.Route("/features", func(r chi.Router) {
-		r.Use(middleware.OptimizelyCtx)
-		r.Get("/", handlers.ListFeatures)
-
-		r.Route("/{featureKey}", func(r chi.Router) {
-			// TODO r.Use(FeatureCtx)
-			r.Get("/", handlers.GetFeature)
-			r.Post("/activate", handlers.ActivateFeature)
-		})
-	})
-
-	return r
+func TestRouter(t *testing.T) {
+	// TODO figure out the best way to test the router.
 }
