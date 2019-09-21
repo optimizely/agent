@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-// NewEventProcessor returns a new instance of QueueingEventProcessor with queueSize and flushInterval
+// NewEventProcessorNSQ returns a new instance of QueueingEventProcessor with a backing NSQ queue
 func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration ) *event.QueueingEventProcessor {
 	// can't set the wg since it is private (lowercase).
 	p := event.NewEventProcessor(exeCtx, event.DefaultBatchSize, queueSize, flushInterval)
