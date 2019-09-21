@@ -27,14 +27,18 @@ import (
 	snsq "github.com/segmentio/nsq-go"
 )
 
+// NsqConsumerChannel is the default consumer channel
 const NsqConsumerChannel string = "optimizely"
+// NsqListenSpec is the default NSQD address
 const NsqListenSpec string = "localhost:4150"
+// NsqTopic is the default NSQ topic
 const NsqTopic string = "user_event"
 
-var embeddedNSQD *nsqd.NSQD = nil
+var embeddedNSQD *nsqd.NSQD
 
 var done = make(chan bool)
 
+// NSQQueue is a implementation of Queue interface with a backing NSQ
 type NSQQueue struct {
 	p *nsq.Producer
 	c *snsq.Consumer
@@ -116,9 +120,9 @@ func (i *NSQQueue) Size() int {
 }
 
 // NewNSQueue returns new NSQ based queue with given queueSize
-func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer bool, startConsumer bool) event.Queue {
+func NewNSQueue(queueSize int, address string, startDaemon, startProducer, startConsumer bool) event.Queue {
 
-	// Run nsqd embedded
+	// Run NSQD embedded
 	if embeddedNSQD == nil && startDaemon {
 		go func() {
 			// running an NSQD with all of the default options
@@ -131,7 +135,10 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer b
 				var err error
 				embeddedNSQD, err = nsqd.New(opts)
 				if err == nil {
-					embeddedNSQD.Main()
+					err = embeddedNSQD.Main()
+					if err != nil {
+						log.Error().Err(err).Msg("Error calling Main() on embeddedNSQD")
+					}
 					// wait until we are told to continue and exit
 					<-done
 					embeddedNSQD.Exit()
@@ -140,18 +147,18 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer b
 		}()
 	}
 
-	var p *nsq.Producer = nil
-	var err error = nil
+	var p *nsq.Producer
+	var err error
 	nsqConfig := nsq.NewConfig()
 
 	if startProducer {
 		p, err = nsq.NewProducer(address, nsqConfig)
 		if err != nil {
-			//log.Fatal(err)
+			log.Error().Err(err).Msg("Error creating producer")
 		}
 	}
 
-	var consumer *snsq.Consumer = nil
+	var consumer *snsq.Consumer
 	if startConsumer {
 		consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
 			Topic:       NsqTopic,
@@ -175,7 +182,7 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, startProducer b
 	return i
 }
 
-//NewNSQueueDefault returns a default implementation of the NSQueue
+// NewNSQueueDefault returns a default implementation of the NSQueue
 func NewNSQueueDefault() event.Queue {
 	return NewNSQueue(100, NsqListenSpec, true, true, true)
 }
