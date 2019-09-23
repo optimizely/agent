@@ -35,7 +35,7 @@ type ClientTestSuite struct {
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.client = &OptlyClient{testClient.OptimizelyClient}
+	suite.client = &OptlyClient{testClient.OptimizelyClient, nil}
 }
 
 func (suite *ClientTestSuite) TestListFeatures() {
