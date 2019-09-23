@@ -34,7 +34,7 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(HandleWebhook)
+	handler := http.HandlerFunc((&WebhookHandler{}).HandleWebhook)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -62,7 +62,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(HandleWebhook)
+	handler := http.HandlerFunc((&WebhookHandler{}).HandleWebhook)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNoContent, rr.Code)

@@ -28,6 +28,7 @@ func NewRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.Post("/optimizely/webhook", handlers.HandleWebhook)
+	webhookApi := new(handlers.WebhookHandler)
+	r.Post("/optimizely/webhook", webhookApi.HandleWebhook)
 	return r
 }

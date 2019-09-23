@@ -30,7 +30,13 @@ import (
 	"github.com/optimizely/sidedoor/pkg/webhook/api/models"
 )
 
-func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
+// WebhookHandler implements the FeatureApi interface
+type WebhookHandler struct{
+	client optimizely.OptlyClient
+}
+
+
+func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request)  {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Msg("Unable to read webhook message body.")
@@ -53,6 +59,6 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
 	}
 
 	// TODO check signature before updating config
-	optimizely.UpdateConfig()
+	h.client.UpdateConfig()
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -31,17 +31,18 @@ import (
 
 var once sync.Once
 var optlyClient *optimizelyclient.OptimizelyClient
-var configManager *optimizelyconfig.PollingProjectConfigManager
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
+	ConfigManager *optimizelyconfig.PollingProjectConfigManager
 }
 
 // NewClient returns an OptlyClient reference providing higher level access to the OptimizelyClient
 func NewClient() (client *OptlyClient) {
 	return &OptlyClient{
 		GetOptimizely(),
+		nil,
 	}
 }
 
@@ -67,8 +68,10 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 }
 
 // SetConfig uses config manager to sync and set project config
-func UpdateConfig() {
-	configManager.SyncConfig([]byte{})
+func (c *OptlyClient) UpdateConfig() {
+	if c.ConfigManager != nil {
+		c.ConfigManager.SyncConfig([]byte{})
+	}
 }
 
 // GetOptimizely returns an instance of OptimizelyClient
