@@ -24,7 +24,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	// "github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/api/models"
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
+
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -49,7 +51,7 @@ func (suite *FeatureTestSuite) SetupTest() {
 	optimizelymw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// TODO figure out why using the middleware constant doesn't work :/
-			ctx := context.WithValue(r.Context(), "optlyClient", optlyClient)
+			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -60,6 +62,7 @@ func (suite *FeatureTestSuite) SetupTest() {
 	mux.Use(optimizelymw)
 	mux.Get("/features", featureAPI.ListFeatures)
 	mux.Get("/features/{featureKey}", featureAPI.GetFeature)
+	mux.Post("/features/{featureKey}/activate", featureAPI.ActivateFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -107,6 +110,31 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 	suite.NoError(err)
 
 	suite.Equal(feature, actual)
+}
+
+func (suite *FeatureTestSuite) TestActivateFeature() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
+
+	req, err := http.NewRequest("POST", "/features/one/activate?userId=test", nil)
+	suite.Nil(err)
+
+	rr := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rr, req)
+
+	suite.Equal(http.StatusOK, rr.Code)
+
+	// Unmarshal response
+	var actual models.Feature
+	err = json.Unmarshal(rr.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Feature{
+		Key: "one",
+		Enabled: true,
+	}
+
+	suite.Equal(expected, actual)
 }
 
 func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
