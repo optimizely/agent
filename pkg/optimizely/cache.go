@@ -26,12 +26,6 @@ import (
 	"github.com/optimizely/go-sdk/optimizely/client"
 )
 
-// Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
-type Cache interface {
-	GetDefault() (*OptlyClient, error)
-	Get(sdkKey string) (*OptlyClient, error)
-}
-
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
