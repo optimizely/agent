@@ -42,7 +42,6 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 
-	// TODO: Update to directly set config on config manager
-	optimizely.SetOptimizely()
+	optimizely.SetConfig()
 	return
 }

@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"errors"
+	
 	"github.com/optimizely/go-sdk/optimizely/client"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )

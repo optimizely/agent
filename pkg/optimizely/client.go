@@ -24,11 +24,14 @@ import (
 	"github.com/rs/zerolog/log"
 
 	optimizelyclient "github.com/optimizely/go-sdk/optimizely/client"
+	optimizelyconfig "github.com/optimizely/go-sdk/optimizely/config"
+	optimizelyutils "github.com/optimizely/go-sdk/optimizely/utils"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
 var once sync.Once
 var optlyClient *optimizelyclient.OptimizelyClient
+var configManager *optimizelyconfig.PollingProjectConfigManager
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
@@ -63,6 +66,11 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 	return projectConfig.GetFeatureByKey(featureKey)
 }
 
+// SetConfig uses config manager to sync and set project config
+func SetConfig() {
+	configManager.SyncConfig([]byte{})
+}
+
 // GetOptimizely returns an instance of OptimizelyClient
 // TODO Support multiple SDK keys
 func GetOptimizely() *optimizelyclient.OptimizelyClient {
@@ -78,13 +86,16 @@ func GetOptimizely() *optimizelyclient.OptimizelyClient {
 		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
 		sublogger.Info().Msg("Fetching new OptimizelyClient")
 
-		optimizelyFactory := &optimizelyclient.OptimizelyFactory{
-			// TODO parameterize
-			SDKKey: sdkKey,
-		}
+		optimizelyFactory := &optimizelyclient.OptimizelyFactory{}
 
 		var err error
-		optlyClient, err = optimizelyFactory.StaticClient()
+
+		// TODO introduce another initialization option on PollingProjectConfigManager to take care of creating execution context
+		execCtx := optimizelyutils.NewCancelableExecutionCtx()
+		configManager := optimizelyconfig.NewPollingProjectConfigManager(execCtx, sdkKey)
+		optlyClient, err = optimizelyFactory.ClientWithOptions(optimizelyclient.Options{
+			ProjectConfigManager: configManager,
+		})
 
 		if err != nil {
 			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
