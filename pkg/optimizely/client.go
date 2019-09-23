@@ -25,7 +25,6 @@ import (
 
 	optimizelyclient "github.com/optimizely/go-sdk/optimizely/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/optimizely/config"
-	optimizelyutils "github.com/optimizely/go-sdk/optimizely/utils"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
@@ -67,7 +66,7 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 	return projectConfig.GetFeatureByKey(featureKey)
 }
 
-// SetConfig uses config manager to sync and set project config
+// UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {
 		c.ConfigManager.SyncConfig([]byte{})
@@ -89,16 +88,13 @@ func GetOptimizely() *optimizelyclient.OptimizelyClient {
 		sublogger := log.With().Str("sdkKey", sdkKey).Logger()
 		sublogger.Info().Msg("Fetching new OptimizelyClient")
 
-		optimizelyFactory := &optimizelyclient.OptimizelyFactory{}
+		optimizelyFactory := &optimizelyclient.OptimizelyFactory{
+			// TODO parameterize
+			SDKKey: sdkKey,
+		}
 
 		var err error
-
-		// TODO introduce another initialization option on PollingProjectConfigManager to take care of creating execution context
-		execCtx := optimizelyutils.NewCancelableExecutionCtx()
-		configManager := optimizelyconfig.NewPollingProjectConfigManager(execCtx, sdkKey)
-		optlyClient, err = optimizelyFactory.ClientWithOptions(optimizelyclient.Options{
-			ProjectConfigManager: configManager,
-		})
+		optlyClient, err = optimizelyFactory.StaticClient()
 
 		if err != nil {
 			sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")

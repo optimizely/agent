@@ -32,7 +32,7 @@ import (
 
 // WebhookHandler implements the FeatureApi interface
 type WebhookHandler struct{
-	client optimizely.OptlyClient
+	optlyClient optimizely.OptlyClient
 }
 
 
@@ -59,6 +59,6 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request)  
 	}
 
 	// TODO check signature before updating config
-	h.client.UpdateConfig()
+	h.optlyClient.UpdateConfig()
 	w.WriteHeader(http.StatusNoContent)
 }
