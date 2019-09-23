@@ -15,3 +15,44 @@
  ***************************************************************************/
 
 package handlers
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
+
+
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+
+	"github.com/optimizely/sidedoor/pkg/webhook/api/models"
+)
+
+func HandleWebhook(w http.ResponseWriter, r *http.Request)  {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error().Msg("Unable to read webhook message body.")
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Unable to read webhook message body.",
+		})
+		return
+	}
+
+	var webhookMsg models.WebhookMessage
+	err = json.Unmarshal(body, &webhookMsg)
+	if err != nil {
+		log.Error().Msg("Unable to parse webhook message.")
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Unable to parse webhook message.",
+		})
+		return
+	}
+
+	// TODO check signature before updating config
+	optimizely.UpdateConfig()
+	w.WriteHeader(http.StatusNoContent)
+}

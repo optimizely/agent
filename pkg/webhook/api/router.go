@@ -20,7 +20,7 @@ package api
 import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	handlers2 "github.com/optimizely/sidedoor/pkg/webhook/pkg/api/handlers"
+	"github.com/optimizely/sidedoor/pkg/webhook/api/handlers"
 )
 
 // NewRouter returns HTTP API router
@@ -28,6 +28,6 @@ func NewRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.Post("/optimizely/webhook", handlers2.HandleWebhook)
+	r.Post("/optimizely/webhook", handlers.HandleWebhook)
 	return r
 }

@@ -67,7 +67,7 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 }
 
 // SetConfig uses config manager to sync and set project config
-func SetConfig() {
+func UpdateConfig() {
 	configManager.SyncConfig([]byte{})
 }
 

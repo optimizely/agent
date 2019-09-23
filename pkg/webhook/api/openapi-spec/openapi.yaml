@@ -25,6 +25,8 @@ paths:
       responses:
         '204':
           description: No content. Webhook message received and processed.
+        '400':
+          description: Invalid webhook message received.
 components:
   schemas:
     DatafileUpdateData:
