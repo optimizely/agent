@@ -24,6 +24,8 @@ import (
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
+
 	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
@@ -33,7 +35,7 @@ type FeatureHandler struct{}
 
 // ListFeatures - List all features
 func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
+	optlyClient, ok := r.Context().Value(middleware.OptlyClientKey).(*optimizely.OptlyClient)
 	if !ok {
 		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
 		return
@@ -53,7 +55,7 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 // GetFeature - Get requested feature
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
+	optlyClient, ok := r.Context().Value(middleware.OptlyClientKey).(*optimizely.OptlyClient)
 	if !ok {
 		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
 		return
@@ -75,7 +77,7 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 
 // ActivateFeature - Return the feature and record impression
 func (h *FeatureHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, ok := r.Context().Value("optlyClient").(*optimizely.OptlyClient)
+	optlyClient, ok := r.Context().Value(middleware.OptlyClientKey).(*optimizely.OptlyClient)
 	if !ok {
 		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
 		return
