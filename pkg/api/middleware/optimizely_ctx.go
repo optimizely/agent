@@ -29,9 +29,9 @@ type contextKey string
 // OptlyClientKey is the context key for the OptlyClient
 const OptlyClientKey = contextKey("optlyClient")
 
-// OptlyMiddleware encapsulates middleware associated with an OptlyClient
+// OptlyContext encapsulates middleware associated with an OptlyClient
 type OptlyContext struct {
-	cache optimizely.Cache
+	Cache optimizely.Cache
 }
 
 // ClientCtx adds Optimizely to the request context
@@ -43,9 +43,9 @@ func (ctx *OptlyContext) ClientCtx(next http.Handler) http.Handler {
 		var err error
 		var optlyClient *optimizely.OptlyClient
 		if sdkKey == "" {
-			optlyClient, err = ctx.cache.GetDefault()
+			optlyClient, err = ctx.Cache.GetDefault()
 		} else {
-			optlyClient, err = ctx.cache.Get(sdkKey)
+			optlyClient, err = ctx.Cache.Get(sdkKey)
 		}
 
 		if err != nil {

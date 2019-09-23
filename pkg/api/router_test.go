@@ -29,10 +29,14 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const headerKey = "X-Test-Header"
+
 type MockOptlyMiddleware struct{}
 
 func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
-	return next
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(headerKey, "expected")
+	})
 }
 
 type MockFeatureAPI struct{}
@@ -49,13 +53,11 @@ type RouterTestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
 	mux *chi.Mux
-	// opt *RouterOptions
 }
 
 func (suite *RouterTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
-	// client := &optimizely.OptlyClient{testClient.OptimizelyClient}
 
 	opts := &RouterOptions{
 		featureAPI:   new(MockFeatureAPI),
@@ -66,10 +68,28 @@ func (suite *RouterTestSuite) SetupTest() {
 	suite.mux = NewRouter(opts)
 }
 
-func (suite *RouterTestSuite) TestRouter() {
-	r := httptest.NewRequest("GET", "/", nil)
+func (suite *RouterTestSuite) TestListFeatures() {
+	r := httptest.NewRequest("GET", "/features", nil)
 	rr := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rr, r)
+	suite.Equal(http.StatusOK, rr.Code)
+	suite.Equal("expected", rr.Header().Get(headerKey))
+}
+
+func (suite *RouterTestSuite) TestGetFeature() {
+	r := httptest.NewRequest("GET", "/features/one", nil)
+	rr := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rr, r)
+	suite.Equal(http.StatusOK, rr.Code)
+	suite.Equal("expected", rr.Header().Get(headerKey))
+}
+
+func (suite *RouterTestSuite) TestActivateFeatures() {
+	r := httptest.NewRequest("POST", "/features/one/activate", nil)
+	rr := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rr, r)
+	suite.Equal(http.StatusOK, rr.Code)
+	suite.Equal("expected", rr.Header().Get(headerKey))
 }
 
 func TestRouter(t *testing.T) {
