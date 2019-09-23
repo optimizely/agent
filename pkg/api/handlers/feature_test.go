@@ -24,8 +24,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/api/models"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
@@ -50,7 +50,6 @@ func (suite *FeatureTestSuite) SetupTest() {
 
 	optimizelymw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// TODO figure out why using the middleware constant doesn't work :/
 			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -130,7 +129,7 @@ func (suite *FeatureTestSuite) TestActivateFeature() {
 	suite.NoError(err)
 
 	expected := models.Feature{
-		Key: "one",
+		Key:     "one",
 		Enabled: true,
 	}
 
