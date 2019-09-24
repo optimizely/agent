@@ -14,7 +14,7 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package api //
+// Package webhook //
 package webhook
 
 import (
@@ -28,7 +28,7 @@ func NewRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	webhookApi := new(handlers.OptlyWebhookHandler)
-	r.Post("/webhooks/optimizely", webhookApi.HandleWebhook)
+	webhookAPI := new(handlers.OptlyWebhookHandler)
+	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
 	return r
 }

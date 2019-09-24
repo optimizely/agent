@@ -14,6 +14,7 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
+// Package handlers //
 package handlers
 
 import (
@@ -36,6 +37,7 @@ type OptlyWebhookHandler struct{
 }
 
 
+// HandleWebhook handles incoming webhook messages from Optimizely application
 func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request)  {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
