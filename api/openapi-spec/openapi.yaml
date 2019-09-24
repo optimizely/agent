@@ -319,7 +319,7 @@ paths:
   /user-event:
     post:
       summary: User event endpoint
-      operationId: userEvent
+      operationId: AddUserEvent
       responses:
           '204':
             description: Valid response
