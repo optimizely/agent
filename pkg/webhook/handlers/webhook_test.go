@@ -19,7 +19,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/optimizely/sidedoor/pkg/webhook/api/models"
+	"github.com/optimizely/sidedoor/pkg/webhook/models"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -34,7 +34,7 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc((&WebhookHandler{}).HandleWebhook)
+	handler := http.HandlerFunc((&OptlyWebhookHandler{}).HandleWebhook)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -42,7 +42,7 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 }
 
 func TestHandleWebhookValidMessage(t *testing.T) {
-	webhook := models.WebhookMessage{
+	webhookMsg := models.OptlyMessage{
 		ProjectId: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
@@ -54,15 +54,15 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 		},
 	}
 
-	validWebhookMessage, _ := json.Marshal(webhook)
+	validWebhookMessage, _ := json.Marshal(webhookMsg)
 
-	req, err := http.NewRequest("POST", "/optimizely/webhook", bytes.NewBuffer(validWebhookMessage))
+	req, err := http.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc((&WebhookHandler{}).HandleWebhook)
+	handler := http.HandlerFunc((&OptlyWebhookHandler{}).HandleWebhook)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNoContent, rr.Code)

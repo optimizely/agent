@@ -14,21 +14,51 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package api //
-package api
+package handlers
 
 import (
-	"github.com/go-chi/chi"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/webhook/api/handlers"
+	"github.com/rs/zerolog/log"
+
+
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+
+	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+// OptlyWebhookHandler handles incoming messages from Optimizely
+type OptlyWebhookHandler struct{
+	optlyClient optimizely.OptlyClient
+}
 
-	webhookApi := new(handlers.WebhookHandler)
-	r.Post("/optimizely/webhook", webhookApi.HandleWebhook)
-	return r
+
+func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request)  {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error().Msg("Unable to read webhook message body.")
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Unable to read webhook message body.",
+		})
+		return
+	}
+
+	var webhookMsg models.OptlyMessage
+	err = json.Unmarshal(body, &webhookMsg)
+	if err != nil {
+		log.Error().Msg("Unable to parse webhook message.")
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Unable to parse webhook message.",
+		})
+		return
+	}
+
+	// TODO check signature before updating config
+	h.optlyClient.UpdateConfig()
+	w.WriteHeader(http.StatusNoContent)
 }
