@@ -43,7 +43,7 @@ type FeatureTestSuite struct {
 func (suite *FeatureTestSuite) SetupTest() {
 
 	testClient := optimizelytest.NewClient()
-	optlyClient := &optimizely.OptlyClient{testClient.OptimizelyClient}
+	optlyClient := &optimizely.OptlyClient{testClient.OptimizelyClient, nil}
 
 	optimizelymw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

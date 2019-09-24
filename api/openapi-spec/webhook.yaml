@@ -1,0 +1,62 @@
+openapi: 3.0.0
+info:  
+  title: Optimizely Server API
+  description: Optimizely.
+  termsOfService: http://optimizely.com/terms/
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.0
+servers:
+  - url: https://api.optimizely.com
+    description: "Hosted Optimizely Decision Service"
+paths:
+  /webhooks/optimizely:
+    post:
+      summary: Incoming webhook message from Optimizely
+      operationId: handleWebhook
+      requestBody:
+        description: Webhook message received from Optimizely
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookRequest"
+      responses:
+        '204':
+          description: No content. Webhook message received and processed.
+        '400':
+          description: Invalid webhook message received.
+components:
+  schemas:
+    DatafileUpdateData:
+      properties:
+        revision:
+          type: integer
+        origin_url:
+          type: string
+        cdn_url:
+          type: string
+        environment:
+          type: string
+      required:
+        - revision
+        - origin_url
+        - cdn_url
+    WebhookRequest:
+      properties:
+        project_id:
+          type: number
+        timestamp:
+          type: number
+        event:
+          type: string
+          enum:
+            - project.datafile_updated
+        data:
+          $ref: '#/components/schemas/DatafileUpdateData    '
+      required:
+        - project_id
+        - timestamp
+        - event
+        - data

@@ -14,47 +14,21 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely //
-package optimizely
+// Package webhook //
+package webhook
 
 import (
-	"testing"
-
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
-
-	"github.com/optimizely/go-sdk/optimizely/entities"
-	"github.com/stretchr/testify/suite"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
 )
 
-type ClientTestSuite struct {
-	suite.Suite
-	client *OptlyClient
-	testClient *optimizelytest.TestClient
-}
+// NewRouter returns HTTP API router
+func NewRouter() *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-func (suite *ClientTestSuite) SetupTest() {
-	testClient := optimizelytest.NewClient()
-	suite.testClient = testClient
-	suite.client = &OptlyClient{testClient.OptimizelyClient, nil}
-}
-
-func (suite *ClientTestSuite) TestListFeatures() {
-	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
-	suite.testClient.AddFeature(entities.Feature{Key: "k2"})
-	features, err := suite.client.ListFeatures()
-	suite.NoError(err)
-	suite.Equal(2, len(features))
-}
-
-func (suite *ClientTestSuite) TestGetFeature() {
-	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
-	actual, err := suite.client.GetFeature("k1")
-	suite.NoError(err)
-	suite.Equal(actual, entities.Feature{Key: "k1"})
-}
-
-// In order for 'go test' to run this suite, we need to create
-// a normal test function and pass our suite to suite.Run
-func TestClientTestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
+	webhookAPI := new(handlers.OptlyWebhookHandler)
+	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
+	return r
 }

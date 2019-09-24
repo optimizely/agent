@@ -24,6 +24,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	optimizelyclient "github.com/optimizely/go-sdk/optimizely/client"
+	optimizelyconfig "github.com/optimizely/go-sdk/optimizely/config"
 	"github.com/optimizely/go-sdk/optimizely/entities"
 )
 
@@ -33,12 +34,14 @@ var optlyClient *optimizelyclient.OptimizelyClient
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
+	ConfigManager *optimizelyconfig.PollingProjectConfigManager
 }
 
 // NewClient returns an OptlyClient reference providing higher level access to the OptimizelyClient
 func NewClient() (client *OptlyClient) {
 	return &OptlyClient{
 		GetOptimizely(),
+		nil,
 	}
 }
 
@@ -61,6 +64,13 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 	}
 
 	return projectConfig.GetFeatureByKey(featureKey)
+}
+
+// UpdateConfig uses config manager to sync and set project config
+func (c *OptlyClient) UpdateConfig() {
+	if c.ConfigManager != nil {
+		c.ConfigManager.SyncConfig([]byte{})
+	}
 }
 
 // GetOptimizely returns an instance of OptimizelyClient
