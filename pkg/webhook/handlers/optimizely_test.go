@@ -57,9 +57,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	validWebhookMessage, _ := json.Marshal(webhookMsg)
 
 	req, err := http.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NotNil(t, err)
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc((&OptlyWebhookHandler{}).HandleWebhook)
