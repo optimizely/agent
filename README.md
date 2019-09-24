@@ -16,7 +16,7 @@ Following best practice for go project layout as defined [here](https://github.c
 The following `make` targets can be used to build and run the application:
 * **build** - builds sidedoor and installs binary in bin/sidedoor
 * **clean** - runs `go clean` and removes the bin/ dir
-* **install** - runs `go get` to install all dependencies
+* **install** - installs all dev and ci dependencies
 * **generate-api** - generates APIs from the swagger spec
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **run** - builds and executes the sidedoor binary
@@ -32,16 +32,14 @@ SDK_KEY=<YOUR-KEY-KEY> make run
 
 This file will get loaded via the `Makefile` configuration script.
 
-## Client Generation
-
-### Prerequisites
-
+## Prerequisites
 Install go on OSX:
 ```
 brew install go
 ```
 
-This repo currently depends heavily on [OpenAPI](https://swagger.io/specification/) and [OpenAPI Generator](https://github.com/openapitools/openapi-generator) (a [fork](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/migration-from-swagger-codegen.md) of swagger-codegen).
+## Client Generation
+This repo currently depends on [OpenAPI](https://swagger.io/specification/) and [OpenAPI Generator](https://github.com/openapitools/openapi-generator) (a [fork](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/migration-from-swagger-codegen.md) of swagger-codegen).
 
 To install the OpenAPI Generator on OSX:
 ```

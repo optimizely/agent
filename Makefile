@@ -8,6 +8,7 @@ COVER_FILE := cover.out
 GO111MODULE:=on
 GOCMD=go
 GOBIN=bin
+GOPATH=$(shell $(GOCMD) env GOPATH)
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
@@ -43,10 +44,10 @@ clean: ## runs `go clean` and removes the bin/ dir
 generate-api: ## generates APIs from the swagger spec
 	scripts/generate.sh $(ARG)
 
-install: ## runs `go get` to install all dependencies
-	$(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
+install: ## installs all dev and ci dependencies
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.19.0
 
-lint: install ## runs `golangci-lint` linters defined in `.golangci.yml` file
+lint: ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false pkg/...
 	$(GOLINT) run --out-format=tab --tests=false cmd/...
 

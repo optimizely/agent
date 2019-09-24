@@ -15,7 +15,7 @@ jobs:
       dist: xenial
       env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
       script:
-        - make lint
+        - make install lint
 
     - stage: test
       name: unit
