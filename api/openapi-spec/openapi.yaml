@@ -1,12 +1,12 @@
 openapi: 3.0.0
-info:  
+info:
   title: Optimizely Server API
   description: Optimizely.
   termsOfService: http://optimizely.com/terms/
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: https://api.optimizely.com
     description: "Hosted Optimizely Decision Service"
@@ -316,6 +316,29 @@ paths:
       responses:
         '200':
           description: Valid response
+  /user-event:
+    post:
+      summary: User event endpoint
+      operationId: AddUserEvent
+      responses:
+          '204':
+            description: Valid response
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+                      description: Error message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEvent'
 components:
   schemas:
     Stat:
@@ -325,7 +348,7 @@ components:
         value:
           type: integer
       # Both properties are required
-      required:  
+      required:
         - name
         - value
     Experiment:
@@ -339,7 +362,7 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/Variation'
       # Both properties are required
-      required:  
+      required:
         - id
         - key
     Variation:
@@ -349,7 +372,7 @@ components:
         key:
           type: string
       # Both properties are required
-      required:  
+      required:
         - id
         - key
     Feature:
@@ -369,7 +392,7 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/FeatureVariation'
       # Both properties are required
-      required:  
+      required:
         - id
         - key
     FeatureVariation:
@@ -383,6 +406,111 @@ components:
           additionalProperties:
             type: string
       # Both properties are required
-      required:  
+      required:
         - id
         - key
+    UserEvent:
+      properties:
+        timestamp:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        context:
+          $ref: '#/components/schemas/UserEventContext'
+        visitor_id:
+          type: string
+        impression:
+          $ref: '#/components/schemas/ImpressionEvent'
+        conversion:
+          $ref: '#/components/schemas/ConversionEvent'
+      required:
+        - timestamp
+        - uuid
+        - visitor_id
+        - context
+    UserEventContext:
+      properties:
+        revision:
+          type: string
+        account_id:
+          type: string
+        client_version:
+          type: string
+        project_id:
+          type: string
+        client_name:
+          type: string
+        anonymize_ip:
+          type: boolean
+        bot_filtering:
+          type: boolean
+      required:
+        - revision
+        - account_id
+        - client_version
+        - project_id
+        - client_name
+        - anonymize_ip
+        - bot_filtering
+    ImpressionEvent:
+      properties:
+        entity_id:
+          type: string
+        key:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitorAttribute'
+        variation_id:
+          type: string
+        campaign_id:
+          type: string
+        experiment_id:
+          type: string
+      required:
+        - entity_id
+        - key
+        - variation_id
+        - campaign_id
+        - experiment_id
+    ConversionEvent:
+      properties:
+        entity_id:
+          type: string
+        key:
+          type: string
+        revenue:
+          type: integer
+          format: int64
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitorAttribute'
+        tags:
+          type: object
+          additionalProperties: true
+        value:
+          type: number
+          format: double
+      required:
+        - entity_id
+        - key
+        - variation_id
+        - campaign_id
+        - experiment_id
+    VisitorAttribute:
+      properties:
+        value: {}
+        key:
+          type: string
+        attribute_type:
+          type: string
+        entity_id:
+          type: string
+      required:
+        - value
+        - key
+        - attribute_type
+        - entity_id
