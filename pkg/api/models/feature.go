@@ -22,6 +22,6 @@ type Feature struct {
 	Key        string                      `json:"key"`
 	Variables  map[string]string           `json:"variables,omitempty"`
 	Variations map[string]FeatureVariation `json:"variations,omitempty"`
-	ID         int32                       `json:"id,enabled,omitempty"`
+	ID         int32                       `json:"id,omitempty"`
 	Enabled    bool                        `json:"enabled"`
 }
