@@ -43,7 +43,7 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 
 func TestHandleWebhookValidMessage(t *testing.T) {
 	webhookMsg := models.OptlyMessage{
-		ProjectId: 42,
+		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
 		Data:      models.DatafileUpdateData{
