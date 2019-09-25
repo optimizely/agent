@@ -65,7 +65,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
-	assert.Regexp(t, "omputed signature does not match signature in request. Ignoring message.", rr.Body.String())
+	assert.Regexp(t, "Computed signature does not match signature in request. Ignoring message.", rr.Body.String())
 }
 
 func TestHandleWebhookValidMessage(t *testing.T) {
