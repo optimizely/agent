@@ -49,7 +49,12 @@ func computeSignature(payload []byte) string {
 	// TODO set this up from webhook registry
 	secretKey := "I am secret"
 	mac := hmac.New(sha1.New, []byte(secretKey))
-	mac.Write(payload)
+	_, err := mac.Write(payload)
+
+	if err != nil {
+		log.Error().Msg("Unable to compute signature.")
+		return ""
+	}
 
 	return signaturePrefix + hex.EncodeToString(mac.Sum(nil))
 }
