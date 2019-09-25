@@ -44,7 +44,7 @@ type OptlyWebhookHandler struct{
 	optlyClient optimizely.OptlyClient
 }
 
-// computeSignature computes signature based on payload and
+// computeSignature computes signature based on payload
 func computeSignature(payload []byte) string {
 	// TODO set this up from webhook registry
 	secretKey := "I am secret"
