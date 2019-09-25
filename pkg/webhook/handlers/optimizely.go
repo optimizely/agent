@@ -18,6 +18,10 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -31,11 +35,35 @@ import (
 	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
+const signatureHeader = "X-Hub-Signature"
+const signaturePrefix = "sha1="
+
+
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
 	optlyClient optimizely.OptlyClient
 }
 
+// computeSignature computes signature based on payload
+func computeSignature(payload []byte) string {
+	// TODO set this up from webhook registry
+	secretKey := "I am secret"
+	mac := hmac.New(sha1.New, []byte(secretKey))
+	_, err := mac.Write(payload)
+
+	if err != nil {
+		log.Error().Msg("Unable to compute signature.")
+		return ""
+	}
+
+	return signaturePrefix + hex.EncodeToString(mac.Sum(nil))
+}
+
+// validateSignature computes and compares message digest
+func validateSignature(requestSignature string, payload []byte) bool {
+	computedSignature := computeSignature(payload)
+	return subtle.ConstantTimeCompare([]byte(computedSignature), []byte(requestSignature)) == 1
+}
 
 // HandleWebhook handles incoming webhook messages from Optimizely application
 func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request)  {
@@ -60,7 +88,18 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// TODO check signature before updating config
+	requestSignature := r.Header.Get(signatureHeader)
+	isValid := validateSignature(requestSignature, body)
+
+	if !isValid {
+		log.Error().Msg("Computed signature does not match signature in request. Ignoring message.")
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, render.M{
+			"error": "Computed signature does not match signature in request. Ignoring message.",
+		})
+		return
+	}
+
 	h.optlyClient.UpdateConfig()
 	w.WriteHeader(http.StatusNoContent)
 }

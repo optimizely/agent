@@ -41,6 +41,33 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 	assert.Regexp(t, "Unable to parse webhook message.", rr.Body.String())
 }
 
+func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
+	webhookMsg := models.OptlyMessage{
+		ProjectID: 42,
+		Timestamp: 42424242,
+		Event:     "project.datafile_updated",
+		Data:      models.DatafileUpdateData{
+			Revision:    101,
+			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
+			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
+			Environment: "Production",
+		},
+	}
+
+	validWebhookMessage, _ := json.Marshal(webhookMsg)
+
+	req, err := http.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
+	assert.Nil(t, err)
+	req.Header.Set(signatureHeader, "sha1=some_random_signature_in_header")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc((&OptlyWebhookHandler{}).HandleWebhook)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Regexp(t, "Computed signature does not match signature in request. Ignoring message.", rr.Body.String())
+}
+
 func TestHandleWebhookValidMessage(t *testing.T) {
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 42,
@@ -58,6 +85,8 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
 	assert.Nil(t, err)
+	// This sha1 has been computed from the Optimizely application
+	req.Header.Set(signatureHeader, "sha1=e0199de63fb7192634f52136d4ceb7dc6f191da3")
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc((&OptlyWebhookHandler{}).HandleWebhook)
