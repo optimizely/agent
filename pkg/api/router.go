@@ -30,7 +30,7 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-// Router defines the configuration parameters for Router.
+// RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
 	middleware   middleware.OptlyMiddleware
 	featureAPI   handlers.FeatureAPI
@@ -40,7 +40,7 @@ type RouterOptions struct {
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultRouter() *chi.Mux {
 	spec := &RouterOptions{
-		middleware:   &middleware.OptlyContext{optimizely.NewCache()},
+		middleware:   &middleware.OptlyContext{Cache: optimizely.NewCache()},
 		featureAPI:   new(handlers.FeatureHandler),
 		userEventAPI: new(handlers.UserEventHandler),
 	}
