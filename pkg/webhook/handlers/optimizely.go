@@ -57,9 +57,6 @@ func computeSignature(payload []byte) string {
 // validateSignature computes and compares message digest
 func validateSignature(requestSignature string, payload []byte) bool {
 	computedSignature := computeSignature(payload)
-	print(requestSignature)
-	print(computedSignature)
-	print(string(payload))
 	return subtle.ConstantTimeCompare([]byte(computedSignature), []byte(requestSignature)) == 1
 }
 
