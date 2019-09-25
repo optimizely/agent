@@ -43,8 +43,8 @@ func (suite *CacheTestSuite) SetupTest() {
 }
 
 func (suite *CacheTestSuite) TestGetDefault() {
-	optltyClient1, err1 := suite.cache.GetDefault()
-	optltyClient2, err2 := suite.cache.GetDefault()
+	optltyClient1, err1 := suite.cache.GetDefaultClient()
+	optltyClient2, err2 := suite.cache.GetDefaultClient()
 
 	suite.NoError(err1)
 	suite.NoError(err2)
@@ -52,8 +52,8 @@ func (suite *CacheTestSuite) TestGetDefault() {
 }
 
 func (suite *CacheTestSuite) TestGetCacheHit() {
-	optltyClient1, err1 := suite.cache.Get("one")
-	optltyClient2, err2 := suite.cache.Get("one")
+	optltyClient1, err1 := suite.cache.GetClient("one")
+	optltyClient2, err2 := suite.cache.GetClient("one")
 
 	suite.NoError(err1)
 	suite.NoError(err2)
@@ -61,8 +61,8 @@ func (suite *CacheTestSuite) TestGetCacheHit() {
 }
 
 func (suite *CacheTestSuite) TestGetCacheMiss() {
-	optltyClient1, err1 := suite.cache.Get("one")
-	optltyClient2, err2 := suite.cache.Get("two")
+	optltyClient1, err1 := suite.cache.GetClient("one")
+	optltyClient2, err2 := suite.cache.GetClient("two")
 
 	suite.NoError(err1)
 	suite.NoError(err2)
@@ -70,7 +70,7 @@ func (suite *CacheTestSuite) TestGetCacheMiss() {
 }
 
 func (suite *CacheTestSuite) TestGetError() {
-	_, err1 := suite.cache.Get("ERROR")
+	_, err1 := suite.cache.GetClient("ERROR")
 	suite.Error(err1)
 }
 
