@@ -28,7 +28,7 @@ type FeatureAPI interface {
 	ActivateFeature(w http.ResponseWriter, r *http.Request)
 }
 
-// FeatureAPI defines the supported user event apis.
+// UserEventAPI defines the supported user event apis.
 type UserEventAPI interface {
 	AddUserEvent(w http.ResponseWriter, r *http.Request)
 }
