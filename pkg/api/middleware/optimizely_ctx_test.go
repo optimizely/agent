@@ -33,7 +33,7 @@ var expectedClient = optimizely.OptlyClient{}
 
 type StaticCache struct{}
 
-func (c *StaticCache) Get(key string) (*optimizely.OptlyClient, error) {
+func (c *StaticCache) GetClient(key string) (*optimizely.OptlyClient, error) {
 	if key == "ERROR" {
 		return &optimizely.OptlyClient{}, fmt.Errorf("ERROR")
 	}
@@ -45,7 +45,7 @@ func (c *StaticCache) Get(key string) (*optimizely.OptlyClient, error) {
 	return &optimizely.OptlyClient{}, fmt.Errorf("NOT FOUND")
 }
 
-func (c *StaticCache) GetDefault() (*optimizely.OptlyClient, error) {
+func (c *StaticCache) GetDefaultClient() (*optimizely.OptlyClient, error) {
 	return &defaultClient, nil
 }
 
@@ -61,7 +61,7 @@ func (suite *OptlyMiddlewareTestSuite) SetupTest() {
 func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 	handler := suite.optlyCtx.ClientCtx(ErrorHandler(suite))
 	req, err := http.NewRequest("GET", "", nil)
-	req.Header.Add("X-OPTLY-SDK-KEY", "ERROR")
+	req.Header.Add(OptlySdkHeader, "ERROR")
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
@@ -80,7 +80,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
 func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
 	handler := suite.optlyCtx.ClientCtx(AssertHandler(suite, &expectedClient))
 	req, err := http.NewRequest("GET", "", nil)
-	req.Header.Add("X-OPTLY-SDK-KEY", "EXPECTED")
+	req.Header.Add(OptlySdkHeader, "EXPECTED")
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
