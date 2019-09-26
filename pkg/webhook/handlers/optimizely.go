@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
@@ -75,7 +76,7 @@ func (h *OptlyWebhookHandler) Init() {
 	if !configFileSet {
 		configFile = defaultWebhookConfigFile
 	}
-	webhooksSource, err := ioutil.ReadFile(configFile)
+	webhooksSource, err := ioutil.ReadFile(filepath.Clean(configFile))
 	if err != nil {
 		log.Error().Msg("Unable to read config file.")
 		panic(err)
