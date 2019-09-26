@@ -26,6 +26,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
@@ -37,7 +38,7 @@ import (
 
 const signatureHeader = "X-Hub-Signature"
 const signaturePrefix = "sha1="
-const webhookConfigFile = "config.yaml"
+const defaultWebhookConfigFile = "config.yaml"
 
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
@@ -69,7 +70,11 @@ func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload
 
 // Init initializes the webhook handler with all known webhooks
 func (h *OptlyWebhookHandler) Init() {
-	webhooksSource, err := ioutil.ReadFile(webhookConfigFile)
+	configFile, configFileSet := os.LookupEnv("OPTLY_WEBHOOK_CONFIG_FILE")
+	if !configFileSet {
+		configFile = defaultWebhookConfigFile
+	}
+	webhooksSource, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Error().Msg("Unable to read config file.")
 		panic(err)
