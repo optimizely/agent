@@ -32,3 +32,10 @@ type OptlyMessage struct {
     Event        string					`json:"event"`
     Data         DatafileUpdateData     `json:"data"`
 }
+
+// OptlyWebhookConfig represents configuration of a single Optimizely webhook
+type OptlyWebhookConfig struct {
+    ProjectID   int64                   `yaml:"projectId"`
+    SDKKeys     []string                `yaml:"sdkKeys"`
+    Secret      string                  `yaml:"secret"`
+}

@@ -1,0 +1,4 @@
+- projectId: 42
+  sdkKeys:
+    - "myDatafile"
+  secret: "I am secret"

@@ -23,12 +23,12 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
-
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 
@@ -37,17 +37,17 @@ import (
 
 const signatureHeader = "X-Hub-Signature"
 const signaturePrefix = "sha1="
+const webhookConfigFile = "config.yaml"
 
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
-	optlyClient optimizely.OptlyClient
+	Configs			[]models.OptlyWebhookConfig
+	optlyClient 	optimizely.OptlyClient
 }
 
 // computeSignature computes signature based on payload
-func computeSignature(payload []byte) string {
-	// TODO set this up from webhook registry
-	secretKey := "I am secret"
+func (h *OptlyWebhookHandler)computeSignature(payload []byte, secretKey string) string {
 	mac := hmac.New(sha1.New, []byte(secretKey))
 	_, err := mac.Write(payload)
 
@@ -60,9 +60,26 @@ func computeSignature(payload []byte) string {
 }
 
 // validateSignature computes and compares message digest
-func validateSignature(requestSignature string, payload []byte) bool {
-	computedSignature := computeSignature(payload)
+func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload []byte) bool {
+	// TODO change this to fetch secret based on project ID
+	secretKey := h.Configs[0].Secret
+	computedSignature := h.computeSignature(payload, secretKey)
 	return subtle.ConstantTimeCompare([]byte(computedSignature), []byte(requestSignature)) == 1
+}
+
+// Init initializes the webhook handler with all known webhooks
+func (h *OptlyWebhookHandler) Init() {
+	webhooksSource, err := ioutil.ReadFile(webhookConfigFile)
+	if err != nil {
+		log.Error().Msg("Unable to read config file.")
+		panic(err)
+	}
+
+	err = yaml.Unmarshal(webhooksSource, &h.Configs)
+	if err != nil {
+		log.Error().Msg("Unable to parse config file.")
+		panic(err)
+	}
 }
 
 // HandleWebhook handles incoming webhook messages from Optimizely application
@@ -89,7 +106,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	}
 
 	requestSignature := r.Header.Get(signatureHeader)
-	isValid := validateSignature(requestSignature, body)
+	isValid := h.validateSignature(requestSignature, body)
 
 	if !isValid {
 		log.Error().Msg("Computed signature does not match signature in request. Ignoring message.")
