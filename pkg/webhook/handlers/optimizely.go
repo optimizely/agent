@@ -70,6 +70,7 @@ func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload
 
 // Init initializes the webhook handler with all known webhooks
 func (h *OptlyWebhookHandler) Init() {
+	// TODO allow setting this config file from command line
 	configFile, configFileSet := os.LookupEnv("OPTLY_WEBHOOK_CONFIG_FILE")
 	if !configFileSet {
 		configFile = defaultWebhookConfigFile
