@@ -43,7 +43,7 @@ const webhookConfigFile = "config.yaml"
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
 	Configs			[]models.OptlyWebhookConfig
-	optlyClient 	optimizely.OptlyClient
+	optlyClient		optimizely.OptlyClient
 }
 
 // computeSignature computes signature based on payload
