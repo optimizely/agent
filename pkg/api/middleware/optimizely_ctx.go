@@ -28,6 +28,8 @@ type contextKey string
 
 // OptlyClientKey is the context key for the OptlyClient
 const OptlyClientKey = contextKey("optlyClient")
+
+// OptlySdkHeader is the header key for an ad-hoc SDK key
 const OptlySdkHeader = string("X-Optimizely-SDK-Key")
 
 // OptlyContext encapsulates middleware associated with an OptlyClient

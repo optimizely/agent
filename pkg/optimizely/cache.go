@@ -46,12 +46,12 @@ func NewCache() *OptlyCache {
 	}
 }
 
-// GetDefault returns a default OptlyClient where the SDK Key is sourced via server configuration.
+// GetDefaultClient returns a default OptlyClient where the SDK Key is sourced via server configuration.
 func (c *OptlyCache) GetDefaultClient() (*OptlyClient, error) {
 	return c.GetClient(c.defaultKey)
 }
 
-// Get is used to fetch an instance of the OptlyClient when the SDK Key is explicitly supplied.
+// GetClient is used to fetch an instance of the OptlyClient when the SDK Key is explicitly supplied.
 func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 	val, ok := c.optlyMap.Get(sdkKey)
 	if ok {
