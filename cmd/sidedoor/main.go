@@ -20,11 +20,18 @@ import (
 	"net/http"
 
 	"github.com/optimizely/sidedoor/pkg/api"
+	"github.com/optimizely/sidedoor/pkg/webhook"
 )
 
 func main() {
-	log.Printf("Server started")
-	router := api.NewDefaultRouter()
+	apiRouter := api.NewDefaultRouter()
+	webhookRouter := webhook.NewRouter()
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	go func() {
+		log.Printf("Optimizely webhook server started")
+		log.Fatal(http.ListenAndServe(":8085", webhookRouter))
+	}()
+
+	log.Printf("Optimizely API server started")
+	log.Fatal(http.ListenAndServe(":8080", apiRouter))
 }
