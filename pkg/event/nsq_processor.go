@@ -26,7 +26,8 @@ import (
 // NewEventProcessorNSQ returns a new instance of QueueingEventProcessor with a backing NSQ queue
 func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration ) *event.QueueingEventProcessor {
 	// can't set the wg since it is private (lowercase).
-	p := event.NewCustomEventProcessor(exeCtx, event.DefaultBatchSize, queueSize, flushInterval, NewNSQueueDefault(), &event.HTTPEventDispatcher{} )
+	p := event.NewEventProcessor(exeCtx, event.BatchSize(event.DefaultBatchSize), event.QueueSize(queueSize),
+		event.FlushInterval(flushInterval), event.PQ(NewNSQueueDefault()), event.PDispatcher(&event.HTTPEventDispatcher{} ))
 
 	return p
 }
