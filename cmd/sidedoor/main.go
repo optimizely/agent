@@ -28,6 +28,7 @@ func main() {
 	webhookRouter := webhook.NewRouter()
 
 	go func() {
+		// TODO optionally not start this if user is not interested in webhooks
 		log.Printf("Optimizely webhook server started")
 		log.Fatal(http.ListenAndServe(":8085", webhookRouter))
 	}()
