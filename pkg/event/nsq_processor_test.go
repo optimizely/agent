@@ -62,7 +62,7 @@ func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
 	processor.ProcessEvent(impression)
 	processor.ProcessEvent(impression)
 
-	time.Sleep(3000 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	assert.NotNil(t, processor.Ticker)
 
@@ -92,13 +92,13 @@ func TestNSQEventProcessor_ProcessBatch(t *testing.T) {
 	processor.ProcessEvent(conversion)
 	processor.ProcessEvent(conversion)
 
-	time.Sleep(3000 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	assert.NotNil(t, processor.Ticker)
 
 	assert.Equal(t, 0, processor.EventsCount())
 
-	time.Sleep(3000 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	result, ok := (processor.EventDispatcher).(*MockDispatcher)
 
