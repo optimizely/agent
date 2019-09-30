@@ -29,8 +29,8 @@ type contextKey string
 // OptlyClientKey is the context key for the OptlyClient
 const OptlyClientKey = contextKey("optlyClient")
 
-// OptlySdkHeader is the header key for an ad-hoc SDK key
-const OptlySdkHeader = string("X-Optimizely-SDK-Key")
+// OptlySDKHeader is the header key for an ad-hoc SDK key
+const OptlySDKHeader = string("X-Optimizely-SDK-Key")
 
 // OptlyContext encapsulates middleware associated with an OptlyClient
 type OptlyContext struct {
@@ -41,7 +41,7 @@ type OptlyContext struct {
 func (ctx *OptlyContext) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		sdkKey := r.Header.Get(OptlySdkHeader)
+		sdkKey := r.Header.Get(OptlySDKHeader)
 
 		var err error
 		var optlyClient *optimizely.OptlyClient
