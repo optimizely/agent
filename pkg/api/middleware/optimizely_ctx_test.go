@@ -61,7 +61,7 @@ func (suite *OptlyMiddlewareTestSuite) SetupTest() {
 func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 	handler := suite.optlyCtx.ClientCtx(ErrorHandler(suite))
 	req, err := http.NewRequest("GET", "", nil)
-	req.Header.Add(OptlySdkHeader, "ERROR")
+	req.Header.Add(OptlySDKHeader, "ERROR")
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
@@ -80,7 +80,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
 func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
 	handler := suite.optlyCtx.ClientCtx(AssertHandler(suite, &expectedClient))
 	req, err := http.NewRequest("GET", "", nil)
-	req.Header.Add(OptlySdkHeader, "EXPECTED")
+	req.Header.Add(OptlySDKHeader, "EXPECTED")
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
