@@ -20,10 +20,16 @@ package event
 import (
 	"bytes"
 	"encoding/gob"
+	// we use the producer from the base package as it does not block.
 	"github.com/nsqio/go-nsq"
+	// this is the nsq demon
 	"github.com/nsqio/nsq/nsqd"
+	// optimizely events
 	"github.com/optimizely/go-sdk/optimizely/event"
 	"github.com/rs/zerolog/log"
+	// we use the consumer from segmentio as it mentions in the segmentio documents, they
+	// found several problems with the nsq consumer and ended up creating their own wrapper.
+	// we use that wrapper.
 	snsq "github.com/segmentio/nsq-go"
 )
 
@@ -36,6 +42,8 @@ const NsqTopic string = "user_event"
 
 var embeddedNSQD *nsqd.NSQD
 
+// the done channel is used by the embeddedNSQD.  The processor implementation waits for a context.Done()
+// and then calls done to shutdown the embeddedNSQD if it is running.
 var done = make(chan bool)
 
 // NSQQueue is a implementation of Queue interface with a backing NSQ

@@ -66,6 +66,10 @@ func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
 
 	assert.NotNil(t, processor.Ticker)
 
+	exeCtx.CancelFunc()
+
+	time.Sleep(1 * time.Second)
+
 	assert.Equal(t, 0, processor.EventsCount())
 
 }
