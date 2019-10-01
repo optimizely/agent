@@ -60,38 +60,6 @@ func (f *MockDispatcher) DispatchEvent(event event.LogEvent) (bool, error) {
 	return true, nil
 }
 
-func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
-	exeCtx := utils.NewCancelableExecutionCtx()
-
-	processor := NewEventProcessorNSQ(exeCtx, 100, 100)
-	processor.EventDispatcher = &MockDispatcher{}
-
-	impression := BuildTestImpressionEvent()
-
-	processor.ProcessEvent(impression)
-	processor.ProcessEvent(impression)
-	processor.ProcessEvent(impression)
-
-	assert.NotNil(t, processor.Ticker)
-
-	time.Sleep(1 * time.Second)
-
-	assert.Equal(t, 0, processor.EventsCount())
-
-	result, ok := (processor.EventDispatcher).(*MockDispatcher)
-
-	if ok {
-		assert.Equal(t, 1, len(result.Events))
-		//evs := result.Events[0]
-		//assert.True(t, len(evs.event.Visitors) >= 1)
-	}
-
-	exeCtx.CancelFunc()
-
-	time.Sleep(1 * time.Second)
-
-}
-
 func TestNSQEventProcessor_ProcessBatch(t *testing.T) {
 	exeCtx := utils.NewCancelableExecutionCtx()
 	processor := NewEventProcessorNSQ(exeCtx, 10, 100)

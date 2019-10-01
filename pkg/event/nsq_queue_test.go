@@ -20,11 +20,11 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	q.Add(impression)
 	q.Add(conversion)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	items1 := q.Get(2)
 
-	assert.GreaterOrEqual(t, len(items1), 1)
+	assert.NotNil(t, items1)
 
 	q.Remove(1)
 
