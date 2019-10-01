@@ -57,7 +57,7 @@ type NSQQueue struct {
 func (i *NSQQueue) Get(count int) []interface{} {
 
 	var (
-		events = make([]interface{}, count)
+		events = make([]interface{}, 0)
 	)
 
 	messages := i.messages.Get(count)
@@ -91,6 +91,8 @@ func (i *NSQQueue) Add(item interface{}) {
 		if err != nil {
 			log.Error().Err(err).Msg("Error publishing event")
 		}
+	} else {
+		log.Error().Msg("No publisher present")
 	}
 }
 

@@ -6,7 +6,11 @@ import (
 	"time"
 )
 
-func TestNSQQueue_Add_Size_Remove(t *testing.T) {
+// right now we create a embedded nsqd and send events to it.  this fully tests nsqd but
+// is probably not necessary for our tests.  in order to stub the processor and consumer out,
+// we need to abstract away the producer and consumer interface, then implement one for nsq and one
+// that stubs nsq.
+func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	q := NewNSQueueDefault()
 
 	impression := BuildTestImpressionEvent()
@@ -35,6 +39,64 @@ func TestNSQQueue_Add_Size_Remove(t *testing.T) {
 	allItems := q.Remove(3)
 
 	assert.True(t,len(allItems) >= 0)
+
+	assert.Equal(t, 0, q.Size())
+}
+
+func TestNSQQueue_TestConfig(t *testing.T) {
+	q := NewNSQueue(10, "", false, true, true)
+
+	impression := BuildTestImpressionEvent()
+	conversion := BuildTestConversionEvent()
+
+	q.Add(impression)
+	q.Add(impression)
+	q.Add(conversion)
+
+	time.Sleep(1 * time.Second)
+
+	items1 := q.Get(2)
+
+	assert.Equal(t, 0, len(items1))
+
+	q.Remove(1)
+
+	items2 := q.Get(1)
+
+	assert.Equal(t, 0, len(items2))
+
+	allItems := q.Remove(3)
+
+	assert.Equal(t,0, len(allItems))
+
+	assert.Equal(t, 0, q.Size())
+}
+
+func TestNSQQueue_TestConfigNoProducerConsumer(t *testing.T) {
+	q := NewNSQueue(10, "", false, false, false)
+
+	impression := BuildTestImpressionEvent()
+	conversion := BuildTestConversionEvent()
+
+	q.Add(impression)
+	q.Add(impression)
+	q.Add(conversion)
+
+	time.Sleep(1 * time.Second)
+
+	items1 := q.Get(2)
+
+	assert.Equal(t, 0, len(items1))
+
+	q.Remove(1)
+
+	items2 := q.Get(1)
+
+	assert.Equal(t, 0, len(items2))
+
+	allItems := q.Remove(3)
+
+	assert.Equal(t,0, len(allItems))
 
 	assert.Equal(t, 0, q.Size())
 }
