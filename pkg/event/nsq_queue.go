@@ -20,11 +20,10 @@ package event
 import (
 	"bytes"
 	"encoding/gob"
-	// we use the producer from the base package as it does not block.
-	"github.com/nsqio/go-nsq"
+	"time"
+
 	// this is the nsq demon
 	"github.com/nsqio/nsq/nsqd"
-	// optimizely events
 	"github.com/optimizely/go-sdk/optimizely/event"
 	"github.com/rs/zerolog/log"
 	// we use the consumer from segmentio as it mentions in the segmentio documents, they
@@ -40,6 +39,8 @@ const NsqListenSpec string = "localhost:4150"
 // NsqTopic is the default NSQ topic
 const NsqTopic string = "user_event"
 
+const deadline = 5 * time.Second
+
 var embeddedNSQD *nsqd.NSQD
 
 // the done channel is used by the embeddedNSQD.  The processor implementation waits for a context.Done()
@@ -48,7 +49,7 @@ var done = make(chan bool)
 
 // NSQQueue is a implementation of Queue interface with a backing NSQ
 type NSQQueue struct {
-	p *nsq.Producer
+	p *snsq.Producer
 	c *snsq.Consumer
 	messages event.Queue
 }
@@ -87,7 +88,23 @@ func (i *NSQQueue) Add(item interface{}) {
 	}
 
 	if i.p != nil {
-		err := i.p.Publish(NsqTopic, buf.Bytes())
+
+		response := make(chan error, 1)
+		deadline := time.Now().Add(deadline)
+
+		// Attempts to queue the request so one of the active connections can pick
+		// it up.
+		i.p.Requests() <- snsq.ProducerRequest{
+			Topic:    NsqTopic,
+			Message:  buf.Bytes(),
+			Response: response,
+			Deadline: deadline,
+		}
+
+		// This will always trigger, either if the connection was lost or if a
+		// response was successfully sent.
+		err = <-response
+
 		if err != nil {
 			log.Error().Err(err).Msg("Error publishing event")
 		}
@@ -152,20 +169,22 @@ func NewNSQueue(queueSize int, address string, startDaemon, startProducer, start
 					// wait until we are told to continue and exit
 					<-done
 					embeddedNSQD.Exit()
+					embeddedNSQD = nil
 				}
 			}
 		}()
 	}
 
-	var p *nsq.Producer
+	var p *snsq.Producer
 	var err error
-	nsqConfig := nsq.NewConfig()
+	nsqConfig := snsq.ProducerConfig{Address:NsqListenSpec, Topic:NsqTopic, MaxConcurrency:queueSize}
 
 	if startProducer {
-		p, err = nsq.NewProducer(address, nsqConfig)
+		p, err = snsq.NewProducer(nsqConfig)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating producer")
 		}
+		p.Start()
 	}
 
 	var consumer *snsq.Consumer

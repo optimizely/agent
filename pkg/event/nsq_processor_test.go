@@ -51,29 +51,6 @@ func BuildTestConversionEvent() event.UserEvent {
 	return conversionUserEvent
 }
 
-func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
-	exeCtx := utils.NewCancelableExecutionCtx()
-
-	processor := NewEventProcessorNSQ(exeCtx, 100, 100)
-
-	impression := BuildTestImpressionEvent()
-
-	processor.ProcessEvent(impression)
-	processor.ProcessEvent(impression)
-	processor.ProcessEvent(impression)
-
-	time.Sleep(1 * time.Second)
-
-	assert.NotNil(t, processor.Ticker)
-
-	exeCtx.CancelFunc()
-
-	time.Sleep(1 * time.Second)
-
-	assert.Equal(t, 0, processor.EventsCount())
-
-}
-
 type MockDispatcher struct {
 	Events []event.LogEvent
 }
@@ -81,6 +58,38 @@ type MockDispatcher struct {
 func (f *MockDispatcher) DispatchEvent(event event.LogEvent) (bool, error) {
 	f.Events = append(f.Events, event)
 	return true, nil
+}
+
+func TestNSQEventProcessor_ProcessImpression(t *testing.T) {
+	exeCtx := utils.NewCancelableExecutionCtx()
+
+	processor := NewEventProcessorNSQ(exeCtx, 100, 100)
+	processor.EventDispatcher = &MockDispatcher{}
+
+	impression := BuildTestImpressionEvent()
+
+	processor.ProcessEvent(impression)
+	processor.ProcessEvent(impression)
+	processor.ProcessEvent(impression)
+
+	assert.NotNil(t, processor.Ticker)
+
+	time.Sleep(1 * time.Second)
+
+	assert.Equal(t, 0, processor.EventsCount())
+
+	result, ok := (processor.EventDispatcher).(*MockDispatcher)
+
+	if ok {
+		assert.Equal(t, 1, len(result.Events))
+		//evs := result.Events[0]
+		//assert.True(t, len(evs.event.Visitors) >= 1)
+	}
+
+	exeCtx.CancelFunc()
+
+	time.Sleep(1 * time.Second)
+
 }
 
 func TestNSQEventProcessor_ProcessBatch(t *testing.T) {
@@ -96,19 +105,21 @@ func TestNSQEventProcessor_ProcessBatch(t *testing.T) {
 	processor.ProcessEvent(conversion)
 	processor.ProcessEvent(conversion)
 
-	time.Sleep(1 * time.Second)
-
 	assert.NotNil(t, processor.Ticker)
 
-	assert.Equal(t, 0, processor.EventsCount())
-
 	time.Sleep(1 * time.Second)
+
+	assert.Equal(t, 0, processor.EventsCount())
 
 	result, ok := (processor.EventDispatcher).(*MockDispatcher)
 
 	if ok {
 		assert.Equal(t, 1, len(result.Events))
-		//evs := result.Events[0]
-		//assert.True(t, len(evs.event.Visitors) >= 1)
+		evs := result.Events[0]
+		assert.True(t, len(evs.Event.Visitors) >= 1)
 	}
+
+	exeCtx.CancelFunc()
+
+	time.Sleep(1 * time.Second)
 }

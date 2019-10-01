@@ -20,7 +20,7 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	q.Add(impression)
 	q.Add(conversion)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	items1 := q.Get(2)
 
@@ -39,35 +39,6 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	allItems := q.Remove(3)
 
 	assert.True(t,len(allItems) >= 0)
-
-	assert.Equal(t, 0, q.Size())
-}
-
-func TestNSQQueue_TestConfig(t *testing.T) {
-	q := NewNSQueue(10, "", false, true, true)
-
-	impression := BuildTestImpressionEvent()
-	conversion := BuildTestConversionEvent()
-
-	q.Add(impression)
-	q.Add(impression)
-	q.Add(conversion)
-
-	time.Sleep(1 * time.Second)
-
-	items1 := q.Get(2)
-
-	assert.Equal(t, 0, len(items1))
-
-	q.Remove(1)
-
-	items2 := q.Get(1)
-
-	assert.Equal(t, 0, len(items2))
-
-	allItems := q.Remove(3)
-
-	assert.Equal(t,0, len(allItems))
 
 	assert.Equal(t, 0, q.Size())
 }
