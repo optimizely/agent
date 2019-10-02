@@ -5,5 +5,6 @@ COPY . .
 RUN make ci_build_static_binary
 
 FROM scratch
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=0 /go/src/github.com/optimizely/sidedoor/bin/sidedoor /sidedoor
 CMD ["/sidedoor"]
