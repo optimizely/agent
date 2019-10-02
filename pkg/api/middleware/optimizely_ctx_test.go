@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
@@ -31,21 +32,16 @@ import (
 var defaultClient = optimizely.OptlyClient{}
 var expectedClient = optimizely.OptlyClient{}
 
-type StaticCache struct{}
-
-func (c *StaticCache) GetClient(key string) (*optimizely.OptlyClient, error) {
-	if key == "ERROR" {
-		return &optimizely.OptlyClient{}, fmt.Errorf("ERROR")
-	}
-
-	if key == "EXPECTED" {
-		return &expectedClient, nil
-	}
-
-	return &optimizely.OptlyClient{}, fmt.Errorf("NOT FOUND")
+type MockCache struct {
+	mock.Mock
 }
 
-func (c *StaticCache) GetDefaultClient() (*optimizely.OptlyClient, error) {
+func (m *MockCache) GetClient(key string) (*optimizely.OptlyClient, error) {
+	args := m.Called(key)
+	return args.Get(0).(*optimizely.OptlyClient), args.Error(1)
+}
+
+func (m *MockCache) GetDefaultClient() (*optimizely.OptlyClient, error) {
 	return &defaultClient, nil
 }
 
@@ -55,7 +51,10 @@ type OptlyMiddlewareTestSuite struct {
 }
 
 func (suite *OptlyMiddlewareTestSuite) SetupTest() {
-	suite.optlyCtx = &OptlyContext{&StaticCache{}}
+	mockCache := new(MockCache)
+	mockCache.On("GetClient", "ERROR").Return(new(optimizely.OptlyClient), fmt.Errorf("Error"))
+	mockCache.On("GetClient", "EXPECTED").Return(&expectedClient, nil)
+	suite.optlyCtx = &OptlyContext{mockCache}
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetError() {
@@ -65,6 +64,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
@@ -72,6 +72,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
@@ -81,6 +82,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
 }
 
 func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {
