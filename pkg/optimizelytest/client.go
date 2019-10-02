@@ -33,12 +33,8 @@ type TestClient struct {
 func NewClient() *TestClient {
 	projectConfig := NewConfig()
 
-	options := client.Options{
-		ProjectConfigManager: config.NewStaticProjectConfigManager(projectConfig),
-	}
-
 	factory := client.OptimizelyFactory{}
-	optlyClient, _ := factory.ClientWithOptions(options)
+	optlyClient, _ := factory.Client(client.ConfigManager(config.NewStaticProjectConfigManager(projectConfig)))
 
 	return &TestClient{
 		projectConfig:    projectConfig,
