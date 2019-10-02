@@ -28,7 +28,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// UserEventHandler implements the UserEventAPI interface for sending and receviing user event payloads.
+// UserEventHandler implements the UserEventAPI interface for sending and receiving user event payloads.
 type UserEventHandler struct{}
 
 // AddUserEvent - Process a user event

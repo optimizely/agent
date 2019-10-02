@@ -30,7 +30,7 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-// FeatureHandler implements the FeatureApi interface
+// FeatureHandler implements the FeatureAPI interface
 type FeatureHandler struct{}
 
 // ListFeatures - List all features

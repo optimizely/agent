@@ -91,7 +91,7 @@ func TestHandleUserEvent(t *testing.T) {
 	req.Header["Content-Type"] = []string{"application/json"}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc((&UserEventHandler{}).AddUserEvent)
+	handler := http.HandlerFunc(new(UserEventHandler).AddUserEvent)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNoContent, rr.Code)
