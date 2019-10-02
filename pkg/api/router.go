@@ -40,7 +40,7 @@ type RouterOptions struct {
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultRouter() *chi.Mux {
 	spec := &RouterOptions{
-		middleware:   &middleware.OptlyContext{Cache: optimizely.NewCache()},
+		middleware:   &middleware.CachedOptlyMiddleware{Cache: optimizely.NewCache()},
 		featureAPI:   new(handlers.FeatureHandler),
 		userEventAPI: new(handlers.UserEventHandler),
 	}

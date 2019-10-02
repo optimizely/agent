@@ -47,18 +47,18 @@ func (m *MockCache) GetDefaultClient() (*optimizely.OptlyClient, error) {
 
 type OptlyMiddlewareTestSuite struct {
 	suite.Suite
-	optlyCtx *OptlyContext
+	mw *CachedOptlyMiddleware
 }
 
 func (suite *OptlyMiddlewareTestSuite) SetupTest() {
 	mockCache := new(MockCache)
 	mockCache.On("GetClient", "ERROR").Return(new(optimizely.OptlyClient), fmt.Errorf("Error"))
 	mockCache.On("GetClient", "EXPECTED").Return(&expectedClient, nil)
-	suite.optlyCtx = &OptlyContext{mockCache}
+	suite.mw = &CachedOptlyMiddleware{mockCache}
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetError() {
-	handler := suite.optlyCtx.ClientCtx(ErrorHandler(suite))
+	handler := suite.mw.ClientCtx(ErrorHandler(suite))
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "ERROR")
 
@@ -68,7 +68,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
-	handler := suite.optlyCtx.ClientCtx(AssertHandler(suite, &defaultClient))
+	handler := suite.mw.ClientCtx(AssertHandler(suite, &defaultClient))
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -76,7 +76,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
-	handler := suite.optlyCtx.ClientCtx(AssertHandler(suite, &expectedClient))
+	handler := suite.mw.ClientCtx(AssertHandler(suite, &expectedClient))
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "EXPECTED")
 

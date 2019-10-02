@@ -23,5 +23,6 @@ import (
 
 // OptlyMiddleware encapsultes all middleware
 type OptlyMiddleware interface {
+	// ClientCtx adds and OptlyClient to the request context.
 	ClientCtx(next http.Handler) http.Handler
 }
