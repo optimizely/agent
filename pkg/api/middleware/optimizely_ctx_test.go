@@ -60,31 +60,27 @@ func (suite *OptlyMiddlewareTestSuite) SetupTest() {
 
 func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 	handler := suite.optlyCtx.ClientCtx(ErrorHandler(suite))
-	req, err := http.NewRequest("GET", "", nil)
+	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "ERROR")
-	suite.Nil(err)
 
-	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
 	handler := suite.optlyCtx.ClientCtx(AssertHandler(suite, &defaultClient))
-	req, err := http.NewRequest("GET", "", nil)
-	suite.Nil(err)
-
-	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
 	handler := suite.optlyCtx.ClientCtx(AssertHandler(suite, &expectedClient))
-	req, err := http.NewRequest("GET", "", nil)
+	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "EXPECTED")
-	suite.Nil(err)
 
-	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
 }
 
 func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {

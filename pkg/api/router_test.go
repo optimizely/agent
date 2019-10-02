@@ -69,27 +69,27 @@ func (suite *RouterTestSuite) SetupTest() {
 }
 
 func (suite *RouterTestSuite) TestListFeatures() {
-	r := httptest.NewRequest("GET", "/features", nil)
-	rr := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rr, r)
-	suite.Equal(http.StatusOK, rr.Code)
-	suite.Equal("expected", rr.Header().Get(headerKey))
+	req := httptest.NewRequest("GET", "/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(headerKey))
 }
 
 func (suite *RouterTestSuite) TestGetFeature() {
-	r := httptest.NewRequest("GET", "/features/one", nil)
-	rr := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rr, r)
-	suite.Equal(http.StatusOK, rr.Code)
-	suite.Equal("expected", rr.Header().Get(headerKey))
+	req := httptest.NewRequest("GET", "/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(headerKey))
 }
 
 func (suite *RouterTestSuite) TestActivateFeatures() {
-	r := httptest.NewRequest("POST", "/features/one/activate", nil)
-	rr := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rr, r)
-	suite.Equal(http.StatusOK, rr.Code)
-	suite.Equal("expected", rr.Header().Get(headerKey))
+	req := httptest.NewRequest("POST", "/features/one/activate", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(headerKey))
 }
 
 func TestRouter(t *testing.T) {

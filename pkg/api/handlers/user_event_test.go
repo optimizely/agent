@@ -84,16 +84,13 @@ func TestHandleUserEvent(t *testing.T) {
 	}
 	userEvent := event.CreateImpressionUserEvent(config, experiment, variation, userContext)
 	jsonValue, _ := json.Marshal(userEvent)
-	req, err := http.NewRequest("POST", "/user-event", bytes.NewBuffer(jsonValue))
-	if err != nil {
-		t.Fatal(err)
-	}
+	req := httptest.NewRequest("POST", "/user-event", bytes.NewBuffer(jsonValue))
 	req.Header["Content-Type"] = []string{"application/json"}
 
-	rr := httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 	handler := http.HandlerFunc(new(UserEventHandler).AddUserEvent)
-	handler.ServeHTTP(rr, req)
+	handler.ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusNoContent, rr.Code)
-	assert.Equal(t, "", rr.Body.String())
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, "", rec.Body.String())
 }

@@ -72,19 +72,15 @@ func (suite *FeatureTestSuite) TestListFeatures() {
 	suite.tc.AddFeature(feature)
 
 	// Add appropriate context
-	req, err := http.NewRequest("GET", "/features", nil)
-	suite.Nil(err)
+	req := httptest.NewRequest("GET", "/features", nil)
+	rec := httptest.NewRecorder()
 
-	rr := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rr, req)
-
-	suite.Equal(http.StatusOK, rr.Code)
-
-	suite.NoError(err)
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
 	var actual []entities.Feature
-	err = json.Unmarshal(rr.Body.Bytes(), &actual)
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
 	suite.Equal(1, len(actual))
@@ -95,17 +91,15 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeature(feature)
 
-	req, err := http.NewRequest("GET", "/features/one", nil)
-	suite.Nil(err)
+	req := httptest.NewRequest("GET", "/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
 
-	rr := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rr, req)
-
-	suite.Equal(http.StatusOK, rr.Code)
+	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
 	var actual entities.Feature
-	err = json.Unmarshal(rr.Body.Bytes(), &actual)
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
 	suite.Equal(feature, actual)
