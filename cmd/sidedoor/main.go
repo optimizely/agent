@@ -18,21 +18,31 @@ package main
 import (
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/optimizely/sidedoor/pkg/api"
 	"github.com/optimizely/sidedoor/pkg/webhook"
 )
 
 func main() {
+	var wg sync.WaitGroup
 	apiRouter := api.NewDefaultRouter()
 	webhookRouter := webhook.NewRouter()
 
+	wg.Add(1)
+	go func() {
+		log.Printf("Optimizely API server started")
+		log.Fatal(http.ListenAndServe(":8080", apiRouter))
+		wg.Done()
+	}()
+
+	wg.Add(1)
 	go func() {
 		// TODO optionally not start this if user is not interested in webhooks
 		log.Printf("Optimizely webhook server started")
 		log.Fatal(http.ListenAndServe(":8085", webhookRouter))
+		wg.Done()
 	}()
 
-	log.Printf("Optimizely API server started")
-	log.Fatal(http.ListenAndServe(":8080", apiRouter))
+	wg.Wait()
 }
