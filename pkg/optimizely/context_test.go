@@ -25,16 +25,16 @@ import (
 
 type ContextTestSuite struct {
 	suite.Suite
-	context *OptlyContext
+	optlyContext *OptlyContext
 }
 
 func (suite *ContextTestSuite) SetupTest() {
-	suite.context = NewContext("userId", map[string]interface{}{"key": "val"})
+	suite.optlyContext = NewContext("userId", map[string]interface{}{"key": "val"})
 }
 
 func (suite *ContextTestSuite) TestUserContext() {
-	suite.Equal("userId", suite.context.UserContext.ID)
-	suite.Equal("val", suite.context.UserContext.Attributes["key"])
+	suite.Equal("userId", suite.optlyContext.UserContext.ID)
+	suite.Equal("val", suite.optlyContext.UserContext.Attributes["key"])
 }
 
 // In order for 'go test' to run this suite, we need to create

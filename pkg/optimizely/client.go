@@ -67,7 +67,7 @@ func (c *OptlyClient) GetAndTrackFeatureWithContext(featureKey string, ctx *Optl
 	return c.GetFeatureWithContext(featureKey, ctx)
 }
 
-// GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext this does NOT track experiment conversions
+// GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext
 func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
 	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
 }

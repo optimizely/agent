@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	// "github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
 	"github.com/stretchr/testify/suite"

@@ -29,35 +29,35 @@ import (
 
 type ClientTestSuite struct {
 	suite.Suite
-	client     *OptlyClient
-	context    *OptlyContext
+	optlyClient     *OptlyClient
+	optlyContext    *OptlyContext
 	testClient *optimizelytest.TestClient
 }
 
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.client = &OptlyClient{testClient.OptimizelyClient, nil}
-	suite.context = NewContext("userId", make(map[string]interface{}))
+	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil}
+	suite.optlyContext = NewContext("userId", make(map[string]interface{}))
 }
 
 func (suite *ClientTestSuite) TestListFeatures() {
 	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
 	suite.testClient.AddFeature(entities.Feature{Key: "k2"})
-	features, err := suite.client.ListFeatures()
+	features, err := suite.optlyClient.ListFeatures()
 	suite.NoError(err)
 	suite.Equal(2, len(features))
 }
 
 func (suite *ClientTestSuite) TestGetFeature() {
 	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
-	actual, err := suite.client.GetFeature("k1")
+	actual, err := suite.optlyClient.GetFeature("k1")
 	suite.NoError(err)
 	suite.Equal(actual, entities.Feature{Key: "k1"})
 }
 
 func (suite *ClientTestSuite) TestGetNonExistentFeature() {
-	_, _, err := suite.client.GetFeatureWithContext("DNE", suite.context)
+	_, _, err := suite.optlyClient.GetFeatureWithContext("DNE", suite.optlyContext)
 	if !suite.Error(err) {
 		suite.Equal(fmt.Errorf("Feature with key DNE not found"), err)
 	}
@@ -66,7 +66,7 @@ func (suite *ClientTestSuite) TestGetNonExistentFeature() {
 func (suite *ClientTestSuite) TestGetAndTrackFeatureWithContext() {
 	basicFeature := entities.Feature{Key: "basic"}
 	suite.testClient.AddFeatureRollout(basicFeature)
-	enabled, variableMap, err := suite.client.GetAndTrackFeatureWithContext("basic", suite.context)
+	enabled, variableMap, err := suite.optlyClient.GetAndTrackFeatureWithContext("basic", suite.optlyContext)
 
 	suite.NoError(err)
 	suite.True(enabled)
@@ -78,7 +78,7 @@ func (suite *ClientTestSuite) TestGetAndTrackFeatureWithContext() {
 func (suite *ClientTestSuite) TestGetBasicFeature() {
 	basicFeature := entities.Feature{Key: "basic"}
 	suite.testClient.AddFeatureRollout(basicFeature)
-	enabled, variableMap, err := suite.client.GetFeatureWithContext("basic", suite.context)
+	enabled, variableMap, err := suite.optlyClient.GetFeatureWithContext("basic", suite.optlyContext)
 
 	suite.NoError(err)
 	suite.True(enabled)
@@ -94,7 +94,7 @@ func (suite *ClientTestSuite) TestGetAdvancedFeature() {
 	}
 
 	suite.testClient.AddFeatureRollout(advancedFeature)
-	enabled, variableMap, err := suite.client.GetFeatureWithContext("advanced", suite.context)
+	enabled, variableMap, err := suite.optlyClient.GetFeatureWithContext("advanced", suite.optlyContext)
 
 	suite.NoError(err)
 	suite.True(enabled)
