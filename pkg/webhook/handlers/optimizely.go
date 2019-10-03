@@ -23,6 +23,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
@@ -126,7 +127,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	// Check if there is configuration corresponding to the project
 	webhookConfig, ok := h.webhookConfigMap[webhookMsg.ProjectID]
 	if !ok {
-		log.Error().Str("Project ID", strconv.FormatInt(webhookMsg.ProjectID, 10)).Msg("No webhooks found for project.")
+		log.Error().Msg(fmt.Sprintf("No webhooks found for project %s.", strconv.FormatInt(webhookMsg.ProjectID, 10)))
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -147,7 +148,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	for _, sdkKey := range webhookConfig.SDKKeys {
 		optlyClient, err := h.optlyCache.GetClient(sdkKey)
 		if err != nil {
-			log.Error().Str("SDK Key", sdkKey).Msg("No client found with SDK key.")
+			log.Error().Msg(fmt.Sprintf("No client found with SDK key %s.", sdkKey))
 			continue
 		}
 		optlyClient.UpdateConfig()
