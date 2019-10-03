@@ -66,7 +66,7 @@ From an API standpoint the presence of a Feature Test or Rollout is abstrated aw
 
 ```python
 s.params.update({'userId': 'test-user'})
-resp = s.POST('http://localhost:8080/features/{}/activate'.format(feature_key))
+resp = s.post('http://localhost:8080/features/{}/activate'.format(feature_key))
 
 print(resp.json())
 ```
