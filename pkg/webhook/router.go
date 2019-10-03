@@ -30,7 +30,6 @@ func NewRouter() *chi.Mux {
 
 	webhookAPI := new(handlers.OptlyWebhookHandler)
 
-	// Initialize handler with config
 	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
 	return r
 }
