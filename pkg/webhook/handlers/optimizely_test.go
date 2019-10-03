@@ -19,6 +19,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/webhook/models"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -39,6 +40,33 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 	assert.Regexp(t, "Unable to parse webhook message.", rr.Body.String())
+}
+
+func TestHandleWebhookNoWebhookForProject(t *testing.T) {
+	optlyHandler := OptlyWebhookHandler{}
+	optlyHandler.Init()
+	webhookMsg := models.OptlyMessage{
+		ProjectID: 43,
+		Timestamp: 43434343,
+		Event:     "project.datafile_updated",
+		Data:      models.DatafileUpdateData{
+			Revision:    101,
+			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
+			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
+			Environment: "Production",
+		},
+	}
+
+	validWebhookMessage, _ := json.Marshal(webhookMsg)
+
+	req, err := http.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
+	assert.Nil(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc((&optlyHandler).HandleWebhook)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
 }
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
@@ -70,8 +98,11 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	assert.Regexp(t, "Computed signature does not match signature in request. Ignoring message.", rr.Body.String())
 }
 
+
 func TestHandleWebhookValidMessage(t *testing.T) {
-	optlyHandler := OptlyWebhookHandler{}
+	optlyHandler := OptlyWebhookHandler{
+		optlyCache: optimizely.NewCache(),
+	}
 	optlyHandler.Init()
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 42,

@@ -23,12 +23,12 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
@@ -46,7 +46,7 @@ const defaultWebhookConfigFile = "config.yaml"
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
 	webhookConfigMap 	map[int64]models.OptlyWebhookConfig
-	optlyCache       	optimizely.OptlyCache
+	optlyCache       	*optimizely.OptlyCache
 }
 
 // computeSignature computes signature based on payload
@@ -64,8 +64,12 @@ func (h *OptlyWebhookHandler)computeSignature(payload []byte, secretKey string) 
 
 // validateSignature computes and compares message digest
 func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload []byte, projectID int64) bool {
-	secretKey := h.webhookConfigMap[projectID].Secret
-	computedSignature := h.computeSignature(payload, secretKey)
+	webhookConfig, ok := h.webhookConfigMap[projectID]
+	if !ok {
+		return false
+	}
+
+	computedSignature := h.computeSignature(payload, webhookConfig.Secret)
 	return subtle.ConstantTimeCompare([]byte(computedSignature), []byte(requestSignature)) == 1
 }
 
@@ -90,6 +94,7 @@ func (h *OptlyWebhookHandler) Init() {
 	}
 
 	// Generate map with key as project ID and value as config.
+	h.webhookConfigMap = make(map[int64]models.OptlyWebhookConfig)
 	for _, config := range webhookConfigs {
 		h.webhookConfigMap[config.ProjectID] = config
 	}
@@ -118,9 +123,17 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Check if there is configuration corresponding to the project
+	webhookConfig, ok := h.webhookConfigMap[webhookMsg.ProjectID]
+	if !ok {
+		log.Error().Str("Project ID", strconv.FormatInt(webhookMsg.ProjectID, 10)).Msg("No webhooks found for project.")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// Check signature
 	requestSignature := r.Header.Get(signatureHeader)
 	isValid := h.validateSignature(requestSignature, body, webhookMsg.ProjectID)
-
 	if !isValid {
 		log.Error().Msg("Computed signature does not match signature in request. Ignoring message.")
 		render.Status(r, http.StatusBadRequest)
@@ -130,11 +143,11 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	webhookConfig := h.webhookConfigMap[webhookMsg.ProjectID]
+	// Iterate through all SDK keys and update config
 	for _, sdkKey := range webhookConfig.SDKKeys {
 		optlyClient, err := h.optlyCache.GetClient(sdkKey)
 		if err != nil {
-			log.Error().Msg(fmt.Sprint("No client found with SDK key %s", sdkKey))
+			log.Error().Str("SDK Key", sdkKey).Msg("No client found with SDK key.")
 			continue
 		}
 		optlyClient.UpdateConfig()
