@@ -27,7 +27,6 @@ import (
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 
 	"github.com/optimizely/sidedoor/pkg/api/models"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
 // FeatureHandler implements the FeatureAPI interface
@@ -35,9 +34,9 @@ type FeatureHandler struct{}
 
 // ListFeatures - List all features
 func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	optlyClient, ok := r.Context().Value(middleware.OptlyClientKey).(*optimizely.OptlyClient)
-	if !ok {
-		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
@@ -55,20 +54,17 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 // GetFeature - Get requested feature
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, ok := r.Context().Value(middleware.OptlyClientKey).(*optimizely.OptlyClient)
-	if !ok {
-		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
 	featureKey := chi.URLParam(r, "featureKey")
 	feature, err := optlyClient.GetFeature(featureKey)
 	if err != nil {
-		// TODO need to disinguish between an error and DNE
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, render.M{
-			"error": err.Error(),
-		})
+		log.Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -77,34 +73,24 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 
 // ActivateFeature - Return the feature and record impression
 func (h *FeatureHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, ok := r.Context().Value(middleware.OptlyClientKey).(*optimizely.OptlyClient)
-	if !ok {
-		http.Error(w, "OptlyClient not available", http.StatusUnprocessableEntity)
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	optlyContext, err := middleware.GetOptlyContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
 	featureKey := chi.URLParam(r, "featureKey")
-	userID := r.URL.Query().Get("userId")
-
-	if userID == "" {
-		log.Error().Msg("Invalid request, missing userId")
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, render.M{
-			"error": "missing userId",
-		})
-		return
-	}
-
-	// TODO replace with middleware for testability
-	context := optimizely.NewContext(userID, map[string]interface{}{})
-	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, context)
+	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, optlyContext)
 
 	if err != nil {
-		log.Error().Str("featureKey", featureKey).Str("userID", userID).Msg("Calling ActivateFeature")
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, render.M{
-			"error": err,
-		})
+		log.Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 

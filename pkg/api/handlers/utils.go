@@ -14,34 +14,19 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
-package optimizely
+// Package handlers //
+package handlers
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"net/http"
+
+	"github.com/go-chi/render"
 )
 
-// OptlyContext encapsulates the user context.
-// TODO Add support for User Profile Service
-type OptlyContext struct {
-	UserContext *entities.UserContext
-}
-
-// NewContext creates the base Context for a user
-func NewContext(id string, attributes map[string]interface{}) *OptlyContext {
-	userContext := entities.UserContext{
-		ID:         id,
-		Attributes: attributes,
-	}
-
-	ctx := &OptlyContext{
-		UserContext: &userContext,
-	}
-
-	return ctx
-}
-
-// GetUserID returns the user ID from within the UserContext
-func (c *OptlyContext) GetUserID() string {
-	return c.UserContext.ID
+// RenderError sets the request status and renders the error message.
+func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	render.Status(r, status)
+	render.JSON(w, r, render.M{
+		"error": err.Error(),
+	})
 }

@@ -14,34 +14,32 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
-package optimizely
+// Package middleware //
+package middleware
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"fmt"
+	"net/http"
+
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-// OptlyContext encapsulates the user context.
-// TODO Add support for User Profile Service
-type OptlyContext struct {
-	UserContext *entities.UserContext
-}
-
-// NewContext creates the base Context for a user
-func NewContext(id string, attributes map[string]interface{}) *OptlyContext {
-	userContext := entities.UserContext{
-		ID:         id,
-		Attributes: attributes,
+// GetOptlyClient is a utility to extract the OptlyClient from the http request context.
+func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
+	optlyClient, ok := r.Context().Value(OptlyClientKey).(*optimizely.OptlyClient)
+	if !ok {
+		return nil, fmt.Errorf("optlyClient not available")
 	}
 
-	ctx := &OptlyContext{
-		UserContext: &userContext,
-	}
-
-	return ctx
+	return optlyClient, nil
 }
 
-// GetUserID returns the user ID from within the UserContext
-func (c *OptlyContext) GetUserID() string {
-	return c.UserContext.ID
+// GetOptlyContext is a utility to extract the OptlyContext from the http request context.
+func GetOptlyContext(r *http.Request) (*optimizely.OptlyContext, error) {
+	optlyContext, ok := r.Context().Value(UserContextKey).(*optimizely.OptlyContext)
+	if !ok {
+		return nil, fmt.Errorf("optlyContext not available")
+	}
+
+	return optlyContext, nil
 }

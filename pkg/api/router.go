@@ -68,7 +68,7 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.Route("/{featureKey}", func(r chi.Router) {
 			// TODO r.Use(FeatureCtx)
 			r.Get("/", opt.featureAPI.GetFeature)
-			r.Post("/activate", opt.featureAPI.ActivateFeature)
+			r.With(opt.middleware.UserCtx).Post("/activate", opt.featureAPI.ActivateFeature)
 		})
 	})
 

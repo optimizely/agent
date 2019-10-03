@@ -94,8 +94,8 @@ func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {
 
 func AssertHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyClient) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		actual, ok := r.Context().Value(OptlyClientKey).(*optimizely.OptlyClient)
-		suite.True(ok)
+		actual, err := GetOptlyClient(r)
+		suite.NoError(err)
 		suite.Same(expected, actual)
 
 	}
@@ -104,4 +104,8 @@ func AssertHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyCl
 
 func TestOptlyMiddleware(t *testing.T) {
 	suite.Run(t, new(OptlyMiddlewareTestSuite))
+}
+
+func TestOptlyContext(t *testing.T) {
+	// TODO
 }
