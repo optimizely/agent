@@ -177,7 +177,7 @@ func NewNSQueue(queueSize int, address string, startDaemon, startProducer, start
 
 	var p *snsq.Producer
 	var err error
-	nsqConfig := snsq.ProducerConfig{Address:NsqListenSpec, Topic:NsqTopic, MaxConcurrency:queueSize}
+	nsqConfig := snsq.ProducerConfig{Address:NsqListenSpec, Topic:NsqTopic}
 
 	if startProducer {
 		p, err = snsq.NewProducer(nsqConfig)
