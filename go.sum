@@ -161,6 +161,8 @@ github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGV
 github.com/onsi/gomega v1.4.2/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/optimizely/go-sdk v1.0.0-beta1 h1:W3ZjBxI52erX95GSAfk+IrP4EEuZHt0kPl+5G53ZaIo=
 github.com/optimizely/go-sdk v1.0.0-beta1/go.mod h1:bzmv9qgWRLndtLrghkyP+JRvuhqhNlq80nGdw9wvadc=
+github.com/optimizely/go-sdk v1.0.0-beta2 h1:tiIH4l+X1oVkv3HgELDiwE2VspLXuqhAT3NPTRmsUN4=
+github.com/optimizely/go-sdk v1.0.0-beta2/go.mod h1:bzmv9qgWRLndtLrghkyP+JRvuhqhNlq80nGdw9wvadc=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6 h1:lNCW6THrCKBiJBpz8kbVGjC7MgdCGKwuvBgc7LoD6sw=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6/go.mod h1:Lu3tH6HLW3feq74c2GC+jIMS/K2CFcDWnWD9XkenwhI=
 github.com/pelletier/go-toml v1.1.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

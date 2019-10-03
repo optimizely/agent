@@ -83,11 +83,7 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	// TODO update go SDK to create and set execution context
 	executionCtx := utils.NewCancelableExecutionCtx()
 	configManager := config.NewPollingProjectConfigManager(executionCtx, sdkKey)
-	clientOptions := client.Options{
-		ProjectConfigManager: configManager,
-	}
-	optimizelyClient, err := optimizelyFactory.ClientWithOptions(clientOptions)
-
+	optimizelyClient, err := optimizelyFactory.Client(client.ConfigManager(configManager))
 	if err != nil {
 		sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
 	}
