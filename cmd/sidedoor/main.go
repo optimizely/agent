@@ -26,12 +26,11 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	apiRouter := api.NewDefaultRouter()
-	webhookRouter := webhook.NewRouter()
 
 	wg.Add(1)
 	go func() {
 		log.Printf("Optimizely API server started")
+		apiRouter := api.NewDefaultRouter()
 		log.Fatal(http.ListenAndServe(":8080", apiRouter))
 		wg.Done()
 	}()
@@ -40,6 +39,7 @@ func main() {
 	go func() {
 		// TODO optionally not start this if user is not interested in webhooks
 		log.Printf("Optimizely webhook server started")
+		webhookRouter := webhook.NewRouter()
 		log.Fatal(http.ListenAndServe(":8085", webhookRouter))
 		wg.Done()
 	}()
