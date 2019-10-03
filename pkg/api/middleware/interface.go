@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ***************************************************************************/
-package main
+
+// Package middleware //
+package middleware
 
 import (
-	"log"
 	"net/http"
-
-	"github.com/optimizely/sidedoor/pkg/api"
 )
 
-func main() {
-	log.Printf("Server started")
-	router := api.NewDefaultRouter()
-
-	log.Fatal(http.ListenAndServe(":8080", router))
+// OptlyMiddleware encapsultes all middleware
+type OptlyMiddleware interface {
+	// ClientCtx adds and OptlyClient to the request context.
+	ClientCtx(next http.Handler) http.Handler
 }

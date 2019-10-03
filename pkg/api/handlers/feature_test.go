@@ -24,6 +24,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/api/models"
+
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -47,16 +50,18 @@ func (suite *FeatureTestSuite) SetupTest() {
 
 	optimizelymw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "optlyClient", optlyClient)
+			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 
 	mux := chi.NewMux()
+	featureAPI := new(FeatureHandler)
 
 	mux.Use(optimizelymw)
-	mux.Get("/features", ListFeatures)
-	mux.Get("/features/{featureKey}", GetFeature)
+	mux.Get("/features", featureAPI.ListFeatures)
+	mux.Get("/features/{featureKey}", featureAPI.GetFeature)
+	mux.Post("/features/{featureKey}/activate", featureAPI.ActivateFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -67,19 +72,15 @@ func (suite *FeatureTestSuite) TestListFeatures() {
 	suite.tc.AddFeature(feature)
 
 	// Add appropriate context
-	req, err := http.NewRequest("GET", "/features", nil)
-	suite.Nil(err)
+	req := httptest.NewRequest("GET", "/features", nil)
+	rec := httptest.NewRecorder()
 
-	rr := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rr, req)
-
-	suite.Equal(http.StatusOK, rr.Code)
-
-	suite.NoError(err)
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
 	var actual []entities.Feature
-	err = json.Unmarshal(rr.Body.Bytes(), &actual)
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
 	suite.Equal(1, len(actual))
@@ -90,7 +91,25 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeature(feature)
 
-	req, err := http.NewRequest("GET", "/features/one", nil)
+	req := httptest.NewRequest("GET", "/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual entities.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.Equal(feature, actual)
+}
+
+func (suite *FeatureTestSuite) TestActivateFeature() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
+
+	req, err := http.NewRequest("POST", "/features/one/activate?userId=test", nil)
 	suite.Nil(err)
 
 	rr := httptest.NewRecorder()
@@ -99,11 +118,16 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 	suite.Equal(http.StatusOK, rr.Code)
 
 	// Unmarshal response
-	var actual entities.Feature
+	var actual models.Feature
 	err = json.Unmarshal(rr.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(feature, actual)
+	expected := models.Feature{
+		Key:     "one",
+		Enabled: true,
+	}
+
+	suite.Equal(expected, actual)
 }
 
 func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
@@ -133,7 +157,7 @@ func TestListFeaturesMissingCtx(t *testing.T) {
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	http.HandlerFunc(ListFeatures).ServeHTTP(rr, req)
+	http.HandlerFunc(new(FeatureHandler).ListFeatures).ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
 	assert.Equal(t, "OptlyClient not available\n", rr.Body.String())
@@ -146,7 +170,7 @@ func TestGetFeatureMissingCtx(t *testing.T) {
 	assert.NoError(t, err)
 
 	rr := httptest.NewRecorder()
-	http.HandlerFunc(GetFeature).ServeHTTP(rr, req)
+	http.HandlerFunc(new(FeatureHandler).GetFeature).ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, rr.Code)
 	assert.Equal(t, "OptlyClient not available\n", rr.Body.String())

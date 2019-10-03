@@ -17,8 +17,80 @@
 // Package api //
 package api
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/go-chi/chi"
+	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+
+	"github.com/stretchr/testify/suite"
+)
+
+const headerKey = "X-Test-Header"
+
+type MockOptlyMiddleware struct{}
+
+func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(headerKey, "expected")
+	})
+}
+
+type MockFeatureAPI struct{}
+
+func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request)    {}
+func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request)      {}
+func (m *MockFeatureAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
+
+type MockUserEventAPI struct{}
+
+func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) {}
+
+type RouterTestSuite struct {
+	suite.Suite
+	tc  *optimizelytest.TestClient
+	mux *chi.Mux
+}
+
+func (suite *RouterTestSuite) SetupTest() {
+	testClient := optimizelytest.NewClient()
+	suite.tc = testClient
+
+	opts := &RouterOptions{
+		featureAPI:   new(MockFeatureAPI),
+		userEventAPI: new(MockUserEventAPI),
+		middleware:   new(MockOptlyMiddleware),
+	}
+
+	suite.mux = NewRouter(opts)
+}
+
+func (suite *RouterTestSuite) TestListFeatures() {
+	req := httptest.NewRequest("GET", "/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(headerKey))
+}
+
+func (suite *RouterTestSuite) TestGetFeature() {
+	req := httptest.NewRequest("GET", "/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(headerKey))
+}
+
+func (suite *RouterTestSuite) TestActivateFeatures() {
+	req := httptest.NewRequest("POST", "/features/one/activate", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(headerKey))
+}
 
 func TestRouter(t *testing.T) {
-	// TODO figure out the best way to test the router.
+	suite.Run(t, new(RouterTestSuite))
 }

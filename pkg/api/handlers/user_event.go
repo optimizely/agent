@@ -28,8 +28,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// UserEvent - Process a user event
-func UserEvent(w http.ResponseWriter, r *http.Request) {
+// UserEventHandler implements the UserEventAPI interface for sending and receiving user event payloads.
+type UserEventHandler struct{}
+
+// AddUserEvent - Process a user event
+func (h *UserEventHandler) AddUserEvent(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Error reading request body")

@@ -14,27 +14,11 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package middleware //
-package middleware
+// Package optimizely wraps the Optimizely SDK
+package optimizely
 
-import (
-	"context"
-	"net/http"
-
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-)
-
-type contextKey string
-
-// OptimizelyCtx adds Optimizely to the request context
-func OptimizelyCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyClient := optimizely.NewClient()
-		if optlyClient == nil {
-			http.Error(w, "Failed to instantiate Optimizely", http.StatusInternalServerError)
-			return
-		}
-		ctx := context.WithValue(r.Context(), contextKey("optlyClient"), optlyClient)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+// Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
+type Cache interface {
+	GetDefaultClient() (*OptlyClient, error)
+	GetClient(sdkKey string) (*OptlyClient, error)
 }
