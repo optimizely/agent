@@ -3,7 +3,8 @@ language: minimal
 branches:
   only:
   - master
-  - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+  # https://docs.travis-ci.com/user/customizing-the-build/#safelisting-or-blocklisting-branches
+  - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 jobs:
 
