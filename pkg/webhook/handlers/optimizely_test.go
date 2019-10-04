@@ -19,12 +19,12 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/optimizely/sidedoor/pkg/optlytest"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
@@ -101,7 +101,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 
 
 func TestHandleWebhookValidMessage(t *testing.T) {
-	testCache := optimizelytest.NewCache()
+	testCache := optlytest.NewCache()
 	optlyHandler := OptlyWebhookHandler{
 		optlyCache: testCache,
 	}

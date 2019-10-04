@@ -14,21 +14,22 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizelytest //
-package optimizelytest
+// Package optlytest //
+package optlytest
 
 import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 )
 
 // TestCache implements the Cache interface and is used in testing.
 type TestCache struct {
-	testClient		*TestClient
+	testClient		*optimizelytest.TestClient
 }
 
 // NewCache returns a new implementation of TestCache
 func NewCache() *TestCache {
-	testClient := NewClient()
+	testClient := optimizelytest.NewClient()
 	return &TestCache{
 		testClient: testClient,
 	}
