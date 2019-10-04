@@ -35,7 +35,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
-
 	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
@@ -47,7 +46,7 @@ const defaultWebhookConfigFile = "config.yaml"
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
 	webhookConfigMap 	map[int64]models.OptlyWebhookConfig
-	optlyCache       	*optimizely.OptlyCache
+	optlyCache       	optimizely.Cache
 }
 
 // computeSignature computes signature based on payload

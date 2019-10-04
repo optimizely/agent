@@ -79,7 +79,7 @@ func (suite *CacheTestSuite) TestGetError() {
 func TestCacheTestSuite(t *testing.T) {
 	suite.Run(t, new(CacheTestSuite))
 }
-
+	
 func mockLoader(sdkKey string) (*OptlyClient, error) {
 	if sdkKey == "ERROR" {
 		return &OptlyClient{}, fmt.Errorf("Error")
