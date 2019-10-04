@@ -11,5 +11,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Adds support for multiple concurrent SDK keys
 
 ## [0.1.0] - September 4th, 2019
- This is the initial release which supported a basic web application and go-sdk integration.
- 
+This is the initial release which supported a basic web application and go-sdk integration.
+
