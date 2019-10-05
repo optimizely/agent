@@ -23,8 +23,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
@@ -68,7 +68,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
-	handler := suite.mw.ClientCtx(AssertHandler(suite, &defaultClient))
+	handler := suite.mw.ClientCtx(AssertOptlyClientHandler(suite, &defaultClient))
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -76,13 +76,32 @@ func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
-	handler := suite.mw.ClientCtx(AssertHandler(suite, &expectedClient))
+	handler := suite.mw.ClientCtx(AssertOptlyClientHandler(suite, &expectedClient))
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "EXPECTED")
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
+}
+
+func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
+	expected := optimizely.NewContext("test", make(map[string]interface{}))
+	handler := suite.mw.UserCtx(AssertOptlyContextHandler(suite, expected))
+	req := httptest.NewRequest("GET", "/?userId=test", nil)
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+}
+
+func (suite *OptlyMiddlewareTestSuite) TestGetUserContextError() {
+	handler := suite.mw.UserCtx(ErrorHandler(suite))
+	req := httptest.NewRequest("GET", "/?userId=", nil)
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusBadRequest, rec.Code)
 }
 
 func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {
@@ -92,7 +111,7 @@ func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {
 	return http.HandlerFunc(fn)
 }
 
-func AssertHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyClient) http.HandlerFunc {
+func AssertOptlyClientHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyClient) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		actual, err := GetOptlyClient(r)
 		suite.NoError(err)
@@ -102,10 +121,16 @@ func AssertHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyCl
 	return http.HandlerFunc(fn)
 }
 
-func TestOptlyMiddleware(t *testing.T) {
-	suite.Run(t, new(OptlyMiddlewareTestSuite))
+func AssertOptlyContextHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyContext) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		actual, err := GetOptlyContext(r)
+		suite.NoError(err)
+		suite.Equal(expected, actual)
+
+	}
+	return http.HandlerFunc(fn)
 }
 
-func TestOptlyContext(t *testing.T) {
-	// TODO
+func TestOptlyMiddleware(t *testing.T) {
+	suite.Run(t, new(OptlyMiddlewareTestSuite))
 }
