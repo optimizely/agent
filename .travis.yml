@@ -34,7 +34,7 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64 VERSION=$TRAVIS_TAG
+      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64 VERSION=${TRAVIS_TAG:1}
       script:
         # now we're going to create packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
