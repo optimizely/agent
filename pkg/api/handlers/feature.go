@@ -42,10 +42,8 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 	features, err := optlyClient.ListFeatures()
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, render.M{
-			"error": err.Error(),
-		})
+		log.Error().Msg("Calling ListFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
