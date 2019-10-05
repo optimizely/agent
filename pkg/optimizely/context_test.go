@@ -37,6 +37,10 @@ func (suite *ContextTestSuite) TestUserContext() {
 	suite.Equal("val", suite.optlyContext.UserContext.Attributes["key"])
 }
 
+func (suite *ContextTestSuite) TestGetUserId() {
+	suite.Equal("userId", suite.optlyContext.GetUserID())
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestContextTestSuite(t *testing.T) {
