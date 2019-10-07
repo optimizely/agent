@@ -18,29 +18,54 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 	"sync"
+	"github.com/spf13/viper"
 
 	"github.com/optimizely/sidedoor/pkg/api"
 	"github.com/optimizely/sidedoor/pkg/webhook"
 )
 
-func main() {
-	var wg sync.WaitGroup
+func loadConfig() {
+	viper.SetEnvPrefix("SIDEDOOR")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 
+	// Port for serving Optimizely APIs
+	viper.SetDefault("api.port", "8080")
+	// Property to turn webhook service on/off
+	viper.SetDefault("webhook.enabled", false)
+	// Port for webhook service
+	viper.SetDefault("webhook.port", "8085")
+	// Path to file for configuring webhooks
+	viper.SetDefault("webhook.config", "config.yaml")
+}
+
+
+func main() {
+	loadConfig()
+	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		log.Printf("Optimizely API server started")
 		apiRouter := api.NewDefaultRouter()
-		log.Fatal(http.ListenAndServe(":8080", apiRouter))
+		apiPort := viper.GetString("api.port")
+		log.Printf("Optimizely API server started at port " + apiPort)
+		log.Fatal(http.ListenAndServe(":" + apiPort, apiRouter))
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
 		// TODO optionally not start this if user is not interested in webhooks
-		log.Printf("Optimizely webhook server started")
+		webhookEnabled := viper.GetBool("webhook.enabled")
+		if !webhookEnabled {
+			log.Printf("Webhook service opted out.")
+			return
+		}
 		webhookRouter := webhook.NewRouter()
-		log.Fatal(http.ListenAndServe(":8085", webhookRouter))
+		webhookPort := viper.GetString("webhook.port")
+		log.Printf("Optimizely webhook server started at port " + webhookPort)
+		log.Fatal(http.ListenAndServe(":" + webhookPort, webhookRouter))
 		wg.Done()
 	}()
 
