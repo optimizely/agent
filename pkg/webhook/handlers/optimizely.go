@@ -23,7 +23,6 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
@@ -66,6 +65,7 @@ func (h *OptlyWebhookHandler)computeSignature(payload []byte, secretKey string) 
 func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload []byte, projectID int64) bool {
 	webhookConfig, ok := h.webhookConfigMap[projectID]
 	if !ok {
+		log.Error().Str("Project ID", strconv.FormatInt(projectID, 10)).Msg("No webhook configuration found for project ID.")
 		return false
 	}
 
@@ -126,7 +126,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	// Check if there is configuration corresponding to the project
 	webhookConfig, ok := h.webhookConfigMap[webhookMsg.ProjectID]
 	if !ok {
-		log.Error().Msg(fmt.Sprintf("No webhooks found for project %s.", strconv.FormatInt(webhookMsg.ProjectID, 10)))
+		log.Error().Str("Project ID", strconv.FormatInt(webhookMsg.ProjectID, 10)).Msg("No webhook configured for Project ID.")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -147,7 +147,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	for _, sdkKey := range webhookConfig.SDKKeys {
 		optlyClient, err := h.optlyCache.GetClient(sdkKey)
 		if err != nil {
-			log.Error().Msg(fmt.Sprintf("No client found with SDK key %s.", sdkKey))
+			log.Error().Str("SDK key", sdkKey).Msg("No client found for SDK key.")
 			continue
 		}
 		optlyClient.UpdateConfig()
