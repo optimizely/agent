@@ -16,11 +16,11 @@
 package main
 
 import (
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"strings"
 	"sync"
-	"github.com/spf13/viper"
 
 	"github.com/optimizely/sidedoor/pkg/api"
 	"github.com/optimizely/sidedoor/pkg/webhook"
@@ -31,8 +31,17 @@ func init() {
 }
 
 func loadConfig() {
-	viper.SetEnvPrefix("SIDEDOOR")
+	viper.SetEnvPrefix("sidedoor")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Set config file
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("No config file found.")
+	}
+
 	viper.AutomaticEnv()
 
 	// Port for serving Optimizely APIs
