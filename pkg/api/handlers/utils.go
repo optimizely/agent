@@ -21,12 +21,11 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/api/models"
 )
 
 // RenderError sets the request status and renders the error message.
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, status)
-	render.JSON(w, r, render.M{
-		"error": err.Error(),
-	})
+	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
 }

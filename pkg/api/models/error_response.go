@@ -17,7 +17,7 @@
 // Package models //
 package models
 
-// Error Model
-type Error struct {
+// ErrorResponse Model
+type ErrorResponse struct {
 	Error string `json:"error"`
 }

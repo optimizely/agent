@@ -56,7 +56,7 @@ func (o *OptlyMW) ClientCtx(next http.Handler) http.Handler {
 func (o *OptlyMW) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyContext := optimizely.NewContext("testUser", make(map[string]interface{}))
-		ctx := context.WithValue(r.Context(), middleware.UserContextKey, optlyContext)
+		ctx := context.WithValue(r.Context(), middleware.OptlyContextKey, optlyContext)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -157,11 +157,11 @@ func (suite *FeatureTestSuite) TestActivateFeatureMissingUserCtx() {
 	suite.Equal(http.StatusUnprocessableEntity, rec.Code)
 
 	// Unmarshal response
-	var actual models.Error
+	var actual models.ErrorResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.Error{Error: "optlyContext not available"}, actual)
+	suite.Equal(models.ErrorResponse{Error: "optlyContext not available"}, actual)
 }
 
 func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
@@ -175,11 +175,11 @@ func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 
 	suite.Equal(http.StatusInternalServerError, rec.Code)
 	// Unmarshal response
-	var actual models.Error
+	var actual models.ErrorResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.Error{Error:`Feature with key dne not found`}, actual)
+	suite.Equal(models.ErrorResponse{Error:`Feature with key dne not found`}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -205,11 +205,11 @@ func TestMissingClientCtx(t *testing.T) {
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
 
 		// Unmarshal response
-		var actual models.Error
+		var actual models.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, models.Error{Error: "optlyClient not available"}, actual)
+		assert.Equal(t, models.ErrorResponse{Error: "optlyClient not available"}, actual)
 	}
 }

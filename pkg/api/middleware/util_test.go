@@ -50,7 +50,7 @@ func TestGetOptlyContext(t *testing.T) {
 	expected := new(optimizely.OptlyContext)
 
 	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), UserContextKey, expected)
+	ctx := context.WithValue(req.Context(), OptlyContextKey, expected)
 
 	actual, err := GetOptlyContext(req.WithContext(ctx))
 	assert.NoError(t, err)

@@ -36,7 +36,7 @@ func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 
 // GetOptlyContext is a utility to extract the OptlyContext from the http request context.
 func GetOptlyContext(r *http.Request) (*optimizely.OptlyContext, error) {
-	optlyContext, ok := r.Context().Value(UserContextKey).(*optimizely.OptlyContext)
+	optlyContext, ok := r.Context().Value(OptlyContextKey).(*optimizely.OptlyContext)
 	if !ok {
 		return nil, fmt.Errorf("optlyContext not available")
 	}
