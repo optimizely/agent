@@ -26,6 +26,10 @@ import (
 	"github.com/optimizely/sidedoor/pkg/webhook"
 )
 
+func init() {
+	loadConfig()
+}
+
 func loadConfig() {
 	viper.SetEnvPrefix("SIDEDOOR")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -37,13 +41,9 @@ func loadConfig() {
 	viper.SetDefault("webhook.enabled", false)
 	// Port for webhook service
 	viper.SetDefault("webhook.port", "8085")
-	// Path to file for configuring webhooks
-	viper.SetDefault("webhook.config", "config.yaml")
 }
 
-
 func main() {
-	loadConfig()
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
