@@ -18,6 +18,8 @@
 package optimizely
 
 import (
+	"github.com/optimizely/go-sdk/optimizely/config"
+	"github.com/optimizely/go-sdk/optimizely/utils"
 	"os"
 
 	cmap "github.com/orcaman/concurrent-map"
@@ -77,15 +79,14 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	sublogger := log.With().Str("sdkKey", sdkKey).Logger()
 	sublogger.Info().Msg("Fetching new OptimizelyClient")
 
-	optimizelyFactory := &client.OptimizelyFactory{
-		SDKKey: sdkKey,
-	}
-
-	optimizelyClient, err := optimizelyFactory.StaticClient()
-
+	optimizelyFactory := &client.OptimizelyFactory{}
+	// TODO update go SDK to create and set execution context
+	executionCtx := utils.NewCancelableExecutionCtx()
+	configManager := config.NewPollingProjectConfigManager(executionCtx, sdkKey)
+	optimizelyClient, err := optimizelyFactory.Client(client.ConfigManager(configManager))
 	if err != nil {
 		sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
 	}
 
-	return &OptlyClient{optimizelyClient, nil}, err
+	return &OptlyClient{optimizelyClient, configManager}, err
 }
