@@ -75,13 +75,22 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		userID := r.URL.Query().Get("userId")
+		values := r.URL.Query()
+		userID := values.Get("userId")
 		if userID == "" {
 			http.Error(w, "Invalid request, missing userId", http.StatusBadRequest)
 			return
 		}
 
-		optlyContext := optimizely.NewContext(userID, map[string]interface{}{})
+		// Remove userId and copy values into the attributes map
+		values.Del("userId")
+		attributes := make(map[string]interface{})
+		for k, v := range values {
+			// Assuming a single KV pair exists in the query parameters
+			attributes[k] = v[0]
+		}
+
+		optlyContext := optimizely.NewContext(userID, attributes)
 		ctx := context.WithValue(r.Context(), OptlyContextKey, optlyContext)
 		log.Debug().Str("userId", userID).Msg("Adding user context to request.")
 		next.ServeHTTP(w, r.WithContext(ctx))

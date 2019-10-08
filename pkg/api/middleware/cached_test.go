@@ -86,14 +86,20 @@ func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
-	expected := optimizely.NewContext("test", make(map[string]interface{}))
+	attributes := map[string]interface{}{
+		"foo": "true",
+		"bar": "yes",
+		"baz": "100",
+	}
+	expected := optimizely.NewContext("test", attributes)
 	handler := suite.mw.UserCtx(AssertOptlyContextHandler(suite, expected))
-	req := httptest.NewRequest("GET", "/?userId=test", nil)
+	req := httptest.NewRequest("GET", "/?userId=test&foo=true&bar=yes&baz=100", nil)
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 }
+
 
 func (suite *OptlyMiddlewareTestSuite) TestGetUserContextError() {
 	handler := suite.mw.UserCtx(ErrorHandler(suite))
