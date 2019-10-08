@@ -16,8 +16,8 @@
 package main
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -39,7 +39,7 @@ func loadConfig() {
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("No config file found.")
+		log.Info().Msg("No config file found.")
 	}
 
 	viper.AutomaticEnv()
@@ -59,7 +59,9 @@ func main() {
 		apiRouter := api.NewDefaultRouter()
 		apiPort := viper.GetString("api.port")
 		log.Printf("Optimizely API server started at port " + apiPort)
-		log.Fatal(http.ListenAndServe(":" + apiPort, apiRouter))
+		if err := http.ListenAndServe(":" + apiPort, apiRouter); err != nil {
+			log.Fatal().Err(err).Msg("Failed to start Optimizely API server.")
+		}
 		wg.Done()
 	}()
 
@@ -74,7 +76,9 @@ func main() {
 		webhookRouter := webhook.NewRouter()
 		webhookPort := viper.GetString("webhook.port")
 		log.Printf("Optimizely webhook server started at port " + webhookPort)
-		log.Fatal(http.ListenAndServe(":" + webhookPort, webhookRouter))
+		if err := http.ListenAndServe(":" + webhookPort, webhookRouter); err != nil {
+			log.Fatal().Err(err).Msg("Failed to start Optimizely webhook server.")
+		}
 		wg.Done()
 	}()
 
