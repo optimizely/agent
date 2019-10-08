@@ -1,4 +1,5 @@
-- projectId: 42
-  sdkKeys:
-    - "myDatafile"
-  secret: "I am secret"
+webhooks:
+  - projectId: 42
+    sdkKeys:
+      - "myDatafile"
+    secret: "I am secret"

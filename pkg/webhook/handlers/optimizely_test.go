@@ -42,7 +42,6 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 
 func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 	optlyHandler := OptlyWebhookHandler{}
-	optlyHandler.Init()
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 43,
 		Timestamp: 43434343,
@@ -68,7 +67,6 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	optlyHandler := OptlyWebhookHandler{}
-	optlyHandler.Init()
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -100,7 +98,6 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	optlyHandler := OptlyWebhookHandler{
 		optlyCache: testCache,
 	}
-	optlyHandler.Init()
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,

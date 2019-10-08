@@ -34,8 +34,8 @@ func loadConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// Set config file
-	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
+	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Info().Msg("No config file found.")
