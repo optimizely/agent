@@ -21,6 +21,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -75,15 +76,14 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		values := r.URL.Query()
-		userID := values.Get("userId")
+		userID := chi.URLParam(r, "userID")
 		if userID == "" {
 			http.Error(w, "Invalid request, missing userId", http.StatusBadRequest)
 			return
 		}
 
 		// Remove userId and copy values into the attributes map
-		values.Del("userId")
+		values := r.URL.Query()
 		attributes := make(map[string]interface{})
 		for k, v := range values {
 			// Assuming a single KV pair exists in the query parameters

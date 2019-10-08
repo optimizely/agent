@@ -23,6 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
@@ -92,24 +93,31 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 		"baz": "100",
 	}
 	expected := optimizely.NewContext("test", attributes)
-	handler := suite.mw.UserCtx(AssertOptlyContextHandler(suite, expected))
-	req := httptest.NewRequest("GET", "/?userId=test&foo=true&bar=yes&baz=100", nil)
 
+	mux := chi.NewMux()
+	handler := AssertOptlyContextHandler(suite, expected)
+	mux.With(suite.mw.UserCtx).Get("/{userID}", handler)
+
+	req := httptest.NewRequest("GET", "/test?foo=true&bar=yes&baz=100", nil)
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
+
+	mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-
 func (suite *OptlyMiddlewareTestSuite) TestGetUserContextError() {
-	handler := suite.mw.UserCtx(ErrorHandler(suite))
-	req := httptest.NewRequest("GET", "/?userId=", nil)
+	mux := chi.NewMux()
+	handler := ErrorHandler(suite)
+	mux.With(suite.mw.UserCtx).Get("/{userID}/features", handler)
 
+	req := httptest.NewRequest("GET", "//features?foo=true&bar=yes&baz=100", nil)
 	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
+
+	mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusBadRequest, rec.Code)
 }
 
+// ErrorHandler will panic if reached.
 func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		panic("test entered test handler, this should not happen")
