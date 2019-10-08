@@ -35,6 +35,7 @@ type RouterOptions struct {
 	middleware   middleware.OptlyMiddleware
 	featureAPI   handlers.FeatureAPI
 	userEventAPI handlers.UserEventAPI
+	userAPI      handlers.UserAPI
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
@@ -43,6 +44,7 @@ func NewDefaultRouter() *chi.Mux {
 		middleware:   &middleware.CachedOptlyMiddleware{Cache: optimizely.NewCache()},
 		featureAPI:   new(handlers.FeatureHandler),
 		userEventAPI: new(handlers.UserEventHandler),
+		userAPI:      new(handlers.UserHandler),
 	}
 
 	return NewRouter(spec)
@@ -68,7 +70,24 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.Route("/{featureKey}", func(r chi.Router) {
 			// TODO r.Use(FeatureCtx)
 			r.Get("/", opt.featureAPI.GetFeature)
-			r.With(opt.middleware.UserCtx).Post("/activate", opt.featureAPI.ActivateFeature)
+		})
+	})
+
+	r.Route("/users", func(r chi.Router) {
+		r.Route("/{userID}", func(r chi.Router) {
+			// TODO r.Use(FeatureCtx)
+			r.Route("/features", func(r chi.Router) {
+				r.Use(opt.middleware.ClientCtx)
+				// Get all feature decisions.
+				// TODO r.Get("/", opt.userAPI.ListFeatures)
+
+				r.Route("/{featureKey}", func(r chi.Router) {
+					// TODO r.Use(FeatureCtx)
+					// Get feature decision.
+					// TODO r.Get("/", opt.userAPI.GetFeature)
+					r.With(opt.middleware.UserCtx).Post("/", opt.userAPI.ActivateFeature)
+				})
+			})
 		})
 	})
 

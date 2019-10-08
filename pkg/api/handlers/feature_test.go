@@ -53,14 +53,6 @@ func (o *OptlyMW) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
-func (o *OptlyMW) UserCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyContext := optimizely.NewContext("testUser", make(map[string]interface{}))
-		ctx := context.WithValue(r.Context(), middleware.OptlyContextKey, optlyContext)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 // Setup Mux
 func (suite *FeatureTestSuite) SetupTest() {
 
@@ -74,8 +66,6 @@ func (suite *FeatureTestSuite) SetupTest() {
 	mux.Use(optlyMW.ClientCtx)
 	mux.Get("/features", featureAPI.ListFeatures)
 	mux.Get("/features/{featureKey}", featureAPI.GetFeature)
-	mux.With(optlyMW.UserCtx).Post("/features/{featureKey}/activate", featureAPI.ActivateFeature)
-	mux.Post("/features/{featureKey}/activate-missing-ctx", featureAPI.ActivateFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -119,51 +109,6 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 	suite.Equal(feature, actual)
 }
 
-func (suite *FeatureTestSuite) TestActivateFeature() {
-	feature := entities.Feature{Key: "one"}
-	suite.tc.AddFeatureRollout(feature)
-
-	req, err := http.NewRequest("POST", "/features/one/activate", nil)
-	suite.Nil(err)
-
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	var actual models.Feature
-	err = json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	expected := models.Feature{
-		Key:     "one",
-		Enabled: true,
-	}
-
-	suite.Equal(expected, actual)
-}
-
-func (suite *FeatureTestSuite) TestActivateFeatureMissingUserCtx() {
-	feature := entities.Feature{Key: "one"}
-	suite.tc.AddFeatureRollout(feature)
-
-	req, err := http.NewRequest("POST", "/features/{featureKey}/activate-missing-ctx", nil)
-	suite.Nil(err)
-
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusUnprocessableEntity, rec.Code)
-
-	// Unmarshal response
-	var actual models.ErrorResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	suite.Equal(models.ErrorResponse{Error: "optlyContext not available"}, actual)
-}
-
 func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
@@ -197,7 +142,6 @@ func TestMissingClientCtx(t *testing.T) {
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		featureHander.ListFeatures,
 		featureHander.GetFeature,
-		featureHander.ActivateFeature,
 	}
 
 	for _, handler := range(handlers) {

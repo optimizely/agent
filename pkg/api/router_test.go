@@ -51,11 +51,14 @@ type MockFeatureAPI struct{}
 
 func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {}
 func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request)   {}
-func (m *MockFeatureAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
 
 type MockUserEventAPI struct{}
 
 func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) {}
+
+type MockUserAPI struct{}
+
+func (m *MockUserAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
 
 type RouterTestSuite struct {
 	suite.Suite
@@ -70,6 +73,7 @@ func (suite *RouterTestSuite) SetupTest() {
 	opts := &RouterOptions{
 		featureAPI:   new(MockFeatureAPI),
 		userEventAPI: new(MockUserEventAPI),
+		userAPI:      new(MockUserAPI),
 		middleware:   new(MockOptlyMiddleware),
 	}
 
@@ -95,7 +99,7 @@ func (suite *RouterTestSuite) TestGetFeature() {
 }
 
 func (suite *RouterTestSuite) TestActivateFeatures() {
-	req := httptest.NewRequest("POST", "/features/one/activate", nil)
+	req := httptest.NewRequest("POST", "/users/me/features/one", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
