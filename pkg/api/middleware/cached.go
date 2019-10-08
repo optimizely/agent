@@ -21,6 +21,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
@@ -28,6 +30,9 @@ type contextKey string
 
 // OptlyClientKey is the context key for the OptlyClient
 const OptlyClientKey = contextKey("optlyClient")
+
+// OptlyContextKey is the context key for the OptlyContext
+const OptlyContextKey = contextKey("optlyContext")
 
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
@@ -59,6 +64,26 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), OptlyClientKey, optlyClient)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// UserCtx extracts the userId and any associated attributes from the request
+// to create an optimizely.UserContext which will be used by downstream handlers.
+// Future iterations of this middleware would capture pulling additional
+// detail from a UPS or attribute store.
+func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		userID := r.URL.Query().Get("userId")
+		if userID == "" {
+			http.Error(w, "Invalid request, missing userId", http.StatusBadRequest)
+			return
+		}
+
+		optlyContext := optimizely.NewContext(userID, map[string]interface{}{})
+		ctx := context.WithValue(r.Context(), OptlyContextKey, optlyContext)
+		log.Debug().Str("userId", userID).Msg("Adding user context to request.")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -28,20 +28,29 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const headerKey = "X-Test-Header"
+const clientHeaderKey = "X-Client-Header"
+const userHeaderKey = "X-User-Header"
 
 type MockOptlyMiddleware struct{}
 
 func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(headerKey, "expected")
+		w.Header().Add(clientHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(userHeaderKey, "expected")
+		next.ServeHTTP(w, r)
 	})
 }
 
 type MockFeatureAPI struct{}
 
-func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request)    {}
-func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request)      {}
+func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {}
+func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request)   {}
 func (m *MockFeatureAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
 
 type MockUserEventAPI struct{}
@@ -72,7 +81,8 @@ func (suite *RouterTestSuite) TestListFeatures() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
-	suite.Equal("expected", rec.Header().Get(headerKey))
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Empty(rec.Header().Get(userHeaderKey))
 }
 
 func (suite *RouterTestSuite) TestGetFeature() {
@@ -80,7 +90,8 @@ func (suite *RouterTestSuite) TestGetFeature() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
-	suite.Equal("expected", rec.Header().Get(headerKey))
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Empty(rec.Header().Get(userHeaderKey))
 }
 
 func (suite *RouterTestSuite) TestActivateFeatures() {
@@ -88,7 +99,8 @@ func (suite *RouterTestSuite) TestActivateFeatures() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
-	suite.Equal("expected", rec.Header().Get(headerKey))
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
 }
 
 func TestRouter(t *testing.T) {

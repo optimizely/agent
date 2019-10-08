@@ -14,34 +14,24 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
-package optimizely
+// Package handlers //
+package handlers
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// OptlyContext encapsulates the user context.
-// TODO Add support for User Profile Service
-type OptlyContext struct {
-	UserContext *entities.UserContext
-}
+func TestRenderError(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
 
-// NewContext creates the base Context for a user
-func NewContext(id string, attributes map[string]interface{}) *OptlyContext {
-	userContext := entities.UserContext{
-		ID:         id,
-		Attributes: attributes,
-	}
+	RenderError(fmt.Errorf("new error"), http.StatusBadRequest, rec, req)
 
-	ctx := &OptlyContext{
-		UserContext: &userContext,
-	}
-
-	return ctx
-}
-
-// GetUserID returns the user ID from within the UserContext
-func (c *OptlyContext) GetUserID() string {
-	return c.UserContext.ID
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, "{\"error\":\"new error\"}\n", rec.Body.String())
 }
