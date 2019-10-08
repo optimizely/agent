@@ -73,6 +73,7 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Use(userMW.ClientCtx)
 	mux.With(userMW.UserCtx).Post("/features/{featureKey}", userAPI.ActivateFeature)
+	mux.Post("/missing-ctx/features/{featureKey}", userAPI.ActivateFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -103,25 +104,25 @@ func (suite *UserTestSuite) TestActivateFeature() {
 	suite.Equal(expected, actual)
 }
 
-// func (suite *UserTestSuite) TestActivateFeatureMissingUserCtx() {
-// 	feature := entities.Feature{Key: "one"}
-// 	suite.tc.AddFeatureRollout(feature)
+func (suite *UserTestSuite) TestActivateFeatureMissingUserCtx() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
 
-// 	req, err := http.NewRequest("POST", "/users/test-user/feature/one", nil)
-// 	suite.Nil(err)
+	req, err := http.NewRequest("POST", "/missing-ctx/feature/one", nil)
+	suite.Nil(err)
 
-// 	rec := httptest.NewRecorder()
-// 	suite.mux.ServeHTTP(rec, req)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
 
-// 	suite.Equal(http.StatusUnprocessableEntity, rec.Code)
+	suite.Equal(http.StatusUnprocessableEntity, rec.Code)
 
-// 	// Unmarshal response
-// 	var actual models.ErrorResponse
-// 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
-// 	suite.NoError(err)
+	// Unmarshal response
+	var actual models.ErrorResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
 
-// 	suite.Equal(models.ErrorResponse{Error: "optlyContext not available"}, actual)
-// }
+	suite.Equal(models.ErrorResponse{Error: "optlyContext not available"}, actual)
+}
 
 func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
@@ -138,7 +139,7 @@ func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.ErrorResponse{Error:`Feature with key dne not found`}, actual)
+	suite.Equal(models.ErrorResponse{Error: `Feature with key dne not found`}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -147,7 +148,7 @@ func TestUserTestSuite(t *testing.T) {
 	suite.Run(t, new(FeatureTestSuite))
 }
 
-func TestMissingClientCtx2(t *testing.T) {
+func TestUserMissingClientCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
 	req := httptest.NewRequest("GET", "/", nil)
@@ -157,7 +158,7 @@ func TestMissingClientCtx2(t *testing.T) {
 		userHander.ActivateFeature,
 	}
 
-	for _, handler := range(handlers) {
+	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
 

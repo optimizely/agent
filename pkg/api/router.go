@@ -75,7 +75,7 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 
 	r.Route("/users", func(r chi.Router) {
 		r.Route("/{userID}", func(r chi.Router) {
-			// TODO r.Use(FeatureCtx)
+			r.Use(opt.middleware.UserCtx)
 			r.Route("/features", func(r chi.Router) {
 				r.Use(opt.middleware.ClientCtx)
 				// Get all feature decisions.
@@ -85,7 +85,7 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 					// TODO r.Use(FeatureCtx)
 					// Get feature decision.
 					// TODO r.Get("/", opt.userAPI.GetFeature)
-					r.With(opt.middleware.UserCtx).Post("/", opt.userAPI.ActivateFeature)
+					r.Post("/", opt.userAPI.ActivateFeature)
 				})
 			})
 		})
