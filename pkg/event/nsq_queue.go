@@ -20,6 +20,7 @@ package event
 import (
 	"bytes"
 	"encoding/gob"
+	"reflect"
 	"time"
 
 	// this is the nsq demon
@@ -50,10 +51,20 @@ var embeddedNSQD *nsqd.NSQD
 // and then calls done to shutdown the embeddedNSQD if it is running.
 var done = make(chan bool)
 
-// NSQQueue is a implementation of Queue interface with a backing NSQ
+// AbstractProducer could be a real nsq produer or a stub
+type AbstractProducer interface {
+	Requests() chan<- snsq.ProducerRequest
+}
+
+// AbstractConsumer could be a real nsq consumer or a stub
+type AbstractConsumer interface {
+	Messages() <-chan snsq.Message
+}
+
+// NSQQueue is a implementation of Queue interface with a backing consumer/producer
 type NSQQueue struct {
-	p        *snsq.Producer
-	c        *snsq.Consumer
+	p        AbstractProducer
+	c        AbstractConsumer
 	messages event.Queue
 }
 
@@ -90,8 +101,7 @@ func (i *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
-	if i.p != nil {
-
+	if v := reflect.ValueOf(i.p); !v.IsNil() {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
 
@@ -103,7 +113,6 @@ func (i *NSQQueue) Add(item interface{}) {
 			Response: response,
 			Deadline: deadline,
 		}
-
 		// This will always trigger, either if the connection was lost or if a
 		// response was successfully sent.
 		err = <-response
@@ -150,7 +159,7 @@ func (i *NSQQueue) Size() int {
 }
 
 // NewNSQueue returns new NSQ based queue with given queueSize
-func NewNSQueue(queueSize int, address string, startDaemon, startProducer, startConsumer bool) event.Queue {
+func NewNSQueue(queueSize int, address string, startConsumer, startDaemon bool, ap AbstractProducer, ac AbstractConsumer) event.Queue {
 
 	// Run NSQD embedded
 	if embeddedNSQD == nil && startDaemon {
@@ -178,32 +187,9 @@ func NewNSQueue(queueSize int, address string, startDaemon, startProducer, start
 		}()
 	}
 
-	var p *snsq.Producer
-	var err error
-	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
+	i := &NSQQueue{p: ap, c: ac, messages: event.NewInMemoryQueue(queueSize)}
 
-	if startProducer {
-		p, err = snsq.NewProducer(nsqConfig)
-		if err != nil {
-			log.Error().Err(err).Msg("Error creating producer")
-		}
-		p.Start()
-	}
-
-	var consumer *snsq.Consumer
-	if startConsumer {
-		consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
-			Topic:       NsqTopic,
-			Channel:     NsqConsumerChannel,
-			Address:     address,
-			MaxInFlight: queueSize,
-		})
-
-	}
-
-	i := &NSQQueue{p: p, c: consumer, messages: event.NewInMemoryQueue(queueSize)}
-
-	if startConsumer {
+	if v := reflect.ValueOf(i.c); !v.IsNil() && startConsumer {
 		go func() {
 			for message := range i.c.Messages() {
 				i.messages.Add(message)
@@ -216,5 +202,24 @@ func NewNSQueue(queueSize int, address string, startDaemon, startProducer, start
 
 // NewNSQueueDefault returns a default implementation of the NSQueue
 func NewNSQueueDefault() event.Queue {
-	return NewNSQueue(100, NsqListenSpec, true, true, true)
+	var p *snsq.Producer
+	var err error
+	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
+	p, err = snsq.NewProducer(nsqConfig)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating producer")
+	}
+	p.Start()
+
+	var consumer *snsq.Consumer
+	consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
+		Topic:       NsqTopic,
+		Channel:     NsqConsumerChannel,
+		Address:     NsqListenSpec,
+		MaxInFlight: 100,
+	})
+
+	var ap AbstractProducer = p
+	var ac AbstractConsumer = consumer
+	return NewNSQueue(100, NsqListenSpec, true, true, ap, ac)
 }

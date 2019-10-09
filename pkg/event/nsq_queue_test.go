@@ -1,9 +1,11 @@
 package event
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	snsq "github.com/segmentio/nsq-go"
+	"github.com/stretchr/testify/assert"
 )
 
 // right now we create a embedded nsqd and send events to it.  this fully tests nsqd but
@@ -38,13 +40,37 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 
 	allItems := q.Remove(3)
 
-	assert.True(t,len(allItems) >= 0)
+	assert.True(t, len(allItems) >= 0)
 
 	assert.Equal(t, 0, q.Size())
 }
 
+type StubNSQ struct {
+	pc chan snsq.ProducerRequest
+	cc chan snsq.Message
+}
+
+func (s *StubNSQ) Requests() chan<- snsq.ProducerRequest {
+	return s.pc
+}
+
+func (s *StubNSQ) Messages() <-chan snsq.Message {
+	return s.cc
+}
+
 func TestNSQQueue_TestConfigNoProducerConsumer(t *testing.T) {
-	q := NewNSQueue(10, "", false, false, false)
+	stubNsq := &StubNSQ{
+		pc: make(chan snsq.ProducerRequest, 10),
+		cc: make(chan snsq.Message, 10),
+	}
+	go func() {
+		for pr := range stubNsq.pc {
+			pr.Response <- nil
+		}
+	}()
+	var ac AbstractConsumer = stubNsq
+	var ap AbstractProducer = stubNsq
+	q := NewNSQueue(10, "", false, false, ap, ac)
 
 	impression := BuildTestImpressionEvent()
 	conversion := BuildTestConversionEvent()
@@ -52,8 +78,6 @@ func TestNSQQueue_TestConfigNoProducerConsumer(t *testing.T) {
 	q.Add(impression)
 	q.Add(impression)
 	q.Add(conversion)
-
-	time.Sleep(1 * time.Second)
 
 	items1 := q.Get(2)
 
@@ -67,7 +91,7 @@ func TestNSQQueue_TestConfigNoProducerConsumer(t *testing.T) {
 
 	allItems := q.Remove(3)
 
-	assert.Equal(t,0, len(allItems))
+	assert.Equal(t, 0, len(allItems))
 
 	assert.Equal(t, 0, q.Size())
 }
