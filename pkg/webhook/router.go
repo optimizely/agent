@@ -18,15 +18,29 @@
 package webhook
 
 import (
+	"github.com/optimizely/sidedoor/pkg/admin"
+	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
 )
+
+// Version holds the api version
+var Version string // can be set at compile time
 
 // NewRouter returns HTTP API router
 func NewRouter() *chi.Mux {
 	r := chi.NewRouter()
+
+	optlyAdmin := admin.NewAdmin(Version, "DevX", "webhook")
+	r.Use(optlyAdmin.AppInfoHeader)
+
 	r.Use(render.SetContentType(render.ContentTypeJSON))
+
+	r.Route("/admin", func(r chi.Router) {
+		r.Get("/health", optlyAdmin.Health)
+		r.Get("/info", optlyAdmin.AppInfo)
+	})
 
 	webhookAPI := new(handlers.OptlyWebhookHandler)
 

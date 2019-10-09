@@ -18,17 +18,17 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
-
+	"github.com/optimizely/sidedoor/pkg/admin"
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
+
+// Version holds the api version
+var Version string // can be set at compile time
 
 // RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
@@ -51,12 +51,15 @@ func NewDefaultRouter() *chi.Mux {
 // NewRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
+
+	optlyAdmin := admin.NewAdmin(Version, "DevX", "sidedoor")
+	r.Use(optlyAdmin.AppInfoHeader)
+
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("pong")); err != nil {
-			log.Fatal().Msg("unable to write response")
-		}
+	r.Route("/admin", func(r chi.Router) {
+		r.Get("/health", optlyAdmin.Health)
+		r.Get("/info", optlyAdmin.AppInfo)
 	})
 
 	r.With(chimw.AllowContentType("application/json")).Post("/user-event", opt.userEventAPI.AddUserEvent)
