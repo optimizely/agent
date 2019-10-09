@@ -112,7 +112,7 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
-	req, err := http.NewRequest("GET", "/features/dne", nil)
+	req, err := http.NewRequest("GET", "/features/feature-404", nil)
 	suite.Nil(err)
 
 	rec := httptest.NewRecorder()
@@ -124,7 +124,7 @@ func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.ErrorResponse{Error: `Feature with key dne not found`}, actual)
+	suite.Equal(models.ErrorResponse{Error: `Feature with key feature-404 not found`}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
