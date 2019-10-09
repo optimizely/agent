@@ -108,7 +108,7 @@ func (suite *UserTestSuite) TestActivateFeatureMissingUserCtx() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
-	req, err := http.NewRequest("POST", "/missing-ctx/feature/one", nil)
+	req, err := http.NewRequest("POST", "/missing-ctx/features/one", nil)
 	suite.Nil(err)
 
 	rec := httptest.NewRecorder()
@@ -127,7 +127,7 @@ func (suite *UserTestSuite) TestActivateFeatureMissingUserCtx() {
 func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
-	req, err := http.NewRequest("GET", "/features/dne", nil)
+	req, err := http.NewRequest("POST", "/features/dne", nil)
 	suite.Nil(err)
 
 	rec := httptest.NewRecorder()
@@ -145,13 +145,13 @@ func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestUserTestSuite(t *testing.T) {
-	suite.Run(t, new(FeatureTestSuite))
+	suite.Run(t, new(UserTestSuite))
 }
 
 func TestUserMissingClientCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest("POST", "/", nil)
 
 	userHander := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
