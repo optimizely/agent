@@ -26,6 +26,7 @@ import (
 	"github.com/nsqio/nsq/nsqd"
 	"github.com/optimizely/go-sdk/optimizely/event"
 	"github.com/rs/zerolog/log"
+
 	// we use the consumer from segmentio as it mentions in the segmentio documents, they
 	// found several problems with the nsq consumer and ended up creating their own wrapper.
 	// we use that wrapper.
@@ -34,8 +35,10 @@ import (
 
 // NsqConsumerChannel is the default consumer channel
 const NsqConsumerChannel string = "optimizely"
+
 // NsqListenSpec is the default NSQD address
 const NsqListenSpec string = "localhost:4150"
+
 // NsqTopic is the default NSQ topic
 const NsqTopic string = "user_event"
 
@@ -49,8 +52,8 @@ var done = make(chan bool)
 
 // NSQQueue is a implementation of Queue interface with a backing NSQ
 type NSQQueue struct {
-	p *snsq.Producer
-	c *snsq.Consumer
+	p        *snsq.Producer
+	c        *snsq.Consumer
 	messages event.Queue
 }
 
@@ -127,9 +130,9 @@ func (i *NSQQueue) decodeMessage(body []byte) event.UserEvent {
 
 // Remove removes item from queue and returns elements slice
 func (i *NSQQueue) Remove(count int) []interface{} {
-	userEvents := make([]interface{},0, count)
+	userEvents := make([]interface{}, 0, count)
 	events := i.messages.Remove(count)
-	for _,message := range events {
+	for _, message := range events {
 		mess, ok := message.(snsq.Message)
 		if !ok {
 			continue
@@ -177,7 +180,7 @@ func NewNSQueue(queueSize int, address string, startDaemon, startProducer, start
 
 	var p *snsq.Producer
 	var err error
-	nsqConfig := snsq.ProducerConfig{Address:NsqListenSpec, Topic:NsqTopic}
+	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
 
 	if startProducer {
 		p, err = snsq.NewProducer(nsqConfig)
@@ -215,4 +218,3 @@ func NewNSQueue(queueSize int, address string, startDaemon, startProducer, start
 func NewNSQueueDefault() event.Queue {
 	return NewNSQueue(100, NsqListenSpec, true, true, true)
 }
-
