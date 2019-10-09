@@ -25,8 +25,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
-
-	"github.com/optimizely/sidedoor/pkg/api/models"
 )
 
 // FeatureHandler implements the FeatureAPI interface
@@ -64,38 +62,6 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 		log.Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
-	}
-
-	render.JSON(w, r, feature)
-}
-
-// ActivateFeature - Return the feature and record impression
-func (h *FeatureHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	optlyContext, err := middleware.GetOptlyContext(r)
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	featureKey := chi.URLParam(r, "featureKey")
-	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, optlyContext)
-
-	if err != nil {
-		log.Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	feature := &models.Feature{
-		Enabled:   enabled,
-		Key:       featureKey,
-		Variables: variables,
 	}
 
 	render.JSON(w, r, feature)

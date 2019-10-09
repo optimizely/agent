@@ -19,25 +19,47 @@ package handlers
 
 import (
 	"net/http"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
+
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
+
+	"github.com/optimizely/sidedoor/pkg/api/models"
 )
 
-// FeatureAPI defines the supported feature apis.
-type FeatureAPI interface {
-	GetFeature(w http.ResponseWriter, r *http.Request)
-	ListFeatures(w http.ResponseWriter, r *http.Request)
-}
+// UserHandler implements the UserAPI interface
+type UserHandler struct{}
 
-// UserEventAPI defines the supported user event apis.
-type UserEventAPI interface {
-	AddUserEvent(w http.ResponseWriter, r *http.Request)
-}
+// ActivateFeature - Return the feature and record impression
+func (h *UserHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
 
-// UserAPI defines the supported user scoped APIs.
-type UserAPI interface {
-	// TODO
-	// GetFeature(w http.ResponseWriter, r *http.Request)
-	// ListFeatures(w http.ResponseWriter, r *http.Request)
-	ActivateFeature(w http.ResponseWriter, r *http.Request)
-}
+	optlyContext, err := middleware.GetOptlyContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
 
-// TODO ExperimentApi
+	featureKey := chi.URLParam(r, "featureKey")
+	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, optlyContext)
+
+	if err != nil {
+		log.Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	feature := &models.Feature{
+		Enabled:   enabled,
+		Key:       featureKey,
+		Variables: variables,
+	}
+
+	render.JSON(w, r, feature)
+}
