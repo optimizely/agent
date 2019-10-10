@@ -59,26 +59,26 @@ type NSQQueue struct {
 }
 
 // Get returns queue for given count size
-func (i *NSQQueue) Get(count int) []interface{} {
+func (q *NSQQueue) Get(count int) []interface{} {
 
 	var (
 		events = make([]interface{}, 0)
 	)
 
-	messages := i.messages.Get(count)
+	messages := q.messages.Get(count)
 	for _, message := range messages {
 		mess, ok := message.(snsq.Message)
 		if !ok {
 			continue
 		}
-		events = append(events, i.decodeMessage(mess.Body))
+		events = append(events, q.decodeMessage(mess.Body))
 	}
 
 	return events
 }
 
 // Add appends item to queue
-func (i *NSQQueue) Add(item interface{}) {
+func (q *NSQQueue) Add(item interface{}) {
 	userEvent, ok := item.(event.UserEvent)
 	if !ok {
 		// cannot add non-user events
@@ -91,13 +91,13 @@ func (i *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
-	if v := reflect.ValueOf(i.producer); !v.IsNil() {
+	if v := reflect.ValueOf(q.producer); !v.IsNil() {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
 
 		// Attempts to queue the request so one of the active connections can pick
 		// it up.
-		i.producer.Requests() <- snsq.ProducerRequest{
+		q.producer.Requests() <- snsq.ProducerRequest{
 			Topic:    NsqTopic,
 			Message:  buf.Bytes(),
 			Response: response,
@@ -115,7 +115,7 @@ func (i *NSQQueue) Add(item interface{}) {
 	}
 }
 
-func (i *NSQQueue) decodeMessage(body []byte) event.UserEvent {
+func (q *NSQQueue) decodeMessage(body []byte) event.UserEvent {
 	reader := bytes.NewReader(body)
 	dec := gob.NewDecoder(reader)
 	userEvent := event.UserEvent{}
@@ -128,15 +128,15 @@ func (i *NSQQueue) decodeMessage(body []byte) event.UserEvent {
 }
 
 // Remove removes item from queue and returns elements slice
-func (i *NSQQueue) Remove(count int) []interface{} {
+func (q *NSQQueue) Remove(count int) []interface{} {
 	userEvents := make([]interface{}, 0, count)
-	events := i.messages.Remove(count)
+	events := q.messages.Remove(count)
 	for _, message := range events {
 		mess, ok := message.(snsq.Message)
 		if !ok {
 			continue
 		}
-		userEvent := i.decodeMessage(mess.Body)
+		userEvent := q.decodeMessage(mess.Body)
 		mess.Finish()
 		userEvents = append(userEvents, userEvent)
 	}
@@ -144,8 +144,8 @@ func (i *NSQQueue) Remove(count int) []interface{} {
 }
 
 // Size returns size of queue
-func (i *NSQQueue) Size() int {
-	return i.messages.Size()
+func (q *NSQQueue) Size() int {
+	return q.messages.Size()
 }
 
 // NewNSQueue returns new NSQ based queue with given queueSize
