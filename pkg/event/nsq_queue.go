@@ -51,20 +51,10 @@ var embeddedNSQD *nsqd.NSQD
 // and then calls done to shutdown the embeddedNSQD if it is running.
 var done = make(chan bool)
 
-// AbstractProducer could be a real nsq produer or a stub
-type AbstractProducer interface {
-	Requests() chan<- snsq.ProducerRequest
-}
-
-// AbstractConsumer could be a real nsq consumer or a stub
-type AbstractConsumer interface {
-	Messages() <-chan snsq.Message
-}
-
 // NSQQueue is a implementation of Queue interface with a backing consumer/producer
 type NSQQueue struct {
-	p        AbstractProducer
-	c        AbstractConsumer
+	producer QueueProducer
+	consumer QueueConsumer
 	messages event.Queue
 }
 
@@ -101,13 +91,13 @@ func (i *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
-	if v := reflect.ValueOf(i.p); !v.IsNil() {
+	if v := reflect.ValueOf(i.producer); !v.IsNil() {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
 
 		// Attempts to queue the request so one of the active connections can pick
 		// it up.
-		i.p.Requests() <- snsq.ProducerRequest{
+		i.producer.Requests() <- snsq.ProducerRequest{
 			Topic:    NsqTopic,
 			Message:  buf.Bytes(),
 			Response: response,
@@ -159,7 +149,7 @@ func (i *NSQQueue) Size() int {
 }
 
 // NewNSQueue returns new NSQ based queue with given queueSize
-func NewNSQueue(queueSize int, address string, startConsumer, startDaemon bool, ap AbstractProducer, ac AbstractConsumer) event.Queue {
+func NewNSQueue(queueSize int, address string, startConsumer, startDaemon bool, qp QueueProducer, qc QueueConsumer) event.Queue {
 
 	// Run NSQD embedded
 	if embeddedNSQD == nil && startDaemon {
@@ -187,11 +177,11 @@ func NewNSQueue(queueSize int, address string, startConsumer, startDaemon bool, 
 		}()
 	}
 
-	i := &NSQQueue{p: ap, c: ac, messages: event.NewInMemoryQueue(queueSize)}
+	i := &NSQQueue{producer: qp, consumer: qc, messages: event.NewInMemoryQueue(queueSize)}
 
-	if v := reflect.ValueOf(i.c); !v.IsNil() && startConsumer {
+	if v := reflect.ValueOf(i.consumer); !v.IsNil() && startConsumer {
 		go func() {
-			for message := range i.c.Messages() {
+			for message := range i.consumer.Messages() {
 				i.messages.Add(message)
 			}
 		}()
@@ -219,7 +209,7 @@ func NewNSQueueDefault() event.Queue {
 		MaxInFlight: 100,
 	})
 
-	var ap AbstractProducer = p
-	var ac AbstractConsumer = consumer
-	return NewNSQueue(100, NsqListenSpec, true, true, ap, ac)
+	var qp QueueProducer = p
+	var qc QueueConsumer = consumer
+	return NewNSQueue(100, NsqListenSpec, true, true, qp, qc)
 }
