@@ -18,12 +18,10 @@
 package admin
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"os"
 
-	"github.com/rs/zerolog/log"
+	"github.com/go-chi/render"
 )
 
 // JSON is a map alias, just for convenience
@@ -43,12 +41,12 @@ func NewAdmin(version, author, appName string) *Admin {
 
 // Health displays health status
 func (a Admin) Health(w http.ResponseWriter, r *http.Request) {
-	renderJSON(w, r, JSON{"status": "ok"})
+	render.JSON(w, r, JSON{"status": "ok"})
 }
 
 // AppInfo returns custom app-info
 func (a Admin) AppInfo(w http.ResponseWriter, r *http.Request) {
-	renderJSON(w, r, JSON{"author": a.author, "app_name": a.appName, "app_version": a.version, "host": os.Getenv("HOST")})
+	render.JSON(w, r, JSON{"author": a.author, "app_name": a.appName, "app_version": a.version, "host": os.Getenv("HOST")})
 }
 
 // AppInfoHeader adds custom app-info to the response header
@@ -64,18 +62,4 @@ func (a Admin) AppInfoHeader(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
-}
-
-func renderJSON(w http.ResponseWriter, _ *http.Request, data interface{}) {
-	buf := &bytes.Buffer{}
-	enc := json.NewEncoder(buf)
-	enc.SetEscapeHTML(true)
-	if err := enc.Encode(data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if _, err := w.Write(buf.Bytes()); err != nil {
-		log.Fatal().Msg("unable to write response")
-	}
 }

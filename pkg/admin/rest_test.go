@@ -18,34 +18,12 @@
 package admin
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestRenderJSON(t *testing.T) {
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		j := JSON{"key1": 1, "key2": "222"}
-		renderJSON(w, r, j)
-	}))
-	defer ts.Close()
-
-	resp, err := http.Get(ts.URL + "/random_string")
-	require.NoError(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-	require.NoError(t, err)
-	body, err := ioutil.ReadAll(resp.Body)
-	require.NoError(t, err)
-	defer resp.Body.Close()
-
-	assert.Equal(t, `{"key1":1,"key2":"222"}`+"\n", string(body))
-	assert.Equal(t, "application/json; charset=utf-8", resp.Header.Get("Content-Type"))
-}
 
 func TestHealthHandler(t *testing.T) {
 
