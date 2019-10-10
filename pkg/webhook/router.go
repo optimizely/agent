@@ -25,7 +25,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-// Version holds the api version
+// Version holds the webhook version
 var Version string // can be set at compile time
 
 // NewRouter returns HTTP API router
