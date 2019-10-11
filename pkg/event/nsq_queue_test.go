@@ -61,32 +61,15 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	assert.Equal(t, 0, q.Size())
 }
 
-type StubNSQ struct {
-	pc chan snsq.ProducerRequest
-	cc chan snsq.Message
-}
-
-func (s *StubNSQ) Requests() chan<- snsq.ProducerRequest {
-	return s.pc
-}
-
-func (s *StubNSQ) Messages() <-chan snsq.Message {
-	return s.cc
-}
-
 func TestNSQQueue_TestConfigNoProducerConsumer(t *testing.T) {
-	stubNsq := &StubNSQ{
-		pc: make(chan snsq.ProducerRequest, 10),
-		cc: make(chan snsq.Message, 10),
-	}
+	pc := make(chan snsq.ProducerRequest, 10)
+	cc := make(chan snsq.Message, 10)
 	go func() {
-		for pr := range stubNsq.pc {
+		for pr := range pc {
 			pr.Response <- nil
 		}
 	}()
-	var qc QueueConsumer = stubNsq
-	var qp QueueProducer = stubNsq
-	q := NewNSQueue(10, "", false, false, qp, qc)
+	q := NewNSQueue(10, "", false, pc, cc)
 
 	impression := BuildTestImpressionEvent()
 	conversion := BuildTestConversionEvent()

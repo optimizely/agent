@@ -20,7 +20,6 @@ package event
 import (
 	"bytes"
 	"encoding/gob"
-	"reflect"
 	"time"
 
 	// this is the nsq demon
@@ -51,11 +50,13 @@ var embeddedNSQD *nsqd.NSQD
 // and then calls done to shutdown the embeddedNSQD if it is running.
 var done = make(chan bool)
 
-// NSQQueue is a implementation of Queue interface with a backing consumer/producer
+// NSQQueue is a implementation of Queue interface for use with NSQ
+// The Add method writes user events to producerWriteChan
+// It is expected that messages from an NSQ consumer are written into the consumerMessages queue.
+// Methods other than Add make use of the messages queue.
 type NSQQueue struct {
-	producer QueueProducer
-	consumer QueueConsumer
-	messages event.Queue
+	producerWriteChan chan<- snsq.ProducerRequest
+	consumerMessages  event.Queue
 }
 
 // Get returns queue for given count size
@@ -65,7 +66,7 @@ func (q *NSQQueue) Get(count int) []interface{} {
 		events = make([]interface{}, 0)
 	)
 
-	messages := q.messages.Get(count)
+	messages := q.consumerMessages.Get(count)
 	for _, message := range messages {
 		mess, ok := message.(snsq.Message)
 		if !ok {
@@ -91,13 +92,13 @@ func (q *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
-	if v := reflect.ValueOf(q.producer); !v.IsNil() {
+	if q.producerWriteChan != nil {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
 
 		// Attempts to queue the request so one of the active connections can pick
 		// it up.
-		q.producer.Requests() <- snsq.ProducerRequest{
+		q.producerWriteChan <- snsq.ProducerRequest{
 			Topic:    NsqTopic,
 			Message:  buf.Bytes(),
 			Response: response,
@@ -130,7 +131,7 @@ func (q *NSQQueue) decodeMessage(body []byte) event.UserEvent {
 // Remove removes item from queue and returns elements slice
 func (q *NSQQueue) Remove(count int) []interface{} {
 	userEvents := make([]interface{}, 0, count)
-	events := q.messages.Remove(count)
+	events := q.consumerMessages.Remove(count)
 	for _, message := range events {
 		mess, ok := message.(snsq.Message)
 		if !ok {
@@ -145,11 +146,11 @@ func (q *NSQQueue) Remove(count int) []interface{} {
 
 // Size returns size of queue
 func (q *NSQQueue) Size() int {
-	return q.messages.Size()
+	return q.consumerMessages.Size()
 }
 
 // NewNSQueue returns new NSQ based queue with given queueSize
-func NewNSQueue(queueSize int, address string, startConsumer, startDaemon bool, qp QueueProducer, qc QueueConsumer) event.Queue {
+func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.ProducerRequest, cc <-chan snsq.Message) event.Queue {
 
 	// Run NSQD embedded
 	if embeddedNSQD == nil && startDaemon {
@@ -177,12 +178,12 @@ func NewNSQueue(queueSize int, address string, startConsumer, startDaemon bool, 
 		}()
 	}
 
-	i := &NSQQueue{producer: qp, consumer: qc, messages: event.NewInMemoryQueue(queueSize)}
+	i := &NSQQueue{producerWriteChan: pc, consumerMessages: event.NewInMemoryQueue(queueSize)}
 
-	if v := reflect.ValueOf(i.consumer); !v.IsNil() && startConsumer {
+	if cc != nil {
 		go func() {
-			for message := range i.consumer.Messages() {
-				i.messages.Add(message)
+			for message := range cc {
+				i.consumerMessages.Add(message)
 			}
 		}()
 	}
@@ -201,15 +202,13 @@ func NewNSQueueDefault() event.Queue {
 	}
 	p.Start()
 
-	var consumer *snsq.Consumer
-	consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
+	var c *snsq.Consumer
+	c, _ = snsq.StartConsumer(snsq.ConsumerConfig{
 		Topic:       NsqTopic,
 		Channel:     NsqConsumerChannel,
 		Address:     NsqListenSpec,
 		MaxInFlight: 100,
 	})
 
-	var qp QueueProducer = p
-	var qc QueueConsumer = consumer
-	return NewNSQueue(100, NsqListenSpec, true, true, qp, qc)
+	return NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
 }
