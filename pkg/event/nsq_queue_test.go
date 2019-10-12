@@ -20,9 +20,35 @@ import (
 	"testing"
 	"time"
 
+	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/optimizely/event"
 	snsq "github.com/segmentio/nsq-go"
 	"github.com/stretchr/testify/assert"
 )
+
+func BuildTestImpressionEvent() event.UserEvent {
+	config := TestConfig{}
+
+	experiment := entities.Experiment{}
+	experiment.Key = "background_experiment"
+	experiment.LayerID = "15399420423"
+	experiment.ID = "15402980349"
+
+	variation := entities.Variation{}
+	variation.Key = "variation_a"
+	variation.ID = "15410990633"
+
+	impressionUserEvent := event.CreateImpressionUserEvent(config, experiment, variation, userContext)
+
+	return impressionUserEvent
+}
+
+func BuildTestConversionEvent() event.UserEvent {
+	config := TestConfig{}
+	conversionUserEvent := event.CreateConversionUserEvent(config, entities.Event{ExperimentIds: []string{"15402980349"}, ID: "15368860886", Key: "sample_conversion"}, userContext, make(map[string]interface{}))
+
+	return conversionUserEvent
+}
 
 func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	pc := make(chan snsq.ProducerRequest, 10)
