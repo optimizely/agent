@@ -92,6 +92,7 @@ func (q *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
+	// producerWriteChan is optional. If it's absent, this queue is in consumer-only mode
 	if q.producerWriteChan != nil {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
@@ -135,6 +136,7 @@ func (q *NSQQueue) Remove(count int) []interface{} {
 	for _, message := range events {
 		mess, ok := message.(snsq.Message)
 		if !ok {
+			log.Error().Msg("Message found in consumerMessages was not a snsq.Message")
 			continue
 		}
 		userEvent := q.decodeMessage(mess.Body)
@@ -192,23 +194,26 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.
 }
 
 // NewNSQueueDefault returns a default implementation of the NSQueue
-func NewNSQueueDefault() event.Queue {
-	var p *snsq.Producer
-	var err error
+func NewNSQueueDefault() (event.Queue, error) {
+	var q event.Queue
+
 	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
-	p, err = snsq.NewProducer(nsqConfig)
+	p, err := snsq.NewProducer(nsqConfig)
 	if err != nil {
-		log.Error().Err(err).Msg("Error creating producer")
+		return q, err
 	}
 	p.Start()
 
-	var c *snsq.Consumer
-	c, _ = snsq.StartConsumer(snsq.ConsumerConfig{
+	c, err := snsq.StartConsumer(snsq.ConsumerConfig{
 		Topic:       NsqTopic,
 		Channel:     NsqConsumerChannel,
 		Address:     NsqListenSpec,
 		MaxInFlight: 100,
 	})
+	if err != nil {
+		return q, err
+	}
 
-	return NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
+	q = NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
+	return q, nil
 }

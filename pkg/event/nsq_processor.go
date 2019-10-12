@@ -18,22 +18,27 @@
 package event
 
 import (
+	"time"
+
 	"github.com/optimizely/go-sdk/optimizely/event"
 	"github.com/optimizely/go-sdk/optimizely/utils"
-	"time"
 )
 
 // NewEventProcessorNSQ returns a new instance of QueueingEventProcessor with a backing NSQ queue
-func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration ) *event.QueueingEventProcessor {
+func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) (*event.QueueingEventProcessor, error) {
+	q, err := NewNSQueueDefault()
+	if err != nil {
+		return nil, err
+	}
+
 	// can't set the wg since it is private (lowercase).
 	p := event.NewEventProcessor(exeCtx, event.BatchSize(event.DefaultBatchSize), event.QueueSize(queueSize),
-		event.FlushInterval(flushInterval), event.PQ(NewNSQueueDefault()), event.PDispatcher(&event.HTTPEventDispatcher{} ))
+		event.FlushInterval(flushInterval), event.PQ(q), event.PDispatcher(&event.HTTPEventDispatcher{}))
 
 	go func() {
 		<-exeCtx.GetContext().Done()
 		// if there is an embedded nsqd, tell it to shutdown.
 		done <- true
 	}()
-	return p
+	return p, nil
 }
-
