@@ -168,7 +168,7 @@ func (q *NSQQueue) Size() int {
 // For "both" mode, provide both pc and cc channels.
 func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.ProducerRequest, cc <-chan snsq.Message) (event.Queue, error) {
 	if pc == nil && cc == nil {
-		return nil, errors.New("Invalid arguments: must provide at least one of pc or cc")
+		return nil, errors.New("invalid arguments: must provide at least one of pc or cc")
 	}
 
 	// Run NSQD embedded
@@ -186,7 +186,7 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.
 				if err == nil {
 					err = embeddedNSQD.Main()
 					if err != nil {
-						log.Error().Err(err).Msg("Error calling Main() on embeddedNSQD")
+						log.Error().Err(err).Msg("error calling Main() on embeddedNSQD")
 					}
 					// wait until we are told to continue and exit
 					<-done
@@ -215,7 +215,7 @@ func NewNSQueueDefault() (event.Queue, error) {
 	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
 	p, err := snsq.NewProducer(nsqConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating default NSQQueue: %v", err)
+		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}
 	p.Start()
 
@@ -226,12 +226,12 @@ func NewNSQueueDefault() (event.Queue, error) {
 		MaxInFlight: 100,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error creating default NSQQueue: %v", err)
+		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}
 
 	q, err := NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
 	if err != nil {
-		return nil, fmt.Errorf("Error creating default NSQQueue: %v", err)
+		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}
 
 	return q, nil
