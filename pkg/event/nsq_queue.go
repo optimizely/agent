@@ -62,8 +62,9 @@ var done = make(chan bool)
 // In consumer-only and "both" modes, NewNSQueue pulls messages from the consumer channel and
 // adds them to consumerMessages. The other Queue interface methods interact with consumerMessages.
 type NSQQueue struct {
-	producerWriteChan chan<- snsq.ProducerRequest
-	consumerMessages  event.Queue
+	producer         NSQProducer
+	consumer         NSQConsumer
+	consumerMessages event.Queue
 }
 
 // Get returns queue for given count size
@@ -99,14 +100,14 @@ func (q *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
-	// producerWriteChan is optional. If it's absent, this queue is in consumer-only mode
-	if q.producerWriteChan != nil {
+	// If producer is nil, this queue is in consumer-only mode
+	if q.producer != nil {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
 
 		// Attempts to queue the request so one of the active connections can pick
 		// it up.
-		q.producerWriteChan <- snsq.ProducerRequest{
+		q.producer.Requests() <- snsq.ProducerRequest{
 			Topic:    NsqTopic,
 			Message:  buf.Bytes(),
 			Response: response,
@@ -158,17 +159,17 @@ func (q *NSQQueue) Size() int {
 	return q.consumerMessages.Size()
 }
 
-// NewNSQueue returns a NSQQueue connected to the argument producer & consumer channels.
+// NewNSQueue returns a NSQQueue connected to the argument producer & consumer
 // NSQQueue can operate in 3 modes:
 // - producer-only
 // - consumer-only
 // - both consumer & producer
-// To create an instance in consumer-only mode, pass nil for the pc argument.
-// To create an instance in producer-only mode, pass nil for the cc argument.
-// For "both" mode, provide both pc and cc channels.
-func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.ProducerRequest, cc <-chan snsq.Message) (event.Queue, error) {
-	if pc == nil && cc == nil {
-		return nil, errors.New("invalid arguments: must provide at least one of pc or cc")
+// To create an instance in consumer-only mode, pass nil for the producer argument.
+// To create an instance in producer-only mode, pass nil for the consumer argument.
+// For "both" mode, provide both producer and consumer
+func NewNSQueue(queueSize int, address string, startDaemon bool, producer NSQProducer, consumer NSQConsumer) (event.Queue, error) {
+	if producer == nil && consumer == nil {
+		return nil, errors.New("invalid arguments: must provide at least one of producer or consumer")
 	}
 
 	// Run NSQD embedded
@@ -197,11 +198,11 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.
 		}()
 	}
 
-	i := &NSQQueue{producerWriteChan: pc, consumerMessages: event.NewInMemoryQueue(queueSize)}
+	i := &NSQQueue{producer: producer, consumer: consumer, consumerMessages: event.NewInMemoryQueue(queueSize)}
 
-	if cc != nil {
+	if consumer != nil {
 		go func() {
-			for message := range cc {
+			for message := range i.consumer.Messages() {
 				i.consumerMessages.Add(message)
 			}
 		}()
@@ -213,13 +214,13 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.
 // NewNSQueueDefault returns a default implementation of the NSQueue
 func NewNSQueueDefault() (event.Queue, error) {
 	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
-	p, err := snsq.NewProducer(nsqConfig)
+	producer, err := snsq.NewProducer(nsqConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}
-	p.Start()
+	producer.Start()
 
-	c, err := snsq.StartConsumer(snsq.ConsumerConfig{
+	consumer, err := snsq.StartConsumer(snsq.ConsumerConfig{
 		Topic:       NsqTopic,
 		Channel:     NsqConsumerChannel,
 		Address:     NsqListenSpec,
@@ -229,7 +230,7 @@ func NewNSQueueDefault() (event.Queue, error) {
 		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}
 
-	q, err := NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
+	q, err := NewNSQueue(100, NsqListenSpec, true, producer, consumer)
 	if err != nil {
 		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}

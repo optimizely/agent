@@ -50,22 +50,44 @@ func BuildTestConversionEvent() event.UserEvent {
 	return conversionUserEvent
 }
 
-func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
+type MockProducer struct {
+	ProducerChannel chan snsq.ProducerRequest
+}
+
+func (p *MockProducer) Requests() chan<- snsq.ProducerRequest {
+	return p.ProducerChannel
+}
+
+type MockConsumer struct {
+	ConsumerChannel chan snsq.Message
+}
+
+func (c *MockConsumer) Messages() <-chan snsq.Message {
+	return c.ConsumerChannel
+}
+
+func NewMockProducerAndConsumer() (*MockProducer, *MockConsumer) {
 	pc := make(chan snsq.ProducerRequest, 10)
 	cc := make(chan snsq.Message, 10)
-	defer func() {
-		close(cc)
-		close(pc)
-	}()
-
 	go func() {
 		for pr := range pc {
 			pr.Response <- nil
 			cc <- *snsq.NewMessage(0, pr.Message, make(chan snsq.Command, 10))
 		}
 	}()
+	mp := &MockProducer{ProducerChannel: pc}
+	mc := &MockConsumer{ConsumerChannel: cc}
+	return mp, mc
+}
 
-	q, err := NewNSQueue(10, "", false, pc, cc)
+func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
+	mp, mc := NewMockProducerAndConsumer()
+	defer func() {
+		close(mp.ProducerChannel)
+		close(mc.ConsumerChannel)
+	}()
+
+	q, err := NewNSQueue(10, "", false, mp, mc)
 	assert.NoError(t, err)
 
 	impression := BuildTestImpressionEvent()

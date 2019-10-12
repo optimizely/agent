@@ -17,29 +17,17 @@
 // Package event //
 package event
 
-import (
-	"fmt"
-	"time"
+import snsq "github.com/segmentio/nsq-go"
 
-	"github.com/optimizely/go-sdk/optimizely/event"
-	"github.com/optimizely/go-sdk/optimizely/utils"
-)
+// NSQProducer and NSQConsumer are abstractions of snsq.Producer and snsq.Consumer.
+// These allow us to test our code in isolation from real NSQ producers & consumers
 
-// NewEventProcessorNSQ returns a new instance of QueueingEventProcessor with a backing NSQ queue
-func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) (*event.QueueingEventProcessor, error) {
-	q, err := NewNSQueueDefault()
-	if err != nil {
-		return nil, fmt.Errorf("error creating NSQ event processor: %v", err)
-	}
+// NSQProducer is an abstraction of snsq.Producer
+type NSQProducer interface {
+	Requests() chan<- snsq.ProducerRequest
+}
 
-	// can't set the wg since it is private (lowercase).
-	p := event.NewEventProcessor(exeCtx, event.BatchSize(event.DefaultBatchSize), event.QueueSize(queueSize),
-		event.FlushInterval(flushInterval), event.PQ(q), event.PDispatcher(&event.HTTPEventDispatcher{}))
-
-	go func() {
-		<-exeCtx.GetContext().Done()
-		// if there is an embedded nsqd, tell it to shutdown.
-		done <- true
-	}()
-	return p, nil
+// NSQConsumer is an abstraction of snsq.Consumer
+type NSQConsumer interface {
+	Messages() <-chan snsq.Message
 }
