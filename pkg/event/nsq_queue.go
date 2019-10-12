@@ -20,6 +20,8 @@ package event
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
+	"fmt"
 	"time"
 
 	// this is the nsq demon
@@ -51,9 +53,14 @@ var embeddedNSQD *nsqd.NSQD
 var done = make(chan bool)
 
 // NSQQueue is a implementation of Queue interface for use with NSQ
-// The Add method writes user events to producerWriteChan
-// It is expected that messages from an NSQ consumer are written into the consumerMessages queue.
-// Methods other than Add make use of the messages queue.
+// When constructed with NewNSQueue, it can be used in three modes:
+// - consumer-only
+// - producer-only
+// - both producer & consumer
+// In consumer-only mode, producerWriteChan is nil, and the Add method has no effect.
+// In producer-only and "both" modes, Add writes messages to producerWriteChan.
+// In consumer-only and "both" modes, NewNSQueue pulls messages from the consumer channel and
+// adds them to consumerMessages. The other Queue interface methods interact with consumerMessages.
 type NSQQueue struct {
 	producerWriteChan chan<- snsq.ProducerRequest
 	consumerMessages  event.Queue
@@ -151,8 +158,18 @@ func (q *NSQQueue) Size() int {
 	return q.consumerMessages.Size()
 }
 
-// NewNSQueue returns new NSQ based queue with given queueSize
-func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.ProducerRequest, cc <-chan snsq.Message) event.Queue {
+// NewNSQueue returns a NSQQueue connected to the argument producer & consumer channels.
+// NSQQueue can operate in 3 modes:
+// - producer-only
+// - consumer-only
+// - both consumer & producer
+// To create an instance in consumer-only mode, pass nil for the pc argument.
+// To create an instance in producer-only mode, pass nil for the cc argument.
+// For "both" mode, provide both pc and cc channels.
+func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.ProducerRequest, cc <-chan snsq.Message) (event.Queue, error) {
+	if pc == nil && cc == nil {
+		return nil, errors.New("Invalid arguments: must provide at least one of pc or cc")
+	}
 
 	// Run NSQD embedded
 	if embeddedNSQD == nil && startDaemon {
@@ -190,17 +207,15 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, pc chan<- snsq.
 		}()
 	}
 
-	return i
+	return i, nil
 }
 
 // NewNSQueueDefault returns a default implementation of the NSQueue
 func NewNSQueueDefault() (event.Queue, error) {
-	var q event.Queue
-
 	nsqConfig := snsq.ProducerConfig{Address: NsqListenSpec, Topic: NsqTopic}
 	p, err := snsq.NewProducer(nsqConfig)
 	if err != nil {
-		return q, err
+		return nil, fmt.Errorf("Error creating default NSQQueue: %v", err)
 	}
 	p.Start()
 
@@ -211,9 +226,13 @@ func NewNSQueueDefault() (event.Queue, error) {
 		MaxInFlight: 100,
 	})
 	if err != nil {
-		return q, err
+		return nil, fmt.Errorf("Error creating default NSQQueue: %v", err)
 	}
 
-	q = NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
+	q, err := NewNSQueue(100, NsqListenSpec, true, p.Requests(), c.Messages())
+	if err != nil {
+		return nil, fmt.Errorf("Error creating default NSQQueue: %v", err)
+	}
+
 	return q, nil
 }

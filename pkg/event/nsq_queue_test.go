@@ -65,7 +65,8 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 		}
 	}()
 
-	q := NewNSQueue(10, "", false, pc, cc)
+	q, err := NewNSQueue(10, "", false, pc, cc)
+	assert.NoError(t, err)
 
 	impression := BuildTestImpressionEvent()
 	conversion := BuildTestConversionEvent()
