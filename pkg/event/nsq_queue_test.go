@@ -17,6 +17,8 @@
 package event
 
 import (
+	"bytes"
+	"encoding/gob"
 	"testing"
 	"time"
 
@@ -107,4 +109,52 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	allItems := q.Remove(3)
 	assert.Equal(t, 2, len(allItems))
 	assert.Equal(t, 0, q.Size())
+}
+
+func TestNSQQueue_Consumer_Only(t *testing.T) {
+	mp, mc := NewMockProducerAndConsumer()
+	defer func() {
+		close(mp.ProducerChannel)
+		close(mc.ConsumerChannel)
+	}()
+
+	// Pass nil producer for consumer-only
+	q, err := NewNSQueue(10, "", false, nil, mc)
+	assert.NoError(t, err)
+
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err = enc.Encode(BuildTestImpressionEvent())
+	mp.Requests() <- snsq.ProducerRequest{
+		Topic:    NsqTopic,
+		Message:  buf.Bytes(),
+		Response: make(chan error, 1),
+		Deadline: time.Now().Add(2 * time.Second),
+	}
+
+	assert.Eventually(t, func() bool { return len(q.Get(1)) == 1 }, 5*time.Second, 10*time.Millisecond)
+
+	q.Add(BuildTestConversionEvent())
+}
+
+func TestNSQQueue_Producer_Only(t *testing.T) {
+	mp, mc := NewMockProducerAndConsumer()
+	defer func() {
+		close(mp.ProducerChannel)
+		close(mc.ConsumerChannel)
+	}()
+
+	// Pass nil consumer for producer-only
+	q, err := NewNSQueue(10, "", false, mp, nil)
+	assert.NoError(t, err)
+
+	q.Add(BuildTestConversionEvent())
+	assert.Eventually(t, func() bool {
+		select {
+		case <-mc.ConsumerChannel:
+			return true
+		default:
+			return false
+		}
+	}, 5*time.Second, 10*time.Millisecond)
 }
