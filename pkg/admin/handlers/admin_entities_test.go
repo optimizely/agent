@@ -101,6 +101,28 @@ func TestHealthHandlerOneServiceNotStarted(t *testing.T) {
 	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
 }
 
+func TestHealthHandlerTwoServiceNotStarted(t *testing.T) {
+
+	req, _ := http.NewRequest("GET", "/health", nil)
+
+	rr := httptest.NewRecorder()
+
+	srvc1 := &MockActiveService{}
+	srvc2 := &MockInactiveService{}
+	srvc3 := &MockInactiveService{}
+
+	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2, srvc3})
+	http.HandlerFunc(a.Health).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
+	}
+
+	expected := string(`{"status":"error", "reason": "not healthy, not healthy"}`)
+
+	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
+}
+
 func TestAppInfoHandler(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/info", nil)
