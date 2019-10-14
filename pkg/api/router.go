@@ -18,17 +18,14 @@
 package api
 
 import (
-	"github.com/go-chi/chi"
-	chimw "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/admin"
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
-)
 
-// Version holds the api version
-var Version string // can be set at compile time
+	"github.com/go-chi/chi"
+	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/render"
+)
 
 // RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
@@ -52,15 +49,7 @@ func NewDefaultRouter() *chi.Mux {
 func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
 
-	optlyAdmin := admin.NewAdmin(Version, "DevX", "sidedoor")
-	r.Use(optlyAdmin.AppInfoHeader)
-
 	r.Use(render.SetContentType(render.ContentTypeJSON))
-
-	r.Route("/admin", func(r chi.Router) {
-		r.Get("/health", optlyAdmin.Health)
-		r.Get("/info", optlyAdmin.AppInfo)
-	})
 
 	r.With(chimw.AllowContentType("application/json")).Post("/user-event", opt.userEventAPI.AddUserEvent)
 

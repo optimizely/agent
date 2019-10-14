@@ -16,11 +16,13 @@
 package main
 
 import (
-	"net/http"
 	"strings"
 	"sync"
 
+	"github.com/optimizely/sidedoor/pkg/admin"
+	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 	"github.com/optimizely/sidedoor/pkg/api"
+	"github.com/optimizely/sidedoor/pkg/service"
 	"github.com/optimizely/sidedoor/pkg/webhook"
 
 	"github.com/rs/zerolog/log"
@@ -49,6 +51,9 @@ func loadConfig() {
 	viper.SetDefault("webhook.enabled", true)
 	// Port for webhook service
 	viper.SetDefault("webhook.port", "8085")
+
+	// Port for admin service
+	viper.SetDefault("admin.port", "8088")
 }
 
 func main() {
@@ -56,41 +61,33 @@ func main() {
 	loadConfig()
 	var wg sync.WaitGroup
 
-	/******************* Enable API ***********/
+	sidedoorSrvc := service.NewService(
+		viper.GetBool("api.enabled"),
+		viper.GetString("api.port"),
+		"API",
+		api.NewDefaultRouter(),
+		&wg,
+	)
 
-	apiEnabled := viper.GetBool("api.enabled")
-	if apiEnabled {
-		wg.Add(1)
-		go func() {
-			apiRouter := api.NewDefaultRouter()
-			apiPort := viper.GetString("api.port")
-			log.Printf("Optimizely API server started at port " + apiPort)
-			if err := http.ListenAndServe(":"+apiPort, apiRouter); err != nil {
-				log.Fatal().Err(err).Msg("Failed to start Optimizely API server.")
-			}
-			wg.Done()
-		}()
-	} else {
-		log.Printf("api service opted out.")
-	}
+	webhookSrvc := service.NewService(
+		viper.GetBool("webhook.enabled"),
+		viper.GetString("webhook.port"),
+		"webhook",
+		webhook.NewRouter(),
+		&wg,
+	)
 
-	/******************* Enable Webhook ***********/
+	adminSrvc := service.NewService(
+		true,
+		viper.GetString("admin.port"),
+		"admin",
+		admin.NewRouter([]handlers.AliveChecker{sidedoorSrvc, webhookSrvc}),
+		&wg,
+	)
 
-	webhookEnabled := viper.GetBool("webhook.enabled")
-	if webhookEnabled {
-		wg.Add(1)
-		go func() {
-			webhookRouter := webhook.NewRouter()
-			webhookPort := viper.GetString("webhook.port")
-			log.Printf("Optimizely webhook server started at port " + webhookPort)
-			if err := http.ListenAndServe(":"+webhookPort, webhookRouter); err != nil {
-				log.Fatal().Err(err).Msg("Failed to start Optimizely webhook server.")
-			}
-			wg.Done()
-		}()
-	} else {
-		log.Printf("Webhook service opted out.")
-	}
+	adminSrvc.StartService()
+	sidedoorSrvc.StartService()
+	webhookSrvc.StartService()
 
 	wg.Wait()
 	log.Printf("Exiting.")

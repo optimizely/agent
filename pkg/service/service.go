@@ -14,24 +14,61 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package webhook //
-package webhook
+// Package service //
+package service
 
 import (
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
+	"net/http"
+	"sync"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
+// Service has generic info for service
+type Service struct {
+	active bool
+	port   string
+	name   string
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	router *chi.Mux
+	wg     *sync.WaitGroup
+}
 
-	webhookAPI := new(handlers.OptlyWebhookHandler)
+// NewService initializes new service
+func NewService(active bool, port, name string, router *chi.Mux, wg *sync.WaitGroup) *Service {
+	return &Service{
+		active: active,
+		port:   port,
+		name:   name,
+		router: router,
+		wg:     wg,
+	}
+}
 
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return r
+// IsAlive checks if the service is alive
+func (s Service) IsAlive() bool {
+	return s.active
+}
+
+// StartService starts the service
+func (s *Service) StartService() {
+	if s.active {
+		s.wg.Add(1)
+		go func() {
+			log.Printf("Optimizely " + s.name + " server starting at port " + s.port)
+			if err := http.ListenAndServe(":"+s.port, s.router); err != nil {
+				s.updateState(false)
+				s.wg.Done()
+				log.Error().Msg("Failed to start Optimizely " + s.name + " server.")
+
+			}
+		}()
+	} else {
+		log.Printf("Optimizely " + s.name + " server has not started")
+	}
+}
+
+func (s *Service) updateState(state bool) {
+	s.active = state
 }
