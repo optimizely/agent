@@ -28,18 +28,16 @@ import (
 var Version string // can be set at compile time
 
 // NewRouter returns HTTP admin router
-func NewRouter(srvcs []handlers.AliveChecker) *chi.Mux {
+func NewRouter(srvcs []handlers.HealthChecker) *chi.Mux {
 	r := chi.NewRouter()
 
-	optlyAdmin := handlers.NewAdmin(Version, "DevX", "admin", srvcs)
+	optlyAdmin := handlers.NewAdmin(Version, "Optimizely", "Sidedoor", srvcs)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.Route("/admin", func(r chi.Router) {
-		r.Get("/health", optlyAdmin.Health)
-		r.Get("/info", optlyAdmin.AppInfo)
-	})
+	r.Get("/health", optlyAdmin.Health)
+	r.Get("/info", optlyAdmin.AppInfo)
 
 	return r
 }

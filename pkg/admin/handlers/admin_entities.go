@@ -21,6 +21,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/go-chi/render"
 	"golang.org/x/sync/errgroup"
@@ -29,9 +30,15 @@ import (
 // JSON is a map alias, just for convenience
 type JSON map[string]interface{}
 
-// AliveChecker is the interface to check if something is alive
-type AliveChecker interface {
-	IsAlive() bool
+// HealthChecker is the interface to check if something is healthy
+type HealthChecker interface {
+	IsHealthy() (bool, string)
+}
+
+// Health is holding info about health checks
+type Health struct {
+	Status string `json:"status,omitempty"`
+	Reason string `json:"reason,omitempty"`
 }
 
 // Admin is holding info to pass to admin handlers
@@ -41,12 +48,12 @@ type Admin struct {
 	AppName string `json:"app_name,omitempty"`
 	Host    string `json:"host,omitempty"`
 
-	srvcs []AliveChecker
+	checks []HealthChecker
 }
 
 // NewAdmin initializes admin
-func NewAdmin(version, author, appName string, srvcs []AliveChecker) *Admin {
-	return &Admin{Version: version, Author: author, AppName: appName, srvcs: srvcs}
+func NewAdmin(version, author, appName string, checks []HealthChecker) *Admin {
+	return &Admin{Version: version, Author: author, AppName: appName, checks: checks}
 }
 
 // Health displays health status
@@ -54,27 +61,34 @@ func (a Admin) Health(w http.ResponseWriter, r *http.Request) {
 
 	var eg errgroup.Group
 	var err error
-	if len(a.srvcs) > 0 {
-		for _, s := range a.srvcs {
+	msgList := []string{}
+	if len(a.checks) > 0 {
+		for _, s := range a.checks {
 			s := s
 			eg.Go(func() error {
-				if !s.IsAlive() {
-					return errors.New("failed")
+				healthy, msg := s.IsHealthy()
+				if !healthy {
+					msgList = append(msgList, msg)
+					return errors.New(msg)
+
 				}
 				return nil
 			})
 		}
 		err = eg.Wait()
 	} else {
-		err = errors.New("no services")
+		msg := "no services"
+		msgList = append(msgList, msg)
+		err = errors.New(msg)
 	}
-	var status string
+	var status, reason string
 	if err == nil {
 		status = "ok"
 	} else {
 		status = "error"
+		reason = strings.Join(msgList, ", ")
 	}
-	render.JSON(w, r, JSON{"status": status})
+	render.JSON(w, r, Health{status, reason})
 }
 
 // AppInfo returns custom app-info

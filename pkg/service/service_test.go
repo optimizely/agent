@@ -19,7 +19,6 @@ package service
 import (
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -30,35 +29,33 @@ func TestNewService(t *testing.T) {
 	assert.NotNil(t, ns)
 
 	assert.Equal(t, ns.port, "1")
-	assert.Equal(t, ns.active, true)
+	assert.Equal(t, ns.enabled, true)
 	assert.Equal(t, ns.name, "name")
-
-}
-
-func TestIsAlive(t *testing.T) {
-	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
-
-	assert.True(t, ns.IsAlive())
 }
 
 func TestUpdateState(t *testing.T) {
 	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
 
 	ns.updateState(false)
-	assert.False(t, ns.IsAlive())
+	state, reason := ns.IsHealthy()
+	assert.False(t, state)
+	assert.Equal(t, reason, "name service down")
 
 	ns.updateState(true)
-	assert.True(t, ns.IsAlive())
+	state, reason = ns.IsHealthy()
+	assert.True(t, state)
+	assert.Equal(t, reason, "")
 }
 
-func TestStartService(t *testing.T) {
-	ns := NewService(true, "-9", "name", &chi.Mux{}, &sync.WaitGroup{})
+func TestFailedStartService(t *testing.T) {
 
-	assert.True(t, ns.IsAlive())
+	var wg sync.WaitGroup
+	ns := NewService(true, "-9", "api", &chi.Mux{}, &wg)
 
 	ns.StartService()
-	time.Sleep(2 * time.Second)
+	wg.Wait()
 
-	assert.False(t, ns.IsAlive())
-
+	state, reason := ns.IsHealthy()
+	assert.False(t, state)
+	assert.Equal(t, reason, "api service down")
 }

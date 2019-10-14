@@ -27,36 +27,41 @@ import (
 
 // Service has generic info for service
 type Service struct {
-	active bool
-	port   string
-	name   string
+	active  bool
+	enabled bool
+	port    string
+	name    string
 
 	router *chi.Mux
 	wg     *sync.WaitGroup
 }
 
 // NewService initializes new service
-func NewService(active bool, port, name string, router *chi.Mux, wg *sync.WaitGroup) *Service {
+func NewService(enabled bool, port, name string, router *chi.Mux, wg *sync.WaitGroup) *Service {
 	return &Service{
-		active: active,
-		port:   port,
-		name:   name,
-		router: router,
-		wg:     wg,
+		enabled: enabled,
+		port:    port,
+		name:    name,
+		router:  router,
+		wg:      wg,
 	}
 }
 
 // IsAlive checks if the service is alive
-func (s Service) IsAlive() bool {
-	return s.active
+func (s Service) IsHealthy() (bool, string) {
+	if s.enabled && !s.active {
+		return s.active, s.name + " service down"
+	}
+	return true, ""
 }
 
 // StartService starts the service
 func (s *Service) StartService() {
-	if s.active {
+	if s.enabled {
 		s.wg.Add(1)
 		go func() {
 			log.Printf("Optimizely " + s.name + " server starting at port " + s.port)
+			s.updateState(true)
 			if err := http.ListenAndServe(":"+s.port, s.router); err != nil {
 				s.updateState(false)
 				s.wg.Done()

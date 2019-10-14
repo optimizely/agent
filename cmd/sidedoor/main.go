@@ -81,7 +81,7 @@ func main() {
 		true,
 		viper.GetString("admin.port"),
 		"admin",
-		admin.NewRouter([]handlers.AliveChecker{sidedoorSrvc, webhookSrvc}),
+		admin.NewRouter([]handlers.HealthChecker{sidedoorSrvc, webhookSrvc}),
 		&wg,
 	)
 
