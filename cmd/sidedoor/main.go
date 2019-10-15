@@ -16,19 +16,18 @@
 package main
 
 import (
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
-	"net/http"
 	"strings"
 	"sync"
 
+	"github.com/optimizely/sidedoor/pkg/admin"
+	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 	"github.com/optimizely/sidedoor/pkg/api"
+	"github.com/optimizely/sidedoor/pkg/service"
 	"github.com/optimizely/sidedoor/pkg/webhook"
-)
 
-func init() {
-	loadConfig()
-}
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+)
 
 func loadConfig() {
 	viper.SetEnvPrefix("sidedoor")
@@ -44,43 +43,52 @@ func loadConfig() {
 
 	viper.AutomaticEnv()
 
+	// Property to turn api service on/off
+	viper.SetDefault("api.enabled", true)
 	// Port for serving Optimizely APIs
 	viper.SetDefault("api.port", "8080")
 	// Property to turn webhook service on/off
-	viper.SetDefault("webhook.enabled", false)
+	viper.SetDefault("webhook.enabled", true)
 	// Port for webhook service
 	viper.SetDefault("webhook.port", "8085")
+
+	// Port for admin service
+	viper.SetDefault("admin.port", "8088")
 }
 
 func main() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		apiRouter := api.NewDefaultRouter()
-		apiPort := viper.GetString("api.port")
-		log.Printf("Optimizely API server started at port " + apiPort)
-		if err := http.ListenAndServe(":" + apiPort, apiRouter); err != nil {
-			log.Fatal().Err(err).Msg("Failed to start Optimizely API server.")
-		}
-		wg.Done()
-	}()
 
-	wg.Add(1)
-	go func() {
-		// TODO optionally not start this if user is not interested in webhooks
-		webhookEnabled := viper.GetBool("webhook.enabled")
-		if !webhookEnabled {
-			log.Printf("Webhook service opted out.")
-			return
-		}
-		webhookRouter := webhook.NewRouter()
-		webhookPort := viper.GetString("webhook.port")
-		log.Printf("Optimizely webhook server started at port " + webhookPort)
-		if err := http.ListenAndServe(":" + webhookPort, webhookRouter); err != nil {
-			log.Fatal().Err(err).Msg("Failed to start Optimizely webhook server.")
-		}
-		wg.Done()
-	}()
+	loadConfig()
+	var wg sync.WaitGroup
+
+	sidedoorSrvc := service.NewService(
+		viper.GetBool("api.enabled"),
+		viper.GetString("api.port"),
+		"API",
+		api.NewDefaultRouter(),
+		&wg,
+	)
+
+	webhookSrvc := service.NewService(
+		viper.GetBool("webhook.enabled"),
+		viper.GetString("webhook.port"),
+		"webhook",
+		webhook.NewRouter(),
+		&wg,
+	)
+
+	adminSrvc := service.NewService(
+		true,
+		viper.GetString("admin.port"),
+		"admin",
+		admin.NewRouter([]handlers.HealthChecker{sidedoorSrvc, webhookSrvc}),
+		&wg,
+	)
+
+	adminSrvc.StartService()
+	sidedoorSrvc.StartService()
+	webhookSrvc.StartService()
 
 	wg.Wait()
+	log.Printf("Exiting.")
 }

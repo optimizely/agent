@@ -14,24 +14,30 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package webhook //
-package webhook
+// Package admin //
+package admin
 
 import (
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
+	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
+// Version holds the admin version
+var Version string // can be set at compile time
+
+// NewRouter returns HTTP admin router
+func NewRouter(srvcs []handlers.HealthChecker) *chi.Mux {
 	r := chi.NewRouter()
+
+	optlyAdmin := handlers.NewAdmin(Version, "Optimizely", "Sidedoor", srvcs)
+	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	webhookAPI := new(handlers.OptlyWebhookHandler)
+	r.Get("/health", optlyAdmin.Health)
+	r.Get("/info", optlyAdmin.AppInfo)
 
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
 	return r
 }

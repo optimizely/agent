@@ -14,24 +14,48 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package webhook //
-package webhook
+package service
 
 import (
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
+	"sync"
+	"testing"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
+	"github.com/stretchr/testify/assert"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
-	r := chi.NewRouter()
+func TestNewService(t *testing.T) {
+	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
+	assert.NotNil(t, ns)
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	assert.Equal(t, ns.port, "1")
+	assert.Equal(t, ns.enabled, true)
+	assert.Equal(t, ns.name, "name")
+}
 
-	webhookAPI := new(handlers.OptlyWebhookHandler)
+func TestUpdateState(t *testing.T) {
+	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
 
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return r
+	ns.updateState(false)
+	state, reason := ns.IsHealthy()
+	assert.False(t, state)
+	assert.Equal(t, reason, "name service down")
+
+	ns.updateState(true)
+	state, reason = ns.IsHealthy()
+	assert.True(t, state)
+	assert.Equal(t, reason, "")
+}
+
+func TestFailedStartService(t *testing.T) {
+
+	var wg sync.WaitGroup
+	ns := NewService(true, "-9", "api", &chi.Mux{}, &wg)
+
+	ns.StartService()
+	wg.Wait()
+
+	state, reason := ns.IsHealthy()
+	assert.False(t, state)
+	assert.Equal(t, reason, "api service down")
 }
