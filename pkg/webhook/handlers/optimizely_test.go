@@ -92,7 +92,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	req.Header.Set(signatureHeader, "sha1=some_random_signature_in_header")
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc((*(&optlyHandler)).HandleWebhook)
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -130,7 +130,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	req.Header.Set(signatureHeader, "sha1=e0199de63fb7192634f52136d4ceb7dc6f191da3")
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc((*(&optlyHandler)).HandleWebhook)
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
