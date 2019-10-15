@@ -23,7 +23,6 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -37,33 +36,23 @@ import (
 
 const signatureHeader = "X-Hub-Signature"
 const signaturePrefix = "sha1="
-var webhookConfigMap map[int64]models.OptlyWebhookConfig
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
 	optlyCache       	optimizely.Cache
+	webhookConfigMap 	map[int64]models.OptlyWebhookConfig
 }
 
-// init initializes the webhook handler with all known webhooks
-func init() {
-	viper.AddConfigPath(".")
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Info().Msg("No webhook config file found.")
-	}
-
-	// Generate map with key as project ID and value as config.
-	var webhookConfigs []models.OptlyWebhookConfig
-
-	if err := viper.UnmarshalKey("webhooks", &webhookConfigs); err != nil {
-		log.Info().Msg("Unable to parse webhooks.")
-	}
-
-	webhookConfigMap = make(map[int64]models.OptlyWebhookConfig)
+// NewWebhookHandler returns a new instance of OptlyWebhookHandler
+func NewWebhookHandler(optlyCache optimizely.Cache, webhookConfigs []models.OptlyWebhookConfig) *OptlyWebhookHandler {
+	configMap := make(map[int64]models.OptlyWebhookConfig)
 	for _, config := range webhookConfigs {
-		webhookConfigMap[config.ProjectID] = config
+		configMap[config.ProjectID] = config
+	}
+
+	return &OptlyWebhookHandler{
+		optlyCache:       optlyCache,
+		webhookConfigMap: configMap,
 	}
 }
 
@@ -82,7 +71,7 @@ func (h *OptlyWebhookHandler)computeSignature(payload []byte, secretKey string) 
 
 // validateSignature computes and compares message digest
 func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload []byte, projectID int64) bool {
-	webhookConfig, ok := webhookConfigMap[projectID]
+	webhookConfig, ok := h.webhookConfigMap[projectID]
 	if !ok {
 		log.Error().Str("Project ID", strconv.FormatInt(projectID, 10)).Msg("No webhook configuration found for project ID.")
 		return false
@@ -116,7 +105,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if there is configuration corresponding to the project
-	webhookConfig, ok := webhookConfigMap[webhookMsg.ProjectID]
+	webhookConfig, ok := h.webhookConfigMap[webhookMsg.ProjectID]
 	if !ok {
 		log.Error().Str("Project ID", strconv.FormatInt(webhookMsg.ProjectID, 10)).Msg("No webhook configured for Project ID.")
 		w.WriteHeader(http.StatusNoContent)

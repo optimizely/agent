@@ -1,0 +1,10 @@
+api:
+  port: 8087
+webhook:
+  port: 8090
+  enabled: true
+  configs:
+    - projectId: 42
+      sdkKeys:
+         - "myDatafile"
+      secret: "I am secret"
