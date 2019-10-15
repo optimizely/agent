@@ -16,6 +16,8 @@
 package main
 
 import (
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/webhook/models"
 	"strings"
 	"sync"
 
@@ -38,7 +40,7 @@ func loadConfig() {
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Info().Msg("No config file found.")
+		log.Info().Msg("No config file found or config file may have invalid format.")
 	}
 
 	viper.AutomaticEnv()
@@ -61,19 +63,25 @@ func main() {
 	loadConfig()
 	var wg sync.WaitGroup
 
+	optlyCache := optimizely.NewCache()
 	sidedoorSrvc := service.NewService(
 		viper.GetBool("api.enabled"),
 		viper.GetString("api.port"),
 		"API",
-		api.NewDefaultRouter(),
+		api.NewDefaultRouter(optlyCache),
 		&wg,
 	)
 
+	// Parse webhook configurations
+	var webhookConfigs []models.OptlyWebhookConfig
+	if err := viper.UnmarshalKey("webhook.configs", &webhookConfigs); err != nil {
+		log.Info().Msg("Unable to parse webhooks.")
+	}
 	webhookSrvc := service.NewService(
 		viper.GetBool("webhook.enabled"),
 		viper.GetString("webhook.port"),
 		"webhook",
-		webhook.NewRouter(),
+		webhook.NewDefaultRouter(optlyCache, webhookConfigs),
 		&wg,
 	)
 

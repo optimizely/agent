@@ -23,11 +23,8 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/go-chi/render"
@@ -39,13 +36,24 @@ import (
 
 const signatureHeader = "X-Hub-Signature"
 const signaturePrefix = "sha1="
-const defaultWebhookConfigFile = "config.yaml"
-
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct{
-	webhookConfigMap 	map[int64]models.OptlyWebhookConfig
 	optlyCache       	optimizely.Cache
+	webhookConfigMap 	map[int64]models.OptlyWebhookConfig
+}
+
+// NewWebhookHandler returns a new instance of OptlyWebhookHandler
+func NewWebhookHandler(optlyCache optimizely.Cache, webhookConfigs []models.OptlyWebhookConfig) *OptlyWebhookHandler {
+	configMap := make(map[int64]models.OptlyWebhookConfig)
+	for _, config := range webhookConfigs {
+		configMap[config.ProjectID] = config
+	}
+
+	return &OptlyWebhookHandler{
+		optlyCache:       optlyCache,
+		webhookConfigMap: configMap,
+	}
 }
 
 // computeSignature computes signature based on payload
@@ -71,33 +79,6 @@ func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload
 
 	computedSignature := h.computeSignature(payload, webhookConfig.Secret)
 	return subtle.ConstantTimeCompare([]byte(computedSignature), []byte(requestSignature)) == 1
-}
-
-// Init initializes the webhook handler with all known webhooks
-func (h *OptlyWebhookHandler) Init() {
-	// TODO allow setting this config file from command line
-	configFile, configFileSet := os.LookupEnv("OPTLY_WEBHOOK_CONFIG_FILE")
-	if !configFileSet {
-		configFile = defaultWebhookConfigFile
-	}
-	webhooksSource, err := ioutil.ReadFile(filepath.Clean(configFile))
-	if err != nil {
-		log.Error().Msg("Unable to read config file.")
-		panic(err)
-	}
-
-	var webhookConfigs []models.OptlyWebhookConfig
-	err = yaml.Unmarshal(webhooksSource, &webhookConfigs)
-	if err != nil {
-		log.Error().Msg("Unable to parse config file.")
-		panic(err)
-	}
-
-	// Generate map with key as project ID and value as config.
-	h.webhookConfigMap = make(map[int64]models.OptlyWebhookConfig)
-	for _, config := range webhookConfigs {
-		h.webhookConfigMap[config.ProjectID] = config
-	}
 }
 
 // HandleWebhook handles incoming webhook messages from Optimizely application

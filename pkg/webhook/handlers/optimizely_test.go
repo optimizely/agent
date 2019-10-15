@@ -42,7 +42,6 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 
 func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 	optlyHandler := OptlyWebhookHandler{}
-	optlyHandler.Init()
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 43,
 		Timestamp: 43434343,
@@ -60,15 +59,21 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 	req := httptest.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc((&optlyHandler).HandleWebhook)
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
-	optlyHandler := OptlyWebhookHandler{}
-	optlyHandler.Init()
+	var testWebhookConfigs = []models.OptlyWebhookConfig {
+		{
+			ProjectID: 42,
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
+		},
+	}
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs)
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -87,7 +92,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	req.Header.Set(signatureHeader, "sha1=some_random_signature_in_header")
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc((&optlyHandler).HandleWebhook)
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -97,10 +102,14 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 
 func TestHandleWebhookValidMessage(t *testing.T) {
 	testCache := optlytest.NewCache()
-	optlyHandler := OptlyWebhookHandler{
-		optlyCache: testCache,
+	var testWebhookConfigs = []models.OptlyWebhookConfig {
+		{
+			ProjectID: 42,
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
+		},
 	}
-	optlyHandler.Init()
+	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
 	webhookMsg := models.OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -121,7 +130,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	req.Header.Set(signatureHeader, "sha1=e0199de63fb7192634f52136d4ceb7dc6f191da3")
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc((&optlyHandler).HandleWebhook)
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)

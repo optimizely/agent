@@ -22,15 +22,33 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
+// RouterOptions defines the configuration parameters for Router
+type RouterOptions struct {
+	cache				optimizely.Cache
+	webhookConfigs		[]models.OptlyWebhookConfig
+}
+
+// NewDefaultRouter creates a new router
+func NewDefaultRouter(optlyCache optimizely.Cache, webhookConfigs []models.OptlyWebhookConfig) *chi.Mux {
+	spec := &RouterOptions{
+		cache:				optlyCache,
+		webhookConfigs:		webhookConfigs,
+	}
+
+	return NewRouter(spec)
+}
+
 // NewRouter returns HTTP API router
-func NewRouter() *chi.Mux {
+func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	webhookAPI := new(handlers.OptlyWebhookHandler)
+	webhookAPI := handlers.NewWebhookHandler(opt.cache, opt.webhookConfigs)
 
 	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
 	return r
