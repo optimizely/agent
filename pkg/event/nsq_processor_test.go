@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/optimizely/go-sdk/optimizely/entities"
-	"github.com/optimizely/go-sdk/optimizely/event"
-	"github.com/optimizely/go-sdk/optimizely/utils"
+	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 

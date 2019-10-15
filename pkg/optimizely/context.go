@@ -18,7 +18,7 @@
 package optimizely
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 // OptlyContext encapsulates the user context.

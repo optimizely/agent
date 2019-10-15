@@ -7,7 +7,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/golangci/golangci-lint v1.18.0 // indirect
 	github.com/nsqio/nsq v1.2.0
-	github.com/optimizely/go-sdk v1.0.0-beta2
+	github.com/optimizely/go-sdk v1.0.0-beta3
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/rs/zerolog v1.15.0
 	github.com/segmentio/nsq-go v1.2.2

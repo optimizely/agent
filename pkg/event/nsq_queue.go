@@ -24,7 +24,7 @@ import (
 
 	// this is the nsq demon
 	"github.com/nsqio/nsq/nsqd"
-	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/rs/zerolog/log"
 	// we use the consumer from segmentio as it mentions in the segmentio documents, they
 	// found several problems with the nsq consumer and ended up creating their own wrapper.

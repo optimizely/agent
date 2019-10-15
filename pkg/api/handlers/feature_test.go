@@ -31,7 +31,7 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
 	"github.com/go-chi/chi"
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

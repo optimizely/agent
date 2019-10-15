@@ -18,9 +18,9 @@
 package optimizelytest
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/client"
-	"github.com/optimizely/go-sdk/optimizely/config"
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/pkg/client"
+	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
@@ -34,7 +34,7 @@ func NewClient() *TestClient {
 	projectConfig := NewConfig()
 
 	factory := client.OptimizelyFactory{}
-	optlyClient, _ := factory.Client(client.ConfigManager(config.NewStaticProjectConfigManager(projectConfig)))
+	optlyClient, _ := factory.Client(client.WithConfigManager(config.NewStaticProjectConfigManager(projectConfig)))
 
 	return &TestClient{
 		ProjectConfig:    projectConfig,

@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 // TestProjectConfig is a project config backed by a datafile
@@ -100,12 +100,8 @@ func (c TestProjectConfig) GetVariableByKey(featureKey, variableKey string) (ent
 	var variable entities.Variable
 	var err = fmt.Errorf("variable with key %s not found", featureKey)
 	if feature, ok := c.FeatureMap[featureKey]; ok {
-		for _, v := range feature.Variables {
-			if v.Key == variableKey {
-				variable = v
-				err = nil
-				break
-			}
+		if variable, ok := feature.VariableMap[featureKey]; ok {
+			return variable, nil
 		}
 	}
 	return variable, err
