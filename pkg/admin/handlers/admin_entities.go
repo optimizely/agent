@@ -18,13 +18,10 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/go-chi/render"
-	"golang.org/x/sync/errgroup"
 )
 
 // JSON is a map alias, just for convenience
@@ -37,8 +34,8 @@ type HealthChecker interface {
 
 // Health is holding info about health checks
 type Health struct {
-	Status string `json:"status,omitempty"`
-	Reason string `json:"reason,omitempty"`
+	Status  string   `json:"status,omitempty"`
+	Reasons []string `json:"reasons,omitempty"`
 }
 
 // Admin is holding info to pass to admin handlers
@@ -59,36 +56,36 @@ func NewAdmin(version, author, appName string, checks []HealthChecker) *Admin {
 // Health displays health status
 func (a Admin) Health(w http.ResponseWriter, r *http.Request) {
 
-	var eg errgroup.Group
-	var err error
 	msgList := []string{}
+	errCh := make(chan string)
 	if len(a.checks) > 0 {
 		for _, s := range a.checks {
 			s := s
-			eg.Go(func() error {
-				healthy, msg := s.IsHealthy()
-				if !healthy {
-					msgList = append(msgList, msg)
-					return errors.New(msg)
-
-				}
-				return nil
-			})
+			go func() {
+				_, msg := s.IsHealthy()
+				errCh <- msg
+			}()
 		}
-		err = eg.Wait()
+
+		for range a.checks {
+			msg := <-errCh
+			if msg != "" {
+				msgList = append(msgList, msg)
+			}
+		}
+		close(errCh)
+
 	} else {
 		msg := "no services"
 		msgList = append(msgList, msg)
-		err = errors.New(msg)
 	}
-	var status, reason string
-	if err == nil {
+	var status string
+	if len(msgList) == 0 {
 		status = "ok"
 	} else {
 		status = "error"
-		reason = strings.Join(msgList, ", ")
 	}
-	render.JSON(w, r, Health{status, reason})
+	render.JSON(w, r, Health{status, msgList})
 }
 
 // AppInfo returns custom app-info

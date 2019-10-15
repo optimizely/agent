@@ -25,7 +25,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Service has generic info for service
+// Service has generic functionality for service: it starts the service and performs basic checks
 type Service struct {
 	active  bool
 	enabled bool
@@ -47,8 +47,8 @@ func NewService(enabled bool, port, name string, router *chi.Mux, wg *sync.WaitG
 	}
 }
 
-// IsAlive checks if the service is alive
-func (s Service) IsHealthy() (bool, string) {
+// IsHealthy checks if the service is healthy
+func (s Service) IsHealthy() (_ bool, _ string) {
 	if s.enabled && !s.active {
 		return s.active, s.name + " service down"
 	}
@@ -66,7 +66,6 @@ func (s *Service) StartService() {
 				s.updateState(false)
 				s.wg.Done()
 				log.Error().Msg("Failed to start Optimizely " + s.name + " server.")
-
 			}
 		}()
 	} else {

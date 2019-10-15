@@ -51,7 +51,7 @@ func TestHealthHandlerNoServicesStarted(t *testing.T) {
 		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
 	}
 
-	expected := string(`{"status":"error", "reason": "no services"}`)
+	expected := string(`{"status":"error", "reasons": ["no services"]}`)
 
 	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
 
@@ -96,7 +96,7 @@ func TestHealthHandlerOneServiceNotStarted(t *testing.T) {
 		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
 	}
 
-	expected := string(`{"status":"error", "reason": "not healthy"}`)
+	expected := string(`{"status":"error", "reasons": ["not healthy"]}`)
 
 	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
 }
@@ -118,7 +118,7 @@ func TestHealthHandlerTwoServiceNotStarted(t *testing.T) {
 		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
 	}
 
-	expected := string(`{"status":"error", "reason": "not healthy, not healthy"}`)
+	expected := string(`{"status":"error", "reasons": ["not healthy", "not healthy"]}`)
 
 	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
 }
