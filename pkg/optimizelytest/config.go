@@ -100,7 +100,7 @@ func (c TestProjectConfig) GetVariableByKey(featureKey, variableKey string) (ent
 	var variable entities.Variable
 	var err = fmt.Errorf("variable with key %s not found", featureKey)
 	if feature, ok := c.FeatureMap[featureKey]; ok {
-		if variable, ok := feature.VariableMap[featureKey]; ok {
+		if variable, ok = feature.VariableMap[featureKey]; ok {
 			return variable, nil
 		}
 	}
