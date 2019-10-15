@@ -35,8 +35,8 @@ type RouterOptions struct {
 // NewDefaultRouter creates a new router
 func NewDefaultRouter(optlyCache optimizely.Cache, webhookConfigs []models.OptlyWebhookConfig) *chi.Mux {
 	spec := &RouterOptions{
-		cache: 				optlyCache,
-		webhookConfigs: 	webhookConfigs,
+		cache:				optlyCache,
+		webhookConfigs:		webhookConfigs,
 	}
 
 	return NewRouter(spec)
