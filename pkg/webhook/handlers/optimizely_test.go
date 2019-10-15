@@ -59,7 +59,7 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 	req := httptest.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc((&optlyHandler).HandleWebhook)
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
