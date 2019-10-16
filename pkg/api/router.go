@@ -80,6 +80,10 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 					r.Post("/", opt.userAPI.ActivateFeature)
 				})
 			})
+
+			r.Route("/events", func(r chi.Router) {
+				r.Post("/", opt.userAPI.Track)
+			})
 		})
 	})
 

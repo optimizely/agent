@@ -29,3 +29,12 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 	render.Status(r, status)
 	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
 }
+
+func ParseRequestBody(r *http.Request, v interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	
+}

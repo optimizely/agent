@@ -57,6 +57,11 @@ func (c *OptlyClient) UpdateConfig() {
 	}
 }
 
+// TrackEventWithContext calls the OptimizelyClient Track method with the current OptlyContext.
+func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, eventTags map[string]interface{}) error {
+	return c.Track(eventKey, *ctx.UserContext, eventTags)
+}
+
 // GetAndTrackFeatureWithContext calls the OptimizelyClient with the current OptlyContext this does NOT track experiment conversions
 func (c *OptlyClient) GetAndTrackFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
 	// TODO add tracking
