@@ -26,14 +26,14 @@ import (
 )
 
 // NewEventProcessorNSQ returns a new instance of BatchEventProcessor with a backing NSQ queue
-func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) *event.BatchEventProcessor {
+func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) (*event.BatchEventProcessor, error) {
 	q, err := NewNSQueueDefault()
 	if err != nil {
 		return nil, fmt.Errorf("error creating NSQ event processor: %v", err)
 	}
 
 	p := event.NewBatchEventProcessor(event.WithBatchSize(event.DefaultBatchSize), event.WithQueueSize(queueSize),
-		event.WithFlushInterval(flushInterval), event.WithQueue(NewNSQueueDefault(q)), event.WithEventDispatcher(&event.HTTPEventDispatcher{}))
+		event.WithFlushInterval(flushInterval), event.WithQueue(q), event.WithEventDispatcher(&event.HTTPEventDispatcher{}))
 	p.Start(exeCtx)
 
 	go func() {
