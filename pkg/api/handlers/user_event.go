@@ -24,7 +24,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/rs/zerolog/log"
 )
 

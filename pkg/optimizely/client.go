@@ -20,9 +20,9 @@ package optimizely
 import (
 	"github.com/rs/zerolog/log"
 
-	optimizelyclient "github.com/optimizely/go-sdk/optimizely/client"
-	optimizelyconfig "github.com/optimizely/go-sdk/optimizely/config"
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
+	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality

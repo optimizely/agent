@@ -21,20 +21,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/optimizely/go-sdk/optimizely/event"
-	"github.com/optimizely/go-sdk/optimizely/utils"
+	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/utils"
 )
 
-// NewEventProcessorNSQ returns a new instance of QueueingEventProcessor with a backing NSQ queue
-func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) (*event.QueueingEventProcessor, error) {
+// NewEventProcessorNSQ returns a new instance of BatchEventProcessor with a backing NSQ queue
+func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) (*event.BatchEventProcessor, error) {
 	q, err := NewNSQueueDefault()
 	if err != nil {
 		return nil, fmt.Errorf("error creating NSQ event processor: %v", err)
 	}
 
-	// can't set the wg since it is private (lowercase).
-	p := event.NewEventProcessor(exeCtx, event.BatchSize(event.DefaultBatchSize), event.QueueSize(queueSize),
-		event.FlushInterval(flushInterval), event.PQ(q), event.PDispatcher(&event.HTTPEventDispatcher{}))
+	p := event.NewBatchEventProcessor(event.WithBatchSize(event.DefaultBatchSize), event.WithQueueSize(queueSize),
+		event.WithFlushInterval(flushInterval), event.WithQueue(q), event.WithEventDispatcher(&event.HTTPEventDispatcher{}))
+	p.Start(exeCtx)
 
 	go func() {
 		<-exeCtx.GetContext().Done()

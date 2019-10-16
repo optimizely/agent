@@ -23,15 +23,15 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
-	"github.com/optimizely/go-sdk/optimizely/entities"
+	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )
 
 type ClientTestSuite struct {
 	suite.Suite
-	optlyClient     *OptlyClient
-	optlyContext    *OptlyContext
-	testClient *optimizelytest.TestClient
+	optlyClient  *OptlyClient
+	optlyContext *OptlyContext
+	testClient   *optimizelytest.TestClient
 }
 
 func (suite *ClientTestSuite) SetupTest() {
@@ -89,8 +89,11 @@ func (suite *ClientTestSuite) TestGetAdvancedFeature() {
 	var1 := entities.Variable{Key: "var1", DefaultValue: "val1"}
 	var2 := entities.Variable{Key: "var2", DefaultValue: "val2"}
 	advancedFeature := entities.Feature{
-		Key:       "advanced",
-		Variables: []entities.Variable{var1, var2},
+		Key: "advanced",
+		VariableMap: map[string]entities.Variable{
+			"var1": var1,
+			"var2": var2,
+		},
 	}
 
 	suite.testClient.AddFeatureRollout(advancedFeature)
