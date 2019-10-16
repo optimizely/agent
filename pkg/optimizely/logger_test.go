@@ -22,7 +22,7 @@ import (
 	"testing"
 	"github.com/rs/zerolog"
 
-	"github.com/optimizely/go-sdk/optimizely/logging"
+	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/stretchr/testify/assert"
 )
 

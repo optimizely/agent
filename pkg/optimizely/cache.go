@@ -18,14 +18,14 @@
 package optimizely
 
 import (
-	"github.com/optimizely/go-sdk/optimizely/config"
-	"github.com/optimizely/go-sdk/optimizely/utils"
 	"os"
+
+	"github.com/optimizely/go-sdk/pkg/config"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
 
-	"github.com/optimizely/go-sdk/optimizely/client"
+	"github.com/optimizely/go-sdk/pkg/client"
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -80,10 +80,8 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	sublogger.Info().Msg("Fetching new OptimizelyClient")
 
 	optimizelyFactory := &client.OptimizelyFactory{}
-	// TODO update go SDK to create and set execution context
-	executionCtx := utils.NewCancelableExecutionCtx()
-	configManager := config.NewPollingProjectConfigManager(executionCtx, sdkKey)
-	optimizelyClient, err := optimizelyFactory.Client(client.ConfigManager(configManager))
+	configManager := config.NewPollingProjectConfigManager(sdkKey)
+	optimizelyClient, err := optimizelyFactory.Client(client.WithConfigManager(configManager))
 	if err != nil {
 		sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
 	}

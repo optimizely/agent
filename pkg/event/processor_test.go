@@ -24,16 +24,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/go-sdk/optimizely"
-	"github.com/optimizely/go-sdk/optimizely/entities"
-	"github.com/optimizely/go-sdk/optimizely/event"
+	"github.com/optimizely/go-sdk/pkg"
+	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/stretchr/testify/assert"
 )
 
 // TODO(Matt): Use shared test package when available
 
 type TestConfig struct {
-	optimizely.ProjectConfig
+	pkg.ProjectConfig
 }
 
 func (TestConfig) GetEventByKey(string) (entities.Event, error) {
