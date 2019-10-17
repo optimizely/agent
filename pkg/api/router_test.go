@@ -109,6 +109,15 @@ func (suite *RouterTestSuite) TestActivateFeatures() {
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
 }
 
+func (suite *RouterTestSuite) TestTrackEvent() {
+	req := httptest.NewRequest("POST", "/users/me/events/key", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+}
+
 func TestRouter(t *testing.T) {
 	suite.Run(t, new(RouterTestSuite))
 }

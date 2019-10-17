@@ -73,7 +73,7 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Use(userMW.ClientCtx, userMW.UserCtx)
 	mux.Post("/events/{eventKey}", userAPI.TrackEvent)
-	mux.Post("/events/{eventKey}/", userAPI.TrackEvent)  // Needed to assert non-empty eventKey
+	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
 	mux.Post("/features/{featureKey}", userAPI.ActivateFeature)
 
 	suite.mux = mux
