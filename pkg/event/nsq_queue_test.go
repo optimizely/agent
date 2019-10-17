@@ -99,8 +99,7 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 	q.Add(impression)
 	q.Add(conversion)
 
-	items1 := q.Get(3)
-	assert.Eventually(t, func() bool { return len(items1) == 3 }, 5*time.Second, 10*time.Millisecond)
+	assert.Eventually(t, func() bool { return len(q.Get(3)) == 3 }, 5*time.Second, 10*time.Millisecond)
 
 	q.Remove(1)
 	items2 := q.Get(3)
