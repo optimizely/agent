@@ -11,19 +11,6 @@ servers:
 - url: https://fullstack.api.optimizely.com
   description: "Hosted Optimizely Decision Service"
 paths:
-  /stats:
-    get:
-      summary: Server metrics
-      operationId: getStats
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Stat'
   /experiments:
     get:
       summary: Return all experiments
@@ -44,22 +31,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/Experiment'
   /experiments/{experimentKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: getExperiment
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: experimentKey
-        in: path
-        required: true
-        description: Key of the experiment
-        schema:
-          type: string
       responses:
         '200':
           description: Valid response
@@ -70,22 +48,13 @@ paths:
         '404':
           description: Experiment does not exist
   /experiments/{experimentKey}/variations:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: listExperimentVariations
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: experimentKey
-        in: path
-        required: true
-        description: Key of the experiment we're activating
-        schema:
-          type: string
       responses:
         '200':
           description: Valid response
@@ -100,28 +69,14 @@ paths:
         '404':
           description: Experiment does not exist
   /experiments/{experimentKey}/variations/{variationKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
+    - $ref: '#/components/parameters/variationKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: getExperimentVariation
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: experimentKey
-        in: path
-        required: true
-        description: Key of the experiment we're activating
-        schema:
-          type: string
-      - name: variationKey
-        in: path
-        required: true
-        description: Variation Key of the experiment we're activating
-        schema:
-          type: string
       responses:
         '200':
           description: Valid response
@@ -154,21 +109,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Feature'
   /features/{featureKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/featureKeyParam'
     get:
       summary: Return the feature
       operationId: getFeature
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: featureKey
-        in: path
-        required: true
-        description: Key of the feature we're fetching
-        schema:
-          type: string
       responses:
         '200':
           description: Valid response
@@ -179,21 +125,12 @@ paths:
         '404':
           description: Experiment does not exist
   /features/{featureKey}/variations:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/featureKeyParam'
     get:
       summary: Return feature variations
       operationId: listFeatureVariations
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: featureKey
-        in: path
-        required: true
-        description: Key of the feature we're fetching
-        schema:
-          type: string
       responses:
         '200':
           description: Valid response
@@ -206,27 +143,13 @@ paths:
         '404':
           description: Feature does not exist or variations DNE
   /features/{featureKey}/variations/{variationKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/featureKeyParam'
+    - $ref: '#/components/parameters/variationKeyParam'
     get:
       summary: Return the feature variant
       operationId: getFeatureVariation
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: featureKey
-        in: path
-        required: true
-        description: Key of the feature we're fetching
-        schema:
-          type: string
-      - name: variationKey
-        in: path
-        required: true
-        description: Key of the variation we're fetching
-        schema:
-          type: string
       responses:
         '200':
           description: Valid response
@@ -236,31 +159,6 @@ paths:
                 $ref: '#/components/schemas/FeatureVariation'
         '404':
           description: Feature does not exist or variation DNE
-  /track/{eventName}:
-    post:
-      summary: Track event endpoint
-      operationId: trackEvent
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: eventName
-        in: path
-        required: true
-        description: Name of the event to be tracked
-        schema:
-          type: string
-      - name: userId
-        in: query
-        required: true
-        description: Id for the user being tracked.
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Valid response
   /user-event:
     post:
       summary: User event endpoint
@@ -285,34 +183,15 @@ paths:
             schema:
               $ref: '#/components/schemas/UserEvent'
   /users/{userId}/experiments/{experimentKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
+    - $ref: '#/components/parameters/attributesParam'
     get:
       summary: Return variation decision for an experiment
       operationId: getVariation
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: userId
-        in: path
-        required: true
-        description: Id associated with the user
-        schema:
-          type: string
-      - name: experimentKey
-        in: path
-        required: true
-        description: Key of the experiment we're activating
-        schema:
-          type: string
-      - name: attributes
-        in: query
-        schema:
-          type: object
-          additionalProperties:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -328,30 +207,6 @@ paths:
       summary: Activate experiment and return variation
       operationId: activateExperiment
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: userId
-        in: path
-        required: true
-        description: Id associated with the user
-        schema:
-          type: string
-      - name: experimentKey
-        in: path
-        required: true
-        description: Key of the experiment we're activating
-        schema:
-          type: string
-      - name: attributes
-        in: query
-        schema:
-          type: object
-          additionalProperties:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -364,34 +219,15 @@ paths:
         '404':
           description: Experiment does not exist
   /users/{userId}/features/{featureKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/featureKeyParam'
+    - $ref: '#/components/parameters/attributesParam'
     get:
       summary: Return feature resulting from an experiment or rollout
       operationId: getFeatureDecision
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: userId
-        in: path
-        required: true
-        description: Id associated with the user
-        schema:
-          type: string
-      - name: featureKey
-        in: path
-        required: true
-        description: Key of the feature we're activating
-        schema:
-          type: string
-      - name: attributes
-        in: query
-        schema:
-          type: object
-          additionalProperties:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -407,30 +243,6 @@ paths:
       summary: Activate feature and return associated variable values
       operationId: activateFeature
       description: todo
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
-      - name: userId
-        in: path
-        required: true
-        description: Id associated with the user
-        schema:
-          type: string
-      - name: featureKey
-        in: path
-        required: true
-        description: Key of the feature we're activating
-        schema:
-          type: string
-      - name: attributes
-        in: query
-        schema:
-          type: object
-          additionalProperties:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -443,17 +255,49 @@ paths:
         '404':
           description: Feature does not exist
 components:
-  schemas:
-    Stat:
-      properties:
-        name:
+  parameters:
+    sdkKeyParam:
+      in: header
+      name: X-Optimizely-SDK-Key
+      schema:
+        type: string
+      required: true
+    attributesParam:
+      in: query
+      name: attributes
+      schema:
+        type: object
+        additionalProperties:
           type: string
-        value:
-          type: integer
-      # Both properties are required
-      required:
-      - name
-      - value
+    experimentKeyParam:
+      in: path
+      name: experimentKey
+      required: true
+      description: Key of the experiment we're activating
+      schema:
+        type: string
+    featureKeyParam:
+      in: path
+      name: featureKey
+      required: true
+      description: Key of the feature we're activating
+      schema:
+        type: string
+    userIdParam:
+      name: userId
+      in: path
+      required: true
+      description: Id associated with the user
+      schema:
+        type: string
+    variationKeyParam:
+      name: variationKey
+      in: path
+      required: true
+      description: Key of the variation we're fetching
+      schema:
+        type: string
+  schemas:
     Experiment:
       properties:
         id:
