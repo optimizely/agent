@@ -104,6 +104,27 @@ func (suite *ClientTestSuite) TestGetAdvancedFeature() {
 	suite.Equal(2, len(variableMap))
 }
 
+func (suite *ClientTestSuite) TestTrackEventWithContext() {
+	eventKey := "eventKey"
+	suite.testClient.AddEvent(entities.Event{Key: eventKey})
+	tags := map[string]interface{}{"tag": "value"}
+	err := suite.optlyClient.TrackEventWithContext(eventKey, suite.optlyContext, tags)
+	suite.NoError(err)
+
+	events := suite.testClient.GetProcessedEvents()
+	suite.Equal(1, len(events))
+
+	actual := events[0]
+	suite.Equal(eventKey, actual.Conversion.Key)
+	suite.Equal("userId", actual.VisitorID)
+	suite.Equal(tags, actual.Conversion.Tags)
+}
+
+func (suite *ClientTestSuite) TestTrackEventWithContextError() {
+	err := suite.optlyClient.TrackEventWithContext("missing-key", suite.optlyContext, map[string]interface{}{})
+	suite.Error(err)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestClientTestSuite(t *testing.T) {

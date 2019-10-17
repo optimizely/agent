@@ -21,10 +21,12 @@ import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/event"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
 type TestClient struct {
+	EventProcessor   *TestEventProcessor
 	ProjectConfig    *TestProjectConfig
 	OptimizelyClient *client.OptimizelyClient
 }
@@ -32,11 +34,16 @@ type TestClient struct {
 // NewClient provides an instance of OptimizelyClient backed by a TestProjectConfig
 func NewClient() *TestClient {
 	projectConfig := NewConfig()
+	eventProcessor := new(TestEventProcessor)
 
 	factory := client.OptimizelyFactory{}
-	optlyClient, _ := factory.Client(client.WithConfigManager(config.NewStaticProjectConfigManager(projectConfig)))
+	optlyClient, _ := factory.Client(
+		client.WithConfigManager(config.NewStaticProjectConfigManager(projectConfig)),
+		client.WithEventProcessor(eventProcessor),
+	)
 
 	return &TestClient{
+		EventProcessor:   eventProcessor,
 		ProjectConfig:    projectConfig,
 		OptimizelyClient: optlyClient,
 	}
@@ -55,4 +62,9 @@ func (t TestClient) AddFeature(feature entities.Feature) {
 // AddFeatureRollout is a helper method for adding feature rollouts to the ProjectConfig to fascilitate testing.
 func (t *TestClient) AddFeatureRollout(feature entities.Feature) {
 	t.ProjectConfig.AddFeatureRollout(feature)
+}
+
+// GetProcessedEvents returns the UserEvent objects sent to the event processor.
+func (t *TestClient) GetProcessedEvents() []event.UserEvent {
+	return t.EventProcessor.GetEvents()
 }

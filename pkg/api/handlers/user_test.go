@@ -124,6 +124,13 @@ func (suite *UserTestSuite) TestTrackEventNoTags() {
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.Equal(http.StatusNoContent, rec.Code)
+
+	events := suite.tc.GetProcessedEvents()
+	suite.Equal(1, len(events))
+
+	actual := events[0]
+	suite.Equal(eventKey, actual.Conversion.Key)
+	suite.Equal("testUser", actual.VisitorID)
 }
 
 func (suite *UserTestSuite) TestTrackEventWithTags() {
@@ -133,7 +140,6 @@ func (suite *UserTestSuite) TestTrackEventWithTags() {
 
 	tags := make(map[string]interface{})
 	tags["key1"] = "val"
-	tags["key2"] = 100
 
 	body, err := json.Marshal(tags)
 	suite.NoError(err)
@@ -143,6 +149,14 @@ func (suite *UserTestSuite) TestTrackEventWithTags() {
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.Equal(http.StatusNoContent, rec.Code)
+
+	events := suite.tc.GetProcessedEvents()
+	suite.Equal(1, len(events))
+
+	actual := events[0]
+	suite.Equal(eventKey, actual.Conversion.Key)
+	suite.Equal("testUser", actual.VisitorID)
+	suite.Equal(tags, actual.Conversion.Tags)
 }
 
 func (suite *UserTestSuite) TestTrackEventWithInvalidTags() {

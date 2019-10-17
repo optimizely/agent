@@ -48,7 +48,7 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tags eventTags
-	err = ParseRequestBody(r, tags)
+	err = ParseRequestBody(r, &tags)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
