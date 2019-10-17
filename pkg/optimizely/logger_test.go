@@ -19,10 +19,11 @@ package optimizely
 
 import (
 	"bytes"
-	"github.com/rs/zerolog"
 	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/logging"
+
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
