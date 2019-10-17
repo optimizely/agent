@@ -22,43 +22,50 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestSetRequestHeaderWithEmtpyHeader(t *testing.T) {
-
-	getTestHandler := func() http.HandlerFunc {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-	}
-
-	ts := httptest.NewServer(SetRequestID(getTestHandler()))
-	defer ts.Close()
-
-	res, err := http.Get(ts.URL + "/some_string")
-	assert.NoError(t, err)
-	header := res.Header["X-Request-Id"]
-	assert.Equal(t, len(header), 1)
-	assert.Equal(t, len(header[0]), 36)
+type RequestHeader struct {
+	suite.Suite
+	server *httptest.Server
 }
 
-func TestSetRequestHeaderWithRequestHeader(t *testing.T) {
-
+func (suite *RequestHeader) SetupTest() {
 	getTestHandler := func() http.HandlerFunc {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 	}
+	suite.server = httptest.NewServer(SetRequestID(getTestHandler()))
+}
 
-	ts := httptest.NewServer(SetRequestID(getTestHandler()))
-	defer ts.Close()
+func (suite *RequestHeader) TearDownTest() {
+	suite.server.Close()
+}
 
-	req, _ := http.NewRequest("POST", ts.URL+"/some_post_request", nil)
+func (suite *RequestHeader) TestSetRequestHeaderWithEmtpyHeader() {
+
+	res, err := http.Get(suite.server.URL + "/some_string")
+	suite.NoError(err)
+	header := res.Header["X-Request-Id"]
+	suite.Equal(len(header), 1)
+	suite.Equal(len(header[0]), 36)
+}
+
+func (suite *RequestHeader) TestSetRequestHeaderWithRequestHeader() {
+
+	req, _ := http.NewRequest("POST", suite.server.URL+"/some_post_request", nil)
 
 	req.Header.Set("X-Request-Id", "12345")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 
-	assert.NoError(t, err)
+	suite.NoError(err)
 	header := res.Header["X-Request-Id"]
-	assert.Equal(t, len(header), 1)
-	assert.Equal(t, header[0], "12345")
+	suite.Equal(len(header), 1)
+	suite.Equal(header[0], "12345")
+}
+
+func TestRequestHeaderSuite(t *testing.T) {
+	suite.Run(t, new(RequestHeader))
+
 }
