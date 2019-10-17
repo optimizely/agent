@@ -162,19 +162,19 @@ func (c TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) 
 }
 
 // AddEvent adds the event to the EventMap
-func (c TestProjectConfig) AddEvent(event entities.Event) *TestProjectConfig {
-	c.EventMap[event.Key] = event
+func (c TestProjectConfig) AddEvent(e entities.Event) *TestProjectConfig {
+	c.EventMap[e.Key] = e
 	return &c
 }
 
 // AddFeature adds the feature to the FeatureMap
-func (c TestProjectConfig) AddFeature(feature entities.Feature) *TestProjectConfig {
-	c.FeatureMap[feature.Key] = feature
+func (c TestProjectConfig) AddFeature(f entities.Feature) *TestProjectConfig {
+	c.FeatureMap[f.Key] = f
 	return &c
 }
 
 // AddFeatureRollout adds the feature and supporting entities to complete the rollout modeling
-func (c TestProjectConfig) AddFeatureRollout(feature entities.Feature) *TestProjectConfig {
+func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectConfig {
 	experimentID := c.getNextID()
 	rolloutID := c.getNextID()
 	variationID := c.getNextID()
@@ -203,8 +203,8 @@ func (c TestProjectConfig) AddFeatureRollout(feature entities.Feature) *TestProj
 
 	c.RolloutMap[rolloutID] = rollout
 
-	feature.Rollout = rollout
-	c.FeatureMap[feature.Key] = feature
+	f.Rollout = rollout
+	c.FeatureMap[f.Key] = f
 	return &c
 }
 

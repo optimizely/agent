@@ -50,18 +50,18 @@ func NewClient() *TestClient {
 }
 
 // AddEvent is a helper method for adding events to the ProjectConfig to fascilitate testing.
-func (t *TestClient) AddEvent(event entities.Event) {
-	t.ProjectConfig.AddEvent(event)
+func (t *TestClient) AddEvent(e entities.Event) {
+	t.ProjectConfig.AddEvent(e)
 }
 
 // AddFeature is a helper method for adding features to the ProjectConfig to fascilitate testing.
-func (t TestClient) AddFeature(feature entities.Feature) {
-	t.ProjectConfig.AddFeature(feature)
+func (t TestClient) AddFeature(f entities.Feature) {
+	t.ProjectConfig.AddFeature(f)
 }
 
 // AddFeatureRollout is a helper method for adding feature rollouts to the ProjectConfig to fascilitate testing.
-func (t *TestClient) AddFeatureRollout(feature entities.Feature) {
-	t.ProjectConfig.AddFeatureRollout(feature)
+func (t *TestClient) AddFeatureRollout(f entities.Feature) {
+	t.ProjectConfig.AddFeatureRollout(f)
 }
 
 // GetProcessedEvents returns the UserEvent objects sent to the event processor.
