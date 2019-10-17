@@ -22,11 +22,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
-
 	"github.com/optimizely/sidedoor/pkg/api/models"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
 // UserHandler implements the UserAPI interface
@@ -50,7 +49,8 @@ func (h *UserHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, optlyContext)
 
 	if err != nil {
-		log.Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
+		optlyLog := optimizely.GetLoggerFromReqID(r.Header.Get(middleware.OptlyRequestHeader))
+		optlyLog.Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

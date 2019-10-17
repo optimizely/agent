@@ -18,8 +18,6 @@
 package optimizely
 
 import (
-	"github.com/rs/zerolog/log"
-
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
@@ -35,7 +33,6 @@ type OptlyClient struct {
 func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 	projectConfig, err := c.GetProjectConfig()
 	if err != nil {
-		log.Error().Err(err).Msg("Attempting to ListFeatures")
 		return features, err
 	}
 
@@ -47,7 +44,6 @@ func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, err error) {
 	projectConfig, err := c.GetProjectConfig()
 	if err != nil {
-		log.Error().Err(err).Str("featureKey", featureKey).Msg("Attempting to GetFeature")
 		return feature, err
 	}
 

@@ -22,9 +22,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
 // FeatureHandler implements the FeatureAPI interface
@@ -40,7 +40,8 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 	features, err := optlyClient.ListFeatures()
 	if err != nil {
-		log.Error().Msg("Calling ListFeature")
+		optlyLog := optimizely.GetLoggerFromReqID(r.Header.Get(middleware.OptlyRequestHeader))
+		optlyLog.Error().Msg("Calling ListFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -59,7 +60,8 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 	feature, err := optlyClient.GetFeature(featureKey)
 	if err != nil {
-		log.Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+		optlyLog := optimizely.GetLoggerFromReqID(r.Header.Get(middleware.OptlyRequestHeader))
+		optlyLog.Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

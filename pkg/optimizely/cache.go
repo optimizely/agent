@@ -22,10 +22,8 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/config"
 
-	cmap "github.com/orcaman/concurrent-map"
-	"github.com/rs/zerolog/log"
-
 	"github.com/optimizely/go-sdk/pkg/client"
+	cmap "github.com/orcaman/concurrent-map"
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -76,15 +74,10 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 }
 
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
-	sublogger := log.With().Str("sdkKey", sdkKey).Logger()
-	sublogger.Info().Msg("Fetching new OptimizelyClient")
 
 	optimizelyFactory := &client.OptimizelyFactory{}
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
 	optimizelyClient, err := optimizelyFactory.Client(client.WithConfigManager(configManager))
-	if err != nil {
-		sublogger.Error().Err(err).Msg("Initializing OptimizelyClient")
-	}
 
 	return &OptlyClient{optimizelyClient, configManager}, err
 }

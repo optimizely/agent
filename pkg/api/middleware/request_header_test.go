@@ -27,42 +27,38 @@ import (
 
 type RequestHeader struct {
 	suite.Suite
-	server *httptest.Server
 }
 
-func (suite *RequestHeader) SetupTest() {
-	getTestHandler := func() http.HandlerFunc {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-	}
-	suite.server = httptest.NewServer(SetRequestID(getTestHandler()))
-}
-
-func (suite *RequestHeader) TearDownTest() {
-	suite.server.Close()
+var getTestHandler = func() http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 }
 
 func (suite *RequestHeader) TestSetRequestHeaderWithEmtpyHeader() {
 
-	res, err := http.Get(suite.server.URL + "/some_string")
-	suite.NoError(err)
-	header := res.Header["X-Request-Id"]
-	suite.Equal(len(header), 1)
-	suite.Equal(len(header[0]), 36)
+	req := httptest.NewRequest("GET", "/some_string", nil)
+
+	rec := httptest.NewRecorder()
+	handler := http.Handler(SetRequestID(getTestHandler()))
+	handler.ServeHTTP(rec, req)
+
+	header := rec.Header()[OptlyRequestHeader]
+	suite.Equal(1, len(header))
+	suite.Equal(36, len(header[0]))
 }
 
 func (suite *RequestHeader) TestSetRequestHeaderWithRequestHeader() {
 
-	req, _ := http.NewRequest("POST", suite.server.URL+"/some_post_request", nil)
+	req, _ := http.NewRequest("POST", "/some_post_request", nil)
 
-	req.Header.Set("X-Request-Id", "12345")
+	req.Header.Set(OptlyRequestHeader, "12345")
 
-	client := &http.Client{}
-	res, err := client.Do(req)
+	rec := httptest.NewRecorder()
+	handler := http.Handler(SetRequestID(getTestHandler()))
+	handler.ServeHTTP(rec, req)
 
-	suite.NoError(err)
-	header := res.Header["X-Request-Id"]
-	suite.Equal(len(header), 1)
-	suite.Equal(header[0], "12345")
+	header := rec.Header()[OptlyRequestHeader]
+	suite.Equal(1, len(header))
+	suite.Equal("12345", header[0])
 }
 
 func TestRequestHeaderSuite(t *testing.T) {

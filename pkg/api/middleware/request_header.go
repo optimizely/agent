@@ -21,18 +21,17 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 )
 
 // SetRequestID sets request ID obtained from the request header itself or from newly generated id
 func SetRequestID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		header := r.Header.Get("X-Request-Id")
+		header := r.Header.Get(OptlyRequestHeader)
 		if header == "" {
 			header = uuid.New().String()
+			r.Header.Add(OptlyRequestHeader, header)
 		}
-		w.Header().Set("X-Request-Id", header)
-		log.Debug().Str("method", r.Method).Str("URI", r.RequestURI).Str("X-Request-Id", header).Msg("Request details")
+		w.Header().Set(OptlyRequestHeader, header)
 
 		next.ServeHTTP(w, r)
 	}

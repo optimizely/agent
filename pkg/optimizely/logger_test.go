@@ -14,13 +14,13 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
- // Package optimizely //
+// Package optimizely //
 package optimizely
 
 import (
 	"bytes"
-	"testing"
 	"github.com/rs/zerolog"
+	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/stretchr/testify/assert"
@@ -32,19 +32,19 @@ func TestLog(t *testing.T) {
 	logConsumer := &LogConsumer{logger: &logger}
 
 	logConsumer.Log(logging.LogLevelDebug, "debug")
-	assert.Equal(t, "{\"level\":\"debug\",\"message\":\"debug\"}\n", string(out.Bytes()))
+	assert.Equal(t, "{\"level\":\"debug\",\"message\":\"debug\"}\n", out.String())
 	out.Reset()
 
 	logConsumer.Log(logging.LogLevelInfo, "info")
-	assert.Equal(t, "{\"level\":\"info\",\"message\":\"info\"}\n", string(out.Bytes()))
+	assert.Equal(t, "{\"level\":\"info\",\"message\":\"info\"}\n", out.String())
 	out.Reset()
 
 	logConsumer.Log(logging.LogLevelWarning, "warn")
-	assert.Equal(t, "{\"level\":\"warn\",\"message\":\"warn\"}\n", string(out.Bytes()))
+	assert.Equal(t, "{\"level\":\"warn\",\"message\":\"warn\"}\n", out.String())
 	out.Reset()
 
 	logConsumer.Log(logging.LogLevelError, "error")
-	assert.Equal(t, "{\"level\":\"error\",\"message\":\"error\"}\n", string(out.Bytes()))
+	assert.Equal(t, "{\"level\":\"error\",\"message\":\"error\"}\n", out.String())
 	out.Reset()
 }
 
@@ -64,4 +64,14 @@ func TestSetLevel(t *testing.T) {
 
 	logConsumer.SetLogLevel(logging.LogLevelError)
 	assert.Equal(t, zerolog.ErrorLevel, logConsumer.logger.GetLevel())
+}
+
+func TestGetLoggerFromReqID(t *testing.T) {
+	out := &bytes.Buffer{}
+	logger := GetLoggerFromReqID("some_req_id")
+	newLogger := logger.Output(out)
+	newLogger.Info().Msg("some_message")
+
+	assert.Contains(t, out.String(), `"requestID":"some_req_id"`)
+
 }
