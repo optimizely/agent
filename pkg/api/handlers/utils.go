@@ -19,11 +19,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/go-chi/render"
 	"github.com/optimizely/sidedoor/pkg/api/models"
+	"github.com/rs/zerolog/log"
 )
 
 // RenderError sets the request status and renders the error message.
@@ -33,12 +35,27 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 }
 
 // ParseRequestBody reads the request body from the request and unmarshals it
-// into the provided interface.
+// into the provided interface. Note that we're sanitizing the returned error
+// so that it is not leaked back to the requestor.
 func ParseRequestBody(r *http.Request, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return err
+		msg := "error reading request body"
+		log.Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
 	}
 
-	return json.Unmarshal(body, &v)
+	if len(body) == 0 {
+		log.Debug().Msg("body was empty skip JSON unmarshal")
+		return nil
+	}
+
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		msg := "error parsing request body"
+		log.Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)	
+	}
+
+	return nil
 }

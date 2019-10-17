@@ -67,6 +67,15 @@ func TestParseRequestBody(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestParseRequestBodyEmpty(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", bytes.NewBufferString(""))
+
+	var actual TestEntity
+	err := ParseRequestBody(req, &actual)
+	assert.NoError(t, err)
+	assert.Equal(t, *new(TestEntity), actual)
+}
+
 func TestParseRequestBodyError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", bytes.NewBufferString("not json"))
 

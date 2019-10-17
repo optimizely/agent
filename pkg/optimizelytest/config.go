@@ -161,6 +161,12 @@ func (c TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) 
 	return entities.Group{}, errors.New(errMessage)
 }
 
+// AddEvent adds the event to the EventMap
+func (c TestProjectConfig) AddEvent(event entities.Event) *TestProjectConfig {
+	c.EventMap[event.Key] = event
+	return &c
+}
+
 // AddFeature adds the feature to the FeatureMap
 func (c TestProjectConfig) AddFeature(feature entities.Feature) *TestProjectConfig {
 	c.FeatureMap[feature.Key] = feature

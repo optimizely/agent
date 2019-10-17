@@ -42,6 +42,11 @@ func NewClient() *TestClient {
 	}
 }
 
+// AddEvent is a helper method for adding events to the ProjectConfig to fascilitate testing.
+func (t *TestClient) AddEvent(event entities.Event) {
+	t.ProjectConfig.AddEvent(event)
+}
+
 // AddFeature is a helper method for adding features to the ProjectConfig to fascilitate testing.
 func (t TestClient) AddFeature(feature entities.Feature) {
 	t.ProjectConfig.AddFeature(feature)
