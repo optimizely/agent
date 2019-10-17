@@ -18,13 +18,28 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	// "testing/iotest"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type ErrorReader struct{}
+
+func (r *ErrorReader) Read(p []byte) (n int, err error) {
+	err = fmt.Errorf("error")
+	return
+}
+
+type TestEntity struct {
+	Name  string `json:"name"`
+	Value int16  `json:"value"`
+}
 
 func TestRenderError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
@@ -34,4 +49,35 @@ func TestRenderError(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Equal(t, "{\"error\":\"new error\"}\n", rec.Body.String())
+}
+
+func TestParseRequestBody(t *testing.T) {
+	expected := TestEntity{
+		Name:  "test name",
+		Value: 1,
+	}
+	jsonEntity, err := json.Marshal(expected)
+	assert.NoError(t, err)
+	req := httptest.NewRequest("GET", "/", bytes.NewBuffer(jsonEntity))
+
+	var actual TestEntity
+	err = ParseRequestBody(req, &actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestParseRequestBodyError(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", bytes.NewBufferString("not json"))
+
+	var actual TestEntity
+	err := ParseRequestBody(req, &actual)
+	assert.Error(t, err)
+}
+func TestParseRequestBodyNil(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", new(ErrorReader))
+
+	var actual TestEntity
+	err := ParseRequestBody(req, &actual)
+	assert.Error(t, err)
 }

@@ -27,6 +27,8 @@ import (
 	"github.com/optimizely/go-sdk/pkg"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/sidedoor/pkg/api/models"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,4 +95,19 @@ func TestHandleUserEvent(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 	assert.Equal(t, "", rec.Body.String())
+}
+
+func TestHandleUserEventError(t *testing.T) {
+	req := httptest.NewRequest("POST", "/user-event", bytes.NewBufferString("not valid"))
+	req.Header["Content-Type"] = []string{"application/json"}
+
+	rec := httptest.NewRecorder()
+	handler := http.HandlerFunc(new(UserEventHandler).AddUserEvent)
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+	var actual models.ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	assert.NoError(t, err)
 }

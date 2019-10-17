@@ -68,9 +68,7 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, r, render.M{
-		"status": "ok",
-	})
+	render.NoContent(w, r)
 }
 
 // ActivateFeature - Return the feature and record impression

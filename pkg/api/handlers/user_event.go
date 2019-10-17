@@ -30,7 +30,7 @@ type UserEventHandler struct{}
 // AddUserEvent - Process a user event
 func (h *UserEventHandler) AddUserEvent(w http.ResponseWriter, r *http.Request) {
 	var userEvent event.UserEvent
-	err := ParseRequestBody(r, userEvent)
+	err := ParseRequestBody(r, &userEvent)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Error reading request body")
 		RenderError(err, http.StatusBadRequest, w, r)
@@ -41,6 +41,5 @@ func (h *UserEventHandler) AddUserEvent(w http.ResponseWriter, r *http.Request) 
 	// Or implement UnmarshalJSON for event.UserEvent, and do it all in there?
 
 	// TODO: Do something with userEvent
-
-	w.WriteHeader(http.StatusNoContent)
+	render.NoContent(w, r)
 }

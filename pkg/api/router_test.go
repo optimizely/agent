@@ -58,6 +58,8 @@ func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) 
 
 type MockUserAPI struct{}
 
+func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {}
+
 func (m *MockUserAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
 
 type RouterTestSuite struct {

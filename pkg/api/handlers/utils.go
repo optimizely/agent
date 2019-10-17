@@ -18,6 +18,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -30,11 +32,13 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
 }
 
+// ParseRequestBody reads the request body from the request and unmarshals it
+// into the provided interface.
 func ParseRequestBody(r *http.Request, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 
-	
+	return json.Unmarshal(body, &v)
 }
