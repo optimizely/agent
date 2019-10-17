@@ -60,15 +60,15 @@ print(resp.json())
 ```
 
 ### Activate Feature
-The `/features/:key/activate` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user. In this case we'll provide a `userId` via a URL parameter. The `userId` will be used to determine how the feature feature will be returned, if at all. Features can either be part of a Feature Test by which multiple variations of a feature are being measured against one another and a feature rollout, which is a percentage based membership criteria. (TODO reword).
+The `/users/:userId/features/:key` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user. In this case we'll provide a `userId` via a path parameter. The `userId` will be used to determine how the feature feature will be returned, if at all. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature availble to a large audience.
 
 From an API standpoint the presence of a Feature Test or Rollout is abstrated away from the response and only the resulting variation or enabled feature is returned.
 
 ```python
-s.params.update({'userId': 'test-user'})
-resp = s.post('http://localhost:8080/features/{}/activate'.format(feature_key))
+user_id = 'test-user'
+resp = s.post('http://localhost:8080/users/{}features/{}'.format(user_id, feature_key))
 
 print(resp.json())
 ```
 
-The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply parat of a rollout.
+The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout.
