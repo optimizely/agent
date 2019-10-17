@@ -74,6 +74,7 @@ func TestParseRequestBodyError(t *testing.T) {
 	err := ParseRequestBody(req, &actual)
 	assert.Error(t, err)
 }
+
 func TestParseRequestBodyNil(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", new(ErrorReader))
 

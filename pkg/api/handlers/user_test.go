@@ -73,7 +73,6 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Use(userMW.ClientCtx)
 	mux.With(userMW.UserCtx).Post("/features/{featureKey}", userAPI.ActivateFeature)
-	mux.Post("/missing-ctx/features/{featureKey}", userAPI.ActivateFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -102,26 +101,6 @@ func (suite *UserTestSuite) TestActivateFeature() {
 	}
 
 	suite.Equal(expected, actual)
-}
-
-func (suite *UserTestSuite) TestActivateFeatureMissingUserCtx() {
-	feature := entities.Feature{Key: "one"}
-	suite.tc.AddFeatureRollout(feature)
-
-	req, err := http.NewRequest("POST", "/missing-ctx/features/one", nil)
-	suite.Nil(err)
-
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusUnprocessableEntity, rec.Code)
-
-	// Unmarshal response
-	var actual models.ErrorResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	suite.Equal(models.ErrorResponse{Error: "optlyContext not available"}, actual)
 }
 
 func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
@@ -153,9 +132,10 @@ func TestUserMissingClientCtx(t *testing.T) {
 	// pass 'nil' as the third parameter.
 	req := httptest.NewRequest("POST", "/", nil)
 
-	userHander := new(UserHandler)
+	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		userHander.ActivateFeature,
+		userHandler.ActivateFeature,
+		userHandler.TrackEvent,
 	}
 
 	for _, handler := range handlers {
@@ -169,5 +149,31 @@ func TestUserMissingClientCtx(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
 		assert.Equal(t, models.ErrorResponse{Error: "optlyClient not available"}, actual)
+	}
+}
+
+func TestUserMissingOptlyCtx(t *testing.T) {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req := httptest.NewRequest("POST", "/", nil)
+	mw := new(UserMW)
+
+	userHandler := new(UserHandler)
+	handlers := []func(w http.ResponseWriter, r *http.Request){
+		userHandler.ActivateFeature,
+		userHandler.TrackEvent,
+	}
+
+	for _, handler := range handlers {
+		rec := httptest.NewRecorder()
+		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
+
+		// Unmarshal response
+		var actual models.ErrorResponse
+		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+		assert.Equal(t, models.ErrorResponse{Error: "optlyContext not available"}, actual)
 	}
 }
