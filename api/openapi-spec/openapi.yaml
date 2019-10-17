@@ -8,26 +8,19 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 0.2.0
 servers:
-  - url: https://api.optimizely.com
-    description: "Hosted Optimizely Decision Service"
+- url: https://fullstack.api.optimizely.com
+  description: "Hosted Optimizely Decision Service"
 paths:
-  /stats:
-    get:
-      summary: Server metrics
-      operationId: getStats
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Stat'
   /experiments:
     get:
       summary: Return all experiments
       operationId: listExperiments
+      parameters:
+      - name: X-Optimizely-SDK-Key
+        in: header
+        schema:
+          type: string
+        required: true
       responses:
         '200':
           description: Valid response
@@ -38,17 +31,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/Experiment'
   /experiments/{experimentKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: getExperiment
       description: todo
-      parameters:
-        - name: experimentKey
-          in: path
-          required: true
-          description: Key of the experiment
-          schema:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -58,64 +47,14 @@ paths:
                 $ref: '#/components/schemas/Experiment'
         '404':
           description: Experiment does not exist
-  /experiments/{experimentKey}/activate:
-    post:
-      summary: Return variation for an experiment and record impression
-      operationId: activateExperiment
-      description: todo
-      parameters:
-        - name: experimentKey
-          in: path
-          required: true
-          description: Key of the experiment we're activating
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Variation'
-        '204':
-          description: No content, user not included in the experiment
-        '404':
-          description: Experiment does not exist
-  /experiments/{experimentKey}/decision:
-    get:
-      summary: Return variation decision for an experiment
-      operationId: getExperimentDecision
-      description: todo
-      parameters:
-        - name: experimentKey
-          in: path
-          required: true
-          description: Key of the experiment we're activating
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Variation'
-        '204':
-          description: No content, user not included in the experiment
-        '404':
-          description: Experiment does not exist
   /experiments/{experimentKey}/variations:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: listExperimentVariations
       description: todo
-      parameters:
-        - name: experimentKey
-          in: path
-          required: true
-          description: Key of the experiment we're activating
-          schema:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -130,23 +69,14 @@ paths:
         '404':
           description: Experiment does not exist
   /experiments/{experimentKey}/variations/{variationKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
+    - $ref: '#/components/parameters/variationKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: getExperimentVariation
       description: todo
-      parameters:
-        - name: experimentKey
-          in: path
-          required: true
-          description: Key of the experiment we're activating
-          schema:
-            type: string
-        - name: variationKey
-          in: path
-          required: true
-          description: Variation Key of the experiment we're activating
-          schema:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -162,6 +92,12 @@ paths:
     get:
       summary: Return all features
       operationId: listFeatures
+      parameters:
+      - name: X-Optimizely-SDK-Key
+        in: header
+        schema:
+          type: string
+        required: true
       responses:
         '200':
           description: Valid response
@@ -173,16 +109,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Feature'
   /features/{featureKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/featureKeyParam'
     get:
       summary: Return the feature
       operationId: getFeature
-      parameters:
-        - name: featureKey
-          in: path
-          required: true
-          description: Key of the feature we're fetching
-          schema:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -192,73 +124,13 @@ paths:
                 $ref: '#/components/schemas/Feature'
         '404':
           description: Experiment does not exist
-  /features/{featureKey}/activate:
-    post:
-      summary: Return the feature and record impression
-      operationId: activateFeature
-      parameters:
-        - name: featureKey
-          in: path
-          required: true
-          description: Key of the feature we're fetching
-          schema:
-            type: string
-        - name: userId
-          in: query
-          required: true
-          description: Id for the user being bucketed.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeatureVariation'
-        '204':
-          description: Feature not enabled
-        '404':
-          description: Feature does not exist
-  /features/{featureKey}/decision:
-    get:
-      summary: Return the decided feature variant
-      operationId: getFeatureDecision
-      parameters:
-        - name: featureKey
-          in: path
-          required: true
-          description: Key of the feature we're fetching
-          schema:
-            type: string
-        - name: userId
-          in: query
-          required: true
-          description: Id for the user being bucketed.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeatureVariation'
-        '204':
-          description: Feature not enabled
-        '404':
-          description: Feature does not exist
   /features/{featureKey}/variations:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/featureKeyParam'
     get:
       summary: Return feature variations
       operationId: listFeatureVariations
-      parameters:
-        - name: featureKey
-          in: path
-          required: true
-          description: Key of the feature we're fetching
-          schema:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -271,22 +143,13 @@ paths:
         '404':
           description: Feature does not exist or variations DNE
   /features/{featureKey}/variations/{variationKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/featureKeyParam'
+    - $ref: '#/components/parameters/variationKeyParam'
     get:
       summary: Return the feature variant
       operationId: getFeatureVariation
-      parameters:
-        - name: featureKey
-          in: path
-          required: true
-          description: Key of the feature we're fetching
-          schema:
-            type: string
-        - name: variationKey
-          in: path
-          required: true
-          description: Key of the variation we're fetching
-          schema:
-            type: string
       responses:
         '200':
           description: Valid response
@@ -296,61 +159,145 @@ paths:
                 $ref: '#/components/schemas/FeatureVariation'
         '404':
           description: Feature does not exist or variation DNE
-  /track/{eventName}:
-    post:
-      summary: Track event endpoint
-      operationId: trackEvent
-      parameters:
-        - name: eventName
-          in: path
-          required: true
-          description: Name of the event to be tracked
-          schema:
-            type: string
-        - name: userId
-          in: query
-          required: true
-          description: Id for the user being tracked.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Valid response
   /user-event:
     post:
       summary: User event endpoint
       operationId: AddUserEvent
       responses:
-          '204':
-            description: Valid response
-          default:
-            description: Unexpected error
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    error:
-                      type: string
-                      description: Error message
+        '204':
+          description: Valid response
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserEvent'
+  /users/{userId}/experiments/{experimentKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
+    - $ref: '#/components/parameters/attributesParam'
+    get:
+      summary: Return variation decision for an experiment
+      operationId: getVariation
+      description: todo
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+    post:
+      summary: Activate experiment and return variation
+      operationId: activateExperiment
+      description: todo
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Experiment does not exist
+  /users/{userId}/features/{featureKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/featureKeyParam'
+    - $ref: '#/components/parameters/attributesParam'
+    get:
+      summary: Return feature resulting from an experiment or rollout
+      operationId: getFeatureDecision
+      description: todo
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Feature does not exist
+    post:
+      summary: Activate feature and return associated variable values
+      operationId: activateFeature
+      description: todo
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureVariation'
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Feature does not exist
 components:
-  schemas:
-    Stat:
-      properties:
-        name:
+  parameters:
+    sdkKeyParam:
+      in: header
+      name: X-Optimizely-SDK-Key
+      schema:
+        type: string
+      required: true
+    attributesParam:
+      in: query
+      name: attributes
+      schema:
+        type: object
+        additionalProperties:
           type: string
-        value:
-          type: integer
-      # Both properties are required
-      required:
-        - name
-        - value
+    experimentKeyParam:
+      in: path
+      name: experimentKey
+      required: true
+      description: Key of the experiment we're activating
+      schema:
+        type: string
+    featureKeyParam:
+      in: path
+      name: featureKey
+      required: true
+      description: Key of the feature we're activating
+      schema:
+        type: string
+    userIdParam:
+      name: userId
+      in: path
+      required: true
+      description: Id associated with the user
+      schema:
+        type: string
+    variationKeyParam:
+      name: variationKey
+      in: path
+      required: true
+      description: Key of the variation we're fetching
+      schema:
+        type: string
+  schemas:
     Experiment:
       properties:
         id:
@@ -363,8 +310,8 @@ components:
             $ref: '#/components/schemas/Variation'
       # Both properties are required
       required:
-        - id
-        - key
+      - id
+      - key
     Variation:
       properties:
         id:
@@ -373,9 +320,27 @@ components:
           type: string
       # Both properties are required
       required:
-        - id
-        - key
+      - id
+      - key
     Feature:
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+        variations:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FeatureVariation'
+      # Both properties are required
+      required:
+      - id
+      - key
+    FeatureVariation:
       properties:
         id:
           type: integer
@@ -387,28 +352,10 @@ components:
           type: object
           additionalProperties:
             type: string
-        variations:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/FeatureVariation'
       # Both properties are required
       required:
-        - id
-        - key
-    FeatureVariation:
-      properties:
-        id:
-          type: integer
-        key:
-          type: string
-        variables:
-          type: object
-          additionalProperties:
-            type: string
-      # Both properties are required
-      required:
-        - id
-        - key
+      - id
+      - key
     UserEvent:
       properties:
         timestamp:
@@ -425,10 +372,10 @@ components:
         conversion:
           $ref: '#/components/schemas/ConversionEvent'
       required:
-        - timestamp
-        - uuid
-        - visitor_id
-        - context
+      - timestamp
+      - uuid
+      - visitor_id
+      - context
     UserEventContext:
       properties:
         revision:
@@ -446,13 +393,13 @@ components:
         bot_filtering:
           type: boolean
       required:
-        - revision
-        - account_id
-        - client_version
-        - project_id
-        - client_name
-        - anonymize_ip
-        - bot_filtering
+      - revision
+      - account_id
+      - client_version
+      - project_id
+      - client_name
+      - anonymize_ip
+      - bot_filtering
     ImpressionEvent:
       properties:
         entity_id:
@@ -470,11 +417,11 @@ components:
         experiment_id:
           type: string
       required:
-        - entity_id
-        - key
-        - variation_id
-        - campaign_id
-        - experiment_id
+      - entity_id
+      - key
+      - variation_id
+      - campaign_id
+      - experiment_id
     ConversionEvent:
       properties:
         entity_id:
@@ -495,11 +442,11 @@ components:
           type: number
           format: double
       required:
-        - entity_id
-        - key
-        - variation_id
-        - campaign_id
-        - experiment_id
+      - entity_id
+      - key
+      - variation_id
+      - campaign_id
+      - experiment_id
     VisitorAttribute:
       properties:
         value: {}
@@ -510,7 +457,7 @@ components:
         entity_id:
           type: string
       required:
-        - value
-        - key
-        - attribute_type
-        - entity_id
+      - value
+      - key
+      - attribute_type
+      - entity_id
