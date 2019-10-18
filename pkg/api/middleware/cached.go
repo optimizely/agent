@@ -51,8 +51,8 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		sdkKey := r.Header.Get(OptlySDKHeader)
-		optlyLog := optimizely.GetLoggerFromReqID(r.Header.Get(OptlyRequestHeader))
-		optlyLog.Info().Msg("Fetching new OptimizelyClient")
+
+		GetLogger(r).Info().Msg("Fetching new OptimizelyClient")
 		var err error
 		var optlyClient *optimizely.OptlyClient
 		if sdkKey == "" {
@@ -62,7 +62,7 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		}
 
 		if err != nil {
-			optlyLog.Error().Err(err).Msg("Initializing OptimizelyClient")
+			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 			http.Error(w, "Failed to instantiate Optimizely", http.StatusInternalServerError)
 			return
 		}
@@ -96,8 +96,7 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 		optlyContext := optimizely.NewContext(userID, attributes)
 		ctx := context.WithValue(r.Context(), OptlyContextKey, optlyContext)
 
-		optlyLog := optimizely.GetLoggerFromReqID(r.Header.Get(OptlyRequestHeader))
-		optlyLog.Debug().Str("userId", userID).Msg("Adding user context to request.")
+		GetLogger(r).Debug().Str("userId", userID).Msg("Adding user context to request.")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

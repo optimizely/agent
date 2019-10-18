@@ -66,13 +66,3 @@ func TestSetLevel(t *testing.T) {
 	logConsumer.SetLogLevel(logging.LogLevelError)
 	assert.Equal(t, zerolog.ErrorLevel, logConsumer.logger.GetLevel())
 }
-
-func TestGetLoggerFromReqID(t *testing.T) {
-	out := &bytes.Buffer{}
-	logger := GetLoggerFromReqID("some_req_id")
-	newLogger := logger.Output(out)
-	newLogger.Info().Msg("some_message")
-
-	assert.Contains(t, out.String(), `"requestID":"some_req_id"`)
-
-}

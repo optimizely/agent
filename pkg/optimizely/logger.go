@@ -58,8 +58,3 @@ func (l *LogConsumer) SetLogLevel(level logging.LogLevel) {
 	childLogger := l.logger.Level(levelMap[level])
 	l.logger = &childLogger
 }
-
-// GetLoggerFromReqID gets the logger with requestID
-func GetLoggerFromReqID(reqID string) zerolog.Logger {
-	return log.With().Str("requestID", reqID).Logger()
-}

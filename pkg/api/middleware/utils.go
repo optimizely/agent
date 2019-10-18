@@ -22,6 +22,9 @@ import (
 	"net/http"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.
@@ -42,4 +45,12 @@ func GetOptlyContext(r *http.Request) (*optimizely.OptlyContext, error) {
 	}
 
 	return optlyContext, nil
+}
+
+// GetLogger gets the logger with some info coming from http request
+func GetLogger(r *http.Request) *zerolog.Logger {
+	sdkKey := r.Header.Get(OptlySDKHeader)
+	reqID := r.Header.Get(OptlyRequestHeader)
+	logger := log.With().Str("sdkKey", sdkKey).Str("requestId", reqID).Logger()
+	return &logger
 }

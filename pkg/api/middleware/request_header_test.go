@@ -41,7 +41,10 @@ func (suite *RequestHeader) TestSetRequestHeaderWithEmtpyHeader() {
 	handler := http.Handler(SetRequestID(getTestHandler()))
 	handler.ServeHTTP(rec, req)
 
-	header := rec.Header()[OptlyRequestHeader]
+	headerMap := rec.Header()
+	suite.Equal(1, len(headerMap))
+
+	header := headerMap[OptlyRequestHeader]
 	suite.Equal(1, len(header))
 	suite.Equal(36, len(header[0]))
 }
@@ -56,7 +59,10 @@ func (suite *RequestHeader) TestSetRequestHeaderWithRequestHeader() {
 	handler := http.Handler(SetRequestID(getTestHandler()))
 	handler.ServeHTTP(rec, req)
 
-	header := rec.Header()[OptlyRequestHeader]
+	headerMap := rec.Header()
+	suite.Equal(1, len(headerMap))
+
+	header := headerMap[OptlyRequestHeader]
 	suite.Equal(1, len(header))
 	suite.Equal("12345", header[0])
 }

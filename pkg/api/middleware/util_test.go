@@ -18,6 +18,7 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"net/http/httptest"
 	"testing"
@@ -62,4 +63,19 @@ func TestGetOptlyContextWithError(t *testing.T) {
 	_, err := GetOptlyContext(req)
 	assert.Error(t, err)
 	assert.Equal(t, "optlyContext not available", err.Error())
+}
+
+func TestGetLogger(t *testing.T) {
+	out := &bytes.Buffer{}
+	req := httptest.NewRequest("GET", "/", nil)
+
+	req.Header.Set(OptlyRequestHeader, "12345")
+	req.Header.Set(OptlySDKHeader, "some_key")
+	logger := GetLogger(req)
+	newLogger := logger.Output(out)
+	newLogger.Info().Msg("some_message")
+
+	assert.Contains(t, out.String(), `"requestId":"12345"`)
+	assert.Contains(t, out.String(), `"sdkKey":"some_key"`)
+
 }
