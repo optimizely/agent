@@ -33,7 +33,7 @@ type eventTags map[string]interface{}
 // UserHandler implements the UserAPI interface
 type UserHandler struct{}
 
-// TrackEvent - track an given event for the current user
+// TrackEvent - track a given event for the current user
 func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
