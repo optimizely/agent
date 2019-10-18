@@ -22,8 +22,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/rs/zerolog/log"
-
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
@@ -38,6 +36,9 @@ const OptlyContextKey = contextKey("optlyContext")
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
 
+// OptlyRequestHeader is the header key for the request ID
+const OptlyRequestHeader = "X-Request-Id"
+
 // CachedOptlyMiddleware implements OptlyMiddleware backed by a cache
 type CachedOptlyMiddleware struct {
 	Cache optimizely.Cache
@@ -51,6 +52,7 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 
 		sdkKey := r.Header.Get(OptlySDKHeader)
 
+		GetLogger(r).Info().Msg("Fetching new OptimizelyClient")
 		var err error
 		var optlyClient *optimizely.OptlyClient
 		if sdkKey == "" {
@@ -60,6 +62,7 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		}
 
 		if err != nil {
+			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 			http.Error(w, "Failed to instantiate Optimizely", http.StatusInternalServerError)
 			return
 		}
@@ -92,7 +95,8 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 
 		optlyContext := optimizely.NewContext(userID, attributes)
 		ctx := context.WithValue(r.Context(), OptlyContextKey, optlyContext)
-		log.Debug().Str("userId", userID).Msg("Adding user context to request.")
+
+		GetLogger(r).Debug().Str("userId", userID).Msg("Adding user context to request.")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

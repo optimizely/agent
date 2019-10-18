@@ -18,39 +18,22 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/google/uuid"
 )
 
-// GetOptlyClient is a utility to extract the OptlyClient from the http request context.
-func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
-	optlyClient, ok := r.Context().Value(OptlyClientKey).(*optimizely.OptlyClient)
-	if !ok {
-		return nil, fmt.Errorf("optlyClient not available")
+// SetRequestID sets request ID obtained from the request header itself or from newly generated id
+func SetRequestID(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get(OptlyRequestHeader)
+		if header == "" {
+			header = uuid.New().String()
+			r.Header.Add(OptlyRequestHeader, header)
+		}
+		w.Header().Set(OptlyRequestHeader, header)
+
+		next.ServeHTTP(w, r)
 	}
-
-	return optlyClient, nil
-}
-
-// GetOptlyContext is a utility to extract the OptlyContext from the http request context.
-func GetOptlyContext(r *http.Request) (*optimizely.OptlyContext, error) {
-	optlyContext, ok := r.Context().Value(OptlyContextKey).(*optimizely.OptlyContext)
-	if !ok {
-		return nil, fmt.Errorf("optlyContext not available")
-	}
-
-	return optlyContext, nil
-}
-
-// GetLogger gets the logger with some info coming from http request
-func GetLogger(r *http.Request) *zerolog.Logger {
-	sdkKey := r.Header.Get(OptlySDKHeader)
-	reqID := r.Header.Get(OptlyRequestHeader)
-	logger := log.With().Str("sdkKey", sdkKey).Str("requestId", reqID).Logger()
-	return &logger
+	return http.HandlerFunc(fn)
 }

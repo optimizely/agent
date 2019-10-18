@@ -18,39 +18,56 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/suite"
 )
 
-// GetOptlyClient is a utility to extract the OptlyClient from the http request context.
-func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
-	optlyClient, ok := r.Context().Value(OptlyClientKey).(*optimizely.OptlyClient)
-	if !ok {
-		return nil, fmt.Errorf("optlyClient not available")
-	}
-
-	return optlyClient, nil
+type RequestHeader struct {
+	suite.Suite
 }
 
-// GetOptlyContext is a utility to extract the OptlyContext from the http request context.
-func GetOptlyContext(r *http.Request) (*optimizely.OptlyContext, error) {
-	optlyContext, ok := r.Context().Value(OptlyContextKey).(*optimizely.OptlyContext)
-	if !ok {
-		return nil, fmt.Errorf("optlyContext not available")
-	}
-
-	return optlyContext, nil
+var getTestHandler = func() http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 }
 
-// GetLogger gets the logger with some info coming from http request
-func GetLogger(r *http.Request) *zerolog.Logger {
-	sdkKey := r.Header.Get(OptlySDKHeader)
-	reqID := r.Header.Get(OptlyRequestHeader)
-	logger := log.With().Str("sdkKey", sdkKey).Str("requestId", reqID).Logger()
-	return &logger
+func (suite *RequestHeader) TestSetRequestHeaderWithEmtpyHeader() {
+
+	req := httptest.NewRequest("GET", "/some_string", nil)
+
+	rec := httptest.NewRecorder()
+	handler := http.Handler(SetRequestID(getTestHandler()))
+	handler.ServeHTTP(rec, req)
+
+	headerMap := rec.Header()
+	suite.Equal(1, len(headerMap))
+
+	header := headerMap[OptlyRequestHeader]
+	suite.Equal(1, len(header))
+	suite.Equal(36, len(header[0]))
+}
+
+func (suite *RequestHeader) TestSetRequestHeaderWithRequestHeader() {
+
+	req := httptest.NewRequest("POST", "/some_post_request", nil)
+
+	req.Header.Set(OptlyRequestHeader, "12345")
+
+	rec := httptest.NewRecorder()
+	handler := http.Handler(SetRequestID(getTestHandler()))
+	handler.ServeHTTP(rec, req)
+
+	headerMap := rec.Header()
+	suite.Equal(1, len(headerMap))
+
+	header := headerMap[OptlyRequestHeader]
+	suite.Equal(1, len(header))
+	suite.Equal("12345", header[0])
+}
+
+func TestRequestHeaderSuite(t *testing.T) {
+	suite.Run(t, new(RequestHeader))
+
 }

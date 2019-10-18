@@ -22,10 +22,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/go-chi/render"
-
 	"github.com/optimizely/go-sdk/pkg/event"
-	"github.com/rs/zerolog/log"
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
+
+	"github.com/go-chi/render"
 )
 
 // UserEventHandler implements the UserEventAPI interface for sending and receiving user event payloads.
@@ -35,7 +35,7 @@ type UserEventHandler struct{}
 func (h *UserEventHandler) AddUserEvent(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error().Err(err).Msg("Error reading request body")
+		middleware.GetLogger(r).Error().Err(err).Msg("Error reading request body")
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, render.M{
 			"error": "Error reading request body",
@@ -50,7 +50,7 @@ func (h *UserEventHandler) AddUserEvent(w http.ResponseWriter, r *http.Request) 
 	var userEvent event.UserEvent
 	err = json.Unmarshal(body, &userEvent)
 	if err != nil {
-		log.Error().Err(err).Msg("Error unmarshaling request body")
+		middleware.GetLogger(r).Error().Err(err).Msg("Error unmarshaling request body")
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, render.M{
 			"error": "Error unmarshaling request body",

@@ -51,7 +51,7 @@ func NewDefaultRouter(optlyCache optimizely.Cache) *chi.Mux {
 func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.With(chimw.AllowContentType("application/json")).Post("/user-event", opt.userEventAPI.AddUserEvent)
 

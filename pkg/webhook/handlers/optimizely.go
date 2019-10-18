@@ -38,9 +38,9 @@ const signatureHeader = "X-Hub-Signature"
 const signaturePrefix = "sha1="
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
-type OptlyWebhookHandler struct{
-	optlyCache       	optimizely.Cache
-	webhookConfigMap 	map[int64]models.OptlyWebhookConfig
+type OptlyWebhookHandler struct {
+	optlyCache       optimizely.Cache
+	webhookConfigMap map[int64]models.OptlyWebhookConfig
 }
 
 // NewWebhookHandler returns a new instance of OptlyWebhookHandler
@@ -57,7 +57,7 @@ func NewWebhookHandler(optlyCache optimizely.Cache, webhookConfigs []models.Optl
 }
 
 // computeSignature computes signature based on payload
-func (h *OptlyWebhookHandler)computeSignature(payload []byte, secretKey string) string {
+func (h *OptlyWebhookHandler) computeSignature(payload []byte, secretKey string) string {
 	mac := hmac.New(sha1.New, []byte(secretKey))
 	_, err := mac.Write(payload)
 
@@ -82,7 +82,7 @@ func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload
 }
 
 // HandleWebhook handles incoming webhook messages from Optimizely application
-func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request)  {
+func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Msg("Unable to read webhook message body.")
