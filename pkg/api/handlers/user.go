@@ -56,7 +56,7 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 
 	eventKey := chi.URLParam(r, "eventKey")
 	if eventKey == "" {
-		err = fmt.Errorf("missing required eventKey")
+		err = fmt.Errorf("missing required path parameter: eventKey")
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
 	}

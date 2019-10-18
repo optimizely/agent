@@ -123,6 +123,7 @@ func (suite *ClientTestSuite) TestTrackEventWithContext() {
 func (suite *ClientTestSuite) TestTrackEventWithContextError() {
 	err := suite.optlyClient.TrackEventWithContext("missing-key", suite.optlyContext, map[string]interface{}{})
 	suite.Error(err)
+	suite.Equal("Event with key missing-key not found", err.Error())
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -184,7 +184,7 @@ func (suite *UserTestSuite) TestTrackEventEmptyKey() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.assertError(rec, "missing required eventKey", http.StatusBadRequest)
+	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
 }
 
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
