@@ -58,29 +58,14 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.Get("/", opt.featureAPI.ListFeatures)
-
-		r.Route("/{featureKey}", func(r chi.Router) {
-			// TODO r.Use(FeatureCtx)
-			r.Get("/", opt.featureAPI.GetFeature)
-		})
+		r.Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
-	r.Route("/users", func(r chi.Router) {
-		r.Route("/{userID}", func(r chi.Router) {
-			r.Use(opt.middleware.UserCtx)
-			r.Route("/features", func(r chi.Router) {
-				r.Use(opt.middleware.ClientCtx)
-				// Get all feature decisions.
-				// TODO r.Get("/", opt.userAPI.ListFeatures)
-
-				r.Route("/{featureKey}", func(r chi.Router) {
-					// TODO r.Use(FeatureCtx)
-					// Get feature decision.
-					// TODO r.Get("/", opt.userAPI.GetFeature)
-					r.Post("/", opt.userAPI.ActivateFeature)
-				})
-			})
-		})
+	r.Route("/users/{userId}", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
+		// TODO r.Get("/features/{featureKey}", opt.userAPI.ActivateFeature)
+		r.Post("/features/{featureKey}", opt.userAPI.ActivateFeature)
+		r.Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 	})
 
 	return r

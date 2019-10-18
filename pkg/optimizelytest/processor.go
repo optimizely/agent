@@ -14,48 +14,25 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// Package optimizelytest //
+package optimizelytest
 
-import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
+import "github.com/optimizely/go-sdk/pkg/event"
 
-	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/api/models"
-	"github.com/rs/zerolog/log"
-)
-
-// RenderError sets the request status and renders the error message.
-func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
-	render.Status(r, status)
-	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
+// TestEventProcessor implements an Optimizely Processor to aid in testing
+type TestEventProcessor struct {
+	events []event.UserEvent
 }
 
-// ParseRequestBody reads the request body from the request and unmarshals it
-// into the provided interface. Note that we're sanitizing the returned error
-// so that it is not leaked back to the requestor.
-func ParseRequestBody(r *http.Request, v interface{}) error {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		msg := "error reading request body"
-		log.Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)
-	}
+// ProcessEvent appends the events to a slice of UserEvents
+func (p *TestEventProcessor) ProcessEvent(e event.UserEvent) {
+	p.events = append(p.events, e)
+}
 
-	if len(body) == 0 {
-		log.Debug().Msg("body was empty skip JSON unmarshal")
-		return nil
-	}
+// GetEvents returns a copy of the events received by the TestEventProcessor
+func (p *TestEventProcessor) GetEvents() []event.UserEvent {
+	c := make([]event.UserEvent, len(p.events))
+	copy(c, p.events)
 
-	err = json.Unmarshal(body, &v)
-	if err != nil {
-		msg := "error parsing request body"
-		log.Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)	
-	}
-
-	return nil
+	return c
 }

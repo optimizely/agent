@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -27,8 +28,48 @@ import (
 	"github.com/optimizely/sidedoor/pkg/api/models"
 )
 
+type eventTags map[string]interface{}
+
 // UserHandler implements the UserAPI interface
 type UserHandler struct{}
+
+// TrackEvent - track a given event for the current user
+func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	optlyContext, err := middleware.GetOptlyContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	var tags eventTags
+	err = ParseRequestBody(r, &tags)
+	if err != nil {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	eventKey := chi.URLParam(r, "eventKey")
+	if eventKey == "" {
+		err = fmt.Errorf("missing required path parameter: eventKey")
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	err = optlyClient.TrackEventWithContext(eventKey, optlyContext, tags)
+	if err != nil {
+		middleware.GetLogger(r).Err(err).Str("eventKey", eventKey).Msg("error tracking event")
+		RenderError(err, http.StatusNotFound, w, r)
+		return
+	}
+
+	render.NoContent(w, r)
+}
 
 // ActivateFeature - Return the feature and record impression
 func (h *UserHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {

@@ -58,6 +58,8 @@ func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) 
 
 type MockUserAPI struct{}
 
+func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {}
+
 func (m *MockUserAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {}
 
 type RouterTestSuite struct {
@@ -100,6 +102,15 @@ func (suite *RouterTestSuite) TestGetFeature() {
 
 func (suite *RouterTestSuite) TestActivateFeatures() {
 	req := httptest.NewRequest("POST", "/users/me/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+}
+
+func (suite *RouterTestSuite) TestTrackEvent() {
+	req := httptest.NewRequest("POST", "/users/me/events/key", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
