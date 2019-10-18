@@ -51,7 +51,7 @@ func (suite *RequestHeader) TestSetRequestHeaderWithEmtpyHeader() {
 
 func (suite *RequestHeader) TestSetRequestHeaderWithRequestHeader() {
 
-	req, _ := http.NewRequest("POST", "/some_post_request", nil)
+	req := httptest.NewRequest("POST", "/some_post_request", nil)
 
 	req.Header.Set(OptlyRequestHeader, "12345")
 
