@@ -5,7 +5,6 @@ go 1.12
 require (
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/render v1.0.1
-	github.com/golangci/golangci-lint v1.18.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/nsqio/nsq v1.2.0
 	github.com/optimizely/go-sdk v1.0.0-beta3.0.20191018225745-33701145d1ba
@@ -14,5 +13,6 @@ require (
 	github.com/segmentio/nsq-go v1.2.2
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
-	gopkg.in/yaml.v2 v2.2.2
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
+	golang.org/x/sys v0.0.0-20190312061237-fead79001313 // indirect
 )
