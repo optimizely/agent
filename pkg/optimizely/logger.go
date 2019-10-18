@@ -24,19 +24,22 @@ import (
 	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
-var levelMap = map[logging.LogLevel]zerolog.Level {
-	logging.LogLevelDebug: zerolog.DebugLevel,
-	logging.LogLevelInfo: zerolog.InfoLevel,
+var levelMap = map[logging.LogLevel]zerolog.Level{
+	logging.LogLevelDebug:   zerolog.DebugLevel,
+	logging.LogLevelInfo:    zerolog.InfoLevel,
 	logging.LogLevelWarning: zerolog.WarnLevel,
-	logging.LogLevelError: zerolog.ErrorLevel,
+	logging.LogLevelError:   zerolog.ErrorLevel,
 }
 
-// init overrides the Optimizely SDK logger with a logrus implementation.
+// init overrides the Optimizely SDK logger with the default zerolog logger.
 func init() {
-	// Use the default logger
-	logger := log.Logger
+	SetLogger(&log.Logger)
+}
+
+// SetLogger explicitly overwrites the zerolog used by the SDK with the provided zerolog logger.
+func SetLogger(logger *zerolog.Logger) {
 	logConsumer := &LogConsumer{
-		logger: &logger,
+		logger: logger,
 	}
 
 	logging.SetLogger(logConsumer)
@@ -48,8 +51,8 @@ type LogConsumer struct {
 }
 
 // Log logs the message if it's log level is higher than or equal to the logger's set level
-func (l *LogConsumer) Log(level logging.LogLevel, message string) {
-	l.logger.WithLevel(levelMap[level]).Msg(message)
+func (l *LogConsumer) Log(level logging.LogLevel, message string, fields map[string]interface{}) {
+	l.logger.WithLevel(levelMap[level]).Fields(fields).Msg(message)
 }
 
 // SetLogLevel changes the log level to the given level

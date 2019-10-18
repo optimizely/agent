@@ -54,7 +54,7 @@ func ParseRequestBody(r *http.Request, v interface{}) error {
 	if err != nil {
 		msg := "error parsing request body"
 		log.Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)	
+		return fmt.Errorf(msg)
 	}
 
 	return nil

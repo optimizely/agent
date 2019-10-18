@@ -1,6 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/DATA-DOG/godog v0.7.13/go.mod h1:z2OZ6a3X0/YAKVqLfVzYBwFt3j6uSt3Xrqa7XTtcQE0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/OpenPeeDeeP/depguard v1.0.0 h1:k9QF73nrHT3nPLz3lu6G5s+3Hi8Je36ODr1F5gjAXXM=
 github.com/OpenPeeDeeP/depguard v1.0.0/go.mod h1:7/4sitnI9YlQgTLLk734QlzXT8DuHVnAyztLplQjk+o=
@@ -199,6 +200,11 @@ github.com/optimizely/go-sdk v1.0.0-beta2 h1:tiIH4l+X1oVkv3HgELDiwE2VspLXuqhAT3N
 github.com/optimizely/go-sdk v1.0.0-beta2/go.mod h1:bzmv9qgWRLndtLrghkyP+JRvuhqhNlq80nGdw9wvadc=
 github.com/optimizely/go-sdk v1.0.0-beta3 h1:q6v5UAZQJctAwDJh5/3R77X+B46EOL047FvlXxbfX04=
 github.com/optimizely/go-sdk v1.0.0-beta3/go.mod h1:bzmv9qgWRLndtLrghkyP+JRvuhqhNlq80nGdw9wvadc=
+github.com/optimizely/go-sdk v1.0.0-beta3.0.20191018202825-e16509f253cd h1:rsC7RuV2fM9oIhXeEpwh0QX3iOjIpFjxO6ZIIb4mVL0=
+github.com/optimizely/go-sdk v1.0.0-beta3.0.20191018202825-e16509f253cd/go.mod h1:3oIiVIfBoMqsdPMnZqCWEp8rE0NapNK3ogI9jFwzXjY=
+github.com/optimizely/go-sdk v1.0.0-beta3.0.20191018220824-5c080e3b9298 h1:rLVNKwHH2uU/ukL1ae8tHg5lN/OzfkzEMkIuySksLho=
+github.com/optimizely/go-sdk v1.0.0-beta3.0.20191018220824-5c080e3b9298/go.mod h1:3oIiVIfBoMqsdPMnZqCWEp8rE0NapNK3ogI9jFwzXjY=
+github.com/optimizely/subset v0.0.0-20191016231344-a0cb13c639ec/go.mod h1:mMJ/yJx3JQbluliFxDCfWchxPb0nvWHCIw7LEtS2Pds=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6 h1:lNCW6THrCKBiJBpz8kbVGjC7MgdCGKwuvBgc7LoD6sw=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6/go.mod h1:Lu3tH6HLW3feq74c2GC+jIMS/K2CFcDWnWD9XkenwhI=
 github.com/pelletier/go-toml v1.1.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
@@ -366,6 +372,7 @@ gopkg.in/yaml.v2 v2.0.0-20170812160011-eb3733d160e7/go.mod h1:JAlM8MvJe8wmxCU4Bl
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v3 v3.0.0-20191010095647-fc94e3f71652/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed h1:WX1yoOaKQfddO/mLzdV4wptyWgoH/6hwLs7QHTixo0I=
 mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed/go.mod h1:Xkxe497xwlCKkIaQYRfC7CSLworTXY9RMqwhhCm+8Nc=

@@ -46,7 +46,7 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 		ProjectID: 43,
 		Timestamp: 43434343,
 		Event:     "project.datafile_updated",
-		Data:      models.DatafileUpdateData{
+		Data: models.DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
@@ -66,11 +66,11 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 }
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
-	var testWebhookConfigs = []models.OptlyWebhookConfig {
+	var testWebhookConfigs = []models.OptlyWebhookConfig{
 		{
 			ProjectID: 42,
-			SDKKeys: []string{"myDatafile"},
-			Secret:  "I am secret",
+			SDKKeys:   []string{"myDatafile"},
+			Secret:    "I am secret",
 		},
 	}
 	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs)
@@ -78,7 +78,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
-		Data:      models.DatafileUpdateData{
+		Data: models.DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
@@ -99,14 +99,13 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	assert.Regexp(t, "Computed signature does not match signature in request. Ignoring message.", rec.Body.String())
 }
 
-
 func TestHandleWebhookValidMessage(t *testing.T) {
 	testCache := optlytest.NewCache()
-	var testWebhookConfigs = []models.OptlyWebhookConfig {
+	var testWebhookConfigs = []models.OptlyWebhookConfig{
 		{
 			ProjectID: 42,
-			SDKKeys: []string{"myDatafile"},
-			Secret:  "I am secret",
+			SDKKeys:   []string{"myDatafile"},
+			Secret:    "I am secret",
 		},
 	}
 	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
@@ -114,7 +113,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
-		Data:      models.DatafileUpdateData{
+		Data: models.DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",

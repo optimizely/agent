@@ -16,10 +16,12 @@
 package main
 
 import (
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
+	"os"
 	"strings"
 	"sync"
+
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/webhook/models"
 
 	"github.com/optimizely/sidedoor/pkg/admin"
 	"github.com/optimizely/sidedoor/pkg/admin/handlers"
@@ -27,6 +29,7 @@ import (
 	"github.com/optimizely/sidedoor/pkg/service"
 	"github.com/optimizely/sidedoor/pkg/webhook"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -61,6 +64,11 @@ func loadConfig() {
 func main() {
 
 	loadConfig()
+
+	if viper.GetBool("log.pretty") {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	}
+
 	var wg sync.WaitGroup
 
 	optlyCache := optimizely.NewCache()
