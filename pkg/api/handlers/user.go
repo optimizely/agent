@@ -63,7 +63,7 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = optlyClient.TrackEventWithContext(eventKey, optlyContext, tags)
 	if err != nil {
-		log.Error().Err(err).Str("eventKey", eventKey).Msg("error tracking event")
+		middleware.GetLogger(r).Err(err).Str("eventKey", eventKey).Msg("error tracking event")
 		RenderError(err, http.StatusNotFound, w, r)
 		return
 	}

@@ -20,6 +20,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/go-chi/render"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 )
