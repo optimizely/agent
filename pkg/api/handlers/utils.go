@@ -24,8 +24,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
-	"github.com/rs/zerolog/log"
 )
 
 // RenderError sets the request status and renders the error message.
@@ -41,19 +41,19 @@ func ParseRequestBody(r *http.Request, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := "error reading request body"
-		log.Error().Err(err).Msg(msg)
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
 		return fmt.Errorf(msg)
 	}
 
 	if len(body) == 0 {
-		log.Debug().Msg("body was empty skip JSON unmarshal")
+		middleware.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
 		return nil
 	}
 
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		msg := "error parsing request body"
-		log.Error().Err(err).Msg(msg)
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
 		return fmt.Errorf(msg)
 	}
 
