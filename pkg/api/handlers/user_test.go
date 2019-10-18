@@ -211,14 +211,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
-
-		// Unmarshal response
-		var actual models.ErrorResponse
-		err := json.Unmarshal(rec.Body.Bytes(), &actual)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, models.ErrorResponse{Error: "optlyClient not available"}, actual)
+		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
 	}
 }
 
@@ -237,14 +230,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
-
-		// Unmarshal response
-		var actual models.ErrorResponse
-		err := json.Unmarshal(rec.Body.Bytes(), &actual)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, models.ErrorResponse{Error: "optlyContext not available"}, actual)
+		assertError(t, rec, "optlyContext not available", http.StatusUnprocessableEntity)
 	}
 }
 
