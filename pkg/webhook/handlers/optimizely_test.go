@@ -99,6 +99,42 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 	assert.Regexp(t, "Computed signature does not match signature in request. Ignoring message.", rec.Body.String())
 }
 
+func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
+	testCache := optlytest.NewCache()
+	var testWebhookConfigs = []models.OptlyWebhookConfig {
+		{
+			ProjectID: 42,
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
+			SkipSignatureCheck: true,
+		},
+	}
+	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
+	webhookMsg := models.OptlyMessage{
+		ProjectID: 42,
+		Timestamp: 42424242,
+		Event:     "project.datafile_updated",
+		Data:      models.DatafileUpdateData{
+			Revision:    101,
+			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
+			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
+			Environment: "Production",
+		},
+	}
+
+	validWebhookMessage, _ := json.Marshal(webhookMsg)
+
+	req := httptest.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
+	req.Header.Set(signatureHeader, "sha1=some_random_signature_in_header")
+
+	rec := httptest.NewRecorder()
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
+	handler.ServeHTTP(rec, req)
+
+	// Message is processed as usual with invalid signature as check is skipped
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+}
+
 func TestHandleWebhookValidMessage(t *testing.T) {
 	testCache := optlytest.NewCache()
 	var testWebhookConfigs = []models.OptlyWebhookConfig{

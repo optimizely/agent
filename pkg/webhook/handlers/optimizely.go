@@ -112,16 +112,18 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Check signature
-	requestSignature := r.Header.Get(signatureHeader)
-	isValid := h.validateSignature(requestSignature, body, webhookMsg.ProjectID)
-	if !isValid {
-		log.Error().Msg("Computed signature does not match signature in request. Ignoring message.")
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, render.M{
-			"error": "Computed signature does not match signature in request. Ignoring message.",
-		})
-		return
+	// Check signature if check is not skipped
+	if !webhookConfig.SkipSignatureCheck {
+		requestSignature := r.Header.Get(signatureHeader)
+		isValid := h.validateSignature(requestSignature, body, webhookMsg.ProjectID)
+		if !isValid {
+			log.Error().Msg("Computed signature does not match signature in request. Ignoring message.")
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, render.M{
+				"error": "Computed signature does not match signature in request. Ignoring message.",
+			})
+			return
+		}
 	}
 
 	// Iterate through all SDK keys and update config

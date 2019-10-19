@@ -35,7 +35,8 @@ type OptlyMessage struct {
 
 // OptlyWebhookConfig represents configuration of a single Optimizely webhook
 type OptlyWebhookConfig struct {
-	ProjectID int64    `yaml:"projectId"`
-	SDKKeys   []string `yaml:"sdkKeys"`
-	Secret    string   `yaml:"secret"`
+    ProjectID           int64                   `yaml:"projectId"`
+    SDKKeys             []string                `yaml:"sdkKeys"`
+    Secret              string                  `yaml:"secret"`
+    SkipSignatureCheck  bool                    `yaml:"skipSignatureCheck" default:"false"`
 }
