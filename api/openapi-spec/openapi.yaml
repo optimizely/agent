@@ -182,6 +182,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserEvent'
+  /users/{userId}/events/{eventKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/eventKeyParam'
+    - $ref: '#/components/parameters/attributesParam'
+    post:
+      summary: Track event for the given user.
+      operationId: trackEvent
+      description: todo
+      responses:
+        '204':
+          description: No content, user not included in the experiment
+        '404':
+          description: Event does not exist
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
   /users/{userId}/experiments/{experimentKey}:
     parameters:
     - $ref: '#/components/parameters/sdkKeyParam'
@@ -265,10 +287,18 @@ components:
     attributesParam:
       in: query
       name: attributes
+      required: false
       schema:
         type: object
         additionalProperties:
           type: string
+    eventKeyParam:
+      in: path
+      name: eventKey
+      required: true
+      description: Key of the event we're tracking
+      schema:
+        type: string
     experimentKeyParam:
       in: path
       name: experimentKey
