@@ -38,6 +38,7 @@ func NewRouter(srvcs []handlers.HealthChecker) *chi.Mux {
 
 	r.Get("/health", optlyAdmin.Health)
 	r.Get("/info", optlyAdmin.AppInfo)
+	r.Get("/metrics", optlyAdmin.Metrics)
 
 	return r
 }
