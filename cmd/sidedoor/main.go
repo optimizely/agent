@@ -34,39 +34,37 @@ import (
 	"github.com/spf13/viper"
 )
 
-func loadConfig() {
+func loadConfig() error {
+
+	// Set defaults
+	viper.SetDefault("api.enabled", true)     // Property to turn api service on/off
+	viper.SetDefault("api.port", "8080")      // Port for serving Optimizely APIs
+	viper.SetDefault("webhook.enabled", true) // Property to turn webhook service on/off
+	viper.SetDefault("webhook.port", "8085")  // Port for webhook service
+	viper.SetDefault("admin.port", "8088")    // Port for admin service
+
+	// Configure envirnoment variables
 	viper.SetEnvPrefix("sidedoor")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 
-	// Set config file
+	// Read configuration from file
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Info().Msg("No config file found or config file may have invalid format.")
-	}
-
-	viper.AutomaticEnv()
-
-	// Property to turn api service on/off
-	viper.SetDefault("api.enabled", true)
-	// Port for serving Optimizely APIs
-	viper.SetDefault("api.port", "8080")
-	// Property to turn webhook service on/off
-	viper.SetDefault("webhook.enabled", true)
-	// Port for webhook service
-	viper.SetDefault("webhook.port", "8085")
-
-	// Port for admin service
-	viper.SetDefault("admin.port", "8088")
+	return viper.ReadInConfig()
 }
 
 func main() {
 
-	loadConfig()
+	err := loadConfig()
 
 	if viper.GetBool("log.pretty") {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	}
+
+	if err != nil {
+		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config.yaml.")
 	}
 
 	var wg sync.WaitGroup
