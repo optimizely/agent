@@ -43,7 +43,7 @@ func loadConfig() error {
 	viper.SetDefault("webhook.port", "8085")  // Port for webhook service
 	viper.SetDefault("admin.port", "8088")    // Port for admin service
 
-	// Configure envirnoment variables
+	// Configure environment variables
 	viper.SetEnvPrefix("sidedoor")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
