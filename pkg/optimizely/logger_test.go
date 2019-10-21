@@ -32,19 +32,19 @@ func TestLog(t *testing.T) {
 	logger := zerolog.New(out).Level(zerolog.DebugLevel)
 	logConsumer := &LogConsumer{logger: &logger}
 
-	logConsumer.Log(logging.LogLevelDebug, "debug")
+	logConsumer.Log(logging.LogLevelDebug, "debug", map[string]interface{}{})
 	assert.Equal(t, "{\"level\":\"debug\",\"message\":\"debug\"}\n", out.String())
 	out.Reset()
 
-	logConsumer.Log(logging.LogLevelInfo, "info")
+	logConsumer.Log(logging.LogLevelInfo, "info", map[string]interface{}{})
 	assert.Equal(t, "{\"level\":\"info\",\"message\":\"info\"}\n", out.String())
 	out.Reset()
 
-	logConsumer.Log(logging.LogLevelWarning, "warn")
+	logConsumer.Log(logging.LogLevelWarning, "warn", map[string]interface{}{})
 	assert.Equal(t, "{\"level\":\"warn\",\"message\":\"warn\"}\n", out.String())
 	out.Reset()
 
-	logConsumer.Log(logging.LogLevelError, "error")
+	logConsumer.Log(logging.LogLevelError, "error", map[string]interface{}{})
 	assert.Equal(t, "{\"level\":\"error\",\"message\":\"error\"}\n", out.String())
 	out.Reset()
 }

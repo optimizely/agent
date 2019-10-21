@@ -19,23 +19,23 @@ package models
 
 // DatafileUpdateData model which represents data specific to datafile update
 type DatafileUpdateData struct {
-    Revision       int32    `json:"revision"`
-    OriginURL      string   `json:"origin_url"`
-    CDNUrl         string   `json:"cdn_url"`
-    Environment    string   `json:"environment"`
+	Revision    int32  `json:"revision"`
+	OriginURL   string `json:"origin_url"`
+	CDNUrl      string `json:"cdn_url"`
+	Environment string `json:"environment"`
 }
 
 // OptlyMessage model which represents any message received from Optimizely
 type OptlyMessage struct {
-    ProjectID    int64					`json:"project_id"`
-    Timestamp    int64					`json:"timestamp"`
-    Event        string					`json:"event"`
-    Data         DatafileUpdateData     `json:"data"`
+	ProjectID int64              `json:"project_id"`
+	Timestamp int64              `json:"timestamp"`
+	Event     string             `json:"event"`
+	Data      DatafileUpdateData `json:"data"`
 }
 
 // OptlyWebhookConfig represents configuration of a single Optimizely webhook
 type OptlyWebhookConfig struct {
-    ProjectID   int64                   `yaml:"projectId"`
-    SDKKeys     []string                `yaml:"sdkKeys"`
-    Secret      string                  `yaml:"secret"`
+	ProjectID int64    `yaml:"projectId"`
+	SDKKeys   []string `yaml:"sdkKeys"`
+	Secret    string   `yaml:"secret"`
 }

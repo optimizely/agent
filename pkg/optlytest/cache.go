@@ -24,7 +24,7 @@ import (
 
 // TestCache implements the Cache interface and is used in testing.
 type TestCache struct {
-	testClient		*optimizelytest.TestClient
+	testClient *optimizelytest.TestClient
 }
 
 // NewCache returns a new implementation of TestCache
