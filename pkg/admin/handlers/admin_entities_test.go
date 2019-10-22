@@ -167,9 +167,7 @@ func TestMetrics(t *testing.T) {
 	a := NewAdmin("1", "2", "3", nil)
 	http.HandlerFunc(a.Metrics).ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+	assert.Equal(t, http.StatusOK, rr.Code, "Status code differs")
 
 	var expVarMap JSON
 	err := json.Unmarshal(rr.Body.Bytes(), &expVarMap)
@@ -178,10 +176,7 @@ func TestMetrics(t *testing.T) {
 	memStatsMap, ok := expVarMap["memstats"]
 	assert.True(t, ok)
 
-	_, ok = memStatsMap.(map[string]interface{})["Alloc"]
-	assert.True(t, ok)
-	_, ok = memStatsMap.(map[string]interface{})["BySize"]
-	assert.True(t, ok)
-	_, ok = memStatsMap.(map[string]interface{})["BuckHashSys"]
-	assert.True(t, ok)
+	assert.Contains(t, memStatsMap, "Alloc")
+	assert.Contains(t, memStatsMap, "BySize")
+	assert.Contains(t, memStatsMap, "BuckHashSys")
 }
