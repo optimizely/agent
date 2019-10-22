@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"expvar"
 	"net/http"
 	"os"
 
@@ -106,4 +107,9 @@ func (a Admin) AppInfoHeader(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
+}
+
+// Metrics returns expvar info
+func (a Admin) Metrics(w http.ResponseWriter, r *http.Request) {
+	expvar.Handler().ServeHTTP(w, r)
 }
