@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -156,4 +157,31 @@ func TestAppInfoHeaderHandler(t *testing.T) {
 	assert.Equal(t, res.Header["App-Version"], []string{"1"})
 	assert.Equal(t, res.Header["Author"], []string{"2"})
 	assert.Equal(t, res.Header["App-Name"], []string{"3"})
+}
+
+func TestMetrics(t *testing.T) {
+
+	req, _ := http.NewRequest("GET", "/metrics", nil)
+
+	rr := httptest.NewRecorder()
+	a := NewAdmin("1", "2", "3", nil)
+	http.HandlerFunc(a.Metrics).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
+	}
+
+	var expVarMap JSON
+	err := json.Unmarshal(rr.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+
+	memStatsMap, ok := expVarMap["memstats"]
+	assert.True(t, ok)
+
+	_, ok = memStatsMap.(map[string]interface{})["Alloc"]
+	assert.True(t, ok)
+	_, ok = memStatsMap.(map[string]interface{})["BySize"]
+	assert.True(t, ok)
+	_, ok = memStatsMap.(map[string]interface{})["BuckHashSys"]
+	assert.True(t, ok)
 }
