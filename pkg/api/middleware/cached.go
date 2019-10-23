@@ -52,7 +52,7 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 
 		sdkKey := r.Header.Get(OptlySDKHeader)
 
-		GetLogger(r).Info().Msg("Fetching new OptimizelyClient")
+		GetLogger(r).Info().Msg("Fetching OptimizelyClient")
 		var err error
 		var optlyClient *optimizely.OptlyClient
 		if sdkKey == "" {
