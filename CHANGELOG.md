@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - October 23rd, 2019
+- Adds admin endpoints for health, info and metrics
+- Adds requestId to logs and response header
+- Improves log integration with Optimizely SDK
+- Updates swagger spec to match current server implementation
+- Updates dependency version for the Optimizely SDK
+- Enhance webhook service configurability
+
 ## [0.3.0] - October 14th, 2019
 - Adds user centric API routes
 - Introduces spf13/viper based configuration
