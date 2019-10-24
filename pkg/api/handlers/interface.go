@@ -37,7 +37,7 @@ type UserAPI interface {
 	// TODO
 	// GetFeature(w http.ResponseWriter, r *http.Request)
 	// ListFeatures(w http.ResponseWriter, r *http.Request)
-	ActivateFeature(w http.ResponseWriter, r *http.Request)
+	GetFeature(w http.ResponseWriter, r *http.Request)
 	TrackEvent(w http.ResponseWriter, r *http.Request)
 }
 

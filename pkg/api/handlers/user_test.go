@@ -74,7 +74,7 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Use(userMW.ClientCtx, userMW.UserCtx)
 	mux.Post("/events/{eventKey}", userAPI.TrackEvent)
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
-	mux.Post("/features/{featureKey}", userAPI.ActivateFeature)
+	mux.Post("/features/{featureKey}", userAPI.GetFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -204,7 +204,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		userHandler.ActivateFeature,
+		userHandler.GetFeature,
 		userHandler.TrackEvent,
 	}
 
@@ -223,7 +223,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		userHandler.ActivateFeature,
+		userHandler.GetFeature,
 		userHandler.TrackEvent,
 	}
 

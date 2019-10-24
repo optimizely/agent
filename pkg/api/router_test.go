@@ -71,7 +71,7 @@ func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
-func (m *MockUserAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {
+func (m *MockUserAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 

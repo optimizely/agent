@@ -63,9 +63,11 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 
 	r.Route("/users/{userID}", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
-		// TODO r.Get("/features/{featureKey}", opt.userAPI.ActivateFeature)
-		r.Post("/features/{featureKey}", opt.userAPI.ActivateFeature)
+		
 		r.Post("/events/{eventKey}", opt.userAPI.TrackEvent)
+
+		r.Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.Post("/features/{featureKey}", opt.userAPI.GetFeature)
 	})
 
 	return r

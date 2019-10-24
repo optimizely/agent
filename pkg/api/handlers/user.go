@@ -71,8 +71,8 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	render.NoContent(w, r)
 }
 
-// ActivateFeature - Return the feature and record impression
-func (h *UserHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
+// GetFeature - Return the feature and record impression
+func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
@@ -86,10 +86,23 @@ func (h *UserHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
 	}
 
 	featureKey := chi.URLParam(r, "featureKey")
+
+	// Track events during a POST.
+	// Note: Tracking is only done in the context of a "Feature Test"
+	if r.Method == "POST" {
+		// HACK - Triggers an impression event when applicable. This is not
+		// ideal since we're making TWO deicisions now. OASIS-5549
+		_, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext)
+		if softErr != nil {
+			// Swallowing the error to allow the response to be made and not break downstream consumers.
+			middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", featureKey).Msg("Calling IsFeatureEnabled")
+		}
+	}
+
 	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, optlyContext)
 
 	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
+		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
