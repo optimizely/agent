@@ -82,7 +82,7 @@ func (suite *UserTestSuite) SetupTest() {
 	suite.tc = testClient
 }
 
-func (suite *UserTestSuite) TestGetFeatureTestHTTPGet() {
+func (suite *UserTestSuite) TestGetFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -106,7 +106,7 @@ func (suite *UserTestSuite) TestGetFeatureTestHTTPGet() {
 	suite.Equal(expected, actual)
 }
 
-func (suite *UserTestSuite) TestGetFeatureHTTPPostFeatureRollout() {
+func (suite *UserTestSuite) TestTrackFeatureWithFeatureRollout() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
@@ -130,7 +130,7 @@ func (suite *UserTestSuite) TestGetFeatureHTTPPostFeatureRollout() {
 	suite.Equal(expected, actual)
 }
 
-func (suite *UserTestSuite) TestGetFeatureHTTPPostFeatureTest() {
+func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -261,6 +261,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.GetFeature,
+		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
 
@@ -280,6 +281,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.GetFeature,
+		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
 
