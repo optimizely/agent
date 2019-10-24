@@ -75,6 +75,10 @@ func (m *MockUserAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
+func (m *MockUserAPI) TrackFeature(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
 func renderPathParams(w http.ResponseWriter, r *http.Request) {
 	pathParams := make(map[string]string)
 	rctx := chi.RouteContext(r.Context())
@@ -151,7 +155,6 @@ func (suite *RouterTestSuite) TestGetFeatures() {
 		}
 		suite.assertValid(rec, expected)
 	}
-
 }
 
 func (suite *RouterTestSuite) TestTrackEvent() {

@@ -63,18 +63,6 @@ func (suite *ClientTestSuite) TestGetNonExistentFeature() {
 	}
 }
 
-func (suite *ClientTestSuite) TestGetAndTrackFeatureWithContext() {
-	basicFeature := entities.Feature{Key: "basic"}
-	suite.testClient.AddFeatureRollout(basicFeature)
-	enabled, variableMap, err := suite.optlyClient.GetAndTrackFeatureWithContext("basic", suite.optlyContext)
-
-	suite.NoError(err)
-	suite.True(enabled)
-	suite.Equal(0, len(variableMap))
-
-	// TODO add assertion that a tracking call was sent for FeatureTest
-}
-
 func (suite *ClientTestSuite) TestGetBasicFeature() {
 	basicFeature := entities.Feature{Key: "basic"}
 	suite.testClient.AddFeatureRollout(basicFeature)
