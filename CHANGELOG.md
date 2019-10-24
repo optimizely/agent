@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - October 24th, 2019
+- Adds GET endpoint for user-based features
+- Adds impression tracking for Feature Tests
+
 ## [0.4.0] - October 23rd, 2019
 - Adds admin endpoints for health, info and metrics
 - Adds requestId to logs and response header
