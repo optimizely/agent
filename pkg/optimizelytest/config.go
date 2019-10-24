@@ -180,13 +180,13 @@ func (c TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfig
 	layerID := c.getNextID()
 
 	variation := entities.Variation{
-		Key:            "rollout_var",
+		Key:            variationID,
 		ID:             variationID,
 		FeatureEnabled: true,
 	}
 
 	experiment := entities.Experiment{
-		Key:        "background_experiment",
+		Key:        experimentID,
 		LayerID:    layerID,
 		ID:         experimentID,
 		Variations: map[string]entities.Variation{variationID: variation},
@@ -208,13 +208,13 @@ func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectCon
 	layerID := c.getNextID()
 
 	variation := entities.Variation{
-		Key:            "rollout_var",
+		Key:            variationID,
 		ID:             variationID,
 		FeatureEnabled: true,
 	}
 
 	experiment := entities.Experiment{
-		Key:        "background_experiment",
+		Key:        experimentID,
 		LayerID:    layerID,
 		ID:         experimentID,
 		Variations: map[string]entities.Variation{variationID: variation},
