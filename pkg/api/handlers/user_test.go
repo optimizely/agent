@@ -82,9 +82,9 @@ func (suite *UserTestSuite) SetupTest() {
 	suite.tc = testClient
 }
 
-func (suite *UserTestSuite) TestGetFeatureHTTPGet() {
+func (suite *UserTestSuite) TestGetFeatureTestHTTPGet() {
 	feature := entities.Feature{Key: "one"}
-	suite.tc.AddFeatureRollout(feature)
+	suite.tc.AddFeatureTest(feature)
 
 	req := httptest.NewRequest("GET", "/features/one", nil)
 	rec := httptest.NewRecorder()
