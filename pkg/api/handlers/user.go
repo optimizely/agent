@@ -91,7 +91,7 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 
 	// HACK - Triggers an impression event when applicable. This is not
-	// ideal since we're making TWO deicisions now. OASIS-5549
+	// ideal since we're making TWO decisions now. OASIS-5549
 	if _, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext); softErr != nil {
 		// Swallowing the error to allow the response to be made and not break downstream consumers.
 		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", featureKey).Msg("Calling IsFeatureEnabled")
