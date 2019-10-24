@@ -71,7 +71,11 @@ func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
-func (m *MockUserAPI) ActivateFeature(w http.ResponseWriter, r *http.Request) {
+func (m *MockUserAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
+func (m *MockUserAPI) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
@@ -134,19 +138,23 @@ func (suite *RouterTestSuite) TestGetFeature() {
 	suite.assertValid(rec, expected)
 }
 
-func (suite *RouterTestSuite) TestActivateFeatures() {
-	req := httptest.NewRequest("POST", "/users/me/features/one", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
+func (suite *RouterTestSuite) TestGetFeatures() {
+	methods := []string{"GET", "POST"}
 
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	for _, m := range methods {
+		req := httptest.NewRequest(m, "/users/me/features/one", nil)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
 
-	expected := map[string]string{
-		"userID":     "me",
-		"featureKey": "one",
+		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+		suite.Equal("expected", rec.Header().Get(userHeaderKey))
+
+		expected := map[string]string{
+			"userID":     "me",
+			"featureKey": "one",
+		}
+		suite.assertValid(rec, expected)
 	}
-	suite.assertValid(rec, expected)
 }
 
 func (suite *RouterTestSuite) TestTrackEvent() {

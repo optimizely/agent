@@ -64,6 +64,11 @@ func (t *TestClient) AddFeatureRollout(f entities.Feature) {
 	t.ProjectConfig.AddFeatureRollout(f)
 }
 
+// AddFeatureTest is a helper method for adding feature rollouts to the ProjectConfig to fascilitate testing.
+func (t *TestClient) AddFeatureTest(f entities.Feature) {
+	t.ProjectConfig.AddFeatureTest(f)
+}
+
 // GetProcessedEvents returns the UserEvent objects sent to the event processor.
 func (t *TestClient) GetProcessedEvents() []event.UserEvent {
 	return t.EventProcessor.GetEvents()

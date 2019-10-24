@@ -74,13 +74,39 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Use(userMW.ClientCtx, userMW.UserCtx)
 	mux.Post("/events/{eventKey}", userAPI.TrackEvent)
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
-	mux.Post("/features/{featureKey}", userAPI.ActivateFeature)
+
+	mux.Get("/features/{featureKey}", userAPI.GetFeature)
+	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
 }
 
-func (suite *UserTestSuite) TestActivateFeature() {
+func (suite *UserTestSuite) TestGetFeatureWithFeatureTest() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureTest(feature)
+
+	req := httptest.NewRequest("GET", "/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Feature{
+		Key:     "one",
+		Enabled: true,
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *UserTestSuite) TestTrackFeatureWithFeatureRollout() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
@@ -100,7 +126,37 @@ func (suite *UserTestSuite) TestActivateFeature() {
 		Enabled: true,
 	}
 
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
 	suite.Equal(expected, actual)
+}
+
+func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureTest(feature)
+
+	req := httptest.NewRequest("POST", "/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Feature{
+		Key:     "one",
+		Enabled: true,
+	}
+	suite.Equal(expected, actual)
+
+	events := suite.tc.GetProcessedEvents()
+	suite.Equal(1, len(events))
+
+	impression := events[0]
+	suite.Equal("campaign_activated", impression.Impression.Key)
+	suite.Equal("testUser", impression.VisitorID)
 }
 
 func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
@@ -204,7 +260,8 @@ func TestUserMissingClientCtx(t *testing.T) {
 
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		userHandler.ActivateFeature,
+		userHandler.GetFeature,
+		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
 
@@ -223,7 +280,8 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		userHandler.ActivateFeature,
+		userHandler.GetFeature,
+		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
 

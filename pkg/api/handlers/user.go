@@ -26,6 +26,7 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
 type eventTags map[string]interface{}
@@ -35,13 +36,7 @@ type UserHandler struct{}
 
 // TrackEvent - track a given event for the current user
 func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	optlyContext, err := middleware.GetOptlyContext(r)
+	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
@@ -71,25 +66,60 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	render.NoContent(w, r)
 }
 
-// ActivateFeature - Return the feature and record impression
-func (h *UserHandler) ActivateFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	optlyContext, err := middleware.GetOptlyContext(r)
+// GetFeature - Return the feature and record impression if applicable.
+func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
 	featureKey := chi.URLParam(r, "featureKey")
-	enabled, variables, err := optlyClient.GetAndTrackFeatureWithContext(featureKey, optlyContext)
+	renderFeature(w, r, featureKey, optlyClient, optlyContext)
+}
+
+// TrackFeature - Return the feature and record impression if applicable.
+// Tracking impressions is only supported for "Feature Tests" as part of the SDK contract.
+func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	featureKey := chi.URLParam(r, "featureKey")
+
+	// HACK - Triggers an impression event when applicable. This is not
+	// ideal since we're making TWO decisions now. OASIS-5549
+	if _, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext); softErr != nil {
+		// Swallowing the error to allow the response to be made and not break downstream consumers.
+		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", featureKey).Msg("Calling IsFeatureEnabled")
+	}
+
+	renderFeature(w, r, featureKey, optlyClient, optlyContext)
+}
+
+// parseContext extract the common references from the request context
+func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyContext, error) {
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	optlyContext, err := middleware.GetOptlyContext(r)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return optlyClient, optlyContext, nil
+}
+
+// renderFeature excapsulates extracting a Feature from the Optimizely SDK and rendering a feature response.
+func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+	enabled, variables, err := optlyClient.GetFeatureWithContext(featureKey, optlyContext)
 
 	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Str("userID", optlyContext.GetUserID()).Msg("Calling ActivateFeature")
+		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

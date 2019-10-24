@@ -173,6 +173,33 @@ func (c TestProjectConfig) AddFeature(f entities.Feature) *TestProjectConfig {
 	return &c
 }
 
+// AddFeatureTest adds the feature and supporting entities to complete the feature test modeling
+func (c TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfig {
+	experimentID := c.getNextID()
+	variationID := c.getNextID()
+	layerID := c.getNextID()
+
+	variation := entities.Variation{
+		Key:            variationID,
+		ID:             variationID,
+		FeatureEnabled: true,
+	}
+
+	experiment := entities.Experiment{
+		Key:        experimentID,
+		LayerID:    layerID,
+		ID:         experimentID,
+		Variations: map[string]entities.Variation{variationID: variation},
+		TrafficAllocation: []entities.Range{
+			entities.Range{EntityID: variationID, EndOfRange: 10000},
+		},
+	}
+
+	f.FeatureExperiments = []entities.Experiment{experiment}
+	c.FeatureMap[f.Key] = f
+	return &c
+}
+
 // AddFeatureRollout adds the feature and supporting entities to complete the rollout modeling
 func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectConfig {
 	experimentID := c.getNextID()
@@ -181,13 +208,13 @@ func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectCon
 	layerID := c.getNextID()
 
 	variation := entities.Variation{
-		Key:            "rollout_var",
+		Key:            variationID,
 		ID:             variationID,
 		FeatureEnabled: true,
 	}
 
 	experiment := entities.Experiment{
-		Key:        "background_experiment",
+		Key:        experimentID,
 		LayerID:    layerID,
 		ID:         experimentID,
 		Variations: map[string]entities.Variation{variationID: variation},
