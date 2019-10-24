@@ -71,7 +71,9 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	render.NoContent(w, r)
 }
 
-// GetFeature - Return the feature and record impression
+// GetFeature - Return the feature and record impression if applicable.
+// Tracking impressions is only supported for "Feature Tests" as part of the SDK contract,
+// and only applicable during a POST request.
 func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
