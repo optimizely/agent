@@ -79,8 +79,7 @@ func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 }
 
 // TrackFeature - Return the feature and record impression if applicable.
-// Tracking impressions is only supported for "Feature Tests" as part of the SDK contract,
-// and only applicable during a POST request.
+// Tracking impressions is only supported for "Feature Tests" as part of the SDK contract.
 func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
