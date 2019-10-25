@@ -7,7 +7,7 @@
 
 
 
-##Summary of conversation with AWS support:
+## Summary of conversation with AWS support:
 
 ECS does not understand docker compose, it only understands Task Definitions,
 but there is a way to convert docker compose. One can use the following command to convert docker compose to Fargate compatible Task Definition and then use Task Definition to launch containers/Tasks:
