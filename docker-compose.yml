@@ -1,0 +1,25 @@
+version: '3'
+services:
+  sidedoor:
+    container_name: sidedoor
+    hostname: sidedoor
+    build: # need image for fargate
+       context: .
+       dockerfile: ./scripts/dockerfiles/Dockerfile.static
+    depends_on:
+      - dd-agent
+    ports:
+      - "8080:8080"
+      - "8085:8085"
+      - "8088:8088"
+
+  dd-agent:
+    container_name: dd-agent
+    hostname: dd-agent
+    build:   # need image for fargate
+       context: .
+       dockerfile: ./scripts/datadog/Dockerfile
+    environment:
+      - DD_API_KEY
+      - DD_APM_ENABLED=true
+      - ECS_FARGATE=true
