@@ -1,5 +1,6 @@
 # The name of the executable (default is current directory name)
 TARGET := $(shell basename "$(PWD)")
+MODULE_NAME := $(shell head -n 1 go.mod | awk '{ split($$0,a," "); print a[2] }')
 .DEFAULT_GOAL := help
 
 COVER_FILE := cover.out
@@ -38,7 +39,7 @@ cover-html: cover
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 clean: ## runs `go clean` and removes the bin/ dir
-	$(GOCLEAN)
+	GO111MODULE=$(GO111MODULE) $(GOCLEAN) $(MODULE_NAME)/cmd/$(TARGET)
 	rm -rf $(GOBIN)
 
 generate-api: ## generates APIs from the swagger spec
