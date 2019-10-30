@@ -49,8 +49,11 @@ func loadConfig() error {
 	viper.AutomaticEnv()
 
 	// Read configuration from file
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	configFile, configSet := os.LookupEnv("SIDEDOOR_CONFIG")
+	if !configSet {
+		configFile = "config"
+	}
+	viper.SetConfigFile(configFile)
 	viper.SetConfigType("yaml")
 	return viper.ReadInConfig()
 }
@@ -64,7 +67,7 @@ func main() {
 	}
 
 	if err != nil {
-		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config.yaml.")
+		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config file.")
 	}
 
 	var wg sync.WaitGroup
