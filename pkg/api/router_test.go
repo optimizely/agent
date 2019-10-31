@@ -139,22 +139,18 @@ func (suite *RouterTestSuite) TestGetFeature() {
 }
 
 func (suite *RouterTestSuite) TestGetFeatures() {
-	methods := []string{"GET", "POST"}
+	req := httptest.NewRequest("GET", "/users/me/features/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
 
-	for _, m := range methods {
-		req := httptest.NewRequest(m, "/users/me/features/one", nil)
-		rec := httptest.NewRecorder()
-		suite.mux.ServeHTTP(rec, req)
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
 
-		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-		suite.Equal("expected", rec.Header().Get(userHeaderKey))
-
-		expected := map[string]string{
-			"userID":     "me",
-			"featureKey": "one",
-		}
-		suite.assertValid(rec, expected)
+	expected := map[string]string{
+		"userID":     "me",
+		"featureKey": "one",
 	}
+	suite.assertValid(rec, expected)
 }
 
 func (suite *RouterTestSuite) TestTrackEvent() {
