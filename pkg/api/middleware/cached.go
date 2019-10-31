@@ -91,6 +91,7 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 		for k, v := range values {
 			// Assuming a single KV pair exists in the query parameters
 			attributes[k] = v[0]
+			GetLogger(r).Debug().Str("attrKey", k).Str("attrVal", v[0]).Msg("User attribute.")
 		}
 
 		optlyContext := optimizely.NewContext(userID, attributes)
