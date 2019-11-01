@@ -18,6 +18,8 @@
 package api
 
 import (
+	"expvar"
+
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -47,27 +49,30 @@ func NewDefaultRouter(optlyCache optimizely.Cache) *chi.Mux {
 	return NewRouter(spec)
 }
 
+const metricsPrefix = "route_counters"
+
 // NewRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
+	routeCounts := expvar.NewMap(metricsPrefix)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.With(chimw.AllowContentType("application/json")).Post("/user-event", opt.userEventAPI.AddUserEvent)
+	r.With(chimw.AllowContentType("application/json"), middleware.UpdateMetrics(routeCounts)).Post("/user-event", opt.userEventAPI.AddUserEvent)
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.Get("/", opt.featureAPI.ListFeatures)
-		r.Get("/{featureKey}", opt.featureAPI.GetFeature)
+		r.With(middleware.UpdateMetrics(routeCounts)).Get("/", opt.featureAPI.ListFeatures)
+		r.With(middleware.UpdateMetrics(routeCounts)).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
-		r.Post("/events/{eventKey}", opt.userAPI.TrackEvent)
+		r.With(middleware.UpdateMetrics(routeCounts)).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 
-		r.Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(middleware.UpdateMetrics(routeCounts)).Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.With(middleware.UpdateMetrics(routeCounts)).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 	})
 
 	return r
