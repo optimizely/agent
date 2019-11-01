@@ -37,11 +37,12 @@ import (
 func loadConfig() error {
 
 	// Set defaults
-	viper.SetDefault("api.enabled", true)     // Property to turn api service on/off
-	viper.SetDefault("api.port", "8080")      // Port for serving Optimizely APIs
-	viper.SetDefault("webhook.enabled", true) // Property to turn webhook service on/off
-	viper.SetDefault("webhook.port", "8085")  // Port for webhook service
-	viper.SetDefault("admin.port", "8088")    // Port for admin service
+	viper.SetDefault("config.filename", "config.yaml")	// Configuration file name
+	viper.SetDefault("api.enabled", true)     		// Property to turn api service on/off
+	viper.SetDefault("api.port", "8080")      		// Port for serving Optimizely APIs
+	viper.SetDefault("webhook.enabled", true) 		// Property to turn webhook service on/off
+	viper.SetDefault("webhook.port", "8085")  		// Port for webhook service
+	viper.SetDefault("admin.port", "8088")    		// Port for admin service
 
 	// Configure environment variables
 	viper.SetEnvPrefix("sidedoor")
@@ -49,8 +50,8 @@ func loadConfig() error {
 	viper.AutomaticEnv()
 
 	// Read configuration from file
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	configFile := viper.GetString("config.filename")
+	viper.SetConfigFile(configFile)
 	viper.SetConfigType("yaml")
 	return viper.ReadInConfig()
 }
@@ -64,7 +65,7 @@ func main() {
 	}
 
 	if err != nil {
-		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config.yaml.")
+		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config file.")
 	}
 
 	var wg sync.WaitGroup
