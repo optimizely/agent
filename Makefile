@@ -22,7 +22,7 @@ MAKEFLAGS += --silent
 # Use linker flags to strip debugging info from the binary.
 # -s Omit the symbol table and debug information.
 # -w Omit the DWARF symbol table.
-LDFLAGS=-ldflags "-s -w"
+LDFLAGS=-ldflags "-s -w -X github.com/optimizely/sidedoor/pkg/admin.Version=${VERSION}"
 
 all: test build ## all
 $(TARGET):
