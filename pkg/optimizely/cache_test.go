@@ -89,5 +89,5 @@ func mockLoader(sdkKey string) (*OptlyClient, error) {
 	tc := optimizelytest.NewClient()
 	tc.ProjectConfig.ProjectID = sdkKey
 
-	return &OptlyClient{tc.OptimizelyClient, nil}, nil
+	return &OptlyClient{tc.OptimizelyClient, nil, cmap.New()}, nil
 }

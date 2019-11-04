@@ -18,9 +18,11 @@
 package optimizely
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	cmap "github.com/orcaman/concurrent-map"
@@ -73,11 +75,44 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 	return c.GetClient(sdkKey)
 }
 
+// CMapOverridesStore is an implementation of ExperimentOverrideStore from the Go SDK, based on a ConcurrentMap
+type CMapOverridesStore struct {
+	overrides cmap.ConcurrentMap
+}
+
+// GetVariation returns the override for the given experiment and user from the overrides ConcurrentMap.
+// The overrideKey is converted to a string key by using a space delimiter in between the key and user ID.
+func (c *CMapOverridesStore) GetVariation(overrideKey decision.ExperimentOverrideKey) (string, bool) {
+	// TODO: Implement this in a function, and reuse with SetForcedVariation calls elsewhere
+	// Note: We are assuming that it's acceptable to use a space as the delimiter between experiment key and user id, because the Optimizely app does not allow space in experiment keys.
+	// This is fragile.
+
+	cMapKey := fmt.Sprintf("%v %v", overrideKey.ExperimentKey, overrideKey.UserID)
+	cmapVal, ok := c.overrides.Get(cMapKey)
+	if !ok {
+		return "", ok
+	}
+	variationKey, typeAssertionOk := cmapVal.(string)
+	if !typeAssertionOk {
+		// TODO: Log error/warning/internal something. This means a non-string value got into the overrides map.
+		return "", typeAssertionOk
+	}
+	return variationKey, typeAssertionOk
+}
+
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 
 	optimizelyFactory := &client.OptimizelyFactory{}
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
-	optimizelyClient, err := optimizelyFactory.Client(client.WithConfigManager(configManager))
+	forcedVariations := cmap.New()
+	overridesStore := &CMapOverridesStore{
+		overrides: forcedVariations,
+	}
+	compositeService := decision.NewCompositeServiceWithOverrides(sdkKey, overridesStore)
+	optimizelyClient, err := optimizelyFactory.Client(
+		client.WithConfigManager(configManager),
+		client.WithDecisionService(compositeService),
+	)
 
-	return &OptlyClient{optimizelyClient, configManager}, err
+	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
