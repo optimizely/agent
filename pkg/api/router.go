@@ -63,11 +63,12 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 
 	r.Route("/users/{userID}", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
-		
+
 		r.Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 
 		r.Get("/features/{featureKey}", opt.userAPI.GetFeature)
 		r.Post("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.Post("/features/{featureKey}/variations/{variationKey}", opt.userAPI.SetForcedVariationFeature)
 	})
 
 	return r
