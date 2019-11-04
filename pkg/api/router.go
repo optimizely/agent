@@ -51,10 +51,11 @@ func NewDefaultRouter(optlyCache optimizely.Cache) *chi.Mux {
 
 const metricsPrefix = "route_counters"
 
+var routeCounts = expvar.NewMap(metricsPrefix)
+
 // NewRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
-	routeCounts := expvar.NewMap(metricsPrefix)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
