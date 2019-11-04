@@ -25,8 +25,8 @@ import (
 	"github.com/go-chi/chi"
 )
 
-// UpdateMetrics update counts for each URL hit
-func UpdateMetrics(counts *expvar.Map) func(http.Handler) http.Handler {
+// HitCount update counts for each URL hit, key being a combination of a method and route pattern
+func HitCount(counts *expvar.Map) func(http.Handler) http.Handler {
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			key := r.Method + "_" + strings.ReplaceAll(chi.RouteContext(r.Context()).RoutePattern(), "/", "_")

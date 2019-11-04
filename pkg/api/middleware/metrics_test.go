@@ -53,7 +53,7 @@ func (rm *RequestMetrics) setRoute(metricsKey string) {
 	rctx.RoutePatterns = []string{"/item/{set_item}"}
 
 	rm.req = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-	rm.handler = http.Handler(UpdateMetrics(metricsMap)(getTestMetrics()))
+	rm.handler = http.Handler(HitCount(metricsMap)(getTestMetrics()))
 
 }
 
