@@ -103,8 +103,8 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	renderFeature(w, r, featureKey, optlyClient, optlyContext)
 }
 
-// SetForcedVariationFeature - set a forced variation for a feature test
-func (h *UserHandler) SetForcedVariationFeature(w http.ResponseWriter, r *http.Request) {
+// SetForcedVariation - set a forced variation
+func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
 	RenderError(errors.New("NYI"), http.StatusNotImplemented, w, r)
 }
 
