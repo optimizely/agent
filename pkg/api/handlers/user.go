@@ -59,11 +59,11 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = optlyClient.TrackEventWithContext(eventKey, optlyContext, tags)
 	if err != nil {
-		middleware.GetLogger(r).Err(err).Str("eventKey", eventKey).Msg("error tracking event")
+		middleware.GetLogger(r).Error().Err(err).Str("eventKey", eventKey).Msg("error tracking event")
 		RenderError(err, http.StatusNotFound, w, r)
 		return
 	}
-
+	middleware.GetLogger(r).Debug().Str("eventKey", eventKey).Msg("tracking event")
 	render.NoContent(w, r)
 }
 
@@ -92,7 +92,10 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 
 	// HACK - Triggers an impression event when applicable. This is not
 	// ideal since we're making TWO decisions now. OASIS-5549
-	if _, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext); softErr != nil {
+	enabled, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext)
+	middleware.GetLogger(r).Info().Str("featureKey", featureKey).Bool("enabled", enabled).Msg("Calling IsFeatureEnabled")
+
+	if softErr != nil {
 		// Swallowing the error to allow the response to be made and not break downstream consumers.
 		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", featureKey).Msg("Calling IsFeatureEnabled")
 	}
@@ -123,9 +126,8 @@ func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyCo
 // renderFeature excapsulates extracting a Feature from the Optimizely SDK and rendering a feature response.
 func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
 	enabled, variables, err := optlyClient.GetFeatureWithContext(featureKey, optlyContext)
-
 	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+		middleware.GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -136,5 +138,6 @@ func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, op
 		Variables: variables,
 	}
 
+	middleware.GetLogger(r).Debug().Str("featureKey", featureKey).Msg("rendering feature")
 	render.JSON(w, r, feature)
 }

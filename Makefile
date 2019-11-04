@@ -38,7 +38,7 @@ cover-html: cover
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 clean: ## runs `go clean` and removes the bin/ dir
-	$(GOCLEAN)
+	GO111MODULE=$(GO111MODULE) $(GOCLEAN) --modcache
 	rm -rf $(GOBIN)
 
 generate-api: ## generates APIs from the swagger spec
