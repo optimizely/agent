@@ -129,9 +129,9 @@ func TestAppInfoHeaderHandler(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	a.AppInfoHeader(handler).ServeHTTP(rec, req)
 
-	assert.Equal(t, "1", rec.Header().Get("App-Version"))
-	assert.Equal(t, "2", rec.Header().Get("Author"))
-	assert.Equal(t, "3", rec.Header().Get("App-Name"))
+	assert.Equal(t, []string{"1"}, rec.HeaderMap["App-Version"])
+	assert.Equal(t, []string{"2"}, rec.HeaderMap["Author"])
+	assert.Equal(t, []string{"3"}, rec.HeaderMap["App-Name"])
 }
 
 func TestMetrics(t *testing.T) {
