@@ -27,7 +27,6 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
-	cmap "github.com/orcaman/concurrent-map"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
@@ -69,7 +68,7 @@ func (suite *UserTestSuite) SetupTest() {
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
 		ConfigManager:    nil,
-		ForcedVariations: cmap.New(),
+		ForcedVariations: optimizely.NewCMapExpOverridesStore(),
 	}
 
 	mux := chi.NewMux()

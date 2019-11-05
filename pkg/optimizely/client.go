@@ -21,14 +21,13 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
-	cmap "github.com/orcaman/concurrent-map"
 )
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
-	ForcedVariations cmap.ConcurrentMap
+	ForcedVariations *CMapExpOverridesStore
 }
 
 // ListFeatures returns all available features

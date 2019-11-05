@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
-	cmap "github.com/orcaman/concurrent-map"
 
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
@@ -37,7 +36,7 @@ type ClientTestSuite struct {
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil, cmap.New()}
+	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil, NewCMapExpOverridesStore()}
 	suite.optlyContext = NewContext("userId", make(map[string]interface{}))
 }
 

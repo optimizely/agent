@@ -20,12 +20,14 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -111,27 +113,39 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
-
 	userID := optlyContext.UserContext.ID
+	if userID == "" {
+		RenderError(errors.New("empty userID"), http.StatusBadRequest, w, r)
+		return
+	}
 	experimentKey := chi.URLParam(r, "experimentKey")
+	if experimentKey == "" {
+		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
+		return
+	}
 	variationKey := chi.URLParam(r, "variationKey")
-	// TODO: Is this the right place for validation?
-	// TODO: Should check each separately and return informative error messages?
-	if userID == "" || experimentKey == "" || variationKey == "" {
-		RenderError(err, http.StatusBadRequest, w, r)
+	if variationKey == "" {
+		RenderError(errors.New("empty variationKey"), http.StatusBadRequest, w, r)
 		return
 	}
 
-	// TODO: Refactor to store interface so i'm not constructing the key
-	forcedVariationKey := fmt.Sprintf("%v %v", experimentKey, userID)
-	shouldReturnStatusCreated := !optlyClient.ForcedVariations.Has(forcedVariationKey)
+	if optlyClient.ForcedVariations == nil {
+		// ForcedVariations must be initialized when the client is created. We can't do anything at this point, so have to return 500
+		// TODO: Should return "please report this issue" link in response body?
+		RenderError(errors.New("internal server error"), http.StatusBadRequest, w, r)
+		return
+	}
 
-	optlyClient.ForcedVariations.Set(forcedVariationKey, variationKey)
-
-	if shouldReturnStatusCreated {
-		w.WriteHeader(http.StatusCreated)
-	} else {
+	forcedVariationKey := decision.ExperimentOverrideKey{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+	}
+	previousVariationKey, ok := optlyClient.ForcedVariations.GetVariation(forcedVariationKey)
+	optlyClient.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
+	if ok && previousVariationKey == variationKey {
 		w.WriteHeader(http.StatusNoContent)
+	} else {
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -142,22 +156,36 @@ func (h *UserHandler) DeleteForcedVariation(w http.ResponseWriter, r *http.Reque
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
-
 	userID := optlyContext.UserContext.ID
+	if userID == "" {
+		RenderError(errors.New("empty userID"), http.StatusBadRequest, w, r)
+		return
+	}
 	experimentKey := chi.URLParam(r, "experimentKey")
+	if experimentKey == "" {
+		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
+		return
+	}
 	variationKey := chi.URLParam(r, "variationKey")
-	// TODO: Is this the right place for validation?
-	// TODO: Should check each separately and return informative error messages?
-	if userID == "" || experimentKey == "" || variationKey == "" {
-		RenderError(err, http.StatusBadRequest, w, r)
+	if variationKey == "" {
+		RenderError(errors.New("empty variationKey"), http.StatusBadRequest, w, r)
 		return
 	}
 
-	// TODO: Refactor to store interface so i'm not constructing the key
-	forcedVariationKey := fmt.Sprintf("%v %v", experimentKey, userID)
-	currentForcedVariation, ok := optlyClient.ForcedVariations.Get(forcedVariationKey)
-	if ok && currentForcedVariation == variationKey {
-		optlyClient.ForcedVariations.Remove(forcedVariationKey)
+	if optlyClient.ForcedVariations == nil {
+		// ForcedVariations must be initialized when the client is created. We can't do anything at this point, so have to return 500
+		// TODO: Should return "please report this issue" link in response body?
+		RenderError(errors.New("internal server error"), http.StatusBadRequest, w, r)
+		return
+	}
+
+	forcedVariationKey := decision.ExperimentOverrideKey{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+	}
+	previousVariationKey, ok := optlyClient.ForcedVariations.GetVariation(forcedVariationKey)
+	if ok && previousVariationKey == variationKey {
+		optlyClient.ForcedVariations.RemoveVariation(forcedVariationKey)
 		w.WriteHeader(http.StatusNoContent)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
