@@ -28,7 +28,7 @@ import (
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
-	forcedVariations cmap.ConcurrentMap
+	ForcedVariations cmap.ConcurrentMap
 }
 
 // ListFeatures returns all available features

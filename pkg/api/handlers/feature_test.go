@@ -32,6 +32,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -57,7 +58,11 @@ func (o *OptlyMW) ClientCtx(next http.Handler) http.Handler {
 func (suite *FeatureTestSuite) SetupTest() {
 
 	testClient := optimizelytest.NewClient()
-	optlyClient := &optimizely.OptlyClient{testClient.OptimizelyClient, nil}
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    nil,
+		ForcedVariations: cmap.New(),
+	}
 
 	mux := chi.NewMux()
 	featureAPI := new(FeatureHandler)
