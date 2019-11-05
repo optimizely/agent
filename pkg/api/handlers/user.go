@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -105,7 +104,25 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 
 // SetForcedVariation - set a forced variation
 func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
-	RenderError(errors.New("NYI"), http.StatusNotImplemented, w, r)
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	userID := optlyContext.UserContext.ID
+	experimentKey := chi.URLParam(r, "experimentKey")
+	variationKey := chi.URLParam(r, "variationKey")
+	// TODO: Is this the right place for validation?
+	// TODO: Should check each separately and return informative error messages?
+	if userID == "" || experimentKey == "" || variationKey == "" {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	optlyClient.ForcedVariations.Set(fmt.Sprintf("%v %v", experimentKey, userID), variationKey)
+
+	render.NoContent(w, r)
 }
 
 // parseContext extract the common references from the request context
