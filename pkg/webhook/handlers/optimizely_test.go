@@ -19,11 +19,12 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/optimizely/sidedoor/pkg/optlytest"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/optimizely/sidedoor/pkg/optlytest"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
@@ -101,11 +102,11 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 
 func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 	testCache := optlytest.NewCache()
-	var testWebhookConfigs = []models.OptlyWebhookConfig {
+	var testWebhookConfigs = []models.OptlyWebhookConfig{
 		{
-			ProjectID: 42,
-			SDKKeys: []string{"myDatafile"},
-			Secret:  "I am secret",
+			ProjectID:          42,
+			SDKKeys:            []string{"myDatafile"},
+			Secret:             "I am secret",
 			SkipSignatureCheck: true,
 		},
 	}
@@ -114,7 +115,7 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
-		Data:      models.DatafileUpdateData{
+		Data: models.DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",

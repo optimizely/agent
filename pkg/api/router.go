@@ -75,7 +75,8 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.With(middleware.HitCount(routeCounts)).Get("/features/{featureKey}", opt.userAPI.GetFeature)
 		r.With(middleware.HitCount(routeCounts)).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 
-		r.With(middleware.HitCount(routeCounts)).Post("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
+		r.With(middleware.HitCount(routeCounts)).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
+		r.With(middleware.HitCount(routeCounts)).Delete("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.DeleteForcedVariation)
 	})
 
 	return r

@@ -14,6 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
+// TODO: Update openapi.yaml with new routes
+
 // Package handlers //
 package handlers
 
@@ -120,9 +122,46 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	optlyClient.ForcedVariations.Set(fmt.Sprintf("%v %v", experimentKey, userID), variationKey)
+	// TODO: Refactor to store interface so i'm not constructing the key
+	forcedVariationKey := fmt.Sprintf("%v %v", experimentKey, userID)
+	shouldReturnStatusCreated := !optlyClient.ForcedVariations.Has(forcedVariationKey)
 
-	render.NoContent(w, r)
+	optlyClient.ForcedVariations.Set(forcedVariationKey, variationKey)
+
+	if shouldReturnStatusCreated {
+		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// DeleteForcedVariation - Delete a forced variation
+func (h *UserHandler) DeleteForcedVariation(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	userID := optlyContext.UserContext.ID
+	experimentKey := chi.URLParam(r, "experimentKey")
+	variationKey := chi.URLParam(r, "variationKey")
+	// TODO: Is this the right place for validation?
+	// TODO: Should check each separately and return informative error messages?
+	if userID == "" || experimentKey == "" || variationKey == "" {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	// TODO: Refactor to store interface so i'm not constructing the key
+	forcedVariationKey := fmt.Sprintf("%v %v", experimentKey, userID)
+	currentForcedVariation, ok := optlyClient.ForcedVariations.Get(forcedVariationKey)
+	if ok && currentForcedVariation == variationKey {
+		optlyClient.ForcedVariations.Remove(forcedVariationKey)
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
 }
 
 // parseContext extract the common references from the request context
