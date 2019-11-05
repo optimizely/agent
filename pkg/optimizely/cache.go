@@ -21,7 +21,6 @@ import (
 	"os"
 
 	"github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/decision"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	cmap "github.com/orcaman/concurrent-map"
@@ -79,11 +78,8 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	optimizelyFactory := &client.OptimizelyFactory{}
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
 	forcedVariations := NewCMapExpOverridesStore()
-	compositeService := decision.NewCompositeServiceWithOverrides(sdkKey, forcedVariations)
-	optimizelyClient, err := optimizelyFactory.Client(
-		client.WithConfigManager(configManager),
-		client.WithDecisionService(compositeService),
-	)
-
+	// TODO: Provide forcedVariations to client via option function or factory argument
+	// For now, forced variations can be set, but will have no effect
+	optimizelyClient, err := optimizelyFactory.Client(client.WithConfigManager(configManager))
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
