@@ -16,7 +16,7 @@ jobs:
       dist: xenial
       env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
       script:
-        - make install lint
+        - make -e install lint
 
     - stage: test
       name: unit
@@ -24,7 +24,7 @@ jobs:
       dist: xenial
       env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
       script:
-        - make cover COVER_FILE=coverage.txt
+        - make -e cover COVER_FILE=coverage.txt
       after_success:
         # Replace with coveralls if/when the repo is made public
         - bash <(curl -s https://codecov.io/bash)
@@ -44,4 +44,4 @@ jobs:
 before_script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-  - make build
+  - make -e build

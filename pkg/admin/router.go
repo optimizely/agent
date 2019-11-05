@@ -19,6 +19,7 @@ package admin
 
 import (
 	"github.com/optimizely/sidedoor/pkg/admin/handlers"
+	"github.com/spf13/viper"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -31,7 +32,11 @@ var Version string // can be set at compile time
 func NewRouter(srvcs []handlers.HealthChecker) *chi.Mux {
 	r := chi.NewRouter()
 
-	optlyAdmin := handlers.NewAdmin(Version, "Optimizely", "Sidedoor", srvcs)
+	version := viper.GetString("app.version")
+	author := viper.GetString("app.author")
+	appName := viper.GetString("app.name")
+
+	optlyAdmin := handlers.NewAdmin(version, author, appName, srvcs)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))

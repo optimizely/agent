@@ -39,138 +39,113 @@ type MockInactiveService struct {
 func (s MockInactiveService) IsHealthy() (bool, string) {
 	return false, "not healthy"
 }
+
 func TestHealthHandlerNoServicesStarted(t *testing.T) {
-
-	req, _ := http.NewRequest("GET", "/health", nil)
-
-	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/health", nil)
+	rec := httptest.NewRecorder()
 
 	a := NewAdmin("1", "2", "3", []HealthChecker{})
-	http.HandlerFunc(a.Health).ServeHTTP(rr, req)
+	a.Health(rec, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+	assert.Equal(t, http.StatusServiceUnavailable, rec.Code, "Status code differs")
 
 	expected := string(`{"status":"error", "reasons": ["no services"]}`)
-
-	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 
 }
 
 func TestHealthHandlerBothServicesStarted(t *testing.T) {
 
-	req, _ := http.NewRequest("GET", "/health", nil)
-
-	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/health", nil)
+	rec := httptest.NewRecorder()
 
 	srvc1 := &MockActiveService{}
 	srvc2 := &MockActiveService{}
 
 	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2})
-	http.HandlerFunc(a.Health).ServeHTTP(rr, req)
+	a.Health(rec, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
 
 	expected := string(`{"status":"ok"}`)
-
-	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
-
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
 
 func TestHealthHandlerOneServiceNotStarted(t *testing.T) {
 
-	req, _ := http.NewRequest("GET", "/health", nil)
-
-	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/health", nil)
+	rec := httptest.NewRecorder()
 
 	srvc1 := &MockActiveService{}
 	srvc2 := &MockActiveService{}
 	srvc3 := &MockInactiveService{}
 
 	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2, srvc3})
-	http.HandlerFunc(a.Health).ServeHTTP(rr, req)
+	a.Health(rec, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+	assert.Equal(t, http.StatusServiceUnavailable, rec.Code, "Status code differs")
 
 	expected := string(`{"status":"error", "reasons": ["not healthy"]}`)
-
-	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
 
 func TestHealthHandlerTwoServiceNotStarted(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/health", nil)
-
-	rr := httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 
 	srvc1 := &MockActiveService{}
 	srvc2 := &MockInactiveService{}
 	srvc3 := &MockInactiveService{}
 
 	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2, srvc3})
-	http.HandlerFunc(a.Health).ServeHTTP(rr, req)
+	a.Health(rec, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+	assert.Equal(t, http.StatusServiceUnavailable, rec.Code, "Status code differs")
 
 	expected := string(`{"status":"error", "reasons": ["not healthy", "not healthy"]}`)
-
-	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
 
 func TestAppInfoHandler(t *testing.T) {
 
-	req, _ := http.NewRequest("GET", "/info", nil)
+	req := httptest.NewRequest("GET", "/info", nil)
+	rec := httptest.NewRecorder()
 
-	rr := httptest.NewRecorder()
 	a := NewAdmin("1", "2", "3", nil)
-	http.HandlerFunc(a.AppInfo).ServeHTTP(rr, req)
+	a.AppInfo(rec, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
 
 	expected := string(`{"app_name":"3", "version":"1", "author":"2"}`)
-
-	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
 
 func TestAppInfoHeaderHandler(t *testing.T) {
-
-	getTestHandler := func() http.HandlerFunc {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-	}
+	req := httptest.NewRequest("GET", "/info", nil)
+	rec := httptest.NewRecorder()
 
 	a := NewAdmin("1", "2", "3", []HealthChecker{})
-	ts := httptest.NewServer(a.AppInfoHeader(getTestHandler()))
-	defer ts.Close()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	a.AppInfoHeader(handler).ServeHTTP(rec, req)
 
-	res, err := http.Get(ts.URL + "/info")
-	assert.NoError(t, err)
-
-	assert.Equal(t, res.Header["App-Version"], []string{"1"})
-	assert.Equal(t, res.Header["Author"], []string{"2"})
-	assert.Equal(t, res.Header["App-Name"], []string{"3"})
+	assert.Equal(t, "1", rec.Header().Get("App-Version"))
+	assert.Equal(t, "2", rec.Header().Get("Author"))
+	assert.Equal(t, "3", rec.Header().Get("App-Name"))
 }
 
 func TestMetrics(t *testing.T) {
 
-	req, _ := http.NewRequest("GET", "/metrics", nil)
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	rec := httptest.NewRecorder()
 
-	rr := httptest.NewRecorder()
 	a := NewAdmin("1", "2", "3", nil)
-	http.HandlerFunc(a.Metrics).ServeHTTP(rr, req)
+	a.Metrics(rec, req)
 
-	assert.Equal(t, http.StatusOK, rr.Code, "Status code differs")
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
 
 	var expVarMap JSON
-	err := json.Unmarshal(rr.Body.Bytes(), &expVarMap)
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
 
 	memStatsMap, ok := expVarMap["memstats"]
