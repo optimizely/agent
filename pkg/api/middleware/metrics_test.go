@@ -26,7 +26,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -44,19 +43,13 @@ type RequestMetrics struct {
 	handler http.Handler
 }
 
-var metricsMap = NewMetricsCollection()
-
 func (rm *RequestMetrics) SetupTest() {
 
 	rm.rw = httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
-	rctx := chi.NewRouteContext()
-	rctx.RoutePatterns = []string{"/item/{set_item}"}
-
-	rm.req = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-	rm.req = r.WithContext(context.WithValue(rm.req.Context(), responseTime, time.Now()))
-	rm.handler = http.Handler(UpdateRouteMetrics(&metricsMap)(getTestMetrics()))
+	rm.req = r.WithContext(context.WithValue(r.Context(), responseTime, time.Now()))
+	rm.handler = http.Handler(UpdateRouteMetrics("some_key")(getTestMetrics()))
 
 }
 
@@ -95,7 +88,7 @@ func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 
 	expVarMap := suite.getMetricsMap()
 	for _, item := range sufixList {
-		expectedKey := metricPrefix + "GET__item_{set_item}" + item
+		expectedKey := metricPrefix + "some_key" + item
 		value, ok := expVarMap[expectedKey]
 		suite.True(ok)
 
@@ -117,26 +110,11 @@ func (suite *RequestMetrics) TestUpdateMetricsHitMultiple() {
 
 	expVarMap := suite.getMetricsMap()
 
-	expectedKey := metricPrefix + "GET__item_{set_item}.counts"
+	expectedKey := metricPrefix + "some_key.counts"
 	value, ok := expVarMap[expectedKey]
 	suite.True(ok)
 
 	suite.NotEqual(0.0, value)
-}
-
-func (suite *RequestMetrics) TestGetMetrics() {
-	metricsColl := NewMetricsCollection()
-	suite.NotNil(metricsColl.MetricMap)
-	suite.Empty(metricsColl.MetricMap)
-
-	metricsColl.getMetrics("some_key")
-	suite.NotNil(metricsColl.MetricMap)
-	suite.NotEmpty(metricsColl.MetricMap)
-
-	_, ok := metricsColl.MetricMap["some_key"]
-
-	suite.True(ok)
-
 }
 
 func TestRequestMetrics(t *testing.T) {

@@ -20,16 +20,13 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"strings"
-	"sync"
 	"time"
 
-	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/expvar"
 )
 
-const metricPrefix = "urlPath."
+const metricPrefix = "timers."
 
 type contextString string
 
@@ -54,38 +51,14 @@ func NewMetrics(key string) *Metrics {
 	}
 }
 
-// MetricsCollection holds the map of metrics by their keys
-type MetricsCollection struct {
-	MetricMap map[string]*Metrics
-
-	mlock sync.Mutex
-}
-
-// NewMetricsCollection initializes metric collection map
-func NewMetricsCollection() MetricsCollection {
-	return MetricsCollection{MetricMap: map[string]*Metrics{}}
-
-}
-func (mc *MetricsCollection) getMetrics(key string) *Metrics {
-	mc.mlock.Lock()
-	defer mc.mlock.Unlock()
-	if stats, ok := mc.MetricMap[key]; ok {
-		return stats
-	}
-	stats := NewMetrics(key)
-	mc.MetricMap[key] = stats
-	return stats
-}
-
 // UpdateRouteMetrics update counts, total response time, and response time histogram
 // for each URL hit, key being a combination of a method and route pattern
-func UpdateRouteMetrics(stats *MetricsCollection) func(http.Handler) http.Handler {
+func UpdateRouteMetrics(key string) func(http.Handler) http.Handler {
+	singleMetric := NewMetrics(key)
 
 	f := func(h http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
 
-			key := r.Method + "_" + strings.ReplaceAll(chi.RouteContext(r.Context()).RoutePattern(), "/", "_")
-			singleMetric := stats.getMetrics(key)
+		fn := func(w http.ResponseWriter, r *http.Request) {
 
 			singleMetric.HitCounts.Add(1)
 			ctx := r.Context()
