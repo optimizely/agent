@@ -43,13 +43,13 @@ type RequestMetrics struct {
 	handler http.Handler
 }
 
-func (rm *RequestMetrics) SetupTest() {
+func (rm *RequestMetrics) SetupRoute(key string) {
 
 	rm.rw = httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
 	rm.req = r.WithContext(context.WithValue(r.Context(), responseTime, time.Now()))
-	rm.handler = http.Handler(UpdateRouteMetrics("some_key")(getTestMetrics()))
+	rm.handler = http.Handler(UpdateRouteMetrics(key)(getTestMetrics()))
 
 }
 
@@ -81,6 +81,8 @@ var sufixList = []string{".counts", ".responseTime", ".responseTimeHist.p50", ".
 
 func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 
+	suite.SetupRoute("some_key")
+
 	suite.serveRoute()
 
 	suite.Equal(http.StatusOK, suite.getCode(), "Status code differs")
@@ -100,6 +102,8 @@ func (suite *RequestMetrics) TestUpdateMetricsHitMultiple() {
 
 	const hitNumber = 10.0
 
+	suite.SetupRoute("different_key")
+
 	for i := 0; i < hitNumber; i++ {
 		suite.serveRoute()
 	}
@@ -110,7 +114,7 @@ func (suite *RequestMetrics) TestUpdateMetricsHitMultiple() {
 
 	expVarMap := suite.getMetricsMap()
 
-	expectedKey := metricPrefix + "some_key.counts"
+	expectedKey := metricPrefix + "different_key.counts"
 	value, ok := expVarMap[expectedKey]
 	suite.True(ok)
 
