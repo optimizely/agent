@@ -132,7 +132,7 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 	if optlyClient.ForcedVariations == nil {
 		// ForcedVariations must be initialized when the client is created. We can't do anything at this point, so have to return 500
 		// TODO: Should return "please report this issue" link in response body?
-		RenderError(errors.New("internal server error"), http.StatusBadRequest, w, r)
+		RenderError(errors.New("internal server error"), http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -175,7 +175,7 @@ func (h *UserHandler) DeleteForcedVariation(w http.ResponseWriter, r *http.Reque
 	if optlyClient.ForcedVariations == nil {
 		// ForcedVariations must be initialized when the client is created. We can't do anything at this point, so have to return 500
 		// TODO: Should return "please report this issue" link in response body?
-		RenderError(errors.New("internal server error"), http.StatusBadRequest, w, r)
+		RenderError(errors.New("internal server error"), http.StatusInternalServerError, w, r)
 		return
 	}
 
