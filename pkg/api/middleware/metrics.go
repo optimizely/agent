@@ -35,7 +35,7 @@ const responseTime = contextString("responseTime")
 // Metrics struct contains url hit counts, response time and its histogram
 type Metrics struct {
 	HitCounts             metrics.Counter
-	ResponseTime          metrics.Gauge
+	ResponseTime          metrics.Counter
 	ResponseTimeHistogram metrics.Histogram
 }
 
@@ -46,7 +46,7 @@ func NewMetrics(key string) *Metrics {
 
 	return &Metrics{
 		HitCounts:             expvar.NewCounter(uniqueName + ".counts"),
-		ResponseTime:          expvar.NewGauge(uniqueName + ".responseTime"),
+		ResponseTime:          expvar.NewCounter(uniqueName + ".responseTime"),
 		ResponseTimeHistogram: expvar.NewHistogram(uniqueName+".responseTimeHist", 50),
 	}
 }
