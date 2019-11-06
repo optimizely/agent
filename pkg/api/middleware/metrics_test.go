@@ -43,9 +43,9 @@ type RequestMetrics struct {
 	handler http.Handler
 }
 
-func (rm *RequestMetrics) setRoute(metricsKey string) {
+func (rm *RequestMetrics) SetupTest() {
 
-	metricsMap := expvar.NewMap(metricsKey)
+	metricsMap := NewMetricsCollection()
 	rm.rw = httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
@@ -53,7 +53,7 @@ func (rm *RequestMetrics) setRoute(metricsKey string) {
 	rctx.RoutePatterns = []string{"/item/{set_item}"}
 
 	rm.req = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-	rm.handler = http.Handler(HitCount(metricsMap)(getTestMetrics()))
+	rm.handler = http.Handler(UpdateRouteMetrics(metricsMap)(getTestMetrics()))
 
 }
 
@@ -63,6 +63,10 @@ func (rm RequestMetrics) serveRoute() {
 
 func (rm RequestMetrics) serveExpvarRoute() {
 	expvar.Handler().ServeHTTP(rm.rw, rm.req)
+}
+
+func (rm RequestMetrics) serveSetTimehHandler() {
+	http.Handler(SetTime(getTestMetrics())).ServeHTTP(rm.rw, rm.req)
 }
 
 func (rm RequestMetrics) getMetricsMap() JSON {
@@ -77,11 +81,11 @@ func (rm RequestMetrics) getCode() int {
 	return rm.rw.(*httptest.ResponseRecorder).Code
 }
 
+var sufixList = []string{".counts", ".responseTime", ".responseTimeHist.p50", ".responseTimeHist.p90", ".responseTimeHist.p95", ".responseTimeHist.p99"}
+
 func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 
-	var metricsKey = "counter"
-
-	suite.setRoute(metricsKey)
+	suite.serveSetTimehHandler()
 	suite.serveRoute()
 
 	suite.Equal(http.StatusOK, suite.getCode(), "Status code differs")
@@ -89,24 +93,18 @@ func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 	suite.serveExpvarRoute()
 
 	expVarMap := suite.getMetricsMap()
+	for _, item := range sufixList {
+		expectedKey := metricPrefix + "GET__item_{set_item}" + item
+		value, ok := expVarMap[expectedKey]
+		suite.True(ok)
 
-	counterMap, ok := expVarMap[metricsKey]
-	suite.True(ok)
-
-	suite.Contains(counterMap, "GET__item_{set_item}")
-
-	m := counterMap.(map[string]interface{})
-
-	suite.Equal(1.0, m["GET__item_{set_item}"])
-
+		suite.NotEqual(0.0, value)
+	}
 }
 
 func (suite *RequestMetrics) TestUpdateMetricsHitMultiple() {
 
-	var metricsKey = "counter1"
 	const hitNumber = 10.0
-
-	suite.setRoute(metricsKey)
 
 	for i := 0; i < hitNumber; i++ {
 		suite.serveRoute()
@@ -118,14 +116,25 @@ func (suite *RequestMetrics) TestUpdateMetricsHitMultiple() {
 
 	expVarMap := suite.getMetricsMap()
 
-	counterMap, ok := expVarMap[metricsKey]
+	expectedKey := metricPrefix + "GET__item_{set_item}.counts"
+	value, ok := expVarMap[expectedKey]
 	suite.True(ok)
 
-	suite.Contains(counterMap, "GET__item_{set_item}")
+	suite.NotEqual(0.0, value)
+}
 
-	m := counterMap.(map[string]interface{})
+func (suite *RequestMetrics) TestGetMetrics() {
+	metricsColl := NewMetricsCollection()
+	suite.NotNil(metricsColl.MetricMap)
+	suite.Empty(metricsColl.MetricMap)
 
-	suite.Equal(hitNumber, m["GET__item_{set_item}"])
+	metricsColl.GetMetrics("some_key")
+	suite.NotNil(metricsColl.MetricMap)
+	suite.NotEmpty(metricsColl.MetricMap)
+
+	_, ok := metricsColl.MetricMap["some_key"]
+
+	suite.True(ok)
 
 }
 

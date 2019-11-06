@@ -18,22 +18,96 @@
 package middleware
 
 import (
-	"expvar"
+	"context"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/expvar"
 )
 
-// HitCount update counts for each URL hit, key being a combination of a method and route pattern
-func HitCount(counts *expvar.Map) func(http.Handler) http.Handler {
+const metricPrefix = "urlPath."
+
+// Metrics struct contains url hit counts, response time and its histogram
+type Metrics struct {
+	HitCounts             metrics.Counter
+	ResponseTime          metrics.Gauge
+	ResponseTimeHistogram metrics.Histogram
+}
+
+// NewMetrics initialized metrics
+func NewMetrics(key string) *Metrics {
+
+	uniqueName := metricPrefix + key
+
+	return &Metrics{
+		HitCounts:             expvar.NewCounter(uniqueName + ".counts"),
+		ResponseTime:          expvar.NewGauge(uniqueName + ".responseTime"),
+		ResponseTimeHistogram: expvar.NewHistogram(uniqueName+".responseTimeHist", 50),
+	}
+}
+
+// MetricsCollection holds the map of metrics by their keys
+type MetricsCollection struct {
+	MetricMap map[string]*Metrics
+
+	mlock sync.Mutex
+}
+
+func NewMetricsCollection() MetricsCollection {
+	return MetricsCollection{MetricMap: map[string]*Metrics{}}
+
+}
+func (mc MetricsCollection) getMetrics(key string) *Metrics {
+	mc.mlock.Lock()
+	defer mc.mlock.Unlock()
+	if metrics, ok := mc.MetricMap[key]; ok {
+		return metrics
+	}
+	metrics := NewMetrics(key)
+	mc.MetricMap[key] = metrics
+	return metrics
+}
+
+// UpdateRouteMetrics update counts, total response time, and response time histogram
+// for each URL hit, key being a combination of a method and route pattern
+func UpdateRouteMetrics(metrics MetricsCollection) func(http.Handler) http.Handler {
+
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+
 			key := r.Method + "_" + strings.ReplaceAll(chi.RouteContext(r.Context()).RoutePattern(), "/", "_")
-			counts.Add(key, 1)
+			singleMetric := metrics.getMetrics(key)
+
+			singleMetric.HitCounts.Add(1)
+			ctx := r.Context()
+			startTime, ok := ctx.Value("responseTime").(time.Time)
+			if ok {
+				defer func() {
+					endTime := time.Now()
+					timeDiff := endTime.Sub(startTime).Seconds()
+					singleMetric.ResponseTime.Add(timeDiff)
+					singleMetric.ResponseTimeHistogram.Observe(timeDiff)
+				}()
+			}
+
 			h.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)
 	}
 	return f
+}
+
+// SetTime middleware sets the start time in request context
+func SetTime(next http.Handler) http.Handler {
+
+	fn := func(w http.ResponseWriter, r *http.Request) {
+
+		ctx := context.WithValue(r.Context(), "responseTime", time.Now())
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+	return http.HandlerFunc(fn)
 }
