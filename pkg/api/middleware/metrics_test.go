@@ -128,7 +128,7 @@ func (suite *RequestMetrics) TestGetMetrics() {
 	suite.NotNil(metricsColl.MetricMap)
 	suite.Empty(metricsColl.MetricMap)
 
-	metricsColl.GetMetrics("some_key")
+	metricsColl.getMetrics("some_key")
 	suite.NotNil(metricsColl.MetricMap)
 	suite.NotEmpty(metricsColl.MetricMap)
 
