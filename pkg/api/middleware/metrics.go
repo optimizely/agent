@@ -54,9 +54,10 @@ func NewMetrics(key string) *Metrics {
 type MetricsCollection struct {
 	MetricMap map[string]*Metrics
 
-	mlock sync.Mutex
+	mlock *sync.Mutex
 }
 
+// NewMetricsCollection initializes metric collection map
 func NewMetricsCollection() MetricsCollection {
 	return MetricsCollection{MetricMap: map[string]*Metrics{}}
 
@@ -64,23 +65,23 @@ func NewMetricsCollection() MetricsCollection {
 func (mc MetricsCollection) getMetrics(key string) *Metrics {
 	mc.mlock.Lock()
 	defer mc.mlock.Unlock()
-	if metrics, ok := mc.MetricMap[key]; ok {
-		return metrics
+	if stats, ok := mc.MetricMap[key]; ok {
+		return stats
 	}
-	metrics := NewMetrics(key)
-	mc.MetricMap[key] = metrics
-	return metrics
+	stats := NewMetrics(key)
+	mc.MetricMap[key] = stats
+	return stats
 }
 
 // UpdateRouteMetrics update counts, total response time, and response time histogram
 // for each URL hit, key being a combination of a method and route pattern
-func UpdateRouteMetrics(metrics MetricsCollection) func(http.Handler) http.Handler {
+func UpdateRouteMetrics(stats MetricsCollection) func(http.Handler) http.Handler {
 
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 
 			key := r.Method + "_" + strings.ReplaceAll(chi.RouteContext(r.Context()).RoutePattern(), "/", "_")
-			singleMetric := metrics.getMetrics(key)
+			singleMetric := stats.getMetrics(key)
 
 			singleMetric.HitCounts.Add(1)
 			ctx := r.Context()
