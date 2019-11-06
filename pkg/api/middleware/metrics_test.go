@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/suite"
@@ -43,9 +44,10 @@ type RequestMetrics struct {
 	handler http.Handler
 }
 
+var metricsMap = NewMetricsCollection()
+
 func (rm *RequestMetrics) SetupTest() {
 
-	metricsMap := NewMetricsCollection()
 	rm.rw = httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
@@ -53,7 +55,8 @@ func (rm *RequestMetrics) SetupTest() {
 	rctx.RoutePatterns = []string{"/item/{set_item}"}
 
 	rm.req = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-	rm.handler = http.Handler(UpdateRouteMetrics(metricsMap)(getTestMetrics()))
+	rm.req = r.WithContext(context.WithValue(rm.req.Context(), responseTime, time.Now()))
+	rm.handler = http.Handler(UpdateRouteMetrics(&metricsMap)(getTestMetrics()))
 
 }
 
@@ -61,12 +64,12 @@ func (rm RequestMetrics) serveRoute() {
 	rm.handler.ServeHTTP(rm.rw, rm.req)
 }
 
-func (rm RequestMetrics) serveExpvarRoute() {
-	expvar.Handler().ServeHTTP(rm.rw, rm.req)
-}
-
 func (rm RequestMetrics) serveSetTimehHandler() {
 	http.Handler(SetTime(getTestMetrics())).ServeHTTP(rm.rw, rm.req)
+}
+
+func (rm RequestMetrics) serveExpvarRoute() {
+	expvar.Handler().ServeHTTP(rm.rw, rm.req)
 }
 
 func (rm RequestMetrics) getMetricsMap() JSON {
@@ -85,11 +88,9 @@ var sufixList = []string{".counts", ".responseTime", ".responseTimeHist.p50", ".
 
 func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 
-	suite.serveSetTimehHandler()
 	suite.serveRoute()
 
 	suite.Equal(http.StatusOK, suite.getCode(), "Status code differs")
-
 	suite.serveExpvarRoute()
 
 	expVarMap := suite.getMetricsMap()

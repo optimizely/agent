@@ -31,6 +31,10 @@ import (
 
 const metricPrefix = "urlPath."
 
+type contextString string
+
+const responseTime = contextString("responseTime")
+
 // Metrics struct contains url hit counts, response time and its histogram
 type Metrics struct {
 	HitCounts             metrics.Counter
@@ -54,7 +58,7 @@ func NewMetrics(key string) *Metrics {
 type MetricsCollection struct {
 	MetricMap map[string]*Metrics
 
-	mlock *sync.Mutex
+	mlock sync.Mutex
 }
 
 // NewMetricsCollection initializes metric collection map
@@ -62,7 +66,7 @@ func NewMetricsCollection() MetricsCollection {
 	return MetricsCollection{MetricMap: map[string]*Metrics{}}
 
 }
-func (mc MetricsCollection) getMetrics(key string) *Metrics {
+func (mc *MetricsCollection) getMetrics(key string) *Metrics {
 	mc.mlock.Lock()
 	defer mc.mlock.Unlock()
 	if stats, ok := mc.MetricMap[key]; ok {
@@ -75,7 +79,7 @@ func (mc MetricsCollection) getMetrics(key string) *Metrics {
 
 // UpdateRouteMetrics update counts, total response time, and response time histogram
 // for each URL hit, key being a combination of a method and route pattern
-func UpdateRouteMetrics(stats MetricsCollection) func(http.Handler) http.Handler {
+func UpdateRouteMetrics(stats *MetricsCollection) func(http.Handler) http.Handler {
 
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +89,7 @@ func UpdateRouteMetrics(stats MetricsCollection) func(http.Handler) http.Handler
 
 			singleMetric.HitCounts.Add(1)
 			ctx := r.Context()
-			startTime, ok := ctx.Value("responseTime").(time.Time)
+			startTime, ok := ctx.Value(responseTime).(time.Time)
 			if ok {
 				defer func() {
 					endTime := time.Now()
@@ -107,7 +111,7 @@ func SetTime(next http.Handler) http.Handler {
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
 
-		ctx := context.WithValue(r.Context(), "responseTime", time.Now())
+		ctx := context.WithValue(r.Context(), responseTime, time.Now())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
