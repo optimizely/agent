@@ -79,6 +79,10 @@ func (m *MockUserAPI) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
+func (m *MockUserAPI) GetVariation(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
 func renderPathParams(w http.ResponseWriter, r *http.Request) {
 	pathParams := make(map[string]string)
 	rctx := chi.RouteContext(r.Context())
@@ -164,6 +168,22 @@ func (suite *RouterTestSuite) TestTrackEvent() {
 	expected := map[string]string{
 		"userID":   "me",
 		"eventKey": "key",
+	}
+	suite.assertValid(rec, expected)
+}
+
+func (suite *RouterTestSuite) TestGetVariation() {
+	req := httptest.NewRequest("GET", "/users/me/experiments/key", nil)
+	rec := httptest.NewRecorder()
+
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+
+	expected := map[string]string{
+		"userID":        "me",
+		"experimentKey": "key",
 	}
 	suite.assertValid(rec, expected)
 }

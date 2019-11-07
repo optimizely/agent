@@ -40,6 +40,8 @@ type UserAPI interface {
 	TrackFeature(w http.ResponseWriter, r *http.Request)
 
 	TrackEvent(w http.ResponseWriter, r *http.Request)
+
+	GetVariation(w http.ResponseWriter, er *http.Request)
 }
 
 // TODO ExperimentApi

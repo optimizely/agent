@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
@@ -77,6 +78,8 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
+
+	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -241,6 +244,49 @@ func (suite *UserTestSuite) TestTrackEventEmptyKey() {
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
+}
+
+func (suite *UserTestSuite) TestGetVariation() {
+	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
+	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
+
+	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Variation
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expectedVariationID, _ := strconv.Atoi(testVariation.ID)
+	expected := models.Variation{
+		Key: testVariation.Key,
+		ID:  expectedVariationID,
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
+	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Variation
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Variation{}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
 }
 
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {

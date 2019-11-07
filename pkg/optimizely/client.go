@@ -50,6 +50,16 @@ func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, e
 	return projectConfig.GetFeatureByKey(featureKey)
 }
 
+// GetExperiment returns the experiment definition
+func (c *OptlyClient) GetExperiment(experimentKey string) (experiment entities.Experiment, err error) {
+	projectConfig, err := c.GetProjectConfig()
+	if err != nil {
+		return experiment, err
+	}
+
+	return projectConfig.GetExperimentByKey(experimentKey)
+}
+
 // UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {
@@ -65,4 +75,26 @@ func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, 
 // GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext
 func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
 	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
+}
+
+// GetExperimentVariation calls the OptimizelyClient with the current OptlyContext
+func (c *OptlyClient) GetExperimentVariation(experimentKey string, ctx *OptlyContext) (variation entities.Variation, err error) {
+	experiment, err := c.GetExperiment(experimentKey)
+	if err != nil {
+		return variation, nil
+	}
+
+	variationKey, err := c.GetVariation(experimentKey, *ctx.UserContext)
+	if err != nil {
+		return variation, err
+	}
+
+	// @TODO: can expose a way to look up variation by key in the SDK
+	for _, experimentVariation := range experiment.Variations {
+		if experimentVariation.Key == variationKey {
+			variation = experimentVariation
+		}
+	}
+
+	return variation, nil
 }

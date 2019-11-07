@@ -113,6 +113,15 @@ func (suite *ClientTestSuite) TestTrackEventWithContextError() {
 	suite.NoError(err) // TODO Should this error?
 }
 
+func (suite *ClientTestSuite) GetExperimentVariation() {
+	testExperimentKey := "testExperiment1"
+	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
+	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
+	variationKey, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, suite.optlyContext)
+	suite.Equal(testVariation.Key, variationKey)
+	suite.NoError(err)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestClientTestSuite(t *testing.T) {
