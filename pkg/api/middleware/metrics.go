@@ -51,9 +51,9 @@ func NewMetrics(key string) *Metrics {
 	}
 }
 
-// UpdateRouteMetrics update counts, total response time, and response time histogram
+// Metricize updates counts, total response time, and response time histogram
 // for each URL hit, key being a combination of a method and route pattern
-func UpdateRouteMetrics(key string) func(http.Handler) http.Handler {
+func Metricize(key string) func(http.Handler) http.Handler {
 	singleMetric := NewMetrics(key)
 
 	f := func(h http.Handler) http.Handler {

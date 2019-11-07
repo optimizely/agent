@@ -54,21 +54,21 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.With(chimw.AllowContentType("application/json"), middleware.UpdateRouteMetrics("user-event")).Post("/user-event", opt.userEventAPI.AddUserEvent)
+	r.With(chimw.AllowContentType("application/json"), middleware.Metricize("user-event")).Post("/user-event", opt.userEventAPI.AddUserEvent)
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(middleware.UpdateRouteMetrics("list-features")).Get("/", opt.featureAPI.ListFeatures)
-		r.With(middleware.UpdateRouteMetrics("get-feature")).Get("/{featureKey}", opt.featureAPI.GetFeature)
+		r.With(middleware.Metricize("list-features")).Get("/", opt.featureAPI.ListFeatures)
+		r.With(middleware.Metricize("get-feature")).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
-		r.With(middleware.UpdateRouteMetrics("track-event")).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
+		r.With(middleware.Metricize("track-event")).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 
-		r.With(middleware.UpdateRouteMetrics("get-user-feature")).Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.With(middleware.UpdateRouteMetrics("track-user-feature")).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(middleware.Metricize("get-user-feature")).Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.With(middleware.Metricize("track-user-feature")).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 	})
 
 	return r
