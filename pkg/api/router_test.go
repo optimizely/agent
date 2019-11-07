@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/go-chi/chi"
@@ -102,18 +103,23 @@ type RouterTestSuite struct {
 	mux *chi.Mux
 }
 
+var once sync.Once
+
 func (suite *RouterTestSuite) SetupTest() {
-	testClient := optimizelytest.NewClient()
-	suite.tc = testClient
 
-	opts := &RouterOptions{
-		featureAPI:   new(MockFeatureAPI),
-		userEventAPI: new(MockUserEventAPI),
-		userAPI:      new(MockUserAPI),
-		middleware:   new(MockOptlyMiddleware),
-	}
+	once.Do(func() {
+		testClient := optimizelytest.NewClient()
+		suite.tc = testClient
 
-	suite.mux = NewRouter(opts)
+		opts := &RouterOptions{
+			featureAPI:   new(MockFeatureAPI),
+			userEventAPI: new(MockUserEventAPI),
+			userAPI:      new(MockUserAPI),
+			middleware:   new(MockOptlyMiddleware),
+		}
+
+		suite.mux = NewRouter(opts)
+	})
 }
 
 func (suite *RouterTestSuite) TestListFeatures() {
