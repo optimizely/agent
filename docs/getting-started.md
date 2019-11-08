@@ -66,7 +66,7 @@ From an API standpoint the presence of a Feature Test or Rollout is abstrated aw
 
 ```python
 user_id = 'test-user'
-resp = s.post('http://localhost:8080/users/{}features/{}'.format(user_id, feature_key))
+resp = s.post('http://localhost:8080/users/{}/features/{}'.format(user_id, feature_key))
 
 print(resp.json())
 ```

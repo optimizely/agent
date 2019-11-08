@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - November 7th, 2019
+- Adds request timing metrics
+- Allows config file location to be set
+- Bumps go-sdk version to latest master
+
 ## [0.6.0] - October 31st, 2019
 * Adds a few more debug logs
 - Updates to latest master to resolve some targeting issues
