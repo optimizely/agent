@@ -16,7 +16,7 @@ jobs:
       dist: xenial
       env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
       addons:
-        srcclr: true
+        srcclr:
           debug: true
       script:
         - make -e install lint
