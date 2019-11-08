@@ -19,6 +19,7 @@ jobs:
         srcclr: true
       script:
         - make -e install lint
+        - go get -v -d ./...
 
     - stage: test
       name: unit
