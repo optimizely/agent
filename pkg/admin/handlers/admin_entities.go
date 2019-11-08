@@ -84,8 +84,10 @@ func (a Admin) Health(w http.ResponseWriter, r *http.Request) {
 	if len(msgList) == 0 {
 		status = "ok"
 	} else {
+		w.WriteHeader(http.StatusServiceUnavailable)
 		status = "error"
 	}
+
 	render.JSON(w, r, Health{status, msgList})
 }
 
