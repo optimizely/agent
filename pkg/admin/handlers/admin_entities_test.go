@@ -26,43 +26,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockActiveService struct {
-}
-
-func (s MockActiveService) IsHealthy() (bool, string) {
-	return true, ""
-}
-
-type MockInactiveService struct {
-}
-
-func (s MockInactiveService) IsHealthy() (bool, string) {
-	return false, "not healthy"
-}
-
-func TestHealthHandlerNoServicesStarted(t *testing.T) {
-	req := httptest.NewRequest("GET", "/health", nil)
-	rec := httptest.NewRecorder()
-
-	a := NewAdmin("1", "2", "3", []HealthChecker{})
-	a.Health(rec, req)
-
-	assert.Equal(t, http.StatusServiceUnavailable, rec.Code, "Status code differs")
-
-	expected := string(`{"status":"error", "reasons": ["no services"]}`)
-	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
-
-}
-
 func TestHealthHandlerBothServicesStarted(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	rec := httptest.NewRecorder()
 
-	srvc1 := &MockActiveService{}
-	srvc2 := &MockActiveService{}
-
-	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2})
+	a := NewAdmin("1", "2", "3")
 	a.Health(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
@@ -71,48 +40,12 @@ func TestHealthHandlerBothServicesStarted(t *testing.T) {
 	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
 
-func TestHealthHandlerOneServiceNotStarted(t *testing.T) {
-
-	req := httptest.NewRequest("GET", "/health", nil)
-	rec := httptest.NewRecorder()
-
-	srvc1 := &MockActiveService{}
-	srvc2 := &MockActiveService{}
-	srvc3 := &MockInactiveService{}
-
-	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2, srvc3})
-	a.Health(rec, req)
-
-	assert.Equal(t, http.StatusServiceUnavailable, rec.Code, "Status code differs")
-
-	expected := string(`{"status":"error", "reasons": ["not healthy"]}`)
-	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
-}
-
-func TestHealthHandlerTwoServiceNotStarted(t *testing.T) {
-
-	req, _ := http.NewRequest("GET", "/health", nil)
-	rec := httptest.NewRecorder()
-
-	srvc1 := &MockActiveService{}
-	srvc2 := &MockInactiveService{}
-	srvc3 := &MockInactiveService{}
-
-	a := NewAdmin("1", "2", "3", []HealthChecker{srvc1, srvc2, srvc3})
-	a.Health(rec, req)
-
-	assert.Equal(t, http.StatusServiceUnavailable, rec.Code, "Status code differs")
-
-	expected := string(`{"status":"error", "reasons": ["not healthy", "not healthy"]}`)
-	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
-}
-
 func TestAppInfoHandler(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/info", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3", nil)
+	a := NewAdmin("1", "2", "3")
 	a.AppInfo(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
@@ -125,7 +58,7 @@ func TestAppInfoHeaderHandler(t *testing.T) {
 	req := httptest.NewRequest("GET", "/info", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3", []HealthChecker{})
+	a := NewAdmin("1", "2", "3")
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	a.AppInfoHeader(handler).ServeHTTP(rec, req)
 
@@ -139,7 +72,7 @@ func TestMetrics(t *testing.T) {
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3", nil)
+	a := NewAdmin("1", "2", "3")
 	a.Metrics(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")

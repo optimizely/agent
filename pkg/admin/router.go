@@ -18,6 +18,8 @@
 package admin
 
 import (
+	"net/http"
+
 	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 	"github.com/spf13/viper"
 
@@ -29,14 +31,14 @@ import (
 var Version string // can be set at compile time
 
 // NewRouter returns HTTP admin router
-func NewRouter(srvcs []handlers.HealthChecker) *chi.Mux {
+func NewRouter() http.Handler {
 	r := chi.NewRouter()
 
 	version := viper.GetString("app.version")
 	author := viper.GetString("app.author")
 	appName := viper.GetString("app.name")
 
-	optlyAdmin := handlers.NewAdmin(version, author, appName, srvcs)
+	optlyAdmin := handlers.NewAdmin(version, author, appName)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))

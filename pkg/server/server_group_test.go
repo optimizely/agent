@@ -14,48 +14,33 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package service
+package server
 
 import (
-	"sync"
+	"context"
 	"testing"
 
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
+	"github.com/spf13/viper"
 )
 
-func TestNewService(t *testing.T) {
-	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
-	assert.NotNil(t, ns)
+func TestServeAndShutdown(t *testing.T) {
+	viper.SetDefault("valid1.enabled", true)
+	viper.SetDefault("valid1.port", "1000")
 
-	assert.Equal(t, ns.port, "1")
-	assert.Equal(t, ns.enabled, true)
-	assert.Equal(t, ns.name, "name")
+	viper.SetDefault("valid2.enabled", true)
+	viper.SetDefault("valid2.port", "1001")
+
+	sg := NewGroup(context.Background())
+
+	sg.GoListenAndServe("valid1", handler)
+	sg.GoListenAndServe("valid2", handler)
+
+	go sg.Shutdown()
+	sg.Wait()
 }
 
-func TestUpdateState(t *testing.T) {
-	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
-
-	ns.updateState(false)
-	state, reason := ns.IsHealthy()
-	assert.False(t, state)
-	assert.Equal(t, reason, "name service down")
-
-	ns.updateState(true)
-	state, reason = ns.IsHealthy()
-	assert.True(t, state)
-	assert.Equal(t, reason, "")
-}
-
-func TestFailedStartService(t *testing.T) {
-
-	var wg sync.WaitGroup
-	ns := NewService(true, "-9", "api", &chi.Mux{}, &wg)
-
-	ns.StartService()
-	wg.Wait()
-
-	state, reason := ns.IsHealthy()
-	assert.False(t, state)
-	assert.Equal(t, reason, "api service down")
+func TestInvalidServer(t *testing.T) {
+	sg := NewGroup(context.Background())
+	sg.GoListenAndServe("invalid", handler)
+	sg.Wait()  // Don't need to shutdown since server never started
 }

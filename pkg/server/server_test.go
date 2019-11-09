@@ -14,51 +14,51 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package webhook //
-package webhook
+package server
 
 import (
 	"net/http"
+	"sync"
+	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
+	"github.com/stretchr/testify/assert"
 )
 
-// RouterOptions defines the configuration parameters for Router
-type RouterOptions struct {
-	cache          optimizely.Cache
-	webhookConfigs []models.OptlyWebhookConfig
-}
+var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+})
 
-// NewDefaultRouter creates a new router
-func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
-	// Parse webhook configurations
-	var config []models.OptlyWebhookConfig
-	if err := viper.UnmarshalKey("webhook.configs", &config); err != nil {
-		log.Info().Msg("Unable to parse webhooks.")
+func TestStartAndShutdown(t *testing.T) {
+	viper.SetDefault("valid.enabled", true)
+	viper.SetDefault("valid.port", "1000")
+	srv, err := NewServer("valid", handler)
+	if !assert.NoError(t, err) {
+		return
 	}
 
-	spec := &RouterOptions{
-		cache:          optlyCache,
-		webhookConfigs: config,
-	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		wg.Done()
+		srv.ListenAndServe()
+	}()
 
-	return NewRouter(spec)
+	wg.Wait()
+	srv.Shutdown()
 }
 
-// NewRouter returns HTTP API router
-func NewRouter(opt *RouterOptions) *chi.Mux {
-	r := chi.NewRouter()
+func TestNotEnabled(t *testing.T) {
+	_, err := NewServer("not-enabled", handler)
+	if assert.Error(t, err) {
+		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
+	}
+}
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-	webhookAPI := handlers.NewWebhookHandler(opt.cache, opt.webhookConfigs)
-
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return r
+func TestFailedStartService(t *testing.T) {
+	viper.SetDefault("test.enabled", true)
+	viper.SetDefault("test.port", "-9")
+	ns, err := NewServer("test", handler)
+	assert.NoError(t, err)
+	ns.ListenAndServe()
 }

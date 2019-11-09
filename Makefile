@@ -56,7 +56,7 @@ run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
 
 test: ## recursively tests all .go files
-	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./...
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -v ./... | sed ''/PASS/s//$$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$$(printf "\033[31mFAIL\033[0m")/''
 
 include scripts/Makefile.ci
 
