@@ -20,6 +20,7 @@ package optimizely
 import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
@@ -27,7 +28,7 @@ import (
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
-	ForcedVariations *CMapExpOverridesStore
+	ForcedVariations *decision.MapExperimentOverridesStore
 }
 
 // ListFeatures returns all available features

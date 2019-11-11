@@ -24,6 +24,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/optimizely/go-sdk/pkg/decision"
+
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
 
@@ -60,7 +62,7 @@ func (suite *FeatureTestSuite) SetupTest() {
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
 		ConfigManager:    nil,
-		ForcedVariations: optimizely.NewCMapExpOverridesStore(),
+		ForcedVariations: decision.NewMapExperimentOverridesStore(),
 	}
 
 	mux := chi.NewMux()
