@@ -79,8 +79,9 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	optimizelyFactory := &client.OptimizelyFactory{}
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
 	forcedVariations := decision.NewMapExperimentOverridesStore()
-	// TODO: Provide forcedVariations to client via option function or factory argument
-	// For now, forced variations can be set, but will have no effect
-	optimizelyClient, err := optimizelyFactory.Client(client.WithConfigManager(configManager))
+	optimizelyClient, err := optimizelyFactory.Client(
+		client.WithConfigManager(configManager),
+		client.WithExperimentOverrides(forcedVariations),
+	)
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
