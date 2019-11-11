@@ -14,8 +14,6 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// TODO: Update openapi.yaml with new routes
-
 // Package handlers //
 package handlers
 
@@ -129,13 +127,6 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if optlyClient.ForcedVariations == nil {
-		// ForcedVariations must be initialized when the client is created. We can't do anything at this point, so have to return 500
-		// TODO: Should return "please report this issue" link in response body?
-		RenderError(errors.New("internal server error"), http.StatusInternalServerError, w, r)
-		return
-	}
-
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        userID,
 		ExperimentKey: experimentKey,
@@ -166,30 +157,13 @@ func (h *UserHandler) DeleteForcedVariation(w http.ResponseWriter, r *http.Reque
 		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
 		return
 	}
-	variationKey := chi.URLParam(r, "variationKey")
-	if variationKey == "" {
-		RenderError(errors.New("empty variationKey"), http.StatusBadRequest, w, r)
-		return
-	}
-
-	if optlyClient.ForcedVariations == nil {
-		// ForcedVariations must be initialized when the client is created. We can't do anything at this point, so have to return 500
-		// TODO: Should return "please report this issue" link in response body?
-		RenderError(errors.New("internal server error"), http.StatusInternalServerError, w, r)
-		return
-	}
 
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        userID,
 		ExperimentKey: experimentKey,
 	}
-	previousVariationKey, ok := optlyClient.ForcedVariations.GetVariation(forcedVariationKey)
-	if ok && previousVariationKey == variationKey {
-		optlyClient.ForcedVariations.RemoveVariation(forcedVariationKey)
-		w.WriteHeader(http.StatusNoContent)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-	}
+	optlyClient.ForcedVariations.RemoveVariation(forcedVariationKey)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // parseContext extract the common references from the request context

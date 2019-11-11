@@ -240,6 +240,35 @@ paths:
           description: No content, user not included in the experiment
         '404':
           description: Experiment does not exist
+  /users/{userId}/experiments/{experimentKey}/variations/{variationKey}:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
+    - $ref: '#/components/parameters/variationKeyParam'
+    put:
+      summary: Set a forced variation for a user in an experiment
+      operationId: setForcedVariation
+      responses:
+        '201':
+          description: Forced variation set
+        '204':
+          description: Forced variation was already set
+        '400':
+          description: Invalid user id, experiment key, or variation key
+  /users/{userId}/experiments/{experimentKey}/variations:
+    parameters:
+    - $ref: '#/components/parameters/sdkKeyParam'
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/experimentKeyParam'
+    delete:
+      summary: Remove any forced variation for a user in an experiment
+      operationId: deleteForcedVariation
+      responses:
+        '204':
+          description: Any forced variation was deleted
+        '400':
+          description: Invalid user id or experiment key
   /users/{userId}/features/{featureKey}:
     parameters:
     - $ref: '#/components/parameters/sdkKeyParam'
