@@ -270,6 +270,13 @@ func (suite *UserTestSuite) TestSetForcedVariation() {
 	suite.True(actual.Enabled)
 }
 
+func (suite *UserTestSuite) TestSetForcedVariationEmptyExperimentKey() {
+	req := httptest.NewRequest("PUT", "/experiments//variations/variation_enabled", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusBadRequest, rec.Code)
+}
+
 func (suite *UserTestSuite) TestRemoveForcedVariation() {
 	feature := entities.Feature{Key: "my_feat"}
 	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
