@@ -113,12 +113,27 @@ func (suite *ClientTestSuite) TestTrackEventWithContextError() {
 	suite.NoError(err) // TODO Should this error?
 }
 
-func (suite *ClientTestSuite) GetExperimentVariation() {
+func (suite *ClientTestSuite) TestGetExperiment() {
 	testExperimentKey := "testExperiment1"
 	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
 	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
-	variationKey, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, suite.optlyContext)
-	suite.Equal(testVariation.Key, variationKey)
+	experiment, err := suite.optlyClient.GetExperiment("testExperiment1")
+	suite.Equal(testExperimentKey, experiment.Key)
+	suite.NoError(err)
+}
+
+func (suite *ClientTestSuite) TestGetExperimentVariation() {
+	testExperimentKey := "testExperiment1"
+	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
+	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
+	variation, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, suite.optlyContext)
+	suite.Equal(testVariation, variation)
+	suite.NoError(err)
+}
+
+func (suite *ClientTestSuite) TestGetExperimentVariationNonExistentExperiment() {
+	variation, err := suite.optlyClient.GetExperimentVariation("non_existent_experiment", suite.optlyContext)
+	suite.Equal("", variation.ID) // empty variation
 	suite.NoError(err)
 }
 
