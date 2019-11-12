@@ -113,6 +113,54 @@ func (suite *ClientTestSuite) TestTrackEventWithContextError() {
 	suite.NoError(err) // TODO Should this error?
 }
 
+func (suite *ClientTestSuite) TestSetForcedVariationSuccess() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	didSetNewForcedVariation, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	suite.NoError(err)
+	suite.True(didSetNewForcedVariation)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.True(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationAlreadySet() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	// Set the same forced variation again
+	didSetNewForcedVariation, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	suite.NoError(err)
+	suite.False(didSetNewForcedVariation)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.True(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationDifferentVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "disabled_var")
+	// Set a different forced variation
+	didSetNewForcedVariation, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	suite.NoError(err)
+	suite.True(didSetNewForcedVariation)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.True(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestRemoveForcedVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	err := suite.optlyClient.RemoveForcedVariation(featureExp.Key, "userId")
+	suite.NoError(err)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.False(isEnabled)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestClientTestSuite(t *testing.T) {
