@@ -22,7 +22,6 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,7 +36,7 @@ type ClientTestSuite struct {
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil, decision.NewMapExperimentOverridesStore()}
+	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil, testClient.ForcedVariations}
 	suite.optlyContext = NewContext("userId", make(map[string]interface{}))
 }
 

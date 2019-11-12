@@ -24,7 +24,6 @@ import (
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 )
 
@@ -90,5 +89,5 @@ func mockLoader(sdkKey string) (*OptlyClient, error) {
 	tc := optimizelytest.NewClient()
 	tc.ProjectConfig.ProjectID = sdkKey
 
-	return &OptlyClient{tc.OptimizelyClient, nil, decision.NewMapExperimentOverridesStore()}, nil
+	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations}, nil
 }

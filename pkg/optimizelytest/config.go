@@ -45,37 +45,37 @@ type TestProjectConfig struct {
 }
 
 // GetProjectID returns projectID
-func (c TestProjectConfig) GetProjectID() string {
+func (c *TestProjectConfig) GetProjectID() string {
 	return c.ProjectID
 }
 
 // GetRevision returns revision
-func (c TestProjectConfig) GetRevision() string {
+func (c *TestProjectConfig) GetRevision() string {
 	return c.Revision
 }
 
 // GetAccountID returns accountID
-func (c TestProjectConfig) GetAccountID() string {
+func (c *TestProjectConfig) GetAccountID() string {
 	return c.AccountID
 }
 
 // GetAnonymizeIP returns anonymizeIP
-func (c TestProjectConfig) GetAnonymizeIP() bool {
+func (c *TestProjectConfig) GetAnonymizeIP() bool {
 	return c.AnonymizeIP
 }
 
 // GetAttributeID returns attributeID
-func (c TestProjectConfig) GetAttributeID(key string) string {
+func (c *TestProjectConfig) GetAttributeID(key string) string {
 	return c.AttributeKeyToIDMap[key]
 }
 
 // GetBotFiltering returns GetBotFiltering
-func (c TestProjectConfig) GetBotFiltering() bool {
+func (c *TestProjectConfig) GetBotFiltering() bool {
 	return c.BotFiltering
 }
 
 // GetEventByKey returns the event with the given key
-func (c TestProjectConfig) GetEventByKey(eventKey string) (entities.Event, error) {
+func (c *TestProjectConfig) GetEventByKey(eventKey string) (entities.Event, error) {
 	if event, ok := c.EventMap[eventKey]; ok {
 		return event, nil
 	}
@@ -85,7 +85,7 @@ func (c TestProjectConfig) GetEventByKey(eventKey string) (entities.Event, error
 }
 
 // GetFeatureByKey returns the feature with the given key
-func (c TestProjectConfig) GetFeatureByKey(featureKey string) (entities.Feature, error) {
+func (c *TestProjectConfig) GetFeatureByKey(featureKey string) (entities.Feature, error) {
 	if feature, ok := c.FeatureMap[featureKey]; ok {
 		return feature, nil
 	}
@@ -95,7 +95,7 @@ func (c TestProjectConfig) GetFeatureByKey(featureKey string) (entities.Feature,
 }
 
 // GetVariableByKey returns the featureVariable with the given key
-func (c TestProjectConfig) GetVariableByKey(featureKey, variableKey string) (entities.Variable, error) {
+func (c *TestProjectConfig) GetVariableByKey(featureKey, variableKey string) (entities.Variable, error) {
 
 	var variable entities.Variable
 	var err = fmt.Errorf("variable with key %s not found", featureKey)
@@ -108,7 +108,7 @@ func (c TestProjectConfig) GetVariableByKey(featureKey, variableKey string) (ent
 }
 
 // GetAttributeByKey returns the attribute with the given key
-func (c TestProjectConfig) GetAttributeByKey(key string) (entities.Attribute, error) {
+func (c *TestProjectConfig) GetAttributeByKey(key string) (entities.Attribute, error) {
 	if attributeID, ok := c.AttributeKeyToIDMap[key]; ok {
 		return c.AttributeMap[attributeID], nil
 	}
@@ -118,7 +118,7 @@ func (c TestProjectConfig) GetAttributeByKey(key string) (entities.Attribute, er
 }
 
 // GetFeatureList returns an array of all the features
-func (c TestProjectConfig) GetFeatureList() (featureList []entities.Feature) {
+func (c *TestProjectConfig) GetFeatureList() (featureList []entities.Feature) {
 	for _, feature := range c.FeatureMap {
 		featureList = append(featureList, feature)
 	}
@@ -126,7 +126,7 @@ func (c TestProjectConfig) GetFeatureList() (featureList []entities.Feature) {
 }
 
 // GetAudienceByID returns the audience with the given ID
-func (c TestProjectConfig) GetAudienceByID(audienceID string) (entities.Audience, error) {
+func (c *TestProjectConfig) GetAudienceByID(audienceID string) (entities.Audience, error) {
 	if audience, ok := c.AudienceMap[audienceID]; ok {
 		return audience, nil
 	}
@@ -136,12 +136,12 @@ func (c TestProjectConfig) GetAudienceByID(audienceID string) (entities.Audience
 }
 
 // GetAudienceMap returns the audience map
-func (c TestProjectConfig) GetAudienceMap() map[string]entities.Audience {
+func (c *TestProjectConfig) GetAudienceMap() map[string]entities.Audience {
 	return c.AudienceMap
 }
 
 // GetExperimentByKey returns the experiment with the given key
-func (c TestProjectConfig) GetExperimentByKey(experimentKey string) (entities.Experiment, error) {
+func (c *TestProjectConfig) GetExperimentByKey(experimentKey string) (entities.Experiment, error) {
 	if experimentID, ok := c.ExperimentKeyToIDMap[experimentKey]; ok {
 		experiment := c.ExperimentMap[experimentID]
 		return experiment, nil
@@ -152,7 +152,7 @@ func (c TestProjectConfig) GetExperimentByKey(experimentKey string) (entities.Ex
 }
 
 // GetGroupByID returns the group with the given ID
-func (c TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) {
+func (c *TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) {
 	if group, ok := c.GroupMap[groupID]; ok {
 		return group, nil
 	}
@@ -162,19 +162,19 @@ func (c TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error) 
 }
 
 // AddEvent adds the event to the EventMap
-func (c TestProjectConfig) AddEvent(e entities.Event) *TestProjectConfig {
+func (c *TestProjectConfig) AddEvent(e entities.Event) *TestProjectConfig {
 	c.EventMap[e.Key] = e
-	return &c
+	return c
 }
 
 // AddFeature adds the feature to the FeatureMap
-func (c TestProjectConfig) AddFeature(f entities.Feature) *TestProjectConfig {
+func (c *TestProjectConfig) AddFeature(f entities.Feature) *TestProjectConfig {
 	c.FeatureMap[f.Key] = f
-	return &c
+	return c
 }
 
 // AddFeatureTest adds the feature and supporting entities to complete the feature test modeling
-func (c TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfig {
+func (c *TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfig {
 	experimentID := c.getNextID()
 	variationID := c.getNextID()
 	layerID := c.getNextID()
@@ -197,11 +197,11 @@ func (c TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfig
 
 	f.FeatureExperiments = []entities.Experiment{experiment}
 	c.FeatureMap[f.Key] = f
-	return &c
+	return c
 }
 
 // AddFeatureRollout adds the feature and supporting entities to complete the rollout modeling
-func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectConfig {
+func (c *TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectConfig {
 	experimentID := c.getNextID()
 	rolloutID := c.getNextID()
 	variationID := c.getNextID()
@@ -232,10 +232,53 @@ func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectCon
 
 	f.Rollout = rollout
 	c.FeatureMap[f.Key] = f
-	return &c
+	return c
 }
 
-func (c TestProjectConfig) getNextID() (nextID string) {
+// AddMultiVariationFeatureTest adds the feature and supporting entities to complete modeling of the following:
+// - Feature test with two variations
+// - Feature is disabled in first variation, enabled in second variation
+// - Traffic allocation is 100% first variation, 0% second variation
+func (c *TestProjectConfig) AddMultiVariationFeatureTest(f entities.Feature, disabledVariationKey, enabledVariationKey string) *TestProjectConfig {
+	experimentID := c.getNextID()
+	disabledVariationID := c.getNextID()
+	enabledVariationID := c.getNextID()
+	layerID := c.getNextID()
+
+	disabledVariation := entities.Variation{
+		Key:            disabledVariationKey,
+		ID:             disabledVariationID,
+		FeatureEnabled: false,
+	}
+	enabledVariation := entities.Variation{
+		Key:            enabledVariationKey,
+		ID:             enabledVariationID,
+		FeatureEnabled: true,
+	}
+
+	experiment := entities.Experiment{
+		Key:     experimentID,
+		LayerID: layerID,
+		ID:      experimentID,
+		Variations: map[string]entities.Variation{
+			disabledVariationID: disabledVariation,
+			enabledVariationID:  enabledVariation,
+		},
+		TrafficAllocation: []entities.Range{
+			// Note: Intentionally using the same variation ID for both ranges.
+			// This is a valid representation that can occur in real datafiles.
+			// This happens when traffic started out as 50/50, and then was changed to 100/0.
+			entities.Range{EntityID: disabledVariationID, EndOfRange: 5000},
+			entities.Range{EntityID: disabledVariationID, EndOfRange: 10000},
+		},
+	}
+
+	f.FeatureExperiments = []entities.Experiment{experiment}
+	c.FeatureMap[f.Key] = f
+	return c
+}
+
+func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
 }

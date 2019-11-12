@@ -70,7 +70,7 @@ func (suite *UserTestSuite) SetupTest() {
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
 		ConfigManager:    nil,
-		ForcedVariations: decision.NewMapExperimentOverridesStore(),
+		ForcedVariations: testClient.ForcedVariations,
 	}
 
 	mux := chi.NewMux()
@@ -83,6 +83,9 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
+
+	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
+	mux.Delete("/experiments/{experimentKey}/variations", userAPI.DeleteForcedVariation)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -247,6 +250,48 @@ func (suite *UserTestSuite) TestTrackEventEmptyKey() {
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
+}
+
+func (suite *UserTestSuite) TestSetForcedVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
+	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+
+	req := httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusCreated, rec.Code)
+
+	req = httptest.NewRequest("GET", "/features/my_feat", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	var actual models.Feature
+	json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.True(actual.Enabled)
+}
+
+func (suite *UserTestSuite) TestDeleteForcedVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
+	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+
+	suite.tc.ForcedVariations.SetVariation(decision.ExperimentOverrideKey{
+		ExperimentKey: featureExp.Key,
+		UserID:        "testUser",
+	}, "variation_enabled")
+
+	req := httptest.NewRequest("DELETE", "/experiments/"+featureExp.Key+"/variations", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusNoContent, rec.Code)
+
+	req = httptest.NewRequest("GET", "/features/my_feat", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	var actual models.Feature
+	json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.False(actual.Enabled)
 }
 
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
