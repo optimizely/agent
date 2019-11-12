@@ -182,6 +182,22 @@ func (suite *RouterTestSuite) TestTrackEvent() {
 	suite.assertValid(rec, expected)
 }
 
+func (suite *RouterTestSuite) TestSetForcedVariation() {
+	req := httptest.NewRequest("PUT", "/users/me/experiments/exp_key/variations/var_key", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+
+	expected := map[string]string{
+		"userID":        "me",
+		"experimentKey": "exp_key",
+		"variationKey":  "var_key",
+	}
+	suite.assertValid(rec, expected)
+}
+
 func (suite *RouterTestSuite) assertValid(rec *httptest.ResponseRecorder, expected map[string]string) {
 	suite.Equal(http.StatusOK, rec.Code)
 
