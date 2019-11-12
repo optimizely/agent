@@ -69,6 +69,8 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 
 		r.With(middleware.Metricize("get-user-feature")).Get("/features/{featureKey}", opt.userAPI.GetFeature)
 		r.With(middleware.Metricize("track-user-feature")).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(middleware.Metricize("get-variation")).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
+
 	})
 
 	return r

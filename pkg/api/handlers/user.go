@@ -102,6 +102,18 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	renderFeature(w, r, featureKey, optlyClient, optlyContext)
 }
 
+// GetVariation - Return the variation that a user is bucketed into
+func (h *UserHandler) GetVariation(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	experimentKey := chi.URLParam(r, "experimentKey")
+	renderVariation(w, r, experimentKey, optlyClient, optlyContext)
+}
+
 // parseContext extract the common references from the request context
 func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyContext, error) {
 	optlyClient, err := middleware.GetOptlyClient(r)
@@ -134,4 +146,21 @@ func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, op
 
 	middleware.GetLogger(r).Debug().Str("featureKey", featureKey).Msg("rendering feature")
 	render.JSON(w, r, feature)
+}
+
+// renderVariation encapsulates extracting Variation from the Optimizely SDK and rendering a response
+func renderVariation(w http.ResponseWriter, r *http.Request, experimentKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+	variation, err := optlyClient.GetExperimentVariation(experimentKey, optlyContext)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Str("experimentKey", experimentKey).Msg("Calling GetVariation")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	variationModel := &models.Variation{
+		Key: variation.Key,
+		ID:  variation.ID,
+	}
+	middleware.GetLogger(r).Debug().Str("experimentKey", experimentKey).Msg("rendering variation")
+	render.JSON(w, r, variationModel)
 }

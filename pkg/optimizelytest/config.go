@@ -235,7 +235,42 @@ func (c TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectCon
 	return &c
 }
 
-func (c TestProjectConfig) getNextID() (nextID string) {
+// AddExperiment adds the experiment and the supporting entities to complete the experiment modeling
+func (c *TestProjectConfig) AddExperiment(experimentKey string, variations []entities.Variation) {
+	experimentID := c.getNextID()
+	layerID := c.getNextID()
+
+	variationMap := map[string]entities.Variation{}
+	trafficAllocation := []entities.Range{}
+	for i, variation := range variations {
+		variationMap[variation.ID] = variation
+		endOfRange := 10000 / len(variations) * (i + 1)
+		trafficAllocation = append(trafficAllocation, entities.Range{EntityID: variation.ID, EndOfRange: endOfRange})
+	}
+
+	experiment := entities.Experiment{
+		Key:               experimentKey,
+		ID:                experimentID,
+		LayerID:           layerID,
+		Variations:        variationMap,
+		TrafficAllocation: trafficAllocation,
+	}
+
+	c.ExperimentKeyToIDMap[experimentKey] = experimentID
+	c.ExperimentMap[experimentID] = experiment
+}
+
+// CreateVariation creates a variation with the given key and a generated ID
+func (c TestProjectConfig) CreateVariation(varKey string) entities.Variation {
+	variationID := c.getNextID()
+	variation := entities.Variation{
+		Key: varKey,
+		ID:  variationID,
+	}
+	return variation
+}
+
+func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
 }

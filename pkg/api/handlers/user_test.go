@@ -78,6 +78,8 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 
+	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
+
 	suite.mux = mux
 	suite.tc = testClient
 }
@@ -243,6 +245,48 @@ func (suite *UserTestSuite) TestTrackEventEmptyKey() {
 	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
 }
 
+func (suite *UserTestSuite) TestGetVariation() {
+	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
+	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
+
+	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Variation
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Variation{
+		Key: testVariation.Key,
+		ID:  testVariation.ID,
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
+	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Variation
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Variation{}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
 }
@@ -261,6 +305,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.GetFeature,
+		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
@@ -281,6 +326,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.GetFeature,
+		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
