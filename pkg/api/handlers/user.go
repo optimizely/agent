@@ -20,7 +20,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -158,10 +157,9 @@ func renderVariation(w http.ResponseWriter, r *http.Request, experimentKey strin
 		return
 	}
 
-	variationIDInt, err := strconv.Atoi(variation.ID)
 	variationModel := &models.Variation{
 		Key: variation.Key,
-		ID:  variationIDInt,
+		ID:  variation.ID,
 	}
 	middleware.GetLogger(r).Debug().Str("experimentKey", experimentKey).Msg("rendering variation")
 	render.JSON(w, r, variationModel)

@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
@@ -261,10 +260,9 @@ func (suite *UserTestSuite) TestGetVariation() {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expectedVariationID, _ := strconv.Atoi(testVariation.ID)
 	expected := models.Variation{
 		Key: testVariation.Key,
-		ID:  expectedVariationID,
+		ID:  testVariation.ID,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -307,6 +305,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.GetFeature,
+		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
@@ -327,6 +326,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.GetFeature,
+		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
 	}
