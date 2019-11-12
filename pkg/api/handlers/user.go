@@ -121,8 +121,11 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	didSetNewForcedVariation := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
-	if didSetNewForcedVariation {
+	didSetNewForcedVariation, err := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("error setting forced variation")
+		RenderError(err, http.StatusInternalServerError, w, r)
+	} else if didSetNewForcedVariation {
 		w.WriteHeader(http.StatusCreated)
 	} else {
 		w.WriteHeader(http.StatusNoContent)
@@ -142,8 +145,13 @@ func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	optlyClient.RemoveForcedVariation(experimentKey, optlyContext.UserContext.ID)
-	w.WriteHeader(http.StatusNoContent)
+	err = optlyClient.RemoveForcedVariation(experimentKey, optlyContext.UserContext.ID)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("error removing forced variation")
+		RenderError(err, http.StatusInternalServerError, w, r)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 // parseContext extract the common references from the request context
