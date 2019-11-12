@@ -84,7 +84,7 @@ func (m *MockUserAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 	renderPathParams(w, r)
 }
 
-func (m *MockUserAPI) DeleteForcedVariation(w http.ResponseWriter, r *http.Request) {
+func (m *MockUserAPI) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 

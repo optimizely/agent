@@ -85,7 +85,7 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 
 	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
-	mux.Delete("/experiments/{experimentKey}/variations", userAPI.DeleteForcedVariation)
+	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -270,7 +270,7 @@ func (suite *UserTestSuite) TestSetForcedVariation() {
 	suite.True(actual.Enabled)
 }
 
-func (suite *UserTestSuite) TestDeleteForcedVariation() {
+func (suite *UserTestSuite) TestRemoveForcedVariation() {
 	feature := entities.Feature{Key: "my_feat"}
 	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
 	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
@@ -334,6 +334,8 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 		userHandler.GetFeature,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
+		userHandler.SetForcedVariation,
+		userHandler.RemoveForcedVariation,
 	}
 
 	for _, handler := range handlers {

@@ -42,7 +42,7 @@ type UserAPI interface {
 	TrackEvent(w http.ResponseWriter, r *http.Request)
 
 	SetForcedVariation(w http.ResponseWriter, r *http.Request)
-	DeleteForcedVariation(w http.ResponseWriter, r *http.Request)
+	RemoveForcedVariation(w http.ResponseWriter, r *http.Request)
 }
 
 // TODO ExperimentApi

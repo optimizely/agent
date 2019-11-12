@@ -25,7 +25,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -111,11 +110,6 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
-	userID := optlyContext.UserContext.ID
-	if userID == "" {
-		RenderError(errors.New("empty userID"), http.StatusBadRequest, w, r)
-		return
-	}
 	experimentKey := chi.URLParam(r, "experimentKey")
 	if experimentKey == "" {
 		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
@@ -127,29 +121,19 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	forcedVariationKey := decision.ExperimentOverrideKey{
-		UserID:        userID,
-		ExperimentKey: experimentKey,
-	}
-	previousVariationKey, ok := optlyClient.ForcedVariations.GetVariation(forcedVariationKey)
-	optlyClient.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
-	if ok && previousVariationKey == variationKey {
-		w.WriteHeader(http.StatusNoContent)
-	} else {
+	didSetNewForcedVariation := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
+	if didSetNewForcedVariation {
 		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
-// DeleteForcedVariation - Delete a forced variation
-func (h *UserHandler) DeleteForcedVariation(w http.ResponseWriter, r *http.Request) {
+// RemoveForcedVariation - Remove a forced variation
+func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-	userID := optlyContext.UserContext.ID
-	if userID == "" {
-		RenderError(errors.New("empty userID"), http.StatusBadRequest, w, r)
 		return
 	}
 	experimentKey := chi.URLParam(r, "experimentKey")
@@ -158,11 +142,7 @@ func (h *UserHandler) DeleteForcedVariation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	forcedVariationKey := decision.ExperimentOverrideKey{
-		UserID:        userID,
-		ExperimentKey: experimentKey,
-	}
-	optlyClient.ForcedVariations.RemoveVariation(forcedVariationKey)
+	optlyClient.RemoveForcedVariation(experimentKey, optlyContext.UserContext.ID)
 	w.WriteHeader(http.StatusNoContent)
 }
 

@@ -68,3 +68,24 @@ func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, 
 func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
 	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
 }
+
+// SetForcedVariation sets a forced variation for the argument experiment key and user ID
+// Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
+func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey string) bool {
+	forcedVariationKey := decision.ExperimentOverrideKey{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+	}
+	previousVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey)
+	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
+	return !ok || previousVariationKey != variationKey
+}
+
+// RemoveForcedVariation removes any forced variation that was previously set for the argument experiment key and user ID
+func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) {
+	forcedVariationKey := decision.ExperimentOverrideKey{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+	}
+	c.ForcedVariations.RemoveVariation(forcedVariationKey)
+}
