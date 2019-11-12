@@ -78,13 +78,20 @@ func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext
 }
 
 // GetExperimentVariation calls the OptimizelyClient with the current OptlyContext
-func (c *OptlyClient) GetExperimentVariation(experimentKey string, ctx *OptlyContext) (variation entities.Variation, err error) {
-	experiment, err := c.GetExperiment(experimentKey)
+func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivate bool, ctx *OptlyContext) (variation entities.Variation, err error) {
+	var experiment entities.Experiment
+	experiment, err = c.GetExperiment(experimentKey)
 	if err != nil {
 		return variation, nil
 	}
 
-	variationKey, err := c.GetVariation(experimentKey, *ctx.UserContext)
+	var variationKey string
+	if shouldActivate {
+		variationKey, err = c.Activate(experimentKey, *ctx.UserContext)
+	} else {
+		variationKey, err = c.GetVariation(experimentKey, *ctx.UserContext)
+	}
+
 	if err != nil {
 		return variation, err
 	}
