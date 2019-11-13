@@ -374,7 +374,7 @@ components:
     Variation:
       properties:
         id:
-          type: integer
+          type: string
         key:
           type: string
       # Both properties are required

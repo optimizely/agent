@@ -54,22 +54,22 @@ func NewClient() *TestClient {
 	}
 }
 
-// AddEvent is a helper method for adding events to the ProjectConfig to fascilitate testing.
+// AddEvent is a helper method for adding events to the ProjectConfig to facilitate testing.
 func (t *TestClient) AddEvent(e entities.Event) {
 	t.ProjectConfig.AddEvent(e)
 }
 
-// AddFeature is a helper method for adding features to the ProjectConfig to fascilitate testing.
+// AddFeature is a helper method for adding features to the ProjectConfig to facilitate testing.
 func (t TestClient) AddFeature(f entities.Feature) {
 	t.ProjectConfig.AddFeature(f)
 }
 
-// AddFeatureRollout is a helper method for adding feature rollouts to the ProjectConfig to fascilitate testing.
+// AddFeatureRollout is a helper method for adding feature rollouts to the ProjectConfig to facilitate testing.
 func (t *TestClient) AddFeatureRollout(f entities.Feature) {
 	t.ProjectConfig.AddFeatureRollout(f)
 }
 
-// AddFeatureTest is a helper method for adding feature rollouts to the ProjectConfig to fascilitate testing.
+// AddFeatureTest is a helper method for adding feature rollouts to the ProjectConfig to facilitate testing.
 func (t *TestClient) AddFeatureTest(f entities.Feature) {
 	t.ProjectConfig.AddFeatureTest(f)
 }
@@ -77,4 +77,9 @@ func (t *TestClient) AddFeatureTest(f entities.Feature) {
 // GetProcessedEvents returns the UserEvent objects sent to the event processor.
 func (t *TestClient) GetProcessedEvents() []event.UserEvent {
 	return t.EventProcessor.GetEvents()
+}
+
+// AddExperiment is a helper method for creating experiments in the ProjectConfig to facilitate testing.
+func (t *TestClient) AddExperiment(experimentKey string, variations []entities.Variation) {
+	t.ProjectConfig.AddExperiment(experimentKey, variations)
 }
