@@ -14,7 +14,7 @@ jobs:
       name: lint
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
+      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
       script:
         - make -e install lint
 
@@ -22,7 +22,7 @@ jobs:
       name: unit
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64
+      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
       script:
         - make -e cover COVER_FILE=coverage.txt
       after_success:
@@ -34,7 +34,7 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.12.9 GIMME_OS=linux GIMME_ARCH=amd64 VERSION=${TRAVIS_TAG:1}
+      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64 VERSION=${TRAVIS_TAG:1}
       script:
         # now we're going to create packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
