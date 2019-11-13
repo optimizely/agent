@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -61,4 +62,15 @@ func TestFailedStartService(t *testing.T) {
 	ns, err := NewServer("test", handler)
 	assert.NoError(t, err)
 	ns.ListenAndServe()
+}
+
+func TestServerConfigs(t *testing.T) {
+	viper.SetDefault("test.enabled", true)
+	viper.SetDefault("server.readtimeout", 5*time.Second) // Default using Duration
+	viper.SetDefault("server.writetimeout", "10s")        // Default using string
+	ns, err := NewServer("test", handler)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 5*time.Second, ns.srv.ReadTimeout)
+	assert.Equal(t, 10*time.Second, ns.srv.WriteTimeout)
 }

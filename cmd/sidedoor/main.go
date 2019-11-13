@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/optimizely/sidedoor/pkg/admin"
 	"github.com/optimizely/sidedoor/pkg/api"
@@ -54,6 +55,9 @@ func loadConfig() error {
 	viper.SetDefault("admin.port", "8088") // Port for admin service
 
 	viper.SetDefault("log.level", "info") // Set default log level
+
+	viper.SetDefault("server.readtimeout", 5*time.Second)
+	viper.SetDefault("server.writetimeout", 10*time.Second)
 
 	// Configure environment variables
 	viper.SetEnvPrefix("sidedoor")

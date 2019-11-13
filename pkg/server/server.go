@@ -43,8 +43,8 @@ func NewServer(name string, handler http.Handler) (Server, error) {
 	}
 
 	port := viper.GetString(name + ".port")
-	rto := viper.GetDuration("server.readtimout")
-	wto := viper.GetDuration("server.writetimout")
+	rto := viper.GetDuration("server.readtimeout")
+	wto := viper.GetDuration("server.writetimeout")
 
 	logger := log.With().Str("port", port).Str("name", name).Logger()
 	srv := &http.Server{
