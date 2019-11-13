@@ -117,6 +117,11 @@ func (h *UserHandler) GetVariation(w http.ResponseWriter, r *http.Request) {
 
 // SetForcedVariation - set a forced variation
 func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
 	experimentKey := chi.URLParam(r, "experimentKey")
 	if experimentKey == "" {
 		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
