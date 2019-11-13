@@ -28,7 +28,7 @@ import (
 
 // Group encapsulates managing multiple Server instances
 type Group struct {
-	done context.CancelFunc
+	stop context.CancelFunc
 	eg   *errgroup.Group
 	ctx  context.Context
 	wg   sync.WaitGroup
@@ -36,11 +36,11 @@ type Group struct {
 
 // NewGroup creares a new server group.
 func NewGroup(ctx context.Context) *Group {
-	nctx, done := context.WithCancel(ctx)
+	nctx, stop := context.WithCancel(ctx)
 	eg, gctx := errgroup.WithContext(nctx)
 
 	return &Group{
-		done: done,
+		stop: stop,
 		eg:   eg,
 		ctx:  gctx,
 		wg:   sync.WaitGroup{},
@@ -62,7 +62,7 @@ func (g *Group) GoListenAndServe(name string, handler http.Handler) {
 	wg.Add(1)
 	g.eg.Go(func() error {
 		wg.Done()
-		defer g.done()
+		defer g.stop()
 		return server.ListenAndServe()
 	})
 
@@ -83,7 +83,7 @@ func (g *Group) Wait() error {
 	return g.eg.Wait()
 }
 
-// Shutdown initiates a graceful shutdown of srevices
+// Shutdown initiates a graceful shutdown of all servers
 func (g *Group) Shutdown() {
-	g.done()
+	g.stop()
 }

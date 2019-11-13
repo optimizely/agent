@@ -90,15 +90,15 @@ func main() {
 
 	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
 
-	// Create a new server group to manage the individual http servers
-	ctx := context.Background()
-	sg := server.NewGroup(ctx)
+	ctx := context.Background()         // Create default service context
+	sg := server.NewGroup(ctx)          // Create a new server group to manage the individual http listeners
 	optlyCache := optimizely.NewCache() // TODO pass ctx
 
-	// goroutine to check for signals to gracefully finish all functions
+	// goroutine to check for signals to gracefully shutdown listeners
 	go func() {
 		signalChannel := make(chan os.Signal, 1)
 		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+
 		// Wait for signal
 		sig := <-signalChannel
 		log.Info().Msgf("Received signal: %s\n", sig)
@@ -109,7 +109,7 @@ func main() {
 	sg.GoListenAndServe("webhook", webhook.NewDefaultRouter(optlyCache))
 	sg.GoListenAndServe("admin", admin.NewRouter()) // Admin should be added last.
 
-	// wait for all errgroup goroutines
+	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {
 		log.Info().Msg("Exiting.")
 	} else {
