@@ -53,6 +53,8 @@ func loadConfig() error {
 
 	viper.SetDefault("admin.port", "8088") // Port for admin service
 
+	viper.SetDefault("log.level", "info") // Set default log level
+
 	// Configure environment variables
 	viper.SetEnvPrefix("sidedoor")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -65,16 +67,25 @@ func loadConfig() error {
 	return viper.ReadInConfig()
 }
 
-func main() {
-
-	err := loadConfig()
-
+func initLogging() {
 	if viper.GetBool("log.pretty") {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
+	if lvl, err := zerolog.ParseLevel(viper.GetString("log.level")); err != nil {
+		log.Warn().Err(err).Msg("Error parsing log level")
+	} else {
+		log.Logger = log.Logger.Level(lvl)
+	}
+}
+
+func main() {
+
+	err := loadConfig()
+	initLogging()
+
 	if err != nil {
-		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config file.")
+		log.Info().Err(err).Msg("Skip loading configuration from config file.")
 	}
 
 	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
