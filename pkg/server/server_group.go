@@ -31,7 +31,6 @@ type Group struct {
 	stop context.CancelFunc
 	eg   *errgroup.Group
 	ctx  context.Context
-	wg   sync.WaitGroup
 }
 
 // NewGroup creares a new server group.
@@ -43,7 +42,6 @@ func NewGroup(ctx context.Context) *Group {
 		stop: stop,
 		eg:   eg,
 		ctx:  gctx,
-		wg:   sync.WaitGroup{},
 	}
 }
 
