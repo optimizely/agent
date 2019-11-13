@@ -104,7 +104,7 @@ func (c *OptlyClient) GetExperimentVariation(experimentKey string, ctx *OptlyCon
 }
 
 // ErrForcedVariationsUninitialized is returned from SetForcedVariation and GetForcedVariation when the forced variations store is not initialized
-var ErrForcedVariationsUninitialized error = errors.New("Client forced variations store not initialized")
+var ErrForcedVariationsUninitialized = errors.New("client forced variations store not initialized")
 
 // SetForcedVariation sets a forced variation for the argument experiment key and user ID
 // Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
