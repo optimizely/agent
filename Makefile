@@ -33,7 +33,7 @@ build: $(TARGET) ## builds and installs binary in bin/
 	@true
 
 cover:
-	GO111MODULE=$(GO111MODULE) $(GOTEST) -race ./... -coverprofile=$(COVER_FILE)
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -race ./... -coverprofile=$(COVER_FILE) | sed ''/^ok/s//$$(printf "\033[32mok\033[0m")/'' | sed ''/FAIL/s//$$(printf "\033[31mFAIL\033[0m")/''
 
 cover-html: cover
 	$(GOCMD) tool cover -html=$(COVER_FILE)
