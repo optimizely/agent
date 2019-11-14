@@ -47,8 +47,8 @@ func NewGroup(ctx context.Context) *Group {
 
 // GoListenAndServe constructs a NewServer and adds it to the Group.
 // Two goroutines are started. One for the http listener and one
-// to initiate a graceful shitdown. This method blocks on adding the
-// go routines to maintain startup order.
+// to initiate a graceful shutdown. This method blocks on adding the
+// go routines to maintain startup order of each listener.
 func (g *Group) GoListenAndServe(name string, handler http.Handler) {
 	server, err := NewServer(name, handler)
 	if err != nil {
