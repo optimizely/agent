@@ -18,6 +18,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -36,7 +38,7 @@ type RouterOptions struct {
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultRouter(optlyCache optimizely.Cache) *chi.Mux {
+func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
 	spec := &RouterOptions{
 		middleware:   &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		featureAPI:   new(handlers.FeatureHandler),

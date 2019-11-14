@@ -14,51 +14,33 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package webhook //
-package webhook
+package server
 
 import (
-	"net/http"
+	"context"
+	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
-// RouterOptions defines the configuration parameters for Router
-type RouterOptions struct {
-	cache          optimizely.Cache
-	webhookConfigs []models.OptlyWebhookConfig
+func TestServeAndShutdown(t *testing.T) {
+	viper.SetDefault("valid1.enabled", true)
+	viper.SetDefault("valid1.port", "1000")
+
+	viper.SetDefault("valid2.enabled", true)
+	viper.SetDefault("valid2.port", "1001")
+
+	sg := NewGroup(context.Background())
+
+	sg.GoListenAndServe("valid1", handler)
+	sg.GoListenAndServe("valid2", handler)
+
+	go sg.Shutdown()
+	sg.Wait()
 }
 
-// NewDefaultRouter creates a new router
-func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
-	// Parse webhook configurations
-	var config []models.OptlyWebhookConfig
-	if err := viper.UnmarshalKey("webhook.configs", &config); err != nil {
-		log.Info().Msg("Unable to parse webhooks.")
-	}
-
-	spec := &RouterOptions{
-		cache:          optlyCache,
-		webhookConfigs: config,
-	}
-
-	return NewRouter(spec)
-}
-
-// NewRouter returns HTTP API router
-func NewRouter(opt *RouterOptions) *chi.Mux {
-	r := chi.NewRouter()
-
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-	webhookAPI := handlers.NewWebhookHandler(opt.cache, opt.webhookConfigs)
-
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return r
+func TestInvalidServer(t *testing.T) {
+	sg := NewGroup(context.Background())
+	sg.GoListenAndServe("invalid", handler)
+	sg.Wait()  // Don't need to shutdown since server never started
 }
