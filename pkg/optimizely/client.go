@@ -126,8 +126,8 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 	}
 	previousVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey)
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
-	didSetNewForcedVariation := !ok || previousVariationKey != variationKey
-	return didSetNewForcedVariation, nil
+	wasSet := !ok || previousVariationKey != variationKey
+	return wasSet, nil
 }
 
 // RemoveForcedVariation removes any forced variation that was previously set for the argument experiment key and user ID

@@ -145,13 +145,13 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	didSetNewForcedVariation, err := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
+	wasSet, err := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
 	switch {
 	case err != nil:
 		middleware.GetLogger(r).Error().Err(err).Msg("error setting forced variation")
 		RenderError(err, http.StatusInternalServerError, w, r)
 
-	case didSetNewForcedVariation:
+	case wasSet:
 		w.WriteHeader(http.StatusCreated)
 
 	default:

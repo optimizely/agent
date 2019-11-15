@@ -150,9 +150,9 @@ func (suite *ClientTestSuite) TestSetForcedVariationSuccess() {
 	feature := entities.Feature{Key: "my_feat"}
 	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
 	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-	didSetNewForcedVariation, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	wasSet, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
 	suite.NoError(err)
-	suite.True(didSetNewForcedVariation)
+	suite.True(wasSet)
 	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
 	suite.True(isEnabled)
 }
@@ -163,9 +163,9 @@ func (suite *ClientTestSuite) TestSetForcedVariationAlreadySet() {
 	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
 	// Set the same forced variation again
-	didSetNewForcedVariation, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	wasSet, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
 	suite.NoError(err)
-	suite.False(didSetNewForcedVariation)
+	suite.False(wasSet)
 	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
 	suite.True(isEnabled)
 }
@@ -176,9 +176,9 @@ func (suite *ClientTestSuite) TestSetForcedVariationDifferentVariation() {
 	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "disabled_var")
 	// Set a different forced variation
-	didSetNewForcedVariation, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	wasSet, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
 	suite.NoError(err)
-	suite.True(didSetNewForcedVariation)
+	suite.True(wasSet)
 	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
 	suite.True(isEnabled)
 }
