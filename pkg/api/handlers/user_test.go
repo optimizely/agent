@@ -270,6 +270,18 @@ func (suite *UserTestSuite) TestSetForcedVariation() {
 	var actual models.Feature
 	json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.True(actual.Enabled)
+
+	req = httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusNoContent, rec.Code)
+
+	req = httptest.NewRequest("GET", "/features/my_feat", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	var actualRepeated models.Feature
+	json.Unmarshal(rec.Body.Bytes(), &actualRepeated)
+	suite.True(actualRepeated.Enabled)
 }
 
 func (suite *UserTestSuite) TestSetForcedVariationEmptyExperimentKey() {
@@ -277,29 +289,6 @@ func (suite *UserTestSuite) TestSetForcedVariationEmptyExperimentKey() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *UserTestSuite) TestSetForcedVariationWasAlreadySet() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
-	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-
-	suite.tc.ForcedVariations.SetVariation(decision.ExperimentOverrideKey{
-		ExperimentKey: featureExp.Key,
-		UserID:        "testUser",
-	}, "variation_enabled")
-
-	req := httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNoContent, rec.Code)
-
-	req = httptest.NewRequest("GET", "/features/my_feat", nil)
-	rec = httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	var actual models.Feature
-	json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.True(actual.Enabled)
 }
 
 func (suite *UserTestSuite) TestRemoveForcedVariation() {
