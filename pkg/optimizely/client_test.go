@@ -194,6 +194,24 @@ func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 	suite.False(isEnabled)
 }
 
+func (suite *ClientTestSuite) TestSetForcedVariationABTestSuccess() {
+	suite.testClient.ProjectConfig.AddMultiVariationABTest("my_exp", "var_1", "var_2")
+	suite.optlyClient.SetForcedVariation("my_exp", "userId", "var_1")
+	variation, err := suite.optlyClient.Activate("my_exp", *suite.optlyContext.UserContext)
+	suite.NoError(err)
+	suite.Equal("var_1", variation)
+}
+
+func (suite *ClientTestSuite) TestRemoveForcedVariationABTest() {
+	suite.testClient.ProjectConfig.AddMultiVariationABTest("my_exp", "var_1", "var_2")
+	suite.optlyClient.SetForcedVariation("my_exp", "userId", "var_1")
+	err := suite.optlyClient.RemoveForcedVariation("my_exp", "userId")
+	suite.NoError(err)
+	variation, err := suite.optlyClient.Activate("my_exp", *suite.optlyContext.UserContext)
+	suite.NoError(err)
+	suite.Equal("var_2", variation)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestClientTestSuite(t *testing.T) {
