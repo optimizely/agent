@@ -42,10 +42,6 @@ func (m *MockCache) GetClient(key string) (*optimizely.OptlyClient, error) {
 	return args.Get(0).(*optimizely.OptlyClient), args.Error(1)
 }
 
-func (m *MockCache) GetDefaultClient() (*optimizely.OptlyClient, error) {
-	return &defaultClient, nil
-}
-
 type OptlyMiddlewareTestSuite struct {
 	suite.Suite
 	mw *CachedOptlyMiddleware
@@ -68,15 +64,15 @@ func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
-func (suite *OptlyMiddlewareTestSuite) TestGetDefault() {
+func (suite *OptlyMiddlewareTestSuite) TestGetClientMissingHeader() {
 	handler := suite.mw.ClientCtx(AssertOptlyClientHandler(suite, &defaultClient))
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal(http.StatusBadRequest, rec.Code)
 }
 
-func (suite *OptlyMiddlewareTestSuite) TestGetExpected() {
+func (suite *OptlyMiddlewareTestSuite) TestGetClient() {
 	handler := suite.mw.ClientCtx(AssertOptlyClientHandler(suite, &expectedClient))
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "EXPECTED")

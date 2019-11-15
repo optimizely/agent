@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -49,18 +50,13 @@ type CachedOptlyMiddleware struct {
 // else the default OptlyClient will be used.
 func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		sdkKey := r.Header.Get(OptlySDKHeader)
-
-		GetLogger(r).Info().Msg("Fetching OptimizelyClient")
-		var err error
-		var optlyClient *optimizely.OptlyClient
 		if sdkKey == "" {
-			optlyClient, err = ctx.Cache.GetDefaultClient()
-		} else {
-			optlyClient, err = ctx.Cache.GetClient(sdkKey)
+			http.Error(w, fmt.Sprintf("Missing required %s header", OptlySDKHeader), http.StatusBadRequest)
+			return
 		}
 
+		optlyClient, err := ctx.Cache.GetClient(sdkKey)
 		if err != nil {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 			http.Error(w, "Failed to instantiate Optimizely", http.StatusInternalServerError)
