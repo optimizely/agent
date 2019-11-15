@@ -239,6 +239,22 @@ func (suite *RouterTestSuite) TestSetForcedVariation() {
 	suite.assertValid(rec, expected)
 }
 
+func (suite *RouterTestSuite) TestRemoveForcedVariation() {
+	req := httptest.NewRequest("DELETE", "/users/me/experiments/exp_key/variations", nil)
+	rec := httptest.NewRecorder()
+
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+
+	expected := map[string]string{
+		"userID":        "me",
+		"experimentKey": "exp_key",
+	}
+	suite.assertValid(rec, expected)
+}
+
 func (suite *RouterTestSuite) assertValid(rec *httptest.ResponseRecorder, expected map[string]string) {
 	suite.Equal(http.StatusOK, rec.Code)
 
