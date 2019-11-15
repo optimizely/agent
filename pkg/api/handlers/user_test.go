@@ -85,6 +85,7 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
+	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
 	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
 	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
 
@@ -374,6 +375,30 @@ func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
 	suite.Equal(expected, actual)
 }
 
+func (suite *UserTestSuite) TestActivateExperiment() {
+	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
+	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
+
+	req := httptest.NewRequest("POST", "/experiments/one", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual models.Variation
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Variation{
+		Key: testVariation.Key,
+		ID:  testVariation.ID,
+	}
+
+	suite.Equal(1, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
 }
@@ -391,6 +416,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
+		userHandler.ActivateExperiment,
 		userHandler.GetFeature,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
@@ -412,6 +438,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 
 	userHandler := new(UserHandler)
 	handlers := []func(w http.ResponseWriter, r *http.Request){
+		userHandler.ActivateExperiment,
 		userHandler.GetFeature,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,

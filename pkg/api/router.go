@@ -18,6 +18,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -36,7 +38,7 @@ type RouterOptions struct {
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultRouter(optlyCache optimizely.Cache) *chi.Mux {
+func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
 	spec := &RouterOptions{
 		middleware:   &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		featureAPI:   new(handlers.FeatureHandler),
@@ -70,6 +72,7 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.With(middleware.Metricize("get-user-feature")).Get("/features/{featureKey}", opt.userAPI.GetFeature)
 		r.With(middleware.Metricize("track-user-feature")).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 		r.With(middleware.Metricize("get-variation")).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
+		r.With(middleware.Metricize("activate-experiment")).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
 		r.With(middleware.Metricize("set-forced-variation")).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
 		r.With(middleware.Metricize("delete-forced-variation")).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})

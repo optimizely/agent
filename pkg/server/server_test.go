@@ -14,48 +14,63 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package service
+package server
 
 import (
+	"net/http"
 	"sync"
 	"testing"
+	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewService(t *testing.T) {
-	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
-	assert.NotNil(t, ns)
+var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+})
 
-	assert.Equal(t, ns.port, "1")
-	assert.Equal(t, ns.enabled, true)
-	assert.Equal(t, ns.name, "name")
+func TestStartAndShutdown(t *testing.T) {
+	viper.SetDefault("valid.enabled", true)
+	viper.SetDefault("valid.port", "1000")
+	srv, err := NewServer("valid", handler)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		wg.Done()
+		srv.ListenAndServe()
+	}()
+
+	wg.Wait()
+	srv.Shutdown()
 }
 
-func TestUpdateState(t *testing.T) {
-	ns := NewService(true, "1", "name", &chi.Mux{}, &sync.WaitGroup{})
-
-	ns.updateState(false)
-	state, reason := ns.IsHealthy()
-	assert.False(t, state)
-	assert.Equal(t, reason, "name service down")
-
-	ns.updateState(true)
-	state, reason = ns.IsHealthy()
-	assert.True(t, state)
-	assert.Equal(t, reason, "")
+func TestNotEnabled(t *testing.T) {
+	_, err := NewServer("not-enabled", handler)
+	if assert.Error(t, err) {
+		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
+	}
 }
 
 func TestFailedStartService(t *testing.T) {
+	viper.SetDefault("test.enabled", true)
+	viper.SetDefault("test.port", "-9")
+	ns, err := NewServer("test", handler)
+	assert.NoError(t, err)
+	ns.ListenAndServe()
+}
 
-	var wg sync.WaitGroup
-	ns := NewService(true, "-9", "api", &chi.Mux{}, &wg)
+func TestServerConfigs(t *testing.T) {
+	viper.SetDefault("test.enabled", true)
+	viper.SetDefault("server.readtimeout", 5*time.Second) // Default using Duration
+	viper.SetDefault("server.writetimeout", "10s")        // Default using string
+	ns, err := NewServer("test", handler)
+	assert.NoError(t, err)
 
-	ns.StartService()
-	wg.Wait()
-
-	state, reason := ns.IsHealthy()
-	assert.False(t, state)
-	assert.Equal(t, reason, "api service down")
+	assert.Equal(t, 5*time.Second, ns.srv.ReadTimeout)
+	assert.Equal(t, 10*time.Second, ns.srv.WriteTimeout)
 }

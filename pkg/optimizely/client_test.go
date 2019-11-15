@@ -126,13 +126,22 @@ func (suite *ClientTestSuite) TestGetExperimentVariation() {
 	testExperimentKey := "testExperiment1"
 	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
 	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
-	variation, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, suite.optlyContext)
+	variation, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, false, suite.optlyContext)
+	suite.Equal(testVariation, variation)
+	suite.NoError(err)
+}
+
+func (suite *ClientTestSuite) TestGetExperimentVariationWithActivation() {
+	testExperimentKey := "testExperiment1"
+	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
+	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
+	variation, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, true, suite.optlyContext)
 	suite.Equal(testVariation, variation)
 	suite.NoError(err)
 }
 
 func (suite *ClientTestSuite) TestGetExperimentVariationNonExistentExperiment() {
-	variation, err := suite.optlyClient.GetExperimentVariation("non_existent_experiment", suite.optlyContext)
+	variation, err := suite.optlyClient.GetExperimentVariation("non_existent_experiment", false, suite.optlyContext)
 	suite.Equal("", variation.ID) // empty variation
 	suite.NoError(err)
 }

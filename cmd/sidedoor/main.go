@@ -16,17 +16,17 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
 	"strings"
-	"sync"
-
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
+	"syscall"
+	"time"
 
 	"github.com/optimizely/sidedoor/pkg/admin"
-	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 	"github.com/optimizely/sidedoor/pkg/api"
-	"github.com/optimizely/sidedoor/pkg/service"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/server"
 	"github.com/optimizely/sidedoor/pkg/webhook"
 
 	"github.com/rs/zerolog"
@@ -51,7 +51,13 @@ func loadConfig() error {
 	viper.SetDefault("webhook.enabled", true) // Property to turn webhook service on/off
 	viper.SetDefault("webhook.port", "8085")  // Port for webhook service
 
+	viper.SetDefault("admin.enabled", true)
 	viper.SetDefault("admin.port", "8088") // Port for admin service
+
+	viper.SetDefault("log.level", "info") // Set default log level
+
+	viper.SetDefault("server.readtimeout", 5*time.Second)
+	viper.SetDefault("server.writetimeout", 10*time.Second)
 
 	// Configure environment variables
 	viper.SetEnvPrefix("sidedoor")
@@ -65,56 +71,52 @@ func loadConfig() error {
 	return viper.ReadInConfig()
 }
 
-func main() {
-
-	err := loadConfig()
-
+func initLogging() {
 	if viper.GetBool("log.pretty") {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
+	if lvl, err := zerolog.ParseLevel(viper.GetString("log.level")); err != nil {
+		log.Warn().Err(err).Msg("Error parsing log level")
+	} else {
+		log.Logger = log.Logger.Level(lvl)
+	}
+}
+
+func main() {
+
+	err := loadConfig()
+	initLogging()
+
 	if err != nil {
-		log.Info().Err(err).Msg("Ignoring error, skip loading configuration from config file.")
+		log.Info().Err(err).Msg("Skip loading configuration from config file.")
 	}
 
 	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
 
-	var wg sync.WaitGroup
+	ctx := context.Background()         // Create default service context
+	sg := server.NewGroup(ctx)          // Create a new server group to manage the individual http listeners
+	optlyCache := optimizely.NewCache() // TODO pass ctx
 
-	optlyCache := optimizely.NewCache()
-	sidedoorSrvc := service.NewService(
-		viper.GetBool("api.enabled"),
-		viper.GetString("api.port"),
-		"API",
-		api.NewDefaultRouter(optlyCache),
-		&wg,
-	)
+	// goroutine to check for signals to gracefully shutdown listeners
+	go func() {
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 
-	// Parse webhook configurations
-	var webhookConfigs []models.OptlyWebhookConfig
-	if err := viper.UnmarshalKey("webhook.configs", &webhookConfigs); err != nil {
-		log.Info().Msg("Unable to parse webhooks.")
+		// Wait for signal
+		sig := <-signalChannel
+		log.Info().Msgf("Received signal: %s\n", sig)
+		sg.Shutdown()
+	}()
+
+	sg.GoListenAndServe("api", api.NewDefaultRouter(optlyCache))
+	sg.GoListenAndServe("webhook", webhook.NewDefaultRouter(optlyCache))
+	sg.GoListenAndServe("admin", admin.NewRouter()) // Admin should be added last.
+
+	// wait for server group to shutdown
+	if err := sg.Wait(); err == nil {
+		log.Info().Msg("Exiting.")
+	} else {
+		log.Fatal().Err(err).Msg("Exiting.")
 	}
-	webhookSrvc := service.NewService(
-		viper.GetBool("webhook.enabled"),
-		viper.GetString("webhook.port"),
-		"webhook",
-		webhook.NewDefaultRouter(optlyCache, webhookConfigs),
-		&wg,
-	)
-
-	adminSrvc := service.NewService(
-		true,
-		viper.GetString("admin.port"),
-		"admin",
-		admin.NewRouter([]handlers.HealthChecker{sidedoorSrvc, webhookSrvc}),
-		&wg,
-	)
-
-	adminSrvc.StartService()
-	sidedoorSrvc.StartService()
-	webhookSrvc.StartService()
-
-	wg.Wait()
-	log.Printf("Exiting.")
 }
