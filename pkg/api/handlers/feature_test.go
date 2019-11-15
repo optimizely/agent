@@ -57,7 +57,11 @@ func (o *OptlyMW) ClientCtx(next http.Handler) http.Handler {
 func (suite *FeatureTestSuite) SetupTest() {
 
 	testClient := optimizelytest.NewClient()
-	optlyClient := &optimizely.OptlyClient{testClient.OptimizelyClient, nil}
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    nil,
+		ForcedVariations: testClient.ForcedVariations,
+	}
 
 	mux := chi.NewMux()
 	featureAPI := new(FeatureHandler)

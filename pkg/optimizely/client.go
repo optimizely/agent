@@ -18,15 +18,19 @@
 package optimizely
 
 import (
+	"errors"
+
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
-	ConfigManager *optimizelyconfig.PollingProjectConfigManager
+	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
+	ForcedVariations *decision.MapExperimentOverridesStore
 }
 
 // ListFeatures returns all available features
@@ -104,4 +108,37 @@ func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivat
 	}
 
 	return variation, nil
+}
+
+// ErrForcedVariationsUninitialized is returned from SetForcedVariation and GetForcedVariation when the forced variations store is not initialized
+var ErrForcedVariationsUninitialized = errors.New("client forced variations store not initialized")
+
+// SetForcedVariation sets a forced variation for the argument experiment key and user ID
+// Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
+// Returns an error when forced variations are not available on this OptlyClient instance
+func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey string) (bool, error) {
+	if c.ForcedVariations == nil {
+		return false, ErrForcedVariationsUninitialized
+	}
+	forcedVariationKey := decision.ExperimentOverrideKey{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+	}
+	previousVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey)
+	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
+	wasSet := !ok || previousVariationKey != variationKey
+	return wasSet, nil
+}
+
+// RemoveForcedVariation removes any forced variation that was previously set for the argument experiment key and user ID
+func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error {
+	if c.ForcedVariations == nil {
+		return ErrForcedVariationsUninitialized
+	}
+	forcedVariationKey := decision.ExperimentOverrideKey{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+	}
+	c.ForcedVariations.RemoveVariation(forcedVariationKey)
+	return nil
 }

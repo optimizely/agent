@@ -43,6 +43,8 @@ type UserAPI interface {
 
 	ActivateExperiment(w http.ResponseWriter, r *http.Request)
 	GetVariation(w http.ResponseWriter, r *http.Request)
+	SetForcedVariation(w http.ResponseWriter, r *http.Request)
+	RemoveForcedVariation(w http.ResponseWriter, r *http.Request)
 }
 
 // TODO ExperimentApi

@@ -23,6 +23,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/config"
 
 	"github.com/optimizely/go-sdk/pkg/client"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	cmap "github.com/orcaman/concurrent-map"
 )
 
@@ -77,7 +78,10 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 
 	optimizelyFactory := &client.OptimizelyFactory{}
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
-	optimizelyClient, err := optimizelyFactory.Client(client.WithConfigManager(configManager))
-
-	return &OptlyClient{optimizelyClient, configManager}, err
+	forcedVariations := decision.NewMapExperimentOverridesStore()
+	optimizelyClient, err := optimizelyFactory.Client(
+		client.WithConfigManager(configManager),
+		client.WithExperimentOverrides(forcedVariations),
+	)
+	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }

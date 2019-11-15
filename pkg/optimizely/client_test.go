@@ -36,7 +36,7 @@ type ClientTestSuite struct {
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil}
+	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil, testClient.ForcedVariations}
 	suite.optlyContext = NewContext("userId", make(map[string]interface{}))
 }
 
@@ -144,6 +144,72 @@ func (suite *ClientTestSuite) TestGetExperimentVariationNonExistentExperiment() 
 	variation, err := suite.optlyClient.GetExperimentVariation("non_existent_experiment", false, suite.optlyContext)
 	suite.Equal("", variation.ID) // empty variation
 	suite.NoError(err)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationSuccess() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	wasSet, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	suite.NoError(err)
+	suite.True(wasSet)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.True(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationAlreadySet() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	// Set the same forced variation again
+	wasSet, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	suite.NoError(err)
+	suite.False(wasSet)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.True(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationDifferentVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "disabled_var")
+	// Set a different forced variation
+	wasSet, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	suite.NoError(err)
+	suite.True(wasSet)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.True(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestRemoveForcedVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
+	err := suite.optlyClient.RemoveForcedVariation(featureExp.Key, "userId")
+	suite.NoError(err)
+	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", *suite.optlyContext.UserContext)
+	suite.False(isEnabled)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationABTestSuccess() {
+	suite.testClient.ProjectConfig.AddMultiVariationABTest("my_exp", "var_1", "var_2")
+	suite.optlyClient.SetForcedVariation("my_exp", "userId", "var_1")
+	variation, err := suite.optlyClient.Activate("my_exp", *suite.optlyContext.UserContext)
+	suite.NoError(err)
+	suite.Equal("var_1", variation)
+}
+
+func (suite *ClientTestSuite) TestRemoveForcedVariationABTest() {
+	suite.testClient.ProjectConfig.AddMultiVariationABTest("my_exp", "var_1", "var_2")
+	suite.optlyClient.SetForcedVariation("my_exp", "userId", "var_1")
+	err := suite.optlyClient.RemoveForcedVariation("my_exp", "userId")
+	suite.NoError(err)
+	variation, err := suite.optlyClient.Activate("my_exp", *suite.optlyContext.UserContext)
+	suite.NoError(err)
+	suite.Equal("var_2", variation)
 }
 
 // In order for 'go test' to run this suite, we need to create

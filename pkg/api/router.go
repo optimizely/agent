@@ -73,7 +73,8 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.With(middleware.Metricize("track-user-feature")).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 		r.With(middleware.Metricize("get-variation")).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
 		r.With(middleware.Metricize("activate-experiment")).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
-
+		r.With(middleware.Metricize("set-forced-variation")).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
+		r.With(middleware.Metricize("remove-forced-variation")).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
 
 	return r

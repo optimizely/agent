@@ -25,6 +25,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/optimizely/go-sdk/pkg/decision"
+
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
 
@@ -65,7 +67,11 @@ func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 // Setup Mux
 func (suite *UserTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
-	optlyClient := &optimizely.OptlyClient{testClient.OptimizelyClient, nil}
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    nil,
+		ForcedVariations: testClient.ForcedVariations,
+	}
 
 	mux := chi.NewMux()
 	userAPI := new(UserHandler)
@@ -80,6 +86,8 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
 	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
+	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
+	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -246,6 +254,74 @@ func (suite *UserTestSuite) TestTrackEventEmptyKey() {
 	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
 }
 
+func (suite *UserTestSuite) TestSetForcedVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
+	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+
+	req := httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusCreated, rec.Code)
+
+	req = httptest.NewRequest("GET", "/features/my_feat", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	var actual models.Feature
+	json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.True(actual.Enabled)
+
+	req = httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusNoContent, rec.Code)
+
+	req = httptest.NewRequest("GET", "/features/my_feat", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	var actualRepeated models.Feature
+	json.Unmarshal(rec.Body.Bytes(), &actualRepeated)
+	suite.True(actualRepeated.Enabled)
+}
+
+func (suite *UserTestSuite) TestSetForcedVariationEmptyExperimentKey() {
+	req := httptest.NewRequest("PUT", "/experiments//variations/variation_enabled", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusBadRequest, rec.Code)
+}
+
+func (suite *UserTestSuite) TestRemoveForcedVariation() {
+	feature := entities.Feature{Key: "my_feat"}
+	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
+	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
+
+	suite.tc.ForcedVariations.SetVariation(decision.ExperimentOverrideKey{
+		ExperimentKey: featureExp.Key,
+		UserID:        "testUser",
+	}, "variation_enabled")
+
+	req := httptest.NewRequest("DELETE", "/experiments/"+featureExp.Key+"/variations", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusNoContent, rec.Code)
+
+	req = httptest.NewRequest("GET", "/features/my_feat", nil)
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	var actual models.Feature
+	json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.False(actual.Enabled)
+}
+
+func (suite *UserTestSuite) TestRemoveForcedVariationEmptyExperimentKey() {
+	req := httptest.NewRequest("DELETE", "/experiments//variations", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusBadRequest, rec.Code)
+}
+
 func (suite *UserTestSuite) TestGetVariation() {
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
@@ -356,6 +432,8 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
+		userHandler.SetForcedVariation,
+		userHandler.RemoveForcedVariation,
 	}
 
 	for _, handler := range handlers {
