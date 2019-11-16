@@ -124,6 +124,7 @@ func (suite *RouterTestSuite) SetupTest() {
 		suite.tc = testClient
 
 		opts := &RouterOptions{
+			maxConns:     1,
 			featureAPI:   new(MockFeatureAPI),
 			userEventAPI: new(MockUserEventAPI),
 			userAPI:      new(MockUserAPI),
@@ -253,6 +254,30 @@ func (suite *RouterTestSuite) TestRemoveForcedVariation() {
 		"experimentKey": "exp_key",
 	}
 	suite.assertValid(rec, expected)
+}
+
+func (suite *RouterTestSuite) TestThrottleConfig() {
+	req := httptest.NewRequest("GET", "/throttled", nil)
+
+	wg1 := sync.WaitGroup{}
+	wg1.Add(1)
+	suite.mux.Get("/throttled", func(w http.ResponseWriter, r *http.Request) {
+		wg1.Wait()
+	})
+
+	wg2 := sync.WaitGroup{}
+	wg2.Add(1)
+	go func() {
+		wg2.Done()
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+	}()
+	wg2.Wait()
+
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusServiceUnavailable, rec.Code)
+	wg1.Done()
 }
 
 func (suite *RouterTestSuite) assertValid(rec *httptest.ResponseRecorder, expected map[string]string) {
