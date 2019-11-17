@@ -48,7 +48,6 @@ func NewCache() *OptlyCache {
 func (c *OptlyCache) init() {
 	sdkKeys := viper.GetStringSlice("optimizely.sdkKeys")
 	for _, sdkKey := range sdkKeys {
-		sdkKey := sdkKey
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
 		}
