@@ -19,6 +19,5 @@ package optimizely
 
 // Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
 type Cache interface {
-	GetDefaultClient() (*OptlyClient, error)
 	GetClient(sdkKey string) (*OptlyClient, error)
 }

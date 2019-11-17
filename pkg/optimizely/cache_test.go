@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	cmap "github.com/orcaman/concurrent-map"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
@@ -36,19 +37,9 @@ type CacheTestSuite struct {
 
 func (suite *CacheTestSuite) SetupTest() {
 	suite.cache = &OptlyCache{
-		defaultKey: "default",
-		loader:     mockLoader,
-		optlyMap:   cmap.New(),
+		loader:   mockLoader,
+		optlyMap: cmap.New(),
 	}
-}
-
-func (suite *CacheTestSuite) TestGetDefault() {
-	optltyClient1, err1 := suite.cache.GetDefaultClient()
-	optltyClient2, err2 := suite.cache.GetDefaultClient()
-
-	suite.NoError(err1)
-	suite.NoError(err2)
-	suite.Equal(optltyClient1, optltyClient2)
 }
 
 func (suite *CacheTestSuite) TestGetCacheHit() {
@@ -72,6 +63,13 @@ func (suite *CacheTestSuite) TestGetCacheMiss() {
 func (suite *CacheTestSuite) TestGetError() {
 	_, err1 := suite.cache.GetClient("ERROR")
 	suite.Error(err1)
+}
+
+func (suite *CacheTestSuite) TestInit() {
+	viper.SetDefault("optimizely.sdkKeys", "one")
+	suite.cache.init()
+	suite.True(suite.cache.optlyMap.Has("one"))
+	suite.False(suite.cache.optlyMap.Has("two"))
 }
 
 // In order for 'go test' to run this suite, we need to create

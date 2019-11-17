@@ -18,9 +18,9 @@
 package optimizely
 
 import (
-	"os"
-
 	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -30,26 +30,28 @@ import (
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	defaultKey string
-	loader     func(string) (*OptlyClient, error)
-	optlyMap   cmap.ConcurrentMap
+	loader   func(string) (*OptlyClient, error)
+	optlyMap cmap.ConcurrentMap
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
 func NewCache() *OptlyCache {
-	// TODO replace with actual configuration component
-	// If Map lookup are expensive we can store a direct reference to the "default" client.
-	sdkKey := os.Getenv("SDK_KEY")
-	return &OptlyCache{
-		defaultKey: sdkKey,
-		optlyMap:   cmap.New(),
-		loader:     initOptlyClient,
+	cache := &OptlyCache{
+		optlyMap: cmap.New(),
+		loader:   initOptlyClient,
 	}
+
+	cache.init()
+	return cache
 }
 
-// GetDefaultClient returns a default OptlyClient where the SDK Key is sourced via server configuration.
-func (c *OptlyCache) GetDefaultClient() (*OptlyClient, error) {
-	return c.GetClient(c.defaultKey)
+func (c *OptlyCache) init() {
+	sdkKeys := viper.GetStringSlice("optimizely.sdkKeys")
+	for _, sdkKey := range sdkKeys {
+		if _, err := c.GetClient(sdkKey); err != nil {
+			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
+		}
+	}
 }
 
 // GetClient is used to fetch an instance of the OptlyClient when the SDK Key is explicitly supplied.
@@ -61,7 +63,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 
 	oc, err := c.loader(sdkKey)
 	if err != nil {
-		return &OptlyClient{}, err
+		return oc, err
 	}
 
 	set := c.optlyMap.SetIfAbsent(sdkKey, oc)
@@ -75,10 +77,14 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 }
 
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
-
-	optimizelyFactory := &client.OptimizelyFactory{}
+	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
+	if _, err := configManager.GetConfig(); err != nil {
+		return &OptlyClient{}, err
+	}
+
 	forcedVariations := decision.NewMapExperimentOverridesStore()
+	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
