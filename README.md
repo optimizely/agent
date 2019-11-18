@@ -1,15 +1,17 @@
 [![Build Status](https://travis-ci.com/optimizely/sidedoor.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/sidedoor)
 [![codecov](https://codecov.io/gh/optimizely/sidedoor/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/sidedoor)
 # Optimizely Sidedoor
-Exploratory project for developing a service version of the Optimizely SDK.
+Sidedoor is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
+a highly available and distributed application.
 
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
 
 * **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
-* **cmd** - Main applications for this project.
 * **bin** - Compiled application binaries.
-* **pkg** - Library code that can be used by other applications
+* **cmd** - Main applications for this project.
+* **docs** - User documentation files.
+* **pkg** - Library code that can be used by other applications.
 * **scripts** - Scripts to perform various build, install, analysis, etc operations.
 
 ## Make targets
@@ -21,16 +23,6 @@ The following `make` targets can be used to build and run the application:
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **run** - builds and executes the sidedoor binary
 * **test** - recursively tests all .go files
-
-## Running locally
-Currently the Optimizely SDK Key is sourced from an `SDK_KEY` environment variable. For local development you can export your `SDK_KEY` or prefix the `make run` command.
-
-Ex:
-```
-SDK_KEY=<YOUR-KEY-KEY> make run
-```
-
-This file will get loaded via the `Makefile` configuration script.
 
 ## Prerequisites
 Install go on OSX:

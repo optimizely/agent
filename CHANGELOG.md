@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - November 18th, 2019
+- Adds ability to limit the number of active api connections
+- Allows SDK keys to be bootstrapped during startup
+- Adds http server timeouts
+- Adds graceful shutdown hooks
+- Adds support for forced variation API
+- Adds support for experimentation APIs
+
 ## [0.7.0] - November 7th, 2019
 - Adds request timing metrics
 - Allows config file location to be set
