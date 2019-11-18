@@ -23,6 +23,7 @@ import (
 	"github.com/optimizely/sidedoor/pkg/api/handlers"
 	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/spf13/viper"
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
@@ -31,6 +32,7 @@ import (
 
 // RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
+	maxConns     int
 	middleware   middleware.OptlyMiddleware
 	featureAPI   handlers.FeatureAPI
 	userEventAPI handlers.UserEventAPI
@@ -40,6 +42,7 @@ type RouterOptions struct {
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
 	spec := &RouterOptions{
+		maxConns:     viper.GetInt("api.maxconns"),
 		middleware:   &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		featureAPI:   new(handlers.FeatureHandler),
 		userEventAPI: new(handlers.UserEventHandler),
@@ -52,6 +55,11 @@ func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
 // NewRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewRouter(opt *RouterOptions) *chi.Mux {
 	r := chi.NewRouter()
+
+	if opt.maxConns > 0 {
+		// Note this is NOT a rate limiter, but a concurrency threshold
+		r.Use(chimw.Throttle(opt.maxConns))
+	}
 
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
