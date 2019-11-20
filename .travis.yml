@@ -15,8 +15,6 @@ jobs:
       os: linux
       dist: xenial
       env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
-      addons:
-        srcclr: true
       script:
         - make -e install lint
 
@@ -30,6 +28,16 @@ jobs:
       after_success:
         # Replace with coveralls if/when the repo is made public
         - bash <(curl -s https://codecov.io/bash)
+
+    - stage: test
+      name: srcclr
+      os: linux
+      dist: xenial
+      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
+      addons:
+        srcclr: true
+      script:
+        - go get -v -d ./...
 
     - stage: build
       if: type = push AND tag IS present
