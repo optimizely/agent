@@ -24,6 +24,7 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	events "github.com/optimizely/go-sdk/pkg/event"
 	cmap "github.com/orcaman/concurrent-map"
 )
 
@@ -83,11 +84,34 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
+	var ep events.Processor
+
+	if viper.IsSet("optimizely.eventProcessor.queueSize") || viper.IsSet("optimizely.eventProcessor.batchSize") {
+		var qFun = events.WithQueueSize(viper.GetInt("optimizely.eventProcessor.queueSize"))
+		var bFun = events.WithQueueSize(viper.GetInt("optimizely.eventProcessor.queueSize"))
+
+		if !viper.IsSet("optimizely.eventProcessor.queueSize") {
+			qFun = nil
+		}
+		if !viper.IsSet("optimizely.eventProcessor.queueSize") {
+			bFun = nil
+		}
+
+		ep = events.NewBatchEventProcessor(qFun,bFun)
+
+	}
+
+	epFun := client.WithEventProcessor(ep)
+	if ep == nil {
+		epFun = nil
+	}
+
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
+		epFun,
 	)
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
