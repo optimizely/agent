@@ -77,6 +77,25 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 	return c.GetClient(sdkKey)
 }
 
+func GetOptlyEventProcessor() events.Processor {
+	var ep events.Processor
+	batchSize := events.DefaultBatchSize
+	queueSize := events.DefaultEventQueueSize
+
+	if viper.IsSet("optimizely.eventProcessor.queueSize") || viper.IsSet("optimizely.eventProcessor.batchSize") {
+		if viper.IsSet("optimizely.eventProcessor.queueSize") {
+			queueSize = viper.GetInt("optimizely.eventProcessor.queueSize")
+		}
+		if viper.IsSet("optimizely.eventProcessor.batchSize") {
+			batchSize = viper.GetInt("optimizely.eventProcessor.batchSize")
+		}
+
+		ep = events.NewBatchEventProcessor(events.WithQueueSize(queueSize), events.WithBatchSize(batchSize))
+	}
+
+	return ep
+}
+
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
@@ -84,22 +103,7 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
-	var ep events.Processor
-
-	if viper.IsSet("optimizely.eventProcessor.queueSize") || viper.IsSet("optimizely.eventProcessor.batchSize") {
-		var qFun = events.WithQueueSize(viper.GetInt("optimizely.eventProcessor.queueSize"))
-		var bFun = events.WithQueueSize(viper.GetInt("optimizely.eventProcessor.queueSize"))
-
-		if !viper.IsSet("optimizely.eventProcessor.queueSize") {
-			qFun = nil
-		}
-		if !viper.IsSet("optimizely.eventProcessor.queueSize") {
-			bFun = nil
-		}
-
-		ep = events.NewBatchEventProcessor(qFun,bFun)
-
-	}
+	ep := GetOptlyEventProcessor()
 
 	epFun := client.WithEventProcessor(ep)
 	if ep == nil {

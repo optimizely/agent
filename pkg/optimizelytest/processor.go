@@ -25,8 +25,9 @@ type TestEventProcessor struct {
 }
 
 // ProcessEvent appends the events to a slice of UserEvents
-func (p *TestEventProcessor) ProcessEvent(e event.UserEvent) {
+func (p *TestEventProcessor) ProcessEvent(e event.UserEvent) bool {
 	p.events = append(p.events, e)
+	return true
 }
 
 // GetEvents returns a copy of the events received by the TestEventProcessor

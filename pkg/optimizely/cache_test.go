@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 
+	events "github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 )
 
@@ -70,6 +71,22 @@ func (suite *CacheTestSuite) TestInit() {
 	suite.cache.init()
 	suite.True(suite.cache.optlyMap.Has("one"))
 	suite.False(suite.cache.optlyMap.Has("two"))
+}
+
+func (suite *CacheTestSuite) TestGetEventProcessorWithQueueSize() {
+	viper.SetDefault("optimizely.eventProcessor.queueSize", 1000)
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*events.BatchEventProcessor); ok {
+		suite.True(bep.MaxQueueSize == 1000)
+	}
+}
+
+func (suite *CacheTestSuite) TestGetEventProcessorWithBatchSize() {
+	viper.SetDefault("optimizely.eventProcessor.batchSize", 30)
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*events.BatchEventProcessor); ok {
+		suite.True(bep.BatchSize == 30)
+	}
 }
 
 // In order for 'go test' to run this suite, we need to create
