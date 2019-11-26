@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/sidedoor/pkg/event"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
@@ -26,7 +27,16 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	events "github.com/optimizely/go-sdk/pkg/event"
 	cmap "github.com/orcaman/concurrent-map"
+	snsq "github.com/segmentio/nsq-go"
 )
+
+const EPQSize = "optimizely.eventProcessor.queueSize"
+const EPBSize = "optimizely.eventProcessor.batchSize"
+const NSQEnabled = "optimizely.eventProcessor.nsq.enabled"
+const NSQStartEmbedded = "optimizely.eventProcessor.nsq.startEmbedded"
+const NSQAddress = "optimizely.eventProcessor.nsq.address"
+const NSQConsumer = "optimizely.eventProcessor.nsq.withConsumer"
+const NSQProducer = "optimizely.eventProcessor.nsq.withProducer"
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -82,16 +92,57 @@ func GetOptlyEventProcessor() events.Processor {
 	batchSize := events.DefaultBatchSize
 	queueSize := events.DefaultEventQueueSize
 
-	if viper.IsSet("optimizely.eventProcessor.queueSize") || viper.IsSet("optimizely.eventProcessor.batchSize") {
-		if viper.IsSet("optimizely.eventProcessor.queueSize") {
-			queueSize = viper.GetInt("optimizely.eventProcessor.queueSize")
+	var q events.Queue
+
+	if viper.IsSet(NSQEnabled) && viper.GetBool(NSQEnabled) {
+		startEmbedded := viper.IsSet(NSQStartEmbedded) && viper.GetBool(NSQStartEmbedded)
+		var nsqAddress string
+		if nsqAddress = viper.GetString(NSQAddress); nsqAddress == "" {
+			nsqAddress = event.NsqListenSpec
 		}
-		if viper.IsSet("optimizely.eventProcessor.batchSize") {
-			batchSize = viper.GetInt("optimizely.eventProcessor.batchSize")
+		withProducer := viper.GetBool(NSQProducer)
+		withConsumer := viper.GetBool(NSQConsumer)
+		queueSize := events.DefaultEventQueueSize
+		if viper.IsSet(EPQSize) {
+			queueSize = viper.GetInt(EPQSize)
 		}
 
-		ep = events.NewBatchEventProcessor(events.WithQueueSize(queueSize), events.WithBatchSize(batchSize))
+		var consumer *snsq.Consumer
+		var producer *snsq.Producer
+
+		if withConsumer {
+			consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
+				Topic:       event.NsqTopic,
+				Channel:     event.NsqConsumerChannel,
+				Address:     nsqAddress,
+				MaxInFlight: 100,
+			})
+
+		}
+
+		if withProducer {
+			nsqConfig := snsq.ProducerConfig{Address: nsqAddress, Topic: event.NsqTopic}
+			producer, _ = snsq.NewProducer(nsqConfig)
+
+		}
+
+		q, _ = event.NewNSQueue(queueSize, startEmbedded, producer, consumer)
+
+	} else {
+		q = events.NewInMemoryQueue(queueSize)
 	}
+
+	if viper.IsSet(EPQSize) || viper.IsSet(EPBSize) {
+		if viper.IsSet(EPQSize) {
+			queueSize = viper.GetInt(EPQSize)
+		}
+		if viper.IsSet(EPBSize) {
+			batchSize = viper.GetInt(EPBSize)
+		}
+	}
+
+
+	ep = events.NewBatchEventProcessor(events.WithQueueSize(queueSize), events.WithBatchSize(batchSize), events.WithQueue(q))
 
 	return ep
 }

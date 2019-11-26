@@ -117,7 +117,7 @@ func TestNSQQueue_Consumer_Only(t *testing.T) {
 		close(mc.ConsumerChannel)
 	}()
 
-	// Pass nil producer for consumer-only
+	// Pass nil Producer for Consumer-only
 	q, err := NewNSQueue(10, "", false, nil, mc)
 	assert.NoError(t, err)
 
@@ -143,7 +143,7 @@ func TestNSQQueue_Producer_Only(t *testing.T) {
 		close(mc.ConsumerChannel)
 	}()
 
-	// Pass nil consumer for producer-only
+	// Pass nil Consumer for Producer-only
 	q, err := NewNSQueue(10, "", false, mp, nil)
 	assert.NoError(t, err)
 

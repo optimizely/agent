@@ -29,13 +29,13 @@ import (
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/rs/zerolog/log"
 
-	// we use the consumer from segmentio as it mentions in the segmentio documents, they
-	// found several problems with the nsq consumer and ended up creating their own wrapper.
+	// we use the Consumer from segmentio as it mentions in the segmentio documents, they
+	// found several problems with the nsq Consumer and ended up creating their own wrapper.
 	// we use that wrapper.
 	snsq "github.com/segmentio/nsq-go"
 )
 
-// NsqConsumerChannel is the default consumer channel
+// NsqConsumerChannel is the default Consumer channel
 const NsqConsumerChannel string = "optimizely"
 
 // NsqListenSpec is the default NSQD address
@@ -54,16 +54,16 @@ var done = make(chan bool)
 
 // NSQQueue is a implementation of Queue interface for use with NSQ
 // When constructed with NewNSQueue, it can be used in three modes:
-// - consumer-only
-// - producer-only
-// - both producer & consumer
-// In consumer-only mode, producerWriteChan is nil, and the Add method has no effect.
-// In producer-only and "both" modes, Add writes messages to producerWriteChan.
-// In consumer-only and "both" modes, NewNSQueue pulls messages from the consumer channel and
+// - Consumer-only
+// - Producer-only
+// - both Producer & Consumer
+// In Consumer-only mode, producerWriteChan is nil, and the Add method has no effect.
+// In Producer-only and "both" modes, Add writes messages to producerWriteChan.
+// In Consumer-only and "both" modes, NewNSQueue pulls messages from the Consumer channel and
 // adds them to consumerMessages. The other Queue interface methods interact with consumerMessages.
 type NSQQueue struct {
-	producer         NSQProducer
-	consumer         NSQConsumer
+	Producer         NSQProducer
+	Consumer         NSQConsumer
 	consumerMessages event.Queue
 }
 
@@ -100,14 +100,14 @@ func (q *NSQQueue) Add(item interface{}) {
 		log.Error().Err(err).Msg("Error encoding event")
 	}
 
-	// If producer is nil, this queue is in consumer-only mode
-	if q.producer != nil {
+	// If Producer is nil, this queue is in Consumer-only mode
+	if q.Producer != nil {
 		response := make(chan error, 1)
 		deadline := time.Now().Add(deadline)
 
 		// Attempts to queue the request so one of the active connections can pick
 		// it up.
-		q.producer.Requests() <- snsq.ProducerRequest{
+		q.Producer.Requests() <- snsq.ProducerRequest{
 			Topic:    NsqTopic,
 			Message:  buf.Bytes(),
 			Response: response,
@@ -159,17 +159,17 @@ func (q *NSQQueue) Size() int {
 	return q.consumerMessages.Size()
 }
 
-// NewNSQueue returns a NSQQueue connected to the argument producer & consumer
+// NewNSQueue returns a NSQQueue connected to the argument Producer & Consumer
 // NSQQueue can operate in 3 modes:
-// - producer-only
-// - consumer-only
-// - both consumer & producer
-// To create an instance in consumer-only mode, pass nil for the producer argument.
-// To create an instance in producer-only mode, pass nil for the consumer argument.
-// For "both" mode, provide both producer and consumer
-func NewNSQueue(queueSize int, address string, startDaemon bool, producer NSQProducer, consumer NSQConsumer) (event.Queue, error) {
+// - Producer-only
+// - Consumer-only
+// - both Consumer & Producer
+// To create an instance in Consumer-only mode, pass nil for the Producer argument.
+// To create an instance in Producer-only mode, pass nil for the Consumer argument.
+// For "both" mode, provide both Producer and Consumer
+func NewNSQueue(queueSize int, startDaemon bool, producer NSQProducer, consumer NSQConsumer) (event.Queue, error) {
 	if producer == nil && consumer == nil {
-		return nil, errors.New("invalid arguments: must provide at least one of producer or consumer")
+		return nil, errors.New("invalid arguments: must provide at least one of Producer or Consumer")
 	}
 
 	// Run NSQD embedded
@@ -198,11 +198,11 @@ func NewNSQueue(queueSize int, address string, startDaemon bool, producer NSQPro
 		}()
 	}
 
-	i := &NSQQueue{producer: producer, consumer: consumer, consumerMessages: event.NewInMemoryQueue(queueSize)}
+	i := &NSQQueue{Producer: producer, Consumer: consumer, consumerMessages: event.NewInMemoryQueue(queueSize)}
 
 	if consumer != nil {
 		go func() {
-			for message := range i.consumer.Messages() {
+			for message := range i.Consumer.Messages() {
 				i.consumerMessages.Add(message)
 			}
 		}()
@@ -230,7 +230,7 @@ func NewNSQueueDefault() (event.Queue, error) {
 		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}
 
-	q, err := NewNSQueue(100, NsqListenSpec, true, producer, consumer)
+	q, err := NewNSQueue(100, true, producer, consumer)
 	if err != nil {
 		return nil, fmt.Errorf("error creating default NSQQueue: %v", err)
 	}

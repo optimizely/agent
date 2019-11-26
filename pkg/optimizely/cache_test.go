@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"fmt"
+	"github.com/optimizely/sidedoor/pkg/event"
 	"testing"
 
 	cmap "github.com/orcaman/concurrent-map"
@@ -74,7 +75,7 @@ func (suite *CacheTestSuite) TestInit() {
 }
 
 func (suite *CacheTestSuite) TestGetEventProcessorWithQueueSize() {
-	viper.SetDefault("optimizely.eventProcessor.queueSize", 1000)
+	viper.SetDefault(EPQSize, 1000)
 	ep := GetOptlyEventProcessor()
 	if bep, ok := ep.(*events.BatchEventProcessor); ok {
 		suite.True(bep.MaxQueueSize == 1000)
@@ -82,10 +83,43 @@ func (suite *CacheTestSuite) TestGetEventProcessorWithQueueSize() {
 }
 
 func (suite *CacheTestSuite) TestGetEventProcessorWithBatchSize() {
-	viper.SetDefault("optimizely.eventProcessor.batchSize", 30)
+	viper.SetDefault(EPBSize, 30)
 	ep := GetOptlyEventProcessor()
 	if bep, ok := ep.(*events.BatchEventProcessor); ok {
 		suite.True(bep.BatchSize == 30)
+	}
+}
+
+func (suite *CacheTestSuite) TestGetEventProcessorWithNSQ() {
+	viper.SetDefault(EPBSize, 30)
+	viper.SetDefault(NSQEnabled, true)
+	viper.SetDefault(NSQConsumer, true)
+	viper.SetDefault(NSQProducer, true)
+	viper.SetDefault(NSQStartEmbedded, false)
+
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*events.BatchEventProcessor); ok {
+		suite.True(bep.BatchSize == 30)
+		if nsq, ok := bep.Q.(*event.NSQQueue); ok {
+			suite.NotNil(nsq.Consumer)
+			suite.NotNil(nsq.Producer)
+		} else {
+			suite.True(false)
+		}
+	}
+}
+
+func (suite *CacheTestSuite) TestGetEventProcessorWithoutNSQ() {
+	viper.SetDefault(EPBSize, 30)
+
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*events.BatchEventProcessor); ok {
+		suite.True(bep.BatchSize == 30)
+		if _, ok := bep.Q.(*event.NSQQueue); ok {
+			suite.True(false)
+		} else {
+			suite.True(true)
+		}
 	}
 }
 
