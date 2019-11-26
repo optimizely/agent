@@ -30,12 +30,19 @@ import (
 	snsq "github.com/segmentio/nsq-go"
 )
 
+// EPQSize integer event processor queue size
 const EPQSize = "optimizely.eventProcessor.queueSize"
+// EPBSize integer event processor batch size
 const EPBSize = "optimizely.eventProcessor.batchSize"
+// NSQEnable boolean true enables using the NSQ as the queue for the event processor
 const NSQEnabled = "optimizely.eventProcessor.nsq.enabled"
+// NSQStartEmbedded boolean whether to start the embedded nsq daemon
 const NSQStartEmbedded = "optimizely.eventProcessor.nsq.startEmbedded"
+// NSQAddress string address to bind the consumer and/or producer
 const NSQAddress = "optimizely.eventProcessor.nsq.address"
+// NSQConsumer boolean.  Start the consumer if set to true
 const NSQConsumer = "optimizely.eventProcessor.nsq.withConsumer"
+// NSQProducer boolan.  Start the producer if set to true
 const NSQProducer = "optimizely.eventProcessor.nsq.withProducer"
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -87,6 +94,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 	return c.GetClient(sdkKey)
 }
 
+// GetOptlyEventProcessor get the optly event processor using viper configuration variables.
 func GetOptlyEventProcessor() events.Processor {
 	var ep events.Processor
 	batchSize := events.DefaultBatchSize
@@ -102,7 +110,6 @@ func GetOptlyEventProcessor() events.Processor {
 		}
 		withProducer := viper.GetBool(NSQProducer)
 		withConsumer := viper.GetBool(NSQConsumer)
-		queueSize := events.DefaultEventQueueSize
 		if viper.IsSet(EPQSize) {
 			queueSize = viper.GetInt(EPQSize)
 		}
