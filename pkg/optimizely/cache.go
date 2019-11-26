@@ -163,17 +163,12 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 
 	ep := GetOptlyEventProcessor()
 
-	epFun := client.WithEventProcessor(ep)
-	if ep == nil {
-		epFun = nil
-	}
-
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
-		epFun,
+		client.WithEventProcessor(ep),
 	)
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
