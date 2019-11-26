@@ -34,7 +34,7 @@ import (
 const EPQSize = "optimizely.eventProcessor.queueSize"
 // EPBSize integer event processor batch size
 const EPBSize = "optimizely.eventProcessor.batchSize"
-// NSQEnable boolean true enables using the NSQ as the queue for the event processor
+// NSQEnabled boolean true enables using the NSQ as the queue for the event processor
 const NSQEnabled = "optimizely.eventProcessor.nsq.enabled"
 // NSQStartEmbedded boolean whether to start the embedded nsq daemon
 const NSQStartEmbedded = "optimizely.eventProcessor.nsq.startEmbedded"
