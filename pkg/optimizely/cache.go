@@ -96,7 +96,6 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 
 // GetOptlyEventProcessor get the optly event processor using viper configuration variables.
 func GetOptlyEventProcessor() events.Processor {
-	var ep events.Processor
 	batchSize := events.DefaultBatchSize
 	queueSize := events.DefaultEventQueueSize
 
@@ -139,17 +138,14 @@ func GetOptlyEventProcessor() events.Processor {
 		q = events.NewInMemoryQueue(queueSize)
 	}
 
-	if viper.IsSet(EPQSize) || viper.IsSet(EPBSize) {
-		if viper.IsSet(EPQSize) {
-			queueSize = viper.GetInt(EPQSize)
-		}
-		if viper.IsSet(EPBSize) {
-			batchSize = viper.GetInt(EPBSize)
-		}
+	if viper.IsSet(EPQSize) {
+		queueSize = viper.GetInt(EPQSize)
+	}
+	if viper.IsSet(EPBSize) {
+		batchSize = viper.GetInt(EPBSize)
 	}
 
-
-	ep = events.NewBatchEventProcessor(events.WithQueueSize(queueSize), events.WithBatchSize(batchSize), events.WithQueue(q))
+	ep := events.NewBatchEventProcessor(events.WithQueueSize(queueSize), events.WithBatchSize(batchSize), events.WithQueue(q))
 
 	return ep
 }
