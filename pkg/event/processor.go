@@ -32,7 +32,7 @@ const jsonContentType = "application/json"
 
 const timeout = 5 * time.Second
 
-// OptlyWebhookConfig represents configuration of a single Optimizely webhook
+// OptlyEventProcessorConfig represents configuration of the event processor. Also configuring nsq if used.
 type OptlyEventProcessorConfig struct {
 	NSQWithProducer     bool                    `yaml:"nsqWithProducer" default:"false"`
 	NSQWithConsumer     bool                    `yaml:"nsqWithConsumer" default:"false"`
