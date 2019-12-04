@@ -55,6 +55,13 @@ func GetOptlyEventProcessor() event.Processor {
 
 	var q event.Queue
 
+	if config.QueueSize == 0 {
+		config.QueueSize = event.DefaultEventQueueSize
+	}
+	if config.BatchSize == 0 {
+		config.BatchSize = event.DefaultBatchSize
+	}
+
 	// configure NSQ backed Queue
 	if config.NSQEnabled  {
 		startEmbedded := config.NSQStartEmbedded
