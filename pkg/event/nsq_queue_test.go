@@ -89,7 +89,7 @@ func TestNSQQueue_Add_Get_Size_Remove(t *testing.T) {
 		close(mc.ConsumerChannel)
 	}()
 
-	q, err := NewNSQueue(10, "", false, mp, mc)
+	q, err := NewNSQueue(10, false, mp, mc)
 	assert.NoError(t, err)
 
 	impression := BuildTestImpressionEvent()
@@ -118,7 +118,7 @@ func TestNSQQueue_Consumer_Only(t *testing.T) {
 	}()
 
 	// Pass nil Producer for Consumer-only
-	q, err := NewNSQueue(10, "", false, nil, mc)
+	q, err := NewNSQueue(10, false, nil, mc)
 	assert.NoError(t, err)
 
 	buf := new(bytes.Buffer)
@@ -144,7 +144,7 @@ func TestNSQQueue_Producer_Only(t *testing.T) {
 	}()
 
 	// Pass nil Consumer for Producer-only
-	q, err := NewNSQueue(10, "", false, mp, nil)
+	q, err := NewNSQueue(10, false, mp, nil)
 	assert.NoError(t, err)
 
 	q.Add(BuildTestConversionEvent())

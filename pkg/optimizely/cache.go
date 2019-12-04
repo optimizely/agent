@@ -21,29 +21,13 @@ import (
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/sidedoor/pkg/event"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
-	events "github.com/optimizely/go-sdk/pkg/event"
 	cmap "github.com/orcaman/concurrent-map"
-	snsq "github.com/segmentio/nsq-go"
-)
+	"github.com/spf13/viper"
 
-// EPQSize integer event processor queue size
-const EPQSize = "optimizely.eventProcessor.queueSize"
-// EPBSize integer event processor batch size
-const EPBSize = "optimizely.eventProcessor.batchSize"
-// NSQEnabled boolean true enables using the NSQ as the queue for the event processor
-const NSQEnabled = "optimizely.eventProcessor.nsq.enabled"
-// NSQStartEmbedded boolean whether to start the embedded nsq daemon
-const NSQStartEmbedded = "optimizely.eventProcessor.nsq.startEmbedded"
-// NSQAddress string address to bind the consumer and/or producer
-const NSQAddress = "optimizely.eventProcessor.nsq.address"
-// NSQConsumer boolean.  Start the consumer if set to true
-const NSQConsumer = "optimizely.eventProcessor.nsq.withConsumer"
-// NSQProducer boolan.  Start the producer if set to true
-const NSQProducer = "optimizely.eventProcessor.nsq.withProducer"
+)
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -94,62 +78,6 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 	return c.GetClient(sdkKey)
 }
 
-// GetOptlyEventProcessor get the optly event processor using viper configuration variables.
-func GetOptlyEventProcessor() events.Processor {
-	batchSize := events.DefaultBatchSize
-	queueSize := events.DefaultEventQueueSize
-
-	var q events.Queue
-
-	if viper.IsSet(NSQEnabled) && viper.GetBool(NSQEnabled) {
-		startEmbedded := viper.IsSet(NSQStartEmbedded) && viper.GetBool(NSQStartEmbedded)
-		var nsqAddress string
-		if nsqAddress = viper.GetString(NSQAddress); nsqAddress == "" {
-			nsqAddress = event.NsqListenSpec
-		}
-		withProducer := viper.GetBool(NSQProducer)
-		withConsumer := viper.GetBool(NSQConsumer)
-		if viper.IsSet(EPQSize) {
-			queueSize = viper.GetInt(EPQSize)
-		}
-
-		var consumer *snsq.Consumer
-		var producer *snsq.Producer
-
-		if withConsumer {
-			consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
-				Topic:       event.NsqTopic,
-				Channel:     event.NsqConsumerChannel,
-				Address:     nsqAddress,
-				MaxInFlight: 100,
-			})
-
-		}
-
-		if withProducer {
-			nsqConfig := snsq.ProducerConfig{Address: nsqAddress, Topic: event.NsqTopic}
-			producer, _ = snsq.NewProducer(nsqConfig)
-
-		}
-
-		q, _ = event.NewNSQueue(queueSize, startEmbedded, producer, consumer)
-
-	} else {
-		q = events.NewInMemoryQueue(queueSize)
-	}
-
-	if viper.IsSet(EPQSize) {
-		queueSize = viper.GetInt(EPQSize)
-	}
-	if viper.IsSet(EPBSize) {
-		batchSize = viper.GetInt(EPBSize)
-	}
-
-	ep := events.NewBatchEventProcessor(events.WithQueueSize(queueSize), events.WithBatchSize(batchSize), events.WithQueue(q))
-
-	return ep
-}
-
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 	configManager := config.NewPollingProjectConfigManager(sdkKey)
@@ -157,7 +85,7 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
-	ep := GetOptlyEventProcessor()
+	ep := event.GetOptlyEventProcessor()
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}

@@ -74,55 +74,6 @@ func (suite *CacheTestSuite) TestInit() {
 	suite.False(suite.cache.optlyMap.Has("two"))
 }
 
-func (suite *CacheTestSuite) TestGetEventProcessorWithQueueSize() {
-	viper.SetDefault(EPQSize, 1000)
-	ep := GetOptlyEventProcessor()
-	if bep, ok := ep.(*events.BatchEventProcessor); ok {
-		suite.True(bep.MaxQueueSize == 1000)
-	}
-}
-
-func (suite *CacheTestSuite) TestGetEventProcessorWithBatchSize() {
-	viper.SetDefault(EPBSize, 30)
-	ep := GetOptlyEventProcessor()
-	if bep, ok := ep.(*events.BatchEventProcessor); ok {
-		suite.True(bep.BatchSize == 30)
-	}
-}
-
-func (suite *CacheTestSuite) TestGetEventProcessorWithNSQ() {
-	viper.SetDefault(EPBSize, 30)
-	viper.SetDefault(NSQEnabled, true)
-	viper.SetDefault(NSQConsumer, true)
-	viper.SetDefault(NSQProducer, true)
-	viper.SetDefault(NSQStartEmbedded, false)
-
-	ep := GetOptlyEventProcessor()
-	if bep, ok := ep.(*events.BatchEventProcessor); ok {
-		suite.True(bep.BatchSize == 30)
-		if nsq, ok := bep.Q.(*event.NSQQueue); ok {
-			suite.NotNil(nsq.Consumer)
-			suite.NotNil(nsq.Producer)
-		} else {
-			suite.True(false)
-		}
-	}
-}
-
-func (suite *CacheTestSuite) TestGetEventProcessorWithoutNSQ() {
-	viper.SetDefault(EPBSize, 30)
-
-	ep := GetOptlyEventProcessor()
-	if bep, ok := ep.(*events.BatchEventProcessor); ok {
-		suite.True(bep.BatchSize == 30)
-		if _, ok := bep.Q.(*event.NSQQueue); ok {
-			suite.True(false)
-		} else {
-			suite.True(true)
-		}
-	}
-}
-
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCacheTestSuite(t *testing.T) {
