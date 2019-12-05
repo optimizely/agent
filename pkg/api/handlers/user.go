@@ -67,7 +67,7 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	render.NoContent(w, r)
 }
 
-// GetFeature - Return the feature and record impression if applicable.
+// GetFeature - Return the feature. Note: no impressions recorded for associated feature tests.
 func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
@@ -179,6 +179,11 @@ func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Reque
 	} else {
 		w.WriteHeader(http.StatusNoContent)
 	}
+}
+
+// ListFeatures - List decisions for all features for user
+func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
+	RenderError(errors.New("NYI"), http.StatusNotImplemented, w, r)
 }
 
 // parseContext extract the common references from the request context
