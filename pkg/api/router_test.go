@@ -80,6 +80,10 @@ func (m *MockUserAPI) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
+func (m *MockUserAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
 func (m *MockUserAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }

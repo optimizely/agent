@@ -181,9 +181,40 @@ func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-// ListFeatures - List decisions for all features for user
+// ListFeatures - List all feature decisions for a user
+// Note: no impressions recorded for associated feature tests.
 func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	RenderError(errors.New("NYI"), http.StatusNotImplemented, w, r)
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	featureEntities, err := optlyClient.ListFeatures()
+	if err != nil {
+		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	var featureModels []*models.Feature
+	for _, feature := range featureEntities {
+		enabled, variables, err := optlyClient.GetFeatureWithContext(feature.Key, optlyContext)
+		if err != nil {
+			middleware.GetLogger(r).Error().Err(err).Str("feature.Key", feature.Key).Msg("Calling ListFeatures")
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+
+		feature := &models.Feature{
+			Enabled:   enabled,
+			Key:       feature.Key,
+			Variables: variables,
+		}
+		featureModels = append(featureModels, feature)
+	}
+
+	render.JSON(w, r, featureModels)
 }
 
 // parseContext extract the common references from the request context
