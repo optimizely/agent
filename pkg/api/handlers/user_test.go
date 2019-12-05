@@ -83,6 +83,7 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
+	mux.Get("/features", userAPI.ListFeatures)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
 	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
@@ -388,6 +389,72 @@ func (suite *UserTestSuite) TestActivateExperiment() {
 	suite.Equal(expected, actual)
 }
 
+func (suite *UserTestSuite) TestListFeatures() {
+	// 100% enabled rollout
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// TODO: refactor to create test entities in helper fns
+
+	// 100% disabled rollout
+	feature2 := entities.Feature{Key: "two"}
+	suite.tc.AddFeatureRollout(feature2)
+	variations := suite.tc.ProjectConfig.FeatureMap["two"].Rollout.Experiments[0].Variations
+	for _, variation := range variations {
+		variation.FeatureEnabled = false
+		variations[variation.ID] = variation
+	}
+
+	// Feature test 100% enabled variation 100% with variation variable value
+	feature3 := entities.Feature{Key: "three", VariableMap: map[string]entities.Variable{
+		"strvar": {DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"},
+	}}
+	suite.tc.AddFeatureRollout(feature3)
+	suite.tc.AddFeatureTest(feature3)
+	variations = suite.tc.ProjectConfig.FeatureMap["three"].FeatureExperiments[0].Variations
+	for _, variation := range variations {
+		variation.Variables = map[string]entities.VariationVariable{
+			"123": {
+				ID:    "123",
+				Value: "abc_notdef",
+			},
+		}
+		variations[variation.ID] = variation
+	}
+
+	req := httptest.NewRequest("GET", "/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual []models.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := models.Feature{
+		Key:     "one",
+		Enabled: true,
+	}
+	suite.Equal(expected, actual[0])
+	expected = models.Feature{
+		Key:     "two",
+		Enabled: false,
+	}
+	suite.Equal(expected, actual[1])
+	expected = models.Feature{
+		Key: "three",
+		Variables: map[string]string{
+			"strvar": "abc_notdef",
+		},
+		ID:      0,
+		Enabled: true,
+	}
+	suite.Equal(expected, actual[2])
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+}
+
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
 }
@@ -407,6 +474,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.ActivateExperiment,
 		userHandler.GetFeature,
+		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,
@@ -429,6 +497,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.ActivateExperiment,
 		userHandler.GetFeature,
+		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
 		userHandler.TrackEvent,

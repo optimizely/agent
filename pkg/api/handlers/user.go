@@ -190,6 +190,8 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: refactor to an optlyClient method that does everything except translating the entity to a model
+
 	featureEntities, err := optlyClient.ListFeatures()
 	if err != nil {
 		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
