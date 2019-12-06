@@ -219,6 +219,10 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, featureModels)
 }
 
+func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {
+	RenderError(errors.New("NYI"), http.StatusNotImplemented, w, r)
+}
+
 // parseContext extract the common references from the request context
 func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyContext, error) {
 	optlyClient, err := middleware.GetOptlyClient(r)
