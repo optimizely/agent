@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -433,16 +434,18 @@ func (suite *UserTestSuite) TestListFeatures() {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
+	// The ordering of features in the response JSON array is undefined,
+	// so sort them before doing assertions.
+	sort.Slice(actual, func(i, j int) bool {
+		return sort.StringsAreSorted([]string{actual[i].Key, actual[j].Key})
+	})
+
 	expected := models.Feature{
 		Key:     "one",
 		Enabled: true,
 	}
 	suite.Equal(expected, actual[0])
-	expected = models.Feature{
-		Key:     "two",
-		Enabled: false,
-	}
-	suite.Equal(expected, actual[1])
+
 	expected = models.Feature{
 		Key: "three",
 		Variables: map[string]string{
@@ -451,7 +454,14 @@ func (suite *UserTestSuite) TestListFeatures() {
 		ID:      0,
 		Enabled: true,
 	}
+	suite.Equal(expected, actual[1])
+
+	expected = models.Feature{
+		Key:     "two",
+		Enabled: false,
+	}
 	suite.Equal(expected, actual[2])
+
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
 }
 
