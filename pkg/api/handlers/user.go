@@ -190,33 +190,17 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: refactor to an optlyClient method that does everything except translating the entity to a model
-
-	featureEntities, err := optlyClient.ListFeatures()
+	featureDecisions, err := optlyClient.DecideFeatures(optlyContext)
 	if err != nil {
 		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
 		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	var featureModels []*models.Feature
-	for _, feature := range featureEntities {
-		enabled, variables, err := optlyClient.GetFeatureWithContext(feature.Key, optlyContext)
-		if err != nil {
-			middleware.GetLogger(r).Error().Err(err).Str("feature.Key", feature.Key).Msg("Calling ListFeatures")
-			RenderError(err, http.StatusInternalServerError, w, r)
-			return
+	} else {
+		var decisionsSlice []optimizely.FeatureDecision
+		for _, decision := range featureDecisions {
+			decisionsSlice = append(decisionsSlice, *decision)
 		}
-
-		feature := &models.Feature{
-			Enabled:   enabled,
-			Key:       feature.Key,
-			Variables: variables,
-		}
-		featureModels = append(featureModels, feature)
+		render.JSON(w, r, decisionsSlice)
 	}
-
-	render.JSON(w, r, featureModels)
 }
 
 func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {

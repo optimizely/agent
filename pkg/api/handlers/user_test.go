@@ -430,7 +430,7 @@ func (suite *UserTestSuite) TestListFeatures() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual []models.Feature
+	var actual []optimizely.FeatureDecision
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
@@ -440,25 +440,26 @@ func (suite *UserTestSuite) TestListFeatures() {
 		return sort.StringsAreSorted([]string{actual[i].Key, actual[j].Key})
 	})
 
-	expected := models.Feature{
-		Key:     "one",
+	expected := optimizely.FeatureDecision{
 		Enabled: true,
+		Key:     "one",
+		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[0])
 
-	expected = models.Feature{
+	expected = optimizely.FeatureDecision{
+		Enabled: true,
 		Key: "three",
-		Variables: map[string]string{
+		VariableValues: map[string]string{
 			"strvar": "abc_notdef",
 		},
-		ID:      0,
-		Enabled: true,
 	}
 	suite.Equal(expected, actual[1])
 
-	expected = models.Feature{
-		Key:     "two",
+	expected = optimizely.FeatureDecision{
 		Enabled: false,
+		Key:     "two",
+		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[2])
 

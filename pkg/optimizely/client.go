@@ -33,6 +33,13 @@ type OptlyClient struct {
 	ForcedVariations *decision.MapExperimentOverridesStore
 }
 
+// Return value of methods that provide feature decisions for a given OptlyContext
+type FeatureDecision struct {
+	Key            string
+	Enabled        bool
+	VariableValues map[string]string
+}
+
 // ListFeatures returns all available features
 func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 	projectConfig, err := c.GetProjectConfig()
@@ -42,6 +49,33 @@ func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 
 	features = projectConfig.GetFeatureList()
 	return features, err
+}
+
+// DecideFeatures - Returns a slice of FeatureDecision pointers representing the decisions for all features for the argument context cotext
+func (c *OptlyClient) DecideFeatures(ctx *OptlyContext) (map[string]*FeatureDecision, error) {
+	featureDecisions := make(map[string]*FeatureDecision)
+
+	featureEntities, err := c.ListFeatures()
+	if err != nil {
+		// TODO: wrap error?
+		return featureDecisions, err
+	}
+
+	for _, feature := range featureEntities {
+		enabled, variables, err := c.GetFeatureWithContext(feature.Key, ctx)
+		if err != nil {
+			// TODO: wrap error?
+			return map[string]*FeatureDecision{}, err
+		}
+
+		featureDecisions[feature.Key] = &FeatureDecision{
+			Enabled:        enabled,
+			Key:            feature.Key,
+			VariableValues: variables,
+		}
+	}
+
+	return featureDecisions, nil
 }
 
 // GetFeature returns the feature definition
@@ -77,6 +111,7 @@ func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, 
 }
 
 // GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext
+// TODO: Refactor to return FeatureDecision
 func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
 	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
 }
