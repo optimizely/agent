@@ -18,14 +18,19 @@
 package optimizely
 
 import (
-	"github.com/optimizely/go-sdk/pkg/config"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
+	"time"
 
 	"github.com/optimizely/go-sdk/pkg/client"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/event"
+
 	cmap "github.com/orcaman/concurrent-map"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
+
+const dispatcherMetricsPrefic = "dispatcher"
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -52,6 +57,18 @@ func (c *OptlyCache) init() {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
 		}
 	}
+
+	metrics := NewMetrics(dispatcherMetricsPrefic)
+	go func() {
+
+		t := time.NewTicker(time.Second * 2)
+		for {
+			select {
+			case <-t.C:
+				metrics.SetMetrics(c.GetEventDispatcherMetrics())
+			}
+		}
+	}()
 }
 
 // GetClient is used to fetch an instance of the OptlyClient when the SDK Key is explicitly supplied.
@@ -90,4 +107,21 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		client.WithExperimentOverrides(forcedVariations),
 	)
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
+}
+
+func (c *OptlyCache) GetEventDispatcherMetrics() *event.DefaultMetrics {
+
+	clientsMetrics := &event.DefaultMetrics{}
+	for _, client := range c.optlyMap.Items() {
+
+		if client, ok := client.(*OptlyClient); ok {
+			if eventProcessor, goodEP := client.EventProcessor.(*event.BatchEventProcessor); goodEP {
+				if metric, goodMetric := eventProcessor.EventDispatcher.GetMetrics().(*event.DefaultMetrics); goodMetric {
+					clientsMetrics.Add(metric)
+				}
+
+			}
+		}
+	}
+	return clientsMetrics
 }
