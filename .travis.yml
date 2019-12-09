@@ -17,6 +17,7 @@ jobs:
       env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
       script:
         - make -e install lint
+        - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
 
     - stage: test
       name: unit
