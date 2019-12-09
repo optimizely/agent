@@ -33,7 +33,7 @@ type OptlyClient struct {
 	ForcedVariations *decision.MapExperimentOverridesStore
 }
 
-// Return value of methods that provide feature decisions for a given OptlyContext
+// FeatureDecision is the return type of methods that provide feature enabled and variable value decisions for a given OptlyContext
 type FeatureDecision struct {
 	Key            string
 	Enabled        bool
