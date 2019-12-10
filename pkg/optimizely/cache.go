@@ -30,7 +30,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const dispatcherMetricsPrefic = "dispatcher"
+const dispatcherMetricsPrefix = "counter.dispatcher"
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -58,10 +58,11 @@ func (c *OptlyCache) init() {
 		}
 	}
 
-	metrics := NewMetrics(dispatcherMetricsPrefic)
+	metrics := NewMetrics(dispatcherMetricsPrefix)
+	pollingFrequency := viper.GetDuration("metrics.pollingfreqency")
 	go func() {
 
-		t := time.NewTicker(time.Second * 2)
+		t := time.NewTicker(pollingFrequency)
 		for {
 			select {
 			case <-t.C:
@@ -109,6 +110,7 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
 
+// GetEventDispatcherMetrics aggregates metrics from all clients
 func (c *OptlyCache) GetEventDispatcherMetrics() *event.DefaultMetrics {
 
 	clientsMetrics := &event.DefaultMetrics{}

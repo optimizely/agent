@@ -18,34 +18,49 @@
 package optimizely
 
 import (
+	"encoding/json"
 	"expvar"
+	"net/http/httptest"
+	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/event"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// Metrics initializes expvar metrics
-type Metrics struct {
-	QueueSize    *expvar.Int
-	SuccessFlush *expvar.Int
-	FailFlush    *expvar.Int
-	RetryFlush   *expvar.Int
-}
+type JSON map[string]interface{}
 
-// NewMetrics initializes metrics
-func NewMetrics(prefixKey string) *Metrics {
+var sufixList = []string{".queueSize", ".successFlush", ".failFlush", ".retryFlush"}
+var metricPrefix = "dispatcher"
 
-	return &Metrics{
-		QueueSize:    expvar.NewInt(prefixKey + ".queueSize"),
-		SuccessFlush: expvar.NewInt(prefixKey + ".successFlush"),
-		FailFlush:    expvar.NewInt(prefixKey + ".failFlush"),
-		RetryFlush:   expvar.NewInt(prefixKey + ".retryFlush"),
+func TestMetrics(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	EPMetrics := &event.DefaultMetrics{QueueSize: 20, FailFlushCount: 1, SuccessFlushCount: 3, RetryFlushCount: 5}
+	metrics := NewMetrics(metricPrefix)
+	metrics.SetMetrics(EPMetrics)
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+
+	for _, item := range sufixList {
+		expectedKey := metricPrefix + item
+		value, ok := expVarMap[expectedKey]
+		assert.True(t, ok)
+		switch item {
+		case ".queueSize":
+			assert.Equal(t, 20.0, value)
+		case ".successFlush":
+			assert.Equal(t, 3.0, value)
+		case ".failFlush":
+			assert.Equal(t, 1.0, value)
+		case ".retryFlush":
+			assert.Equal(t, 5.0, value)
+
+		}
 	}
-}
-
-// SetMetrics sets event process metrics to expvar metrics
-func (m *Metrics) SetMetrics(defaultMetrics *event.DefaultMetrics) {
-	m.QueueSize.Set(int64(defaultMetrics.QueueSize))
-	m.FailFlush.Set(defaultMetrics.FailFlushCount)
-	m.RetryFlush.Set(defaultMetrics.RetryFlushCount)
-	m.SuccessFlush.Set(defaultMetrics.SuccessFlushCount)
 }

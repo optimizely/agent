@@ -59,6 +59,8 @@ func loadConfig() error {
 	viper.SetDefault("server.readtimeout", 5*time.Second)
 	viper.SetDefault("server.writetimeout", 10*time.Second)
 
+	viper.SetDefault("metrics.pollingfreqency", time.Minute) // Set default polling frequency for metric collection
+
 	// Configure environment variables
 	viper.SetEnvPrefix("sidedoor")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
