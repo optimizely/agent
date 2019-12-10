@@ -20,6 +20,7 @@ package optimizely
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/spf13/viper"
@@ -67,6 +68,7 @@ func (suite *CacheTestSuite) TestGetError() {
 
 func (suite *CacheTestSuite) TestInit() {
 	viper.SetDefault("optimizely.sdkKeys", "one")
+	viper.SetDefault("metrics.pollingfreqency", time.Minute)
 	suite.cache.init()
 	suite.True(suite.cache.optlyMap.Has("one"))
 	suite.False(suite.cache.optlyMap.Has("two"))
