@@ -24,7 +24,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/sidedoor/pkg/api/models"
@@ -33,7 +33,7 @@ import (
 )
 
 type TestConfig struct {
-	pkg.ProjectConfig
+	config.ProjectConfig
 }
 
 func (TestConfig) GetEventByKey(string) (entities.Event, error) {
