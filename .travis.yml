@@ -1,5 +1,9 @@
 language: minimal
 
+env:
+  global:
+    - GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
+
 branches:
   only:
   - master
@@ -14,7 +18,7 @@ jobs:
       name: lint
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
+      env: BLAH=test
       script:
         - make -e install lint
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
@@ -23,7 +27,6 @@ jobs:
       name: unit
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
       script:
         - make -e cover COVER_FILE=coverage.txt
       after_success:
@@ -34,7 +37,6 @@ jobs:
       name: srcclr
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
       addons:
         srcclr: true
       script:
@@ -45,7 +47,7 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-      env: GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64 VERSION=${TRAVIS_TAG:1}
+      env: VERSION=${TRAVIS_TAG:1}
       script:
         # now we're going to create packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
