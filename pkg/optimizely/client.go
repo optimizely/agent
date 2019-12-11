@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"errors"
+	"fmt"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
@@ -57,15 +58,13 @@ func (c *OptlyClient) DecideFeatures(ctx *OptlyContext) (map[string]*FeatureDeci
 
 	featureEntities, err := c.ListFeatures()
 	if err != nil {
-		// TODO: wrap error?
-		return featureDecisions, err
+		return featureDecisions, fmt.Errorf("error returned from ListFeatures: %w", err)
 	}
 
 	for _, feature := range featureEntities {
 		enabled, variables, err := c.GetFeatureWithContext(feature.Key, ctx)
 		if err != nil {
-			// TODO: wrap error?
-			return map[string]*FeatureDecision{}, err
+			return map[string]*FeatureDecision{}, fmt.Errorf("error returned from GetFeatureWithContext: %w", err)
 		}
 
 		featureDecisions[feature.Key] = &FeatureDecision{

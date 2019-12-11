@@ -397,6 +397,7 @@ func (suite *UserTestSuite) TestListFeatures() {
 	suite.tc.AddFeatureRollout(feature)
 
 	// TODO: refactor to create test entities in helper fns
+	// TODO: Move tests inside client
 
 	// 100% disabled rollout
 	feature2 := entities.Feature{Key: "two"}
@@ -489,7 +490,6 @@ func TestUserMissingClientCtx(t *testing.T) {
 		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
-		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
 	}
 
@@ -513,7 +513,6 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
-		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
 		userHandler.SetForcedVariation,
 		userHandler.RemoveForcedVariation,
