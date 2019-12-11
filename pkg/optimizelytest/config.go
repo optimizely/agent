@@ -186,10 +186,11 @@ func (c *TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfi
 	}
 
 	experiment := entities.Experiment{
-		Key:        experimentID,
-		LayerID:    layerID,
-		ID:         experimentID,
-		Variations: map[string]entities.Variation{variationID: variation},
+		Key:                 experimentID,
+		LayerID:             layerID,
+		ID:                  experimentID,
+		Variations:          map[string]entities.Variation{variationID: variation},
+		VariationKeyToIDMap: map[string]string{variation.Key: variationID},
 		TrafficAllocation: []entities.Range{
 			entities.Range{EntityID: variationID, EndOfRange: 10000},
 		},
@@ -214,10 +215,11 @@ func (c *TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectCo
 	}
 
 	experiment := entities.Experiment{
-		Key:        experimentID,
-		LayerID:    layerID,
-		ID:         experimentID,
-		Variations: map[string]entities.Variation{variationID: variation},
+		Key:                 experimentID,
+		LayerID:             layerID,
+		ID:                  experimentID,
+		Variations:          map[string]entities.Variation{variationID: variation},
+		VariationKeyToIDMap: map[string]string{variation.Key: variationID},
 		TrafficAllocation: []entities.Range{
 			entities.Range{EntityID: variationID, EndOfRange: 10000},
 		},
@@ -241,19 +243,22 @@ func (c *TestProjectConfig) AddExperiment(experimentKey string, variations []ent
 	layerID := c.getNextID()
 
 	variationMap := map[string]entities.Variation{}
+	variationKeyTOIDMap := make(map[string]string)
 	trafficAllocation := []entities.Range{}
 	for i, variation := range variations {
 		variationMap[variation.ID] = variation
+		variationKeyTOIDMap[variation.Key] = variation.ID
 		endOfRange := 10000 / len(variations) * (i + 1)
 		trafficAllocation = append(trafficAllocation, entities.Range{EntityID: variation.ID, EndOfRange: endOfRange})
 	}
 
 	experiment := entities.Experiment{
-		Key:               experimentKey,
-		ID:                experimentID,
-		LayerID:           layerID,
-		Variations:        variationMap,
-		TrafficAllocation: trafficAllocation,
+		Key:                 experimentKey,
+		ID:                  experimentID,
+		LayerID:             layerID,
+		Variations:          variationMap,
+		VariationKeyToIDMap: variationKeyTOIDMap,
+		TrafficAllocation:   trafficAllocation,
 	}
 
 	c.ExperimentKeyToIDMap[experimentKey] = experimentID
@@ -300,6 +305,9 @@ func (c *TestProjectConfig) AddMultiVariationFeatureTest(f entities.Feature, dis
 			disabledVariationID: disabledVariation,
 			enabledVariationID:  enabledVariation,
 		},
+		VariationKeyToIDMap: map[string]string{
+			enabledVariationKey: enabledVariationID,
+		},
 		TrafficAllocation: []entities.Range{
 			// Note: Intentionally using the same variation ID for both ranges.
 			// This is a valid representation that can occur in real datafiles.
@@ -324,9 +332,14 @@ func (c *TestProjectConfig) AddMultiVariationABTest(experimentKey, variationAKey
 	variationA := c.CreateVariation(variationAKey)
 	variationB := c.CreateVariation(variationBKey)
 
-	variationMap := map[string]entities.Variation{}
-	variationMap[variationA.ID] = variationA
-	variationMap[variationB.ID] = variationB
+	variationMap := map[string]entities.Variation{
+		variationA.ID: variationA,
+		variationB.ID: variationB,
+	}
+	variationKeyToIDMap := map[string]string{
+		variationA.Key: variationA.ID,
+		variationB.Key: variationB.ID,
+	}
 	trafficAllocation := []entities.Range{
 		// Note: Intentionally using the same variation ID for both ranges.
 		// This is a valid representation that can occur in real datafiles.
@@ -338,11 +351,12 @@ func (c *TestProjectConfig) AddMultiVariationABTest(experimentKey, variationAKey
 	experimentID := c.getNextID()
 	layerID := c.getNextID()
 	experiment := entities.Experiment{
-		Key:               experimentKey,
-		ID:                experimentID,
-		LayerID:           layerID,
-		Variations:        variationMap,
-		TrafficAllocation: trafficAllocation,
+		Key:                 experimentKey,
+		ID:                  experimentID,
+		LayerID:             layerID,
+		Variations:          variationMap,
+		VariationKeyToIDMap: variationKeyToIDMap,
+		TrafficAllocation:   trafficAllocation,
 	}
 
 	c.ExperimentKeyToIDMap[experimentKey] = experimentID
