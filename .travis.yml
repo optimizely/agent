@@ -2,6 +2,7 @@ language: minimal
 
 env:
   global:
+    # GO VERSION is set here with GIMME_GO_VERSION see: https://github.com/travis-ci/gimme
     - GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
 
 branches:
@@ -18,7 +19,6 @@ jobs:
       name: lint
       os: linux
       dist: xenial
-      env: BLAH=test
       script:
         - make -e install lint
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
@@ -47,7 +47,12 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-      env: VERSION=${TRAVIS_TAG:1}
+
+      # The version of the app is set via git tag (below). This is picked up in the Makefile and compiled into the binary via LDFLAGS.
+      # It is also picked up in scripts/Makefile.ci to be used in the package name when they are built.
+
+      env: APP_VERSION=${TRAVIS_TAG#v}
+
       script:
         # now we're going to create packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
