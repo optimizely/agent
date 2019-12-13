@@ -167,7 +167,21 @@ func (suite *RouterTestSuite) TestGetFeature() {
 	suite.assertValid(rec, expected)
 }
 
-func (suite *RouterTestSuite) TestGetFeatures() {
+func (suite *RouterTestSuite) TestGetUserFeatures() {
+	req := httptest.NewRequest("GET", "/users/me/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+
+	expected := map[string]string{
+		"userID":     "me",
+	}
+	suite.assertValid(rec, expected)
+}
+
+func (suite *RouterTestSuite) TestGetUserFeature() {
 	req := httptest.NewRequest("GET", "/users/me/features/one", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
