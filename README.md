@@ -51,3 +51,65 @@ We also provide a Make task `generate-api`:
 ```
 make generate-api ARG=<GENERATOR_NAME>
 ```
+
+## Credits
+
+This software is distributed with code from the following open source projects:
+
+gohistogram
+Copyright (c) 2013 VividCortex
+LICENSE (MIT):https://github.com/VividCortex/gohistogram/blob/master/LICENSE
+
+chi
+Copyright (c) 2015-present Peter Kieltyka
+LICENSE (MIT):https://github.com/go-chi/chi/blob/master/LICENSE
+
+chi-render
+Copyright (c) 2016-Present
+LICENSE (MIT):https://github.com/go-chi/render/blob/master/LICENSE
+
+go-kit
+Copyright (c) 2015 Peter Bourgon
+LICENSE (MIT):https://github.com/go-kit/kit/blob/master/LICENSE
+
+uuid
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+License (BSD-3): https://github.com/nsqio/nsq/blob/master/LICENSE
+
+nsq
+License (MIT): https://github.com/nsqio/nsq/blob/master/LICENSE
+
+Optimizely go-sdk
+License (Apache-2): https://github.com/optimizely/go-sdk/blob/master/LICENSE
+
+concurrent-map
+Copyright (c) 2014 streamrail
+License (MIT): https://github.com/orcaman/concurrent-map/blob/master/LICENSE
+
+zerolog
+Copyright (c) 2017 Olivier Poitrey
+License (MIT): https://github.com/rs/zerolog/blob/master/LICENSE
+
+nsq-go
+Copyright (c) 2016 Segment
+LICENSE (MIT):https://github.com/segmentio/nsq-go/blob/master/LICENSE
+
+viper
+Copyright (c) 2014 Steve Francia
+LICENSE (MIT):https://github.com/spf13/viper/blob/master/LICENSE
+
+testify
+Copyright (c) 2012-2018 Mat Ryer and Tyler Bunnell.
+License (MIT): https://github.com/stretchr/testify/blob/master/LICENSE
+
+net
+Copyright (c) 2009 The Go Authors. All rights reserved.
+https://github.com/golang/sync/blob/master/LICENSE
+
+sync
+Copyright (c) 2009 The Go Authors. All rights reserved.
+https://github.com/golang/sync/blob/master/LICENSE
+
+sys
+Copyright (c) 2009 The Go Authors. All rights reserved.
+https://github.com/golang/sync/blob/master/LICENSE
