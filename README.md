@@ -54,62 +54,70 @@ make generate-api ARG=<GENERATOR_NAME>
 
 ## Credits
 
-This software is distributed with code from the following open source projects:
+This software is used with additional code that is separately downloaded by you. These components are subject to their own license terms which you should review carefully.
 
-gohistogram
-Copyright (c) 2013 VividCortex
-LICENSE (MIT):https://github.com/VividCortex/gohistogram/blob/master/LICENSE
+Gohistogram
+(c) 2013 VividCortex 
+License (MIT): github.com/VividCortex/gohistogram
 
-chi
-Copyright (c) 2015-present Peter Kieltyka
-LICENSE (MIT):https://github.com/go-chi/chi/blob/master/LICENSE
+Chi
+(c) 2015-present Peter Kieltyka (https://github.com/pkieltyka), Google Inc. 
+License (MIT): github.com/go-chi/chi
 
-chi-render
-Copyright (c) 2016-Present
-LICENSE (MIT):https://github.com/go-chi/render/blob/master/LICENSE
+chi-render 
+(c) 2016-Present https://github.com/go-chi ‑ authors
+License (MIT): github.com/go-chi/render
 
-go-kit
-Copyright (c) 2015 Peter Bourgon
-LICENSE (MIT):https://github.com/go-kit/kit/blob/master/LICENSE
+go-kit 
+(c) 2015 Peter Bourgon
+License (MIT): github.com/go-kit/kit
 
-uuid
-Copyright (c) 2009,2014 Google Inc. All rights reserved.
-License (BSD-3): https://github.com/nsqio/nsq/blob/master/LICENSE
+guuid
+(c) 2009,2014 Google Inc. All rights reserved. 
+License (BSD 3-Clause): github.com/google/uuid
 
-nsq
-License (MIT): https://github.com/nsqio/nsq/blob/master/LICENSE
+nsq 
+Matt Reiferson and Jehiah Czebotar
+License (MIT): github.com/nsqio/nsq
 
-Optimizely go-sdk
-License (Apache-2): https://github.com/optimizely/go-sdk/blob/master/LICENSE
+optimizely go sdk 
+(c) 2016-2017, Optimizely, Inc. and contributors
+License (Apache 2): github.com/optimizely/go-sdk
 
-concurrent-map
-Copyright (c) 2014 streamrail
-License (MIT): https://github.com/orcaman/concurrent-map/blob/master/LICENSE
+concurrent-map 
+(c) 2014 streamrail
+License (MIT): github.com/orcaman/concurrent-map
 
-zerolog
-Copyright (c) 2017 Olivier Poitrey
-License (MIT): https://github.com/rs/zerolog/blob/master/LICENSE
+zerolog 
+(c) 2017 Olivier Poitrey
+License (MIT): github.com/rs/zerolog
 
-nsq-go
-Copyright (c) 2016 Segment
-LICENSE (MIT):https://github.com/segmentio/nsq-go/blob/master/LICENSE
+nsq-go 
+(c) 2016 Segment
+License (MIT): github.com/segmentio/nsq-go
 
-viper
-Copyright (c) 2014 Steve Francia
-LICENSE (MIT):https://github.com/spf13/viper/blob/master/LICENSE
+viper 
+(c) 2014 Steve Francia
+License (MIT): github.com/spf13/viper
 
 testify
-Copyright (c) 2012-2018 Mat Ryer and Tyler Bunnell.
-License (MIT): https://github.com/stretchr/testify/blob/master/LICENSE
+(c) 2012-2018 Mat Ryer and Tyler Bunnell
+License (MIT): github.com/stretchr/testify
 
-net
-Copyright (c) 2009 The Go Authors. All rights reserved.
-https://github.com/golang/sync/blob/master/LICENSE
+net 
+(c) 2009 The Go Authors
+License (BSD 3-Clause): https://github.com/golang/net
+ 
+sync 
+(c) 2009 The Go Authors
+License (BSD 3-Clause): https://github.com/golang/sync
 
-sync
-Copyright (c) 2009 The Go Authors. All rights reserved.
-https://github.com/golang/sync/blob/master/LICENSE
+sys 
+(c) 2009 The Go Authors
+License (BSD 3-Clause): https://github.com/golang/sys
+ 
+## Apache Copyright Notice
+Copyright 2019-present, Optimizely, Inc. and contributors
 
-sys
-Copyright (c) 2009 The Go Authors. All rights reserved.
-https://github.com/golang/sync/blob/master/LICENSE
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
