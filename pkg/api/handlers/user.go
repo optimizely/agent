@@ -195,6 +195,7 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
 		RenderError(err, http.StatusInternalServerError, w, r)
 	} else {
+		// Convert map to slice in order to return a JSON array - array is better if we want to add sorting in the future
 		var decisionsSlice []optimizely.FeatureDecision
 		for _, decision := range featureDecisions {
 			decisionsSlice = append(decisionsSlice, *decision)
