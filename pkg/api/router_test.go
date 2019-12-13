@@ -14,8 +14,6 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// TODO: Check my forced variations PR to make sure I didn't miss adding/updating some other test, like in the router area
-
 // Package api //
 package api
 
@@ -176,7 +174,7 @@ func (suite *RouterTestSuite) TestGetUserFeatures() {
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
 
 	expected := map[string]string{
-		"userID":     "me",
+		"userID": "me",
 	}
 	suite.assertValid(rec, expected)
 }

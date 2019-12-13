@@ -422,14 +422,14 @@ func (suite *UserTestSuite) TestListFeatures() {
 	})
 
 	expected := models.Feature{
-		Enabled:        true,
-		Key:            "featureA",
+		Enabled: true,
+		Key:     "featureA",
 	}
 	suite.Equal(expected, actual[0])
 
 	expected = models.Feature{
-		Enabled:        false,
-		Key:            "featureB",
+		Enabled: false,
+		Key:     "featureB",
 	}
 	suite.Equal(expected, actual[1])
 

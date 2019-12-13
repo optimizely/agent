@@ -197,8 +197,9 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var featureModels []*models.Feature
-	var featureKeys []string
+	featuresCount := len(features)
+	featureModels := make([]*models.Feature, 0, featuresCount)
+	featureKeys := make([]string, 0, featuresCount)
 	for _, feature := range features {
 		enabled, variables, err := optlyClient.GetFeatureWithContext(feature.Key, optlyContext)
 		if err != nil {
@@ -208,8 +209,8 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		}
 
 		featureModels = append(featureModels, &models.Feature{
-			Key:            feature.Key,
-			Enabled:        enabled,
+			Key:       feature.Key,
+			Enabled:   enabled,
 			Variables: variables,
 		})
 
