@@ -395,8 +395,6 @@ func (suite *UserTestSuite) TestListFeatures() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
-	// TODO: Move tests inside client
-
 	// 100% disabled rollout
 	feature2 := entities.Feature{Key: "two"}
 	suite.tc.ProjectConfig.AddDisabledFeatureRollout(feature2)
@@ -413,7 +411,7 @@ func (suite *UserTestSuite) TestListFeatures() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual []optimizely.FeatureDecision
+	var actual []models.FeatureDecision
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
@@ -423,14 +421,14 @@ func (suite *UserTestSuite) TestListFeatures() {
 		return sort.StringsAreSorted([]string{actual[i].Key, actual[j].Key})
 	})
 
-	expected := optimizely.FeatureDecision{
+	expected := models.FeatureDecision{
 		Enabled:        true,
 		Key:            "one",
 		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[0])
 
-	expected = optimizely.FeatureDecision{
+	expected = models.FeatureDecision{
 		Enabled: true,
 		Key:     "three",
 		VariableValues: map[string]string{
@@ -439,7 +437,7 @@ func (suite *UserTestSuite) TestListFeatures() {
 	}
 	suite.Equal(expected, actual[1])
 
-	expected = optimizely.FeatureDecision{
+	expected = models.FeatureDecision{
 		Enabled:        false,
 		Key:            "two",
 		VariableValues: map[string]string{},

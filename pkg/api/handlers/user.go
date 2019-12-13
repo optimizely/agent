@@ -190,18 +190,29 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	featureDecisions, err := optlyClient.GetFeaturesWithContext(optlyContext)
+	features, err := optlyClient.ListFeatures()
 	if err != nil {
 		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
 		RenderError(err, http.StatusInternalServerError, w, r)
-	} else {
-		// Convert map to slice in order to return a JSON array - array is better if we want to add sorting in the future
-		var decisionsSlice []optimizely.FeatureDecision
-		for _, decision := range featureDecisions {
-			decisionsSlice = append(decisionsSlice, decision)
-		}
-		render.JSON(w, r, decisionsSlice)
+		return
 	}
+
+	var featureDecisions []models.FeatureDecision
+	for _, feature := range features {
+		enabled, variables, err := optlyClient.GetFeatureWithContext(feature.Key, optlyContext)
+		if err != nil {
+			middleware.GetLogger(r).Error().Msg("Calling GetFeatureWithContext")
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+		featureDecisions = append(featureDecisions, models.FeatureDecision{
+			Key:            feature.Key,
+			Enabled:        enabled,
+			VariableValues: variables,
+		})
+	}
+
+	render.JSON(w, r, featureDecisions)
 }
 
 // parseContext extract the common references from the request context

@@ -19,7 +19,7 @@ package optimizely
 
 import (
 	"errors"
-	"fmt"
+
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -31,13 +31,6 @@ type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
 	ForcedVariations *decision.MapExperimentOverridesStore
-}
-
-// FeatureDecision is the return type of methods that provide feature enabled and variable value decisions for a given OptlyContext
-type FeatureDecision struct {
-	Key            string
-	Enabled        bool
-	VariableValues map[string]string
 }
 
 // ListFeatures returns all available features
@@ -84,36 +77,8 @@ func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, 
 }
 
 // GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext
-// TODO: Refactor to return FeatureDecision
 func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
 	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
-}
-
-// GetFeaturesWithContext - Returns a map of FeatureDecision pointers representing the decisions for all features for the argument context cotext.
-// All features are obtained by calling ListFeatures.
-// Decisions are obtained by calling GetFeatureWithContext.
-func (c *OptlyClient) GetFeaturesWithContext(ctx *OptlyContext) (map[string]FeatureDecision, error) {
-	featureDecisions := make(map[string]FeatureDecision)
-
-	featureEntities, err := c.ListFeatures()
-	if err != nil {
-		return featureDecisions, fmt.Errorf("error returned from ListFeatures: %w", err)
-	}
-
-	for _, feature := range featureEntities {
-		enabled, variables, err := c.GetFeatureWithContext(feature.Key, ctx)
-		if err != nil {
-			return map[string]FeatureDecision{}, fmt.Errorf("error returned from GetFeatureWithContext: %w", err)
-		}
-
-		featureDecisions[feature.Key] = FeatureDecision{
-			Enabled:        enabled,
-			Key:            feature.Key,
-			VariableValues: variables,
-		}
-	}
-
-	return featureDecisions, nil
 }
 
 // GetExperimentVariation calls the OptimizelyClient with the current OptlyContext
