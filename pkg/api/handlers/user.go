@@ -197,22 +197,27 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var featureDecisions []models.FeatureDecision
+	var featureModels []*models.Feature
+	var featureKeys []string
 	for _, feature := range features {
 		enabled, variables, err := optlyClient.GetFeatureWithContext(feature.Key, optlyContext)
 		if err != nil {
-			middleware.GetLogger(r).Error().Msg("Calling GetFeatureWithContext")
+			middleware.GetLogger(r).Error().Err(err).Str("featureKey", feature.Key).Msg("Calling GetFeatureWithContext")
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
 		}
-		featureDecisions = append(featureDecisions, models.FeatureDecision{
+
+		featureModels = append(featureModels, &models.Feature{
 			Key:            feature.Key,
 			Enabled:        enabled,
-			VariableValues: variables,
+			Variables: variables,
 		})
+
+		featureKeys = append(featureKeys, feature.Key)
 	}
 
-	render.JSON(w, r, featureDecisions)
+	middleware.GetLogger(r).Debug().Strs("featureKeys", featureKeys).Msg("rendering features")
+	render.JSON(w, r, featureModels)
 }
 
 // parseContext extract the common references from the request context
