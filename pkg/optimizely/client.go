@@ -52,7 +52,9 @@ func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
 	return features, err
 }
 
-// DecideFeatures - Returns a slice of FeatureDecision pointers representing the decisions for all features for the argument context cotext
+// DecideFeatures - Returns a map of FeatureDecision pointers representing the decisions for all features for the argument context cotext.
+// All features are obtained by calling ListFeatures.
+// Decisions are obtained by calling GetFeatureWithContext.
 func (c *OptlyClient) DecideFeatures(ctx *OptlyContext) (map[string]*FeatureDecision, error) {
 	featureDecisions := make(map[string]*FeatureDecision)
 
