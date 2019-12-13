@@ -85,7 +85,6 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 	mux.Get("/features", userAPI.ListFeatures)
-	mux.Post("/features", userAPI.TrackFeatures)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
 	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
