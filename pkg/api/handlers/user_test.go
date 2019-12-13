@@ -82,9 +82,9 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/events/{eventKey}", userAPI.TrackEvent)
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
 
+	mux.Get("/features", userAPI.ListFeatures)
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
-	mux.Get("/features", userAPI.ListFeatures)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
 	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
@@ -392,16 +392,16 @@ func (suite *UserTestSuite) TestActivateExperiment() {
 
 func (suite *UserTestSuite) TestListFeatures() {
 	// 100% enabled rollout
-	feature := entities.Feature{Key: "one"}
+	feature := entities.Feature{Key: "featureA"}
 	suite.tc.AddFeatureRollout(feature)
 
 	// 100% disabled rollout
-	feature2 := entities.Feature{Key: "two"}
+	feature2 := entities.Feature{Key: "featureB"}
 	suite.tc.ProjectConfig.AddDisabledFeatureRollout(feature2)
 
 	// Feature test 100% enabled variation 100% with variation variable value
 	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
-	feature3 := entities.Feature{Key: "three", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	feature3 := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
 	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(feature3, variable, "abc_notdef")
 
 	req := httptest.NewRequest("GET", "/features", nil)
@@ -423,24 +423,24 @@ func (suite *UserTestSuite) TestListFeatures() {
 
 	expected := models.FeatureDecision{
 		Enabled:        true,
-		Key:            "one",
+		Key:            "featureA",
 		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[0])
 
 	expected = models.FeatureDecision{
-		Enabled: true,
-		Key:     "three",
-		VariableValues: map[string]string{
-			"strvar": "abc_notdef",
-		},
+		Enabled:        false,
+		Key:            "featureB",
+		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[1])
 
 	expected = models.FeatureDecision{
-		Enabled:        false,
-		Key:            "two",
-		VariableValues: map[string]string{},
+		Enabled: true,
+		Key:     "featureC",
+		VariableValues: map[string]string{
+			"strvar": "abc_notdef",
+		},
 	}
 	suite.Equal(expected, actual[2])
 
