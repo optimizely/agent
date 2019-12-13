@@ -396,34 +396,16 @@ func (suite *UserTestSuite) TestListFeatures() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
-	// TODO: refactor to create test entities in helper fns
 	// TODO: Move tests inside client
 
 	// 100% disabled rollout
 	feature2 := entities.Feature{Key: "two"}
-	suite.tc.AddFeatureRollout(feature2)
-	variations := suite.tc.ProjectConfig.FeatureMap["two"].Rollout.Experiments[0].Variations
-	for _, variation := range variations {
-		variation.FeatureEnabled = false
-		variations[variation.ID] = variation
-	}
+	suite.tc.ProjectConfig.AddDisabledFeatureRollout(feature2)
 
 	// Feature test 100% enabled variation 100% with variation variable value
-	feature3 := entities.Feature{Key: "three", VariableMap: map[string]entities.Variable{
-		"strvar": {DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"},
-	}}
-	suite.tc.AddFeatureRollout(feature3)
-	suite.tc.AddFeatureTest(feature3)
-	variations = suite.tc.ProjectConfig.FeatureMap["three"].FeatureExperiments[0].Variations
-	for _, variation := range variations {
-		variation.Variables = map[string]entities.VariationVariable{
-			"123": {
-				ID:    "123",
-				Value: "abc_notdef",
-			},
-		}
-		variations[variation.ID] = variation
-	}
+	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	feature3 := entities.Feature{Key: "three", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(feature3, variable, "abc_notdef")
 
 	req := httptest.NewRequest("GET", "/features", nil)
 	rec := httptest.NewRecorder()
@@ -443,15 +425,15 @@ func (suite *UserTestSuite) TestListFeatures() {
 	})
 
 	expected := optimizely.FeatureDecision{
-		Enabled: true,
-		Key:     "one",
+		Enabled:        true,
+		Key:            "one",
 		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[0])
 
 	expected = optimizely.FeatureDecision{
 		Enabled: true,
-		Key: "three",
+		Key:     "three",
 		VariableValues: map[string]string{
 			"strvar": "abc_notdef",
 		},
@@ -459,8 +441,8 @@ func (suite *UserTestSuite) TestListFeatures() {
 	suite.Equal(expected, actual[1])
 
 	expected = optimizely.FeatureDecision{
-		Enabled: false,
-		Key:     "two",
+		Enabled:        false,
+		Key:            "two",
 		VariableValues: map[string]string{},
 	}
 	suite.Equal(expected, actual[2])

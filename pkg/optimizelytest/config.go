@@ -235,6 +235,35 @@ func (c *TestProjectConfig) AddFeatureRollout(f entities.Feature) *TestProjectCo
 	return c
 }
 
+// AddDisabledFeatureRollout adds modeling of a disabled feature rollout (variation's FeatureEnabled is false)
+func (c *TestProjectConfig) AddDisabledFeatureRollout(f entities.Feature) *TestProjectConfig {
+	c.AddFeatureRollout(f)
+	variations := c.FeatureMap[f.Key].Rollout.Experiments[0].Variations
+	for _, variation := range variations {
+		variation.FeatureEnabled = false
+		variations[variation.ID] = variation
+	}
+	return c
+}
+
+// AddFeatureTestWithCustomVariableValue adds modeling of a 1-variation feature test with a custom variable value
+func (c *TestProjectConfig) AddFeatureTestWithCustomVariableValue(feature entities.Feature, variable entities.Variable, customValue string) *TestProjectConfig {
+	c.AddFeatureRollout(feature)
+	c.AddFeatureTest(feature)
+	variations := c.FeatureMap[feature.Key].FeatureExperiments[0].Variations
+	customVariableValues := map[string]entities.VariationVariable{
+		variable.ID: {
+			ID:    variable.ID,
+			Value: customValue,
+		},
+	}
+	for _, variation := range variations {
+		variation.Variables = customVariableValues
+		variations[variation.ID] = variation
+	}
+	return c
+}
+
 // AddExperiment adds the experiment and the supporting entities to complete the experiment modeling
 func (c *TestProjectConfig) AddExperiment(experimentKey string, variations []entities.Variation) {
 	experimentID := c.getNextID()
