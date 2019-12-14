@@ -43,6 +43,16 @@ jobs:
       script:
         - go get -v -d ./...
 
+    - stage: test
+      name: windows build
+      os: windows
+      language: go
+      env: GIMME_OS=windows
+      before_script:
+        - eval "$(gimme)"
+      script:
+        - build
+
     - stage: build
       if: type = push AND tag IS present
       name: linux
