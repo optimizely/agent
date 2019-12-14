@@ -47,11 +47,11 @@ jobs:
       name: windows build
       os: windows
       language: go
-      env: GIMME_OS=windows
-      before_script:
-        - eval "$(gimme)"
+      go:
+        - 1.13
+      before_script: skip
       script:
-        - build
+        - build.bat
 
     - stage: build
       if: type = push AND tag IS present
