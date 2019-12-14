@@ -46,6 +46,7 @@ jobs:
     - stage: test
       name: windows build
       os: windows
+      env: GIMME_OS=windows
       language: go
       go:
         - 1.13
