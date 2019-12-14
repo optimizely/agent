@@ -53,6 +53,7 @@ jobs:
       before_script:
         - choco install make
       script:
+        - make -e cover COVER_FILE=coverage.txt
         - make -e build
 
     - stage: build
