@@ -52,7 +52,8 @@ jobs:
         - 1.13
       before_script: skip
       script:
-        - ./build.bat
+        - make -e build
+        #- ./build.bat
 
     - stage: build
       if: type = push AND tag IS present
