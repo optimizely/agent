@@ -1,6 +1,6 @@
 FROM centos:7
 
-ARG VERSION
+ARG APP_VERSION
 
 RUN yum -y install ruby-devel gcc make rpm-build rubygems
 RUN gem install --no-ri --no-rdoc fpm:1.11.0 pleaserun:0.0.30
@@ -9,8 +9,8 @@ WORKDIR /workdir
 
 COPY sidedoor /workdir
 
-RUN fpm -v $VERSION -s pleaserun -t dir -n sidedoor /usr/bin/sidedoor
+RUN fpm -v $APP_VERSION -s pleaserun -t dir -n sidedoor /usr/bin/sidedoor
 RUN printf "#!/bin/sh\nsh /usr/share/pleaserun/sidedoor/cleanup.sh\nrm -rf /usr/share/pleaserun/sidedoor/cleanup.sh\n" > /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh
-RUN fpm -v $VERSION -n sidedoor -s dir -t rpm --after-install /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/install.sh --before-remove /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh /workdir/sidedoor=/usr/bin/ /workdir/sidedoor.dir/usr/share/pleaserun/=/usr/share/pleaserun
+RUN fpm -v $APP_VERSION -n sidedoor -s dir -t rpm --after-install /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/install.sh --before-remove /workdir/sidedoor.dir/usr/share/pleaserun/sidedoor/delete.sh /workdir/sidedoor=/usr/bin/ /workdir/sidedoor.dir/usr/share/pleaserun/=/usr/share/pleaserun
 
 CMD ["/bin/bash"]

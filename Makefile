@@ -1,6 +1,6 @@
 # The name of the executable (default is current directory name)
 TARGET := $(shell basename "$(PWD)")
-VERSION ?= $(shell git describe --tags)
+APP_VERSION ?= $(shell git describe --tags)
 .DEFAULT_GOAL := help
 
 COVER_FILE := cover.out
@@ -23,7 +23,7 @@ MAKEFLAGS += --silent
 # Use linker flags to strip debugging info from the binary.
 # -s Omit the symbol table and debug information.
 # -w Omit the DWARF symbol table.
-LDFLAGS=-ldflags "-s -w -X main.Version=${VERSION}"
+LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION}"
 
 all: test build ## all
 $(TARGET):
