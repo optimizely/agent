@@ -17,15 +17,18 @@ set GOTEST=%GOCMD% test
 :: -w Omit the DWARF symbol table.
 set LDFLAGS=-ldflags "-s -w -X main.Version=%VERSION%"
 
+mkdir %GOPATH% 2> NUL
+
 echo "Running tests..."
 %GOTEST% ./...
-if errorlevel 1 goto fail
+if errorlevel 1 goto tests_fail
 
 echo "Running build..."
 %GOBUILD% %LDFLAGS% -o %GOPATH%/%TARGET%.exe cmd/%TARGET%/main.go
 goto end
 
-:fail
+:tests_fail
 echo ERROR: tests failed
+goto end
 
 :end
