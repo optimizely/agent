@@ -1,0 +1,17 @@
+# The name of the executable (default is current directory name)
+TARGET=sidedoor
+VERSION=0.8.1
+
+# Go parameters
+#GO111MODULE //set in environment variables
+GOCMD=C:\Go\bin\go.exe
+GOPATH=C:\go-work
+GOBUILD=$(GOCMD) build
+
+# Use linker flags to strip debugging info from the binary.
+# -s Omit the symbol table and debug information.
+# -w Omit the DWARF symbol table.
+LDFLAGS=-ldflags "-s -w -X main.Version=$(VERSION)"
+
+all: ## all
+	$(GOBUILD) $(LDFLAGS) -o $(GOPATH)/$(TARGET).exe cmd/$(TARGET)/main.go
