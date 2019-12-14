@@ -50,10 +50,10 @@ jobs:
       language: go
       go:
         - 1.13
-      before_script: skip
+      before_script:
+        - choco install make
       script:
         - make -e build
-        #- ./build.bat
 
     - stage: build
       if: type = push AND tag IS present
