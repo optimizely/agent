@@ -84,6 +84,7 @@ func (suite *UserTestSuite) SetupTest() {
 
 	mux.Get("/features", userAPI.ListFeatures)
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
+	mux.Post("/features", userAPI.TrackFeatures)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
@@ -396,13 +397,13 @@ func (suite *UserTestSuite) TestListFeatures() {
 	suite.tc.AddFeatureRollout(feature)
 
 	// 100% disabled rollout
-	feature2 := entities.Feature{Key: "featureB"}
-	suite.tc.ProjectConfig.AddDisabledFeatureRollout(feature2)
+	featureB := entities.Feature{Key: "featureB"}
+	suite.tc.ProjectConfig.AddDisabledFeatureRollout(featureB)
 
 	// Feature test 100% enabled variation 100% with variation variable value
 	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
-	feature3 := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
-	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(feature3, variable, "abc_notdef")
+	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
 
 	req := httptest.NewRequest("GET", "/features", nil)
 	rec := httptest.NewRecorder()
@@ -444,6 +445,60 @@ func (suite *UserTestSuite) TestListFeatures() {
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
 }
+func (suite *UserTestSuite) TestTrackFeatures() {
+	// 100% enabled rollout
+	feature := entities.Feature{Key: "featureA"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// 100% enabled feature test
+	featureB := entities.Feature{Key: "featureB"}
+	suite.tc.AddFeatureTest(featureB)
+
+	// Feature test 100% enabled variation 100% with variation variable value
+	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+
+	req := httptest.NewRequest("POST", "/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual []models.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	// The ordering of features in the response JSON array is undefined,
+	// so sort them before doing assertions.
+	sort.Slice(actual, func(i, j int) bool {
+		return sort.StringsAreSorted([]string{actual[i].Key, actual[j].Key})
+	})
+
+	expected := models.Feature{
+		Enabled: true,
+		Key:     "featureA",
+	}
+	suite.Equal(expected, actual[0])
+
+	expected = models.Feature{
+		Enabled: true,
+		Key:     "featureB",
+	}
+	suite.Equal(expected, actual[1])
+
+	expected = models.Feature{
+		Enabled: true,
+		Key:     "featureC",
+		Variables: map[string]string{
+			"strvar": "abc_notdef",
+		},
+	}
+	suite.Equal(expected, actual[2])
+
+	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
+}
 
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
@@ -467,6 +522,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
+		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
 	}
 
@@ -490,6 +546,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
+		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
 		userHandler.SetForcedVariation,
 		userHandler.RemoveForcedVariation,
