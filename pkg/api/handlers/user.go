@@ -244,21 +244,21 @@ func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyCo
 }
 
 // getModelOfFeatureDecision - Returns a models.Feature representing the feature decision from the provided client and context
-func getModelOfFeatureDecision(featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) (error, *models.Feature) {
+func getModelOfFeatureDecision(featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) (*models.Feature, error) {
 	enabled, variables, err := optlyClient.GetFeatureWithContext(featureKey, optlyContext)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	return nil, &models.Feature{
+	return &models.Feature{
 		Key:       featureKey,
 		Enabled:   enabled,
 		Variables: variables,
-	}
+	}, nil
 }
 
 // renderFeature excapsulates extracting a Feature from the Optimizely SDK and rendering a feature response.
 func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
-	err, featureModel := getModelOfFeatureDecision(featureKey, optlyClient, optlyContext)
+	featureModel, err := getModelOfFeatureDecision(featureKey, optlyClient, optlyContext)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeatureWithContext")
 		RenderError(err, http.StatusInternalServerError, w, r)
@@ -274,7 +274,7 @@ func renderFeatures(w http.ResponseWriter, r *http.Request, features []entities.
 	featureModels := make([]*models.Feature, 0, featuresCount)
 	featureKeys := make([]string, 0, featuresCount)
 	for _, feature := range features {
-		err, featureModel := getModelOfFeatureDecision(feature.Key, optlyClient, optlyContext)
+		featureModel, err := getModelOfFeatureDecision(feature.Key, optlyClient, optlyContext)
 		if err != nil {
 			middleware.GetLogger(r).Error().Err(err).Str("featureKey", feature.Key).Msg("Calling GetFeatureWithContext")
 			RenderError(err, http.StatusInternalServerError, w, r)
