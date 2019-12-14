@@ -40,6 +40,10 @@ func (suite *ClientTestSuite) SetupTest() {
 	suite.optlyContext = NewContext("userId", make(map[string]interface{}))
 }
 
+func (suite *ClientTestSuite) TearDownTest() {
+	suite.optlyClient.Close()
+}
+
 func (suite *ClientTestSuite) TestListFeatures() {
 	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
 	suite.testClient.AddFeature(entities.Feature{Key: "k2"})

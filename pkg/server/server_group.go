@@ -80,8 +80,3 @@ func (g *Group) GoListenAndServe(name string, handler http.Handler) {
 func (g *Group) Wait() error {
 	return g.eg.Wait()
 }
-
-// Shutdown initiates a graceful shutdown of all servers
-func (g *Group) Shutdown() {
-	g.stop()
-}

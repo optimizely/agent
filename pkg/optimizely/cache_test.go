@@ -18,6 +18,7 @@
 package optimizely
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -32,14 +33,25 @@ var counter int
 
 type CacheTestSuite struct {
 	suite.Suite
-	cache *OptlyCache
+	cache  *OptlyCache
+	cancel func()
 }
 
 func (suite *CacheTestSuite) SetupTest() {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	suite.cache = &OptlyCache{
 		loader:   mockLoader,
 		optlyMap: cmap.New(),
+		ctx:      ctx,
 	}
+
+	suite.cancel = cancel
+}
+
+func (suite *CacheTestSuite) TearDownTest() {
+	suite.cancel()
+	suite.cache.Wait()
 }
 
 func (suite *CacheTestSuite) TestGetCacheHit() {

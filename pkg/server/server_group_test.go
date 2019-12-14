@@ -30,17 +30,18 @@ func TestServeAndShutdown(t *testing.T) {
 	viper.SetDefault("valid2.enabled", true)
 	viper.SetDefault("valid2.port", "1001")
 
-	sg := NewGroup(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	sg := NewGroup(ctx)
 
 	sg.GoListenAndServe("valid1", handler)
 	sg.GoListenAndServe("valid2", handler)
 
-	go sg.Shutdown()
+	cancel()
 	sg.Wait()
 }
 
 func TestInvalidServer(t *testing.T) {
 	sg := NewGroup(context.Background())
 	sg.GoListenAndServe("invalid", handler)
-	sg.Wait()  // Don't need to shutdown since server never started
+	sg.Wait() // Don't need to shutdown since server never started
 }
