@@ -20,7 +20,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/optimizely/go-sdk/pkg/entities"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -191,14 +190,7 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	features, err := optlyClient.ListFeatures()
-	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	renderFeatures(w, r, features, optlyClient, optlyContext)
+	renderFeatures(w, r, optlyClient, optlyContext)
 }
 
 // TrackFeatures - List all feature decisions for a user. Impression events are recorded for all applicable feature tests.
@@ -206,13 +198,6 @@ func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	features, err := optlyClient.ListFeatures()
-	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
-		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -225,7 +210,7 @@ func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {
 		middleware.GetLogger(r).Error().Err(softErr).Msg("Calling GetEnabledFeatures")
 	}
 
-	renderFeatures(w, r, features, optlyClient, optlyContext)
+	renderFeatures(w, r, optlyClient, optlyContext)
 }
 
 // parseContext extract the common references from the request context
@@ -269,7 +254,15 @@ func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, op
 }
 
 // renderFeatures encapsulates extracting decisions for all available features from the Optimizely SDK and rendering a response with all those decisions
-func renderFeatures(w http.ResponseWriter, r *http.Request, features []entities.Feature, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+func renderFeatures(w http.ResponseWriter, r *http.Request, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+	features, err := optlyClient.ListFeatures()
+	if err != nil {
+		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+
 	featuresCount := len(features)
 	featureModels := make([]*models.Feature, 0, featuresCount)
 	featureKeys := make([]string, 0, featuresCount)
