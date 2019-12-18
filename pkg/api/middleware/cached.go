@@ -77,7 +77,7 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 
 		userID := chi.URLParam(r, "userID")
 		if userID == "" {
-			http.Error(w, "Invalid request, missing userId", http.StatusBadRequest)
+			RenderError(fmt.Errorf("invalid request, missing userId"), http.StatusBadRequest, w, r)
 			return
 		}
 

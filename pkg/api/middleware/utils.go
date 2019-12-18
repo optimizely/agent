@@ -19,6 +19,8 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/api/models"
 	"net/http"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -53,4 +55,10 @@ func GetLogger(r *http.Request) *zerolog.Logger {
 	reqID := r.Header.Get(OptlyRequestHeader)
 	logger := log.With().Str("sdkKey", sdkKey).Str("requestId", reqID).Logger()
 	return &logger
+}
+
+// RenderError sets the request status and renders the error message.
+func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	render.Status(r, status)
+	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
 }
