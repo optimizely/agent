@@ -18,15 +18,15 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/optimizely/go-sdk/pkg/event"
-	"github.com/optimizely/go-sdk/pkg/utils"
 )
 
 // NewEventProcessorNSQ returns a new instance of BatchEventProcessor with a backing NSQ queue
-func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterval time.Duration) (*event.BatchEventProcessor, error) {
+func NewEventProcessorNSQ(ctx context.Context, queueSize int, flushInterval time.Duration) (*event.BatchEventProcessor, error) {
 	q, err := NewNSQueueDefault()
 	if err != nil {
 		return nil, fmt.Errorf("error creating NSQ event processor: %v", err)
@@ -34,10 +34,10 @@ func NewEventProcessorNSQ(exeCtx utils.ExecutionCtx, queueSize int, flushInterva
 
 	p := event.NewBatchEventProcessor(event.WithBatchSize(event.DefaultBatchSize), event.WithQueueSize(queueSize),
 		event.WithFlushInterval(flushInterval), event.WithQueue(q), event.WithEventDispatcher(&event.HTTPEventDispatcher{}))
-	p.Start(exeCtx)
+	p.Start(ctx)
 
 	go func() {
-		<-exeCtx.GetContext().Done()
+		<-ctx.Done()
 		// if there is an embedded nsqd, tell it to shutdown.
 		done <- true
 	}()

@@ -4,16 +4,34 @@ ci_build_static_binary: ## build static binary
 	CGO_ENABLED=0 GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
 
 ci_build_dockerimage: ## build minimal docker image of sidedoor
-	docker build -f scripts/dockerfiles/Dockerfile.static -t optimizely-docker.jfrog.io/sidedoor:${VERSION} -t optimizely-docker.jfrog.io/sidedoor:latest .
+	docker build \
+		-f scripts/dockerfiles/Dockerfile.static \
+		-t optimizely-docker.jfrog.io/sidedoor:${APP_VERSION} \
+		-t optimizely-docker.jfrog.io/sidedoor:latest \
+		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
+		.
 
 ci_build_dockerimage_alpine: ## build alpine docker image of sidedoor
-	docker build -f scripts/dockerfiles/Dockerfile.alpine -t optimizely-docker.jfrog.io/sidedoor:${VERSION}-alpine -t optimizely-docker.jfrog.io/sidedoor:alpine .
+	docker build \
+	  -f scripts/dockerfiles/Dockerfile.alpine \
+		-t optimizely-docker.jfrog.io/sidedoor:${APP_VERSION}-alpine \
+		-t optimizely-docker.jfrog.io/sidedoor:alpine \
+		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
+		.
 
 ci_build_fpm_centos: ## build fpm_centos image for packaging
-	docker build --build-arg VERSION -f scripts/dockerfiles/Dockerfile.fpm_centos -t fpm_centos ${TRAVIS_BUILD_DIR}/bin
+	docker build \
+		--build-arg APP_VERSION \
+		-f scripts/dockerfiles/Dockerfile.fpm_centos \
+		-t fpm_centos \
+		${TRAVIS_BUILD_DIR}/bin
 
 ci_build_fpm_ubuntu: ## build fpm_centos image for packaging
-	docker build --build-arg VERSION -f scripts/dockerfiles/Dockerfile.fpm_ubuntu -t fpm_ubuntu ${TRAVIS_BUILD_DIR}/bin
+	docker build \
+		--build-arg APP_VERSION \
+		-f scripts/dockerfiles/Dockerfile.fpm_ubuntu \
+		-t fpm_ubuntu \
+		${TRAVIS_BUILD_DIR}/bin
 
 ci_get_fpm_centos: ## get generated rpm
 	docker run -v /tmp/output_packages:/output -it fpm_centos bash -c "cp *.rpm /output"

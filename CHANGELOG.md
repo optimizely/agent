@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - December 4th, 2019
+- Bump to 1.0.0-rc1@973644b of the Optimizely go-sdk
+- Update test harness with new interface
+
 ## [0.8.0] - November 18th, 2019
 - Adds ability to limit the number of active api connections
 - Allows SDK keys to be bootstrapped during startup

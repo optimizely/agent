@@ -18,9 +18,11 @@
 package optimizely
 
 import (
+	"context"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/sidedoor/pkg/event"
 	"github.com/rs/zerolog/log"
+	"sync"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -34,13 +36,17 @@ import (
 type OptlyCache struct {
 	loader   func(string) (*OptlyClient, error)
 	optlyMap cmap.ConcurrentMap
+	ctx      context.Context
+	wg       sync.WaitGroup
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache() *OptlyCache {
+func NewCache(ctx context.Context) *OptlyCache {
 	cache := &OptlyCache{
-		optlyMap: cmap.New(),
+		ctx:      ctx,
+		wg:       sync.WaitGroup{},
 		loader:   initOptlyClient,
+		optlyMap: cmap.New(),
 	}
 
 	cache.init()
@@ -70,12 +76,26 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 
 	set := c.optlyMap.SetIfAbsent(sdkKey, oc)
 	if set {
+		c.wg.Add(1)
+		go func() {
+			defer c.wg.Done()
+			<-c.ctx.Done()
+			oc.Close()
+		}()
 		return oc, err
 	}
+
+	// Clean-up to not leave any lingering un-unused goroutines
+	go oc.Close()
 
 	// If we didn't "set" the key in this method execution then it was set in another thread.
 	// Recursively lookuping up the SDK key "should" only happen once.
 	return c.GetClient(sdkKey)
+}
+
+// Wait for all optimizely clients to gracefully shutdown
+func (c *OptlyCache) Wait() {
+	c.wg.Wait()
 }
 
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
@@ -94,5 +114,6 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		client.WithExperimentOverrides(forcedVariations),
 		client.WithEventProcessor(ep),
 	)
+
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }

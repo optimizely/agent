@@ -1,10 +1,12 @@
-FROM golang:1.13-alpine3.10
+ARG GO_VERSION
+FROM golang:$GO_VERSION-alpine3.10 as builder
+# hadolint ignore=DL3018
 RUN apk add --no-cache make gcc libc-dev git
 WORKDIR /go/src/github.com/optimizely/sidedoor
 COPY . .
 RUN make build
 
 FROM alpine:3.10
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
-COPY --from=0 /go/src/github.com/optimizely/sidedoor/bin/sidedoor /sidedoor
+RUN apk add --no-cache ca-certificates=20190108-r0
+COPY --from=builder /go/src/github.com/optimizely/sidedoor/bin/sidedoor /sidedoor
 CMD ["/sidedoor"]

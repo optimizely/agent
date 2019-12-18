@@ -94,9 +94,9 @@ func main() {
 
 	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
 
-	ctx := context.Background()         // Create default service context
-	sg := server.NewGroup(ctx)          // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache() // TODO pass ctx
+	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
+	sg := server.NewGroup(ctx)                              // Create a new server group to manage the individual http listeners
+	optlyCache := optimizely.NewCache(ctx)
 
 	// goroutine to check for signals to gracefully shutdown listeners
 	go func() {
@@ -106,7 +106,7 @@ func main() {
 		// Wait for signal
 		sig := <-signalChannel
 		log.Info().Msgf("Received signal: %s\n", sig)
-		sg.Shutdown()
+		cancel()
 	}()
 
 	sg.GoListenAndServe("api", api.NewDefaultRouter(optlyCache))
@@ -119,4 +119,6 @@ func main() {
 	} else {
 		log.Fatal().Err(err).Msg("Exiting.")
 	}
+
+	optlyCache.Wait()
 }
