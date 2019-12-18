@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"sort"
 	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -398,12 +397,12 @@ func (suite *UserTestSuite) TestListFeatures() {
 
 	// 100% disabled rollout
 	featureB := entities.Feature{Key: "featureB"}
-	suite.tc.ProjectConfig.AddDisabledFeatureRollout(featureB)
+	suite.tc.AddDisabledFeatureRollout(featureB)
 
 	// Feature test 100% enabled variation 100% with variation variable value
 	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
 	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
-	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
 
 	req := httptest.NewRequest("GET", "/features", nil)
 	rec := httptest.NewRecorder()
@@ -416,32 +415,23 @@ func (suite *UserTestSuite) TestListFeatures() {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	// The ordering of features in the response JSON array is undefined,
-	// so sort them before doing assertions.
-	sort.Slice(actual, func(i, j int) bool {
-		return sort.StringsAreSorted([]string{actual[i].Key, actual[j].Key})
-	})
-
-	expected := models.Feature{
-		Enabled: true,
-		Key:     "featureA",
-	}
-	suite.Equal(expected, actual[0])
-
-	expected = models.Feature{
-		Enabled: false,
-		Key:     "featureB",
-	}
-	suite.Equal(expected, actual[1])
-
-	expected = models.Feature{
-		Enabled: true,
-		Key:     "featureC",
-		Variables: map[string]string{
-			"strvar": "abc_notdef",
+	suite.ElementsMatch([]models.Feature{
+		models.Feature{
+			Enabled: true,
+			Key:     "featureA",
 		},
-	}
-	suite.Equal(expected, actual[2])
+		models.Feature{
+			Enabled: false,
+			Key:     "featureB",
+		},
+		models.Feature{
+			Enabled: true,
+			Key:     "featureC",
+			Variables: map[string]string{
+				"strvar": "abc_notdef",
+			},
+		},
+	}, actual)
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
 }
@@ -457,7 +447,7 @@ func (suite *UserTestSuite) TestTrackFeatures() {
 	// Feature test 100% enabled variation 100% with variation variable value
 	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
 	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
-	suite.tc.ProjectConfig.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
 
 	req := httptest.NewRequest("POST", "/features", nil)
 	rec := httptest.NewRecorder()
@@ -470,32 +460,23 @@ func (suite *UserTestSuite) TestTrackFeatures() {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	// The ordering of features in the response JSON array is undefined,
-	// so sort them before doing assertions.
-	sort.Slice(actual, func(i, j int) bool {
-		return sort.StringsAreSorted([]string{actual[i].Key, actual[j].Key})
-	})
-
-	expected := models.Feature{
-		Enabled: true,
-		Key:     "featureA",
-	}
-	suite.Equal(expected, actual[0])
-
-	expected = models.Feature{
-		Enabled: true,
-		Key:     "featureB",
-	}
-	suite.Equal(expected, actual[1])
-
-	expected = models.Feature{
-		Enabled: true,
-		Key:     "featureC",
-		Variables: map[string]string{
-			"strvar": "abc_notdef",
+	suite.ElementsMatch([]models.Feature{
+		models.Feature{
+			Enabled: true,
+			Key:     "featureA",
 		},
-	}
-	suite.Equal(expected, actual[2])
+		models.Feature{
+			Enabled: true,
+			Key:     "featureB",
+		},
+		models.Feature{
+			Enabled: true,
+			Key:     "featureC",
+			Variables: map[string]string{
+				"strvar": "abc_notdef",
+			},
+		},
+	}, actual)
 
 	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
 }

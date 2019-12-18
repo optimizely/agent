@@ -265,7 +265,6 @@ func renderFeatures(w http.ResponseWriter, r *http.Request, optlyClient *optimiz
 
 	featuresCount := len(features)
 	featureModels := make([]*models.Feature, 0, featuresCount)
-	featureKeys := make([]string, 0, featuresCount)
 	for _, feature := range features {
 		featureModel, err := getModelOfFeatureDecision(feature.Key, optlyClient, optlyContext)
 		if err != nil {
@@ -274,10 +273,9 @@ func renderFeatures(w http.ResponseWriter, r *http.Request, optlyClient *optimiz
 			return
 		}
 		featureModels = append(featureModels, featureModel)
-		featureKeys = append(featureKeys, feature.Key)
+		middleware.GetLogger(r).Debug().Str("featureKey", feature.Key).Msg("rendering feature")
 	}
 
-	middleware.GetLogger(r).Debug().Strs("featureKeys", featureKeys).Msg("rendering features")
 	render.JSON(w, r, featureModels)
 }
 
