@@ -20,16 +20,85 @@ package event
 import (
 	"bytes"
 	"encoding/json"
-	"net/http"
-	"time"
-
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/rs/zerolog/log"
+	snsq "github.com/segmentio/nsq-go"
+	"github.com/spf13/viper"
+	"net/http"
+	"time"
 )
 
 const jsonContentType = "application/json"
 
 const timeout = 5 * time.Second
+
+// OptlyEventProcessorConfig represents configuration of the event processor. Also configuring nsq if used.
+type OptlyEventProcessorConfig struct {
+	NSQWithProducer     bool                    `yaml:"nsqWithProducer" default:"false"`
+	NSQWithConsumer     bool                    `yaml:"nsqWithConsumer" default:"false"`
+	NSQEnabled          bool                    `yaml:"nsqEnabled" default:"false"`
+	NSQStartEmbedded    bool                    `yaml:"nsqStartEmbedded" default:"false"`
+	NSQAddress          string                  `yaml:"nsqAddress" default:"localhost:4150"`
+	QueueSize           int                     `yaml:"queueSize" default:"1000"`
+	BatchSize           int                     `yaml:"batchSize" default:"10"`
+}
+
+
+// GetOptlyEventProcessor get the optly event processor using viper configuration variables.
+func GetOptlyEventProcessor() event.Processor {
+
+	var config OptlyEventProcessorConfig
+	if err := viper.UnmarshalKey("optimizely.eventProcessor", &config); err != nil {
+		log.Info().Msg("Unable to parse event processor config.")
+		return event.NewBatchEventProcessor()
+	}
+
+	var q event.Queue
+
+	if config.QueueSize == 0 {
+		config.QueueSize = event.DefaultEventQueueSize
+	}
+	if config.BatchSize == 0 {
+		config.BatchSize = event.DefaultBatchSize
+	}
+
+	// configure NSQ backed Queue
+	if config.NSQEnabled  {
+		startEmbedded := config.NSQStartEmbedded
+		var nsqAddress string
+		if nsqAddress = config.NSQAddress; nsqAddress == "" {
+			nsqAddress = NsqListenSpec
+		}
+
+		var consumer *snsq.Consumer
+		var producer *snsq.Producer
+
+		if config.NSQWithConsumer {
+			consumer, _ = snsq.StartConsumer(snsq.ConsumerConfig{
+				Topic:       NsqTopic,
+				Channel:     NsqConsumerChannel,
+				Address:     nsqAddress,
+				MaxInFlight: 100,
+			})
+
+		}
+
+		if config.NSQWithProducer {
+			nsqConfig := snsq.ProducerConfig{Address: nsqAddress, Topic: NsqTopic}
+			producer, _ = snsq.NewProducer(nsqConfig)
+
+		}
+
+		q, _ = NewNSQueue(config.QueueSize, startEmbedded, producer, consumer)
+
+	} else {
+		// use default in memory queue
+		q = event.NewInMemoryQueue(config.QueueSize)
+	}
+
+	// return a new batch event processor
+	return event.NewBatchEventProcessor(event.WithQueueSize(config.QueueSize), event.WithBatchSize(config.BatchSize), event.WithQueue(q))
+}
 
 // SidedoorEventProcessor - sends events to sidedoor API
 type SidedoorEventProcessor struct {

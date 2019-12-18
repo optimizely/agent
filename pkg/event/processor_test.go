@@ -27,6 +27,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -114,5 +115,70 @@ func TestProcessEvent(t *testing.T) {
 
 	if !wasCalled {
 		t.Errorf("Server endpoint was not called")
+	}
+}
+
+// EPQSize integer event processor queue size
+const EPQSize = "optimizely.eventProcessor.queueSize"
+// EPBSize integer event processor batch size
+const EPBSize = "optimizely.eventProcessor.batchSize"
+// NSQEnabled boolean true enables using the NSQ as the queue for the event processor
+const NSQEnabled = "optimizely.eventProcessor.nsqEnabled"
+// NSQStartEmbedded boolean whether to start the embedded nsq daemon
+const NSQStartEmbedded = "optimizely.eventProcessor.nsqStartEmbedded"
+// NSQAddress string address to bind the consumer and/or producer
+const NSQAddress = "optimizely.eventProcessor.nsqAddress"
+// NSQConsumer boolean.  Start the consumer if set to true
+const Consumer = "optimizely.eventProcessor.nsqWithConsumer"
+// NSQProducer boolan.  Start the producer if set to true
+const Producer = "optimizely.eventProcessor.nsqWithProducer"
+
+
+func TestGetEventProcessorWithQueueSize(t *testing.T) {
+	viper.SetDefault(EPQSize, 1000)
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*event.BatchEventProcessor); ok {
+		assert.True(t, bep.MaxQueueSize == 1000)
+	}
+}
+
+func TestGetEventProcessorWithBatchSize(t *testing.T) {
+	viper.SetDefault(EPBSize, 30)
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*event.BatchEventProcessor); ok {
+		assert.True(t, bep.BatchSize == 30)
+	}
+}
+
+func TestGetEventProcessorWithNSQ(t *testing.T) {
+	viper.Set(Consumer, true)
+	viper.Set(NSQEnabled, true)
+	viper.Set(EPBSize, 30)
+	viper.Set(Producer, true)
+	viper.Set(NSQStartEmbedded, false)
+
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*event.BatchEventProcessor); ok {
+		assert.True(t, bep.BatchSize == 30)
+		if nsq, ok := bep.Q.(*NSQQueue); ok {
+			assert.NotNil(t, nsq.Consumer)
+			assert.NotNil(t, nsq.Producer)
+		} else {
+			assert.True(t, false)
+		}
+	}
+}
+
+func TestGetEventProcessorWithoutNSQ(t *testing.T) {
+	viper.SetDefault(EPBSize, 30)
+
+	ep := GetOptlyEventProcessor()
+	if bep, ok := ep.(*event.BatchEventProcessor); ok {
+		assert.True(t, bep.BatchSize == 30)
+		if _, ok := bep.Q.(*NSQQueue); ok {
+			assert.True(t, false)
+		} else {
+			assert.True(t, true)
+		}
 	}
 }

@@ -20,13 +20,15 @@ package optimizely
 import (
 	"context"
 	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/sidedoor/pkg/event"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"sync"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	cmap "github.com/orcaman/concurrent-map"
+	"github.com/spf13/viper"
+
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -103,11 +105,14 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
+	ep := event.GetOptlyEventProcessor()
+
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
+		client.WithEventProcessor(ep),
 	)
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
