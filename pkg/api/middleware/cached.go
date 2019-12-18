@@ -52,14 +52,14 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sdkKey := r.Header.Get(OptlySDKHeader)
 		if sdkKey == "" {
-			http.Error(w, fmt.Sprintf("Missing required %s header", OptlySDKHeader), http.StatusBadRequest)
+			RenderError(fmt.Errorf("missing required %s header", OptlySDKHeader), http.StatusBadRequest, w, r)
 			return
 		}
 
 		optlyClient, err := ctx.Cache.GetClient(sdkKey)
 		if err != nil {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
-			http.Error(w, "Failed to instantiate Optimizely", http.StatusInternalServerError)
+			RenderError(fmt.Errorf("failed to instantiate Optimizely for SDK Key: %s", sdkKey), http.StatusInternalServerError, w, r)
 			return
 		}
 
