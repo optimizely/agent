@@ -68,8 +68,8 @@ func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.Optimize
 		return experiments, errors.New("optimizely config is null")
 	}
 	experiments = []optimizelyconfig.OptimizelyExperiment{}
-	for _, feature := range optimizelyConfig.ExperimentsMap {
-		experiments = append(experiments, feature)
+	for _, experiment := range optimizelyConfig.ExperimentsMap {
+		experiments = append(experiments, experiment)
 	}
 
 	return experiments, err

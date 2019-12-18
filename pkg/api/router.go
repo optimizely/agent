@@ -34,8 +34,8 @@ import (
 type RouterOptions struct {
 	maxConns      int
 	middleware    middleware.OptlyMiddleware
-	featureAPI    handlers.FeatureAPI
 	experimentAPI handlers.ExperimentAPI
+	featureAPI    handlers.FeatureAPI
 	userEventAPI  handlers.UserEventAPI
 	userAPI       handlers.UserAPI
 }
@@ -45,8 +45,8 @@ func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
 	spec := &RouterOptions{
 		maxConns:      viper.GetInt("api.maxconns"),
 		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		featureAPI:    new(handlers.FeatureHandler),
 		experimentAPI: new(handlers.ExperimentHandler),
+		featureAPI:    new(handlers.FeatureHandler),
 		userEventAPI:  new(handlers.UserEventHandler),
 		userAPI:       new(handlers.UserHandler),
 	}
