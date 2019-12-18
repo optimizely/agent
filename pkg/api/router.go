@@ -32,21 +32,23 @@ import (
 
 // RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
-	maxConns     int
-	middleware   middleware.OptlyMiddleware
-	featureAPI   handlers.FeatureAPI
-	userEventAPI handlers.UserEventAPI
-	userAPI      handlers.UserAPI
+	maxConns      int
+	middleware    middleware.OptlyMiddleware
+	featureAPI    handlers.FeatureAPI
+	experimentAPI handlers.ExperimentAPI
+	userEventAPI  handlers.UserEventAPI
+	userAPI       handlers.UserAPI
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
 	spec := &RouterOptions{
-		maxConns:     viper.GetInt("api.maxconns"),
-		middleware:   &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		featureAPI:   new(handlers.FeatureHandler),
-		userEventAPI: new(handlers.UserEventHandler),
-		userAPI:      new(handlers.UserHandler),
+		maxConns:      viper.GetInt("api.maxconns"),
+		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
+		featureAPI:    new(handlers.FeatureHandler),
+		experimentAPI: new(handlers.ExperimentHandler),
+		userEventAPI:  new(handlers.UserEventHandler),
+		userAPI:       new(handlers.UserHandler),
 	}
 
 	return NewRouter(spec)
@@ -70,6 +72,12 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(middleware.Metricize("list-features")).Get("/", opt.featureAPI.ListFeatures)
 		r.With(middleware.Metricize("get-feature")).Get("/{featureKey}", opt.featureAPI.GetFeature)
+	})
+
+	r.Route("/experiments", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx)
+		r.With(middleware.Metricize("list-experiments")).Get("/", opt.experimentAPI.ListExperiments)
+		r.With(middleware.Metricize("get-experiment")).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {

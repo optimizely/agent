@@ -27,6 +27,12 @@ type FeatureAPI interface {
 	ListFeatures(w http.ResponseWriter, r *http.Request)
 }
 
+// ExperimentAPI defines the supported experiment apis.
+type ExperimentAPI interface {
+	GetExperiment(w http.ResponseWriter, r *http.Request)
+	ListExperiments(w http.ResponseWriter, r *http.Request)
+}
+
 // UserEventAPI defines the supported user event apis.
 type UserEventAPI interface {
 	AddUserEvent(w http.ResponseWriter, r *http.Request)

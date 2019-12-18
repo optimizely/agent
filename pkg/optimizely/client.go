@@ -23,7 +23,6 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
@@ -34,34 +33,60 @@ type OptlyClient struct {
 }
 
 // ListFeatures returns all available features
-func (c *OptlyClient) ListFeatures() (features []entities.Feature, err error) {
-	projectConfig, err := c.GetProjectConfig()
-	if err != nil {
-		return features, err
+func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeature, err error) {
+	optimizelyConfig := c.GetOptimizelyConfig()
+	if optimizelyConfig == nil {
+		return features, errors.New("optimizely config is null")
+	}
+	features = []optimizelyconfig.OptimizelyFeature{}
+	for _, feature := range optimizelyConfig.FeaturesMap {
+		features = append(features, feature)
 	}
 
-	features = projectConfig.GetFeatureList()
 	return features, err
 }
 
 // GetFeature returns the feature definition
-func (c *OptlyClient) GetFeature(featureKey string) (feature entities.Feature, err error) {
-	projectConfig, err := c.GetProjectConfig()
-	if err != nil {
+func (c *OptlyClient) GetFeature(featureKey string) (feature optimizelyconfig.OptimizelyFeature, err error) {
+
+	optimizelyConfig := c.GetOptimizelyConfig()
+	if optimizelyConfig == nil {
+		return feature, errors.New("optimizely config is null")
+	}
+	var ok bool
+	if feature, ok = optimizelyConfig.FeaturesMap[featureKey]; ok {
 		return feature, err
 	}
 
-	return projectConfig.GetFeatureByKey(featureKey)
+	return feature, errors.New("unable to get feature for featureKey " + featureKey)
+}
+
+// ListExperiments returns all available experiments
+func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.OptimizelyExperiment, err error) {
+	optimizelyConfig := c.GetOptimizelyConfig()
+	if optimizelyConfig == nil {
+		return experiments, errors.New("optimizely config is null")
+	}
+	experiments = []optimizelyconfig.OptimizelyExperiment{}
+	for _, feature := range optimizelyConfig.ExperimentsMap {
+		experiments = append(experiments, feature)
+	}
+
+	return experiments, err
 }
 
 // GetExperiment returns the experiment definition
-func (c *OptlyClient) GetExperiment(experimentKey string) (experiment entities.Experiment, err error) {
-	projectConfig, err := c.GetProjectConfig()
-	if err != nil {
+func (c *OptlyClient) GetExperiment(experimentKey string) (experiment optimizelyconfig.OptimizelyExperiment, err error) {
+	optimizelyConfig := c.GetOptimizelyConfig()
+	if optimizelyConfig == nil {
+		return experiment, errors.New("optimizely config is null")
+	}
+	var ok bool
+	if experiment, ok = optimizelyConfig.ExperimentsMap[experimentKey]; ok {
 		return experiment, err
 	}
 
-	return projectConfig.GetExperimentByKey(experimentKey)
+	return experiment, errors.New("unable to get experiment for experimentKey " + experimentKey)
 }
 
 // UpdateConfig uses config manager to sync and set project config
@@ -82,8 +107,14 @@ func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext
 }
 
 // GetExperimentVariation calls the OptimizelyClient with the current OptlyContext
-func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivate bool, ctx *OptlyContext) (variation entities.Variation, err error) {
-	var experiment entities.Experiment
+func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivate bool, ctx *OptlyContext) (variation optimizelyconfig.OptimizelyVariation, err error) {
+
+	optimizelyConfig := c.GetOptimizelyConfig()
+	if optimizelyConfig == nil {
+		return variation, errors.New("optimizely config is null")
+	}
+
+	var experiment optimizelyconfig.OptimizelyExperiment
 	experiment, err = c.GetExperiment(experimentKey)
 	if err != nil {
 		return variation, nil
@@ -100,11 +131,8 @@ func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivat
 		return variation, err
 	}
 
-	// @TODO: can expose a way to look up variation by key in the SDK
-	for _, experimentVariation := range experiment.Variations {
-		if experimentVariation.Key == variationKey {
-			variation = experimentVariation
-		}
+	if experimentVariation, ok := experiment.VariationsMap[variationKey]; ok {
+		variation = experimentVariation
 	}
 
 	return variation, nil
