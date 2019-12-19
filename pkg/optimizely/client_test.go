@@ -22,6 +22,7 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )
@@ -56,7 +57,8 @@ func (suite *ClientTestSuite) TestGetFeature() {
 	suite.testClient.AddFeature(entities.Feature{Key: "k1"})
 	actual, err := suite.optlyClient.GetFeature("k1")
 	suite.NoError(err)
-	suite.Equal(actual, entities.Feature{Key: "k1"})
+	suite.Equal(actual, config.OptimizelyFeature{Key: "k1", ExperimentsMap: map[string]config.OptimizelyExperiment{},
+		VariablesMap: map[string]config.OptimizelyVariable{}})
 }
 
 func (suite *ClientTestSuite) TestGetNonExistentFeature() {
@@ -126,12 +128,21 @@ func (suite *ClientTestSuite) TestGetExperiment() {
 	suite.NoError(err)
 }
 
+func (suite *ClientTestSuite) TestListExperiments() {
+	suite.testClient.AddExperiment("k1", []entities.Variation{})
+	suite.testClient.AddExperiment("k2", []entities.Variation{})
+	experiments, err := suite.optlyClient.ListExperiments()
+	suite.NoError(err)
+	suite.Equal(2, len(experiments))
+}
+
 func (suite *ClientTestSuite) TestGetExperimentVariation() {
 	testExperimentKey := "testExperiment1"
 	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
 	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
+	optiConfigVariation := suite.testClient.ProjectConfig.ConvertVariation(testVariation)
 	variation, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, false, suite.optlyContext)
-	suite.Equal(testVariation, variation)
+	suite.Equal(optiConfigVariation, variation)
 	suite.NoError(err)
 }
 
@@ -139,8 +150,9 @@ func (suite *ClientTestSuite) TestGetExperimentVariationWithActivation() {
 	testExperimentKey := "testExperiment1"
 	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
 	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
+	optiConfigVariation := suite.testClient.ProjectConfig.ConvertVariation(testVariation)
 	variation, err := suite.optlyClient.GetExperimentVariation(testExperimentKey, true, suite.optlyContext)
-	suite.Equal(testVariation, variation)
+	suite.Equal(optiConfigVariation, variation)
 	suite.NoError(err)
 }
 

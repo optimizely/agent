@@ -25,6 +25,8 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
+var errNullOptimizelyConfig = errors.New("optimizely config is null")
+
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
@@ -36,7 +38,7 @@ type OptlyClient struct {
 func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeature, err error) {
 	optimizelyConfig := c.GetOptimizelyConfig()
 	if optimizelyConfig == nil {
-		return features, errors.New("optimizely config is null")
+		return features, errNullOptimizelyConfig
 	}
 	features = []optimizelyconfig.OptimizelyFeature{}
 	for _, feature := range optimizelyConfig.FeaturesMap {
@@ -47,25 +49,25 @@ func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeat
 }
 
 // GetFeature returns the feature definition
-func (c *OptlyClient) GetFeature(featureKey string) (feature optimizelyconfig.OptimizelyFeature, err error) {
+func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.OptimizelyFeature, error) {
 
 	optimizelyConfig := c.GetOptimizelyConfig()
 	if optimizelyConfig == nil {
-		return feature, errors.New("optimizely config is null")
-	}
-	var ok bool
-	if feature, ok = optimizelyConfig.FeaturesMap[featureKey]; ok {
-		return feature, err
+		return optimizelyconfig.OptimizelyFeature{}, errNullOptimizelyConfig
 	}
 
-	return feature, errors.New("unable to get feature for featureKey " + featureKey)
+	if feature, ok := optimizelyConfig.FeaturesMap[featureKey]; ok {
+		return feature, nil
+	}
+
+	return optimizelyconfig.OptimizelyFeature{}, errors.New("unable to get feature for featureKey " + featureKey)
 }
 
 // ListExperiments returns all available experiments
 func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.OptimizelyExperiment, err error) {
 	optimizelyConfig := c.GetOptimizelyConfig()
 	if optimizelyConfig == nil {
-		return experiments, errors.New("optimizely config is null")
+		return experiments, errNullOptimizelyConfig
 	}
 	experiments = []optimizelyconfig.OptimizelyExperiment{}
 	for _, experiment := range optimizelyConfig.ExperimentsMap {
@@ -76,17 +78,17 @@ func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.Optimize
 }
 
 // GetExperiment returns the experiment definition
-func (c *OptlyClient) GetExperiment(experimentKey string) (experiment optimizelyconfig.OptimizelyExperiment, err error) {
+func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.OptimizelyExperiment, error) {
 	optimizelyConfig := c.GetOptimizelyConfig()
 	if optimizelyConfig == nil {
-		return experiment, errors.New("optimizely config is null")
-	}
-	var ok bool
-	if experiment, ok = optimizelyConfig.ExperimentsMap[experimentKey]; ok {
-		return experiment, err
+		return optimizelyconfig.OptimizelyExperiment{}, errNullOptimizelyConfig
 	}
 
-	return experiment, errors.New("unable to get experiment for experimentKey " + experimentKey)
+	if experiment, ok := optimizelyConfig.ExperimentsMap[experimentKey]; ok {
+		return experiment, nil
+	}
+
+	return optimizelyconfig.OptimizelyExperiment{}, errors.New("unable to get experiment for experimentKey " + experimentKey)
 }
 
 // UpdateConfig uses config manager to sync and set project config

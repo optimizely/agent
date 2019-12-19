@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strconv"
 
+	optlyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
@@ -123,6 +124,14 @@ func (c *TestProjectConfig) GetFeatureList() (featureList []entities.Feature) {
 		featureList = append(featureList, feature)
 	}
 	return featureList
+}
+
+// GetExperimentList returns an array of all the experiments
+func (c *TestProjectConfig) GetExperimentList() (experimentList []entities.Experiment) {
+	for _, experiment := range c.ExperimentMap {
+		experimentList = append(experimentList, experiment)
+	}
+	return experimentList
 }
 
 // GetAudienceByID returns the audience with the given ID
@@ -271,6 +280,17 @@ func (c *TestProjectConfig) CreateVariation(varKey string) entities.Variation {
 	variation := entities.Variation{
 		Key: varKey,
 		ID:  variationID,
+	}
+	return variation
+}
+
+// ConvertVariation converts entities variation to optimizely config variation
+func (c *TestProjectConfig) ConvertVariation(eVariation entities.Variation) optlyconfig.OptimizelyVariation {
+
+	variation := optlyconfig.OptimizelyVariation{
+		Key:          eVariation.Key,
+		ID:           eVariation.ID,
+		VariablesMap: map[string]optlyconfig.OptimizelyVariable{},
 	}
 	return variation
 }
