@@ -83,3 +83,13 @@ func (t *TestClient) GetProcessedEvents() []event.UserEvent {
 func (t *TestClient) AddExperiment(experimentKey string, variations []entities.Variation) {
 	t.ProjectConfig.AddExperiment(experimentKey, variations)
 }
+
+// AddDisabledFeatureRollout is a helper method for creating a disabled rollout in the ProjectConfig to facilitate testing.
+func (t *TestClient) AddDisabledFeatureRollout(f entities.Feature) {
+	t.ProjectConfig.AddDisabledFeatureRollout(f)
+}
+
+// AddFeatureTestWithCustomVariableValue is a helper method for creating a feature test with a custom variable value in the ProjectConfig to facilitate testing.
+func (t *TestClient) AddFeatureTestWithCustomVariableValue(feature entities.Feature, variable entities.Variable, customValue string) {
+	t.ProjectConfig.AddFeatureTestWithCustomVariableValue(feature, variable, customValue)
+}

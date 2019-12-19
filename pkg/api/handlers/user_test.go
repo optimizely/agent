@@ -81,7 +81,9 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/events/{eventKey}", userAPI.TrackEvent)
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
 
+	mux.Get("/features", userAPI.ListFeatures)
 	mux.Get("/features/{featureKey}", userAPI.GetFeature)
+	mux.Post("/features", userAPI.TrackFeatures)
 	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
@@ -388,6 +390,97 @@ func (suite *UserTestSuite) TestActivateExperiment() {
 	suite.Equal(expected, actual)
 }
 
+func (suite *UserTestSuite) TestListFeatures() {
+	// 100% enabled rollout
+	feature := entities.Feature{Key: "featureA"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// 100% disabled rollout
+	featureB := entities.Feature{Key: "featureB"}
+	suite.tc.AddDisabledFeatureRollout(featureB)
+
+	// Feature test 100% enabled variation 100% with variation variable value
+	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+
+	req := httptest.NewRequest("GET", "/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual []models.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.ElementsMatch([]models.Feature{
+		models.Feature{
+			Enabled: true,
+			Key:     "featureA",
+		},
+		models.Feature{
+			Enabled: false,
+			Key:     "featureB",
+		},
+		models.Feature{
+			Enabled: true,
+			Key:     "featureC",
+			Variables: map[string]string{
+				"strvar": "abc_notdef",
+			},
+		},
+	}, actual)
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+}
+func (suite *UserTestSuite) TestTrackFeatures() {
+	// 100% enabled rollout
+	feature := entities.Feature{Key: "featureA"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// 100% enabled feature test
+	featureB := entities.Feature{Key: "featureB"}
+	suite.tc.AddFeatureTest(featureB)
+
+	// Feature test 100% enabled variation 100% with variation variable value
+	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+
+	req := httptest.NewRequest("POST", "/features", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual []models.Feature
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.ElementsMatch([]models.Feature{
+		models.Feature{
+			Enabled: true,
+			Key:     "featureA",
+		},
+		models.Feature{
+			Enabled: true,
+			Key:     "featureB",
+		},
+		models.Feature{
+			Enabled: true,
+			Key:     "featureC",
+			Variables: map[string]string{
+				"strvar": "abc_notdef",
+			},
+		},
+	}, actual)
+
+	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
+}
+
 func (suite *UserTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
 }
@@ -407,8 +500,10 @@ func TestUserMissingClientCtx(t *testing.T) {
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.ActivateExperiment,
 		userHandler.GetFeature,
+		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
+		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
 	}
 
@@ -429,8 +524,10 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	handlers := []func(w http.ResponseWriter, r *http.Request){
 		userHandler.ActivateExperiment,
 		userHandler.GetFeature,
+		userHandler.ListFeatures,
 		userHandler.GetVariation,
 		userHandler.TrackFeature,
+		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
 		userHandler.SetForcedVariation,
 		userHandler.RemoveForcedVariation,

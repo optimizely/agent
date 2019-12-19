@@ -67,7 +67,7 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	render.NoContent(w, r)
 }
 
-// GetFeature - Return the feature and record impression if applicable.
+// GetFeature - Return the feature. Note: no impressions recorded for associated feature tests.
 func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
@@ -181,6 +181,38 @@ func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// ListFeatures - List all feature decisions for a user
+// Note: no impressions recorded for associated feature tests.
+func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	renderFeatures(w, r, optlyClient, optlyContext)
+}
+
+// TrackFeatures - List all feature decisions for a user. Impression events are recorded for all applicable feature tests.
+func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {
+	optlyClient, optlyContext, err := parseContext(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	// HACK - Triggers impression events when applicable. This is not
+	// ideal since we're making TWO decisions for each feature now. OASIS-5549
+	enabledFeatures, softErr := optlyClient.GetEnabledFeatures(*optlyContext.UserContext)
+	middleware.GetLogger(r).Info().Strs("enabledFeatures", enabledFeatures).Msg("Calling GetEnabledFeatures")
+	if softErr != nil {
+		// Swallowing the error to allow the response to be made and not break downstream consumers.
+		middleware.GetLogger(r).Error().Err(softErr).Msg("Calling GetEnabledFeatures")
+	}
+
+	renderFeatures(w, r, optlyClient, optlyContext)
+}
+
 // parseContext extract the common references from the request context
 func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyContext, error) {
 	optlyClient, err := middleware.GetOptlyClient(r)
@@ -196,23 +228,55 @@ func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyCo
 	return optlyClient, optlyContext, nil
 }
 
-// renderFeature excapsulates extracting a Feature from the Optimizely SDK and rendering a feature response.
-func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+// getModelOfFeatureDecision - Returns a models.Feature representing the feature decision from the provided client and context
+func getModelOfFeatureDecision(featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) (*models.Feature, error) {
 	enabled, variables, err := optlyClient.GetFeatureWithContext(featureKey, optlyContext)
 	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature")
+		return nil, err
+	}
+	return &models.Feature{
+		Key:       featureKey,
+		Enabled:   enabled,
+		Variables: variables,
+	}, nil
+}
+
+// renderFeature excapsulates extracting a Feature from the Optimizely SDK and rendering a feature response.
+func renderFeature(w http.ResponseWriter, r *http.Request, featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+	featureModel, err := getModelOfFeatureDecision(featureKey, optlyClient, optlyContext)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeatureWithContext")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+	middleware.GetLogger(r).Debug().Str("featureKey", featureKey).Msg("rendering feature")
+	render.JSON(w, r, featureModel)
+}
+
+// renderFeatures encapsulates extracting decisions for all available features from the Optimizely SDK and rendering a response with all those decisions
+func renderFeatures(w http.ResponseWriter, r *http.Request, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) {
+	features, err := optlyClient.ListFeatures()
+	if err != nil {
+		middleware.GetLogger(r).Error().Msg("Calling ListFeatures")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	feature := &models.Feature{
-		Enabled:   enabled,
-		Key:       featureKey,
-		Variables: variables,
+
+	featuresCount := len(features)
+	featureModels := make([]*models.Feature, 0, featuresCount)
+	for _, feature := range features {
+		featureModel, err := getModelOfFeatureDecision(feature.Key, optlyClient, optlyContext)
+		if err != nil {
+			middleware.GetLogger(r).Error().Err(err).Str("featureKey", feature.Key).Msg("Calling GetFeatureWithContext")
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+		featureModels = append(featureModels, featureModel)
+		middleware.GetLogger(r).Debug().Str("featureKey", feature.Key).Msg("rendering feature")
 	}
 
-	middleware.GetLogger(r).Debug().Str("featureKey", featureKey).Msg("rendering feature")
-	render.JSON(w, r, feature)
+	render.JSON(w, r, featureModels)
 }
 
 // renderVariation encapsulates extracting Variation from the Optimizely SDK and rendering a response
