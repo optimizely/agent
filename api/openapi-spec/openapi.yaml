@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Optimizely Server API
-  description: Optimizely.
+  title: Optimizely Agent API
+  description: Optimizely Agent - Full Stack REST API
   termsOfService: http://optimizely.com/terms/
   license:
     name: Apache 2.0
@@ -10,17 +10,16 @@ info:
 servers:
 - url: https://fullstack.api.optimizely.com
   description: "Hosted Optimizely Decision Service"
+security:
+  - SdkKeyAuth: []
 paths:
   /experiments:
     get:
       summary: Return all experiments
       operationId: listExperiments
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
+      description: List experiments returns all available experiments and their variations.
+      tags:
+        - experiments
       responses:
         '200':
           description: Valid response
@@ -32,12 +31,13 @@ paths:
                   $ref: '#/components/schemas/Experiment'
   /experiments/{experimentKey}:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
     - $ref: '#/components/parameters/experimentKeyParam'
     get:
       summary: Return variation for a given user and experiment
       operationId: getExperiment
-      description: todo
+      description: Get experiment returns the corresponding experiment for the given experimentKey.
+      tags:
+        - experiments
       responses:
         '200':
           description: Valid response
@@ -47,57 +47,52 @@ paths:
                 $ref: '#/components/schemas/Experiment'
         '404':
           description: Experiment does not exist
-  /experiments/{experimentKey}/variations:
-    parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
-    - $ref: '#/components/parameters/experimentKeyParam'
-    get:
-      summary: Return variation for a given user and experiment
-      operationId: listExperimentVariations
-      description: todo
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Variation'
-        '204':
-          description: No content, user not included in the experiment
-        '404':
-          description: Experiment does not exist
-  /experiments/{experimentKey}/variations/{variationKey}:
-    parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
-    - $ref: '#/components/parameters/experimentKeyParam'
-    - $ref: '#/components/parameters/variationKeyParam'
-    get:
-      summary: Return variation for a given user and experiment
-      operationId: getExperimentVariation
-      description: todo
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Variation'
-        '204':
-          description: No content, user not included in the experiment
-        '404':
-          description: Experiment does not exist
+#  /experiments/{experimentKey}/variations:
+#    parameters:
+#    - $ref: '#/components/parameters/experimentKeyParam'
+#    get:
+#      summary: Return variation for a given user and experiment
+#      operationId: listExperimentVariations
+#      description: todo
+#      responses:
+#        '200':
+#          description: Valid response
+#          content:
+#            application/json:
+#              schema:
+#                type: array
+#                items:
+#                  $ref: '#/components/schemas/Variation'
+#        '204':
+#          description: No content, user not included in the experiment
+#        '404':
+#          description: Experiment does not exist
+#  /experiments/{experimentKey}/variations/{variationKey}:
+#    parameters:
+#    - $ref: '#/components/parameters/experimentKeyParam'
+#    - $ref: '#/components/parameters/variationKeyParam'
+#    get:
+#      summary: Return variation for a given user and experiment
+#      operationId: getExperimentVariation
+#      description: todo
+#      responses:
+#        '200':
+#          description: Valid response
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/Variation'
+#        '204':
+#          description: No content, user not included in the experiment
+#        '404':
+#          description: Experiment does not exist
   /features:
     get:
       summary: Return all features
       operationId: listFeatures
-      parameters:
-      - name: X-Optimizely-SDK-Key
-        in: header
-        schema:
-          type: string
-        required: true
+      description: List features returns all available features and their variations.
+      tags:
+        - features
       responses:
         '200':
           description: Valid response
@@ -110,11 +105,13 @@ paths:
                   $ref: '#/components/schemas/Feature'
   /features/{featureKey}:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
     - $ref: '#/components/parameters/featureKeyParam'
     get:
       summary: Return the feature
       operationId: getFeature
+      description: Get feature returns the corresponding feature for the given featureKey.
+      tags:
+        - features
       responses:
         '200':
           description: Valid response
@@ -124,96 +121,93 @@ paths:
                 $ref: '#/components/schemas/Feature'
         '404':
           description: Experiment does not exist
-  /features/{featureKey}/variations:
-    parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
-    - $ref: '#/components/parameters/featureKeyParam'
-    get:
-      summary: Return feature variations
-      operationId: listFeatureVariations
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FeatureVariation'
-        '404':
-          description: Feature does not exist or variations DNE
-  /features/{featureKey}/variations/{variationKey}:
-    parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
-    - $ref: '#/components/parameters/featureKeyParam'
-    - $ref: '#/components/parameters/variationKeyParam'
-    get:
-      summary: Return the feature variant
-      operationId: getFeatureVariation
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeatureVariation'
-        '404':
-          description: Feature does not exist or variation DNE
-  /user-event:
-    post:
-      summary: User event endpoint
-      operationId: AddUserEvent
-      responses:
-        '204':
-          description: Valid response
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Error message
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserEvent'
+#  /features/{featureKey}/variations:
+#    parameters:
+#    - $ref: '#/components/parameters/featureKeyParam'
+#    get:
+#      summary: Return feature variations
+#      operationId: listFeatureVariations
+#      responses:
+#        '200':
+#          description: Valid response
+#          content:
+#            application/json:
+#              schema:
+#                type: array
+#                items:
+#                  $ref: '#/components/schemas/FeatureVariation'
+#        '404':
+#          description: Feature does not exist or variations DNE
+#  /features/{featureKey}/variations/{variationKey}:
+#    parameters:
+#    - $ref: '#/components/parameters/featureKeyParam'
+#    - $ref: '#/components/parameters/variationKeyParam'
+#    get:
+#      summary: Return the feature variant
+#      operationId: getFeatureVariation
+#      responses:
+#        '200':
+#          description: Valid response
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/FeatureVariation'
+#        '404':
+#          description: Feature does not exist or variation DNE
+#  /user-event:
+#    post:
+#      summary: User event endpoint
+#      operationId: AddUserEvent
+#      responses:
+#        '204':
+#          description: Valid response
+#        default:
+#          description: Unexpected error
+#          content:
+#            application/json:
+#              schema:
+#                type: object
+#                properties:
+#                  error:
+#                    type: string
+#                    description: Error message
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/UserEvent'
   /users/{userId}/events/{eventKey}:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
     - $ref: '#/components/parameters/userIdParam'
     - $ref: '#/components/parameters/eventKeyParam'
     - $ref: '#/components/parameters/attributesParam'
     post:
       summary: Track event for the given user.
       operationId: trackEvent
-      description: todo
+      description: Posting and event sends user and event details to Optimizely’s analytics backend for the analysis of
+                   a feature test or a/b test.
+      tags:
+        - users
       responses:
         '204':
           description: No content, user not included in the experiment
         '404':
           description: Event does not exist
       requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: true
+        $ref: '#/components/requestBodies/EventTags'
   /users/{userId}/experiments/{experimentKey}:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
     - $ref: '#/components/parameters/userIdParam'
     - $ref: '#/components/parameters/experimentKeyParam'
     - $ref: '#/components/parameters/attributesParam'
     get:
       summary: Return variation decision for an experiment
       operationId: getVariation
-      description: todo
+      description: Read the experiment decision for the supplied user ID and experiment key. Experiment variations do
+                   not have variables so the response simply contains the variation key and id.
+      tags:
+        - users
       responses:
         '200':
           description: Valid response
@@ -228,7 +222,11 @@ paths:
     post:
       summary: Activate experiment and return variation
       operationId: activateExperiment
-      description: todo
+      description: Read the experiment decision for the supplied user ID and experiment key. Experiment variations do
+                   not have variables so the response simply contains the variation key and id. This method will send a
+                   tracking impression event to the Optimizely analytics backend for experiment reporting.
+      tags:
+        - users
       responses:
         '200':
           description: Valid response
@@ -242,13 +240,17 @@ paths:
           description: Experiment does not exist
   /users/{userId}/experiments/{experimentKey}/variations/{variationKey}:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
     - $ref: '#/components/parameters/userIdParam'
     - $ref: '#/components/parameters/experimentKeyParam'
     - $ref: '#/components/parameters/variationKeyParam'
     put:
       summary: Set a forced variation for a user in an experiment
       operationId: setForcedVariation
+      description: Set forced variation stores the experiment and variation detail to be consumed by future user
+                   based decisions. This override is only stored locally and inmemory for debugging and testing purposes
+                   and should not be used for production overrides.
+      tags:
+        - users
       responses:
         '201':
           description: Forced variation set
@@ -258,34 +260,78 @@ paths:
           description: Invalid user id, experiment key, or variation key
   /users/{userId}/experiments/{experimentKey}/variations:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
     - $ref: '#/components/parameters/userIdParam'
     - $ref: '#/components/parameters/experimentKeyParam'
     delete:
       summary: Remove any forced variation for a user in an experiment
       operationId: deleteForcedVariation
+      description: Delete forced variation removes any stored variation override associated with the user and experiment.
+      tags:
+        - users
       responses:
         '204':
           description: Any forced variation was deleted
         '400':
           description: Invalid user id or experiment key
-  /users/{userId}/features/{featureKey}:
+  /users/{userId}/features:
     parameters:
-    - $ref: '#/components/parameters/sdkKeyParam'
-    - $ref: '#/components/parameters/userIdParam'
-    - $ref: '#/components/parameters/featureKeyParam'
-    - $ref: '#/components/parameters/attributesParam'
+      - $ref: '#/components/parameters/userIdParam'
+      - $ref: '#/components/parameters/attributesParam'
     get:
-      summary: Return feature resulting from an experiment or rollout
-      operationId: getFeatureDecision
-      description: todo
+      summary: Return ALL features resulting from an experiment or rollout
+      operationId: listFeatureDecisions
+      description: List feature decisions iterates over all features and returns the feature decisions in the context
+                   of the given user. All features are included regardless of whether the feature is enabled. The
+                   response includes the enabled status of the feature in addition to any configured variables.
+      tags:
+        - users
       responses:
         '200':
           description: Valid response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeatureVariation'
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureDecision'
+    post:
+      summary: Activate ALL features resulting from an experiment or rollout
+      operationId: activateAllFeatures
+      description: List feature decisions iterates over all features and returns the feature definition in the context
+                   of the given user. All features are included regardless of whether the feature is enabled. The
+                   response includes the enabled status of the feature in addition to any configured variables. Any
+                   feature that is part of a feature test(s) will also send an impression event to the Optimizely
+                   analytics backend for reporting analysis.
+      tags:
+        - users
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureDecision'
+  /users/{userId}/features/{featureKey}:
+    parameters:
+    - $ref: '#/components/parameters/userIdParam'
+    - $ref: '#/components/parameters/featureKeyParam'
+    - $ref: '#/components/parameters/attributesParam'
+    get:
+      summary: Return feature resulting from an experiment or rollout
+      operationId: getFeatureDecision
+      description: Read the feature flag decision for the supplied user ID and experiment key.  The response is
+                   determined by the feature test(s) and/or feature rollout defined for the supplied feature key.
+      tags:
+        - users
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureDecision'
         '204':
           description: No content, user not included in the experiment
         '404':
@@ -293,26 +339,24 @@ paths:
     post:
       summary: Activate feature and return associated variable values
       operationId: activateFeature
-      description: todo
+      description: Read the feature flag decisions for the supplied user ID. The response value is determined by the
+                   feature test(s) and/or feature rollout defined for the supplied feature key. If the decision was mafe
+                   as part of a feature test, then this API will send an impression event to Optimizely tracking servers.
+      tags:
+        - users
       responses:
         '200':
           description: Valid response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeatureVariation'
+                $ref: '#/components/schemas/FeatureDecision'
         '204':
           description: No content, user not included in the experiment
         '404':
           description: Feature does not exist
 components:
   parameters:
-    sdkKeyParam:
-      in: header
-      name: X-Optimizely-SDK-Key
-      schema:
-        type: string
-      required: true
     attributesParam:
       in: query
       name: attributes
@@ -356,6 +400,14 @@ components:
       description: Key of the variation we're fetching
       schema:
         type: string
+  requestBodies:
+    EventTags:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
   schemas:
     Experiment:
       properties:
@@ -389,7 +441,7 @@ components:
       required:
       - id
       - key
-    FeatureVariation:
+    FeatureDecision:
       properties:
         id:
           type: integer
@@ -397,11 +449,10 @@ components:
           type: string
         enabled:
           type: boolean
-        variablesMap:
+        variables:
           type: object
           additionalProperties:
-            type: object
-            $ref: '#/components/schemas/Variable'
+            type: string
       # Both properties are required
       required:
       - id
@@ -416,7 +467,6 @@ components:
       required:
         - id
         - key
-
     Variable:
       properties:
         id:
@@ -430,108 +480,126 @@ components:
       required:
         - id
         - key
-    UserEvent:
-      properties:
-        timestamp:
-          type: integer
-          format: int64
-        uuid:
-          type: string
-        context:
-          $ref: '#/components/schemas/UserEventContext'
-        visitor_id:
-          type: string
-        impression:
-          $ref: '#/components/schemas/ImpressionEvent'
-        conversion:
-          $ref: '#/components/schemas/ConversionEvent'
-      required:
-      - timestamp
-      - uuid
-      - visitor_id
-      - context
-    UserEventContext:
-      properties:
-        revision:
-          type: string
-        account_id:
-          type: string
-        client_version:
-          type: string
-        project_id:
-          type: string
-        client_name:
-          type: string
-        anonymize_ip:
-          type: boolean
-        bot_filtering:
-          type: boolean
-      required:
-      - revision
-      - account_id
-      - client_version
-      - project_id
-      - client_name
-      - anonymize_ip
-      - bot_filtering
-    ImpressionEvent:
-      properties:
-        entity_id:
-          type: string
-        key:
-          type: string
-        attributes:
-          type: array
-          items:
-            $ref: '#/components/schemas/VisitorAttribute'
-        variation_id:
-          type: string
-        campaign_id:
-          type: string
-        experiment_id:
-          type: string
-      required:
-      - entity_id
-      - key
-      - variation_id
-      - campaign_id
-      - experiment_id
-    ConversionEvent:
-      properties:
-        entity_id:
-          type: string
-        key:
-          type: string
-        revenue:
-          type: integer
-          format: int64
-        attributes:
-          type: array
-          items:
-            $ref: '#/components/schemas/VisitorAttribute'
-        tags:
-          type: object
-          additionalProperties: true
-        value:
-          type: number
-          format: double
-      required:
-      - entity_id
-      - key
-      - variation_id
-      - campaign_id
-      - experiment_id
-    VisitorAttribute:
-      properties:
-        value: {}
-        key:
-          type: string
-        attribute_type:
-          type: string
-        entity_id:
-          type: string
-      required:
-      - value
-      - key
-      - attribute_type
-      - entity_id
+#    UserEvent:
+#      properties:
+#        timestamp:
+#          type: integer
+#          format: int64
+#        uuid:
+#          type: string
+#        context:
+#          $ref: '#/components/schemas/UserEventContext'
+#        visitor_id:
+#          type: string
+#        impression:
+#          $ref: '#/components/schemas/ImpressionEvent'
+#        conversion:
+#          $ref: '#/components/schemas/ConversionEvent'
+#      required:
+#      - timestamp
+#      - uuid
+#      - visitor_id
+#      - context
+#    UserEventContext:
+#      properties:
+#        revision:
+#          type: string
+#        account_id:
+#          type: string
+#        client_version:
+#          type: string
+#        project_id:
+#          type: string
+#        client_name:
+#          type: string
+#        anonymize_ip:
+#          type: boolean
+#        bot_filtering:
+#          type: boolean
+#      required:
+#      - revision
+#      - account_id
+#      - client_version
+#      - project_id
+#      - client_name
+#      - anonymize_ip
+#      - bot_filtering
+#    ImpressionEvent:
+#      properties:
+#        entity_id:
+#          type: string
+#        key:
+#          type: string
+#        attributes:
+#          type: array
+#          items:
+#            $ref: '#/components/schemas/VisitorAttribute'
+#        variation_id:
+#          type: string
+#        campaign_id:
+#          type: string
+#        experiment_id:
+#          type: string
+#      required:
+#      - entity_id
+#      - key
+#      - variation_id
+#      - campaign_id
+#      - experiment_id
+#    ConversionEvent:
+#      properties:
+#        entity_id:
+#          type: string
+#        key:
+#          type: string
+#        revenue:
+#          type: integer
+#          format: int64
+#        attributes:
+#          type: array
+#          items:
+#            $ref: '#/components/schemas/VisitorAttribute'
+#        tags:
+#          type: object
+#          additionalProperties: true
+#        value:
+#          type: number
+#          format: double
+#      required:
+#      - entity_id
+#      - key
+#      - variation_id
+#      - campaign_id
+#      - experiment_id
+#    VisitorAttribute:
+#      properties:
+#        value: {}
+#        key:
+#          type: string
+#        attribute_type:
+#          type: string
+#        entity_id:
+#          type: string
+#      required:
+#      - value
+#      - key
+#      - attribute_type
+#      - entity_id
+  securitySchemes:
+    SdkKeyAuth:
+      in: header
+      name: X-Optimizely-SDK-Key
+      type: apiKey
+tags:
+  - name: experiments
+    description: Collection of APIs to describe the Optimizely Experiment set.
+    externalDocs:
+      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
+  - name: features
+    description: Collection of APIs to describe the Optimizely Feature set.
+    externalDocs:
+      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
+  - name: users
+    description: Collection of APIs to make decisions given the context of a specified user.
+    externalDocs:
+      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
