@@ -1,0 +1,2 @@
+Contact: security@optimizely.com
+Encryption: https://www.optimizely.com/security-at-pgp-key.txt
