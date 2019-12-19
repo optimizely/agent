@@ -19,12 +19,12 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/api/models"
 	"net/http"
 
+	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
