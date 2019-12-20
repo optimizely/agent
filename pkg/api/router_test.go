@@ -51,6 +51,15 @@ func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	})
 }
 
+type MockExperimentAPI struct{}
+
+func (m *MockExperimentAPI) ListExperiments(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+func (m *MockExperimentAPI) GetExperiment(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
 type MockFeatureAPI struct{}
 
 func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {
@@ -132,11 +141,12 @@ func (suite *RouterTestSuite) SetupTest() {
 		suite.tc = testClient
 
 		opts := &RouterOptions{
-			maxConns:     1,
-			featureAPI:   new(MockFeatureAPI),
-			userEventAPI: new(MockUserEventAPI),
-			userAPI:      new(MockUserAPI),
-			middleware:   new(MockOptlyMiddleware),
+			maxConns:      1,
+			experimentAPI: new(MockExperimentAPI),
+			featureAPI:    new(MockFeatureAPI),
+			userEventAPI:  new(MockUserEventAPI),
+			userAPI:       new(MockUserAPI),
+			middleware:    new(MockOptlyMiddleware),
 		}
 
 		suite.mux = NewRouter(opts)

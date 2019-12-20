@@ -363,20 +363,10 @@ components:
           type: integer
         key:
           type: string
-        variations:
+        variationsMap:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Variation'
-      # Both properties are required
-      required:
-      - id
-      - key
-    Variation:
-      properties:
-        id:
-          type: string
-        key:
-          type: string
       # Both properties are required
       required:
       - id
@@ -387,14 +377,14 @@ components:
           type: integer
         key:
           type: string
-        variables:
+        variablesMap:
           type: object
           additionalProperties:
             type: string
-        variations:
+        experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/FeatureVariation'
+            $ref: '#/components/schemas/Experiment'
       # Both properties are required
       required:
       - id
@@ -407,14 +397,39 @@ components:
           type: string
         enabled:
           type: boolean
-        variables:
+        variablesMap:
           type: object
           additionalProperties:
-            type: string
+            type: object
+            $ref: '#/components/schemas/Variable'
       # Both properties are required
       required:
       - id
       - key
+    Variation:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+      # Both properties are required
+      required:
+        - id
+        - key
+
+    Variable:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        type:
+          type: string
+        value:
+          type: string
+      required:
+        - id
+        - key
     UserEvent:
       properties:
         timestamp:
