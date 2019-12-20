@@ -8,5 +8,5 @@ RUN make build
 
 FROM alpine:3.10
 RUN apk add --no-cache ca-certificates=20190108-r0
-COPY --from=builder /go/src/github.com/optimizely/sidedoor/bin/sidedoor /sidedoor
-CMD ["/sidedoor"]
+COPY --from=builder /go/src/github.com/optimizely/sidedoor/bin/optimizely /optimizely
+CMD ["/optimizely"]

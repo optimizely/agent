@@ -15,7 +15,7 @@ if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   # push docker images to artifactory
   docker login -u ${ARTIFACTORY_USER} -p ${ARTIFACTORY_PASSWORD} optimizely-docker.jfrog.io
   # if you dont specify the tag, it'll push all image versions
-  docker push optimizely-docker.jfrog.io/sidedoor
+  docker push optimizely-docker.jfrog.io/optimizely
 elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
   echo "we're on osx"
 else
