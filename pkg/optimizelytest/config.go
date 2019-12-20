@@ -285,11 +285,11 @@ func (c *TestProjectConfig) CreateVariation(varKey string) entities.Variation {
 }
 
 // ConvertVariation converts entities variation to optimizely config variation
-func (c *TestProjectConfig) ConvertVariation(eVariation entities.Variation) optlyconfig.OptimizelyVariation {
+func (c *TestProjectConfig) ConvertVariation(v entities.Variation) optlyconfig.OptimizelyVariation {
 
 	variation := optlyconfig.OptimizelyVariation{
-		Key:          eVariation.Key,
-		ID:           eVariation.ID,
+		Key:          v.Key,
+		ID:           v.ID,
 		VariablesMap: map[string]optlyconfig.OptimizelyVariable{},
 	}
 	return variation
