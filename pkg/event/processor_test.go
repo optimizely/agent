@@ -175,15 +175,14 @@ func TestGetEventProcessorWithNSQ(t *testing.T) {
 }
 
 func TestGetEventProcessorWithoutNSQ(t *testing.T) {
+	viper.Reset()
 	viper.SetDefault(EPBSize, 30)
 
 	ep := GetOptlyEventProcessor()
 	if bep, ok := ep.(*event.BatchEventProcessor); ok {
-		assert.True(t, bep.BatchSize == 30)
+		assert.Equal(t, bep.BatchSize, 30)
 		if _, ok := bep.Q.(*NSQQueue); ok {
-			assert.True(t, false)
-		} else {
-			assert.True(t, true)
+			assert.Fail(t, "should not be NSQQueue")
 		}
 	}
 }
