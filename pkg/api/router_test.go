@@ -115,24 +115,20 @@ type RouterTestSuite struct {
 	mux *chi.Mux
 }
 
-var once sync.Once
-
 func (suite *RouterTestSuite) SetupTest() {
 
-	once.Do(func() {
-		testClient := optimizelytest.NewClient()
-		suite.tc = testClient
+	testClient := optimizelytest.NewClient()
+	suite.tc = testClient
 
-		opts := &RouterOptions{
-			maxConns:     1,
-			featureAPI:   new(MockFeatureAPI),
-			userEventAPI: new(MockUserEventAPI),
-			userAPI:      new(MockUserAPI),
-			middleware:   new(MockOptlyMiddleware),
-		}
+	opts := &RouterOptions{
+		maxConns:     1,
+		featureAPI:   new(MockFeatureAPI),
+		userEventAPI: new(MockUserEventAPI),
+		userAPI:      new(MockUserAPI),
+		middleware:   new(MockOptlyMiddleware),
+	}
 
-		suite.mux = NewRouter(opts)
-	})
+	suite.mux = NewRouter(opts)
 }
 
 func (suite *RouterTestSuite) TestListFeatures() {

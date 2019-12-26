@@ -30,6 +30,30 @@ import (
 	"github.com/go-chi/render"
 )
 
+var userEventTimer func(http.Handler) http.Handler
+var listFeaturesTimer func(http.Handler) http.Handler
+var getFeatureTimer func(http.Handler) http.Handler
+var trackEventTimer func(http.Handler) http.Handler
+var getUserFeatureTimer func(http.Handler) http.Handler
+var trackUserFeatureTimer func(http.Handler) http.Handler
+var getVariationTimer func(http.Handler) http.Handler
+var activateExperimentTimer func(http.Handler) http.Handler
+var setForcedVariationTimer func(http.Handler) http.Handler
+var removeForcedVariationTimer func(http.Handler) http.Handler
+
+func init() {
+	userEventTimer = middleware.Metricize("user-event")
+	listFeaturesTimer = middleware.Metricize("list-features")
+	getFeatureTimer = middleware.Metricize("get-feature")
+	trackEventTimer = middleware.Metricize("track-event")
+	getUserFeatureTimer = middleware.Metricize("get-user-feature")
+	trackUserFeatureTimer = middleware.Metricize("track-user-feature")
+	getVariationTimer = middleware.Metricize("get-variation")
+	activateExperimentTimer = middleware.Metricize("activate-experiment")
+	setForcedVariationTimer = middleware.Metricize("set-forced-variation")
+	removeForcedVariationTimer = middleware.Metricize("remove-forced-variation")
+}
+
 // RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
 	maxConns     int
@@ -64,25 +88,25 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.With(chimw.AllowContentType("application/json"), middleware.Metricize("user-event")).Post("/user-event", opt.userEventAPI.AddUserEvent)
+	r.With(chimw.AllowContentType("application/json"), userEventTimer).Post("/user-event", opt.userEventAPI.AddUserEvent)
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(middleware.Metricize("list-features")).Get("/", opt.featureAPI.ListFeatures)
-		r.With(middleware.Metricize("get-feature")).Get("/{featureKey}", opt.featureAPI.GetFeature)
+		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
+		r.With(getFeatureTimer).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
-		r.With(middleware.Metricize("track-event")).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
+		r.With(trackEventTimer).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 
-		r.With(middleware.Metricize("get-user-feature")).Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.With(middleware.Metricize("track-user-feature")).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
-		r.With(middleware.Metricize("get-variation")).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
-		r.With(middleware.Metricize("activate-experiment")).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
-		r.With(middleware.Metricize("set-forced-variation")).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
-		r.With(middleware.Metricize("remove-forced-variation")).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
+		r.With(getUserFeatureTimer).Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.With(trackUserFeatureTimer).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(getVariationTimer).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
+		r.With(activateExperimentTimer).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
+		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
+		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
 
 	return r
