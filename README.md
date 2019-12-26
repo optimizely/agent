@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.com/optimizely/sidedoor.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/sidedoor)
 [![codecov](https://codecov.io/gh/optimizely/sidedoor/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/sidedoor)
-# Optimizely Sidedoor
-Sidedoor is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
-a highly available and distributed application.
+# Optimizely Agent
+Optimizely Agent is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
+a highly available and distributed web application.
 
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
@@ -16,7 +16,7 @@ Following best practice for go project layout as defined [here](https://github.c
 
 ## Make targets
 The following `make` targets can be used to build and run the application:
-* **build** - builds sidedoor and installs binary in bin/sidedoor
+* **build** - builds optimizely and installs binary in bin/optimizely
 * **clean** - runs `go clean` and removes the bin/ dir
 * **install** - installs all dev and ci dependencies
 * **generate-api** - generates APIs from the swagger spec

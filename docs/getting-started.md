@@ -1,24 +1,24 @@
 # Getting Started Guide
 
 ## Installation
-Sidedoor is available via most application package managers and can be installed with a single command:
+Optimizely Agent is available via most application package managers and can be installed with a single command:
 
 ### Via RPM (CentOS)
 ```bash
-> sudo yum install sidedoor
-> sudo service sidedoor start
+> sudo yum install optimizely
+> sudo service optimizely start
 ```
 
 ### Via DEB (Ubuntu)
 ```bash
-> sudo apt-get install sidedoor
-> sudo service sidedoor start
+> sudo apt-get install optimizely
+> sudo service optimizely start
 ```
 
 ### Via Homebrew (OSX)
 ```bash
-> brew install sidedoor
-> brew services start sidedoor
+> brew install optimizely
+> brew services start optimizely
 ```
 
 Once installed and the service is running we can start to explore the REST APIs.
@@ -27,7 +27,7 @@ Once installed and the service is running we can start to explore the REST APIs.
 The rest of the getting started guide will demonstrate the APIs capabilities. For brevity, we've chosen to illustrate the API usage with Python. Note that the APIs are also defined via OpenAPI (Swagger) and can be found [here](http://localhost:8080/openapi.yaml).
 
 ### Start an http session
-Each request made into Sidedoor is in the context of an Optimizely SDK Key. SDK Keys map API requests to a specific Optimizely Project and Environment. We can setup a global request header by using the `requests.Session` object.
+Each request made into Optimizely Agent is in the context of an Optimizely SDK Key. SDK Keys map API requests to a specific Optimizely Project and Environment. We can setup a global request header by using the `requests.Session` object.
 
 ```python
 import requests

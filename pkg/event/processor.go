@@ -34,15 +34,14 @@ const timeout = 5 * time.Second
 
 // OptlyEventProcessorConfig represents configuration of the event processor. Also configuring nsq if used.
 type OptlyEventProcessorConfig struct {
-	NSQWithProducer     bool                    `yaml:"nsqWithProducer" default:"false"`
-	NSQWithConsumer     bool                    `yaml:"nsqWithConsumer" default:"false"`
-	NSQEnabled          bool                    `yaml:"nsqEnabled" default:"false"`
-	NSQStartEmbedded    bool                    `yaml:"nsqStartEmbedded" default:"false"`
-	NSQAddress          string                  `yaml:"nsqAddress" default:"localhost:4150"`
-	QueueSize           int                     `yaml:"queueSize" default:"1000"`
-	BatchSize           int                     `yaml:"batchSize" default:"10"`
+	NSQWithProducer  bool   `yaml:"nsqWithProducer" default:"false"`
+	NSQWithConsumer  bool   `yaml:"nsqWithConsumer" default:"false"`
+	NSQEnabled       bool   `yaml:"nsqEnabled" default:"false"`
+	NSQStartEmbedded bool   `yaml:"nsqStartEmbedded" default:"false"`
+	NSQAddress       string `yaml:"nsqAddress" default:"localhost:4150"`
+	QueueSize        int    `yaml:"queueSize" default:"1000"`
+	BatchSize        int    `yaml:"batchSize" default:"10"`
 }
-
 
 // GetOptlyEventProcessor get the optly event processor using viper configuration variables.
 func GetOptlyEventProcessor() event.Processor {
@@ -63,7 +62,7 @@ func GetOptlyEventProcessor() event.Processor {
 	}
 
 	// configure NSQ backed Queue
-	if config.NSQEnabled  {
+	if config.NSQEnabled {
 		startEmbedded := config.NSQStartEmbedded
 		var nsqAddress string
 		if nsqAddress = config.NSQAddress; nsqAddress == "" {
@@ -100,23 +99,23 @@ func GetOptlyEventProcessor() event.Processor {
 	return event.NewBatchEventProcessor(event.WithQueueSize(config.QueueSize), event.WithBatchSize(config.BatchSize), event.WithQueue(q))
 }
 
-// SidedoorEventProcessor - sends events to sidedoor API
-type SidedoorEventProcessor struct {
+// OptimizelyEventProcessor - sends events to optimizely API
+type OptimizelyEventProcessor struct {
 	client http.Client
 	URL    string
 }
 
-// NewSidedoorEventProcessor - Create a SidedoorEventProcessor of the given URL, with a default client that sets a 5 second request timeout
-func NewSidedoorEventProcessor(url string) *SidedoorEventProcessor {
+// NewOptimizelyEventProcessor - Create a OptimizelyEventProcessor of the given URL, with a default client that sets a 5 second request timeout
+func NewOptimizelyEventProcessor(url string) *OptimizelyEventProcessor {
 	client := http.Client{Timeout: timeout}
-	return &SidedoorEventProcessor{
+	return &OptimizelyEventProcessor{
 		client: client,
 		URL:    url,
 	}
 }
 
-// ProcessEvent - send event to sidedoor API
-func (s *SidedoorEventProcessor) ProcessEvent(userEvent event.UserEvent) error {
+// ProcessEvent - send event to optimizely API
+func (s *OptimizelyEventProcessor) ProcessEvent(userEvent event.UserEvent) error {
 	jsonValue, err := json.Marshal(userEvent)
 	if err != nil {
 		log.Error().Err(err).Msg("Error marshaling event")

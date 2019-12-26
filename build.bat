@@ -2,7 +2,7 @@
 
 @echo off
 :: The name of the executable (default is current directory name)
-set TARGET=sidedoor
+set TARGET=optimizely
 set VERSION=0.8.1
 
 :: Go parameters

@@ -1,5 +1,5 @@
 # The name of the executable (default is current directory name)
-TARGET := $(shell basename "$(PWD)")
+TARGET := "optimizely"
 APP_VERSION ?= $(shell git describe --tags)
 .DEFAULT_GOAL := help
 

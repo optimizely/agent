@@ -41,9 +41,9 @@ func loadConfig() error {
 	// Set defaults
 	viper.SetDefault("config.filename", "config.yaml") // Configuration file name
 
-	viper.SetDefault("app.version", Version)     // Application version
-	viper.SetDefault("app.author", "Optimizely") // Application author
-	viper.SetDefault("app.name", "Sidedoor")     // Appplication name
+	viper.SetDefault("app.version", Version)          // Application version
+	viper.SetDefault("app.author", "Optimizely Inc.") // Application author
+	viper.SetDefault("app.name", "optimizely")        // Appplication name
 
 	viper.SetDefault("api.enabled", true) // Property to turn api service on/off
 	viper.SetDefault("api.port", "8080")  // Port for serving Optimizely APIs
@@ -60,7 +60,7 @@ func loadConfig() error {
 	viper.SetDefault("server.writetimeout", 10*time.Second)
 
 	// Configure environment variables
-	viper.SetEnvPrefix("sidedoor")
+	viper.SetEnvPrefix("optimizely")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
