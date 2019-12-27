@@ -39,7 +39,9 @@ function installPrereq($URL, $SHA) {
         if ($extension -eq ".msi") {
             Start-Process -FilePath "msiexec.exe" -ArgumentList "/i","$PSScriptRoot\$filename","INSTALLDIR=$env:APPDATA\$RANDOM","/qb" -Wait
         } elseif ($extension -eq ".exe") {
-            Start-Process -FilePath "$PSScriptRoot\$filename" -ArgumentList "/DIR=$env:APPDATA\$RANDOM","/VERYSILENT"
+            Start-Process -FilePath "$PSScriptRoot\$filename" -ArgumentList "/DIR=$env:APPDATA\$RANDOM","/SILENT"
+            Write-Host "Installing $filename..."
+            Start-Sleep -s 60
         } else {
             Write-Host "Unrecognized extension: $extension" -ForegroundColor Red
             exit 1
