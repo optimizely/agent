@@ -33,6 +33,8 @@ type JSON map[string]interface{}
 
 var getTestMetrics = func() http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Need to sleep to register response duration
+		time.Sleep(1 * time.Millisecond)
 	})
 }
 

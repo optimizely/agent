@@ -43,6 +43,16 @@ jobs:
       script:
         - go get -v -d ./...
 
+    - stage: test
+      name: windows build.ps1 test
+      os: windows
+      language: shell
+      before_script: skip
+      script:
+        - PowerShell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+        - PowerShell -File build.ps1 noninteractive
+        # - PowerShell -Command Start-Process -Filepath "bin\optimizely.exe" -NoNewWindow
+
     - stage: build
       if: type = push AND tag IS present
       name: linux
