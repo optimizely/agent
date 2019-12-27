@@ -14,29 +14,50 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package models //
-package models
+package config
 
-// DatafileUpdateData model which represents data specific to datafile update
-type DatafileUpdateData struct {
-	Revision    int32  `json:"revision"`
-	OriginURL   string `json:"origin_url"`
-	CDNUrl      string `json:"cdn_url"`
-	Environment string `json:"environment"`
+import (
+	"time"
+)
+
+type AgentConfig struct {
+	Log     LogConfig     `yaml:"log"`
+	Api     ApiConfig     `yaml:"api"`
+	Admin   AdminConfig   `yaml:"admin"`
+	Webhook WebhookConfig `yaml:"webhook"`
+	Server  ServerConfig  `yaml:"server"`
 }
 
-// OptlyMessage model which represents any message received from Optimizely
-type OptlyMessage struct {
-	ProjectID int64              `json:"project_id"`
-	Timestamp int64              `json:"timestamp"`
-	Event     string             `json:"event"`
-	Data      DatafileUpdateData `json:"data"`
+type LogConfig struct {
+	Pretty bool   `yaml:"pretty"`
+	Level  string `yaml:"level"`
 }
 
-// OptlyWebhookConfig represents configuration of a single Optimizely webhook
-type OptlyWebhookConfig struct {
-    ProjectID           int64                   `yaml:"projectId"`
-    SDKKeys             []string                `yaml:"sdkKeys"`
-    Secret              string                  `yaml:"secret"`
-    SkipSignatureCheck  bool                    `yaml:"skipSignatureCheck" default:"false"`
+type ServerConfig struct {
+	ReadTimeout  time.Duration `yaml:"readtimeout"`
+	WriteTimeout time.Duration `yaml:"writetimeout"`
+}
+
+type ApiConfig struct {
+	MaxConns int    `yaml:"maxconns"`
+	Enabled  bool   `yaml:"enabled"`
+	Port     string `yaml:"port"`
+}
+
+type AdminConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Port    string `yaml:"port"`
+}
+
+// WebhookConfig represents configuration of a single Optimizely webhook
+type WebhookConfig struct {
+	Enabled  bool                     `yaml:"enabled"`
+	Port     string                   `yaml:"port"`
+	Projects map[int64]WebhookProject `mapstructure:"projects"`
+}
+
+type WebhookProject struct {
+	SDKKeys            []string `yaml:"sdkKeys"`
+	Secret             string   `yaml:"secret"`
+	SkipSignatureCheck bool     `yaml:"skipSignatureCheck" default:"false"`
 }

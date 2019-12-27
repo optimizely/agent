@@ -1,0 +1,29 @@
+server:
+  readTimeout: 5s
+  writeTimeout: 10s
+log:
+  pretty: true
+  level: debug
+admin:
+  port: 3002
+api:
+  enabled: true
+  maxconns: 100
+  port: 3000
+webhook:
+  enabled: true
+  port: 3001
+  projects:
+    10000:
+      sdkKeys:
+        - aaa
+        - bbb
+        - ccc
+      secret: secret-10000
+      skipSignatureCheck: true
+    20000:
+      sdkKeys:
+        - xxx
+        - yyy
+        - zzz
+      secret: secret-20000
