@@ -17,12 +17,12 @@
 package server
 
 import (
+	"github.com/optimizely/sidedoor/config"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,10 +30,10 @@ var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 })
 
+var conf = config.ServerConfig{}
+
 func TestStartAndShutdown(t *testing.T) {
-	viper.SetDefault("valid.enabled", true)
-	viper.SetDefault("valid.port", "1000")
-	srv, err := NewServer("valid", handler)
+	srv, err := NewServer("valid", "1000", handler, conf)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -50,27 +50,26 @@ func TestStartAndShutdown(t *testing.T) {
 }
 
 func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", handler)
+	_, err := NewServer("not-enabled", "0", handler, conf)
 	if assert.Error(t, err) {
 		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
 	}
 }
 
 func TestFailedStartService(t *testing.T) {
-	viper.SetDefault("test.enabled", true)
-	viper.SetDefault("test.port", "-9")
-	ns, err := NewServer("test", handler)
+	ns, err := NewServer("test", "-9", handler, conf)
 	assert.NoError(t, err)
 	ns.ListenAndServe()
 }
 
 func TestServerConfigs(t *testing.T) {
-	viper.SetDefault("test.enabled", true)
-	viper.SetDefault("server.readtimeout", 5*time.Second) // Default using Duration
-	viper.SetDefault("server.writetimeout", "10s")        // Default using string
-	ns, err := NewServer("test", handler)
+	conf := config.ServerConfig{
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 8 * time.Second,
+	}
+	ns, err := NewServer("test", "1000", handler, conf)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 5*time.Second, ns.srv.ReadTimeout)
-	assert.Equal(t, 10*time.Second, ns.srv.WriteTimeout)
+	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
+	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
 }

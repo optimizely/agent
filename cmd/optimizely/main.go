@@ -21,17 +21,17 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+
+	"github.com/optimizely/sidedoor/config"
 	"github.com/optimizely/sidedoor/pkg/admin"
 	"github.com/optimizely/sidedoor/pkg/api"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/server"
 	"github.com/optimizely/sidedoor/pkg/webhook"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 // Version holds the admin version
@@ -40,24 +40,7 @@ var Version string // default set at compile time
 func loadConfig() error {
 	// Set defaults
 	viper.SetDefault("config.filename", "config.yaml") // Configuration file name
-
-	viper.SetDefault("app.version", Version)          // Application version
-	viper.SetDefault("app.author", "Optimizely Inc.") // Application author
-	viper.SetDefault("app.name", "optimizely")        // Appplication name
-
-	viper.SetDefault("api.enabled", true) // Property to turn api service on/off
-	viper.SetDefault("api.port", "8080")  // Port for serving Optimizely APIs
-
-	viper.SetDefault("webhook.enabled", true) // Property to turn webhook service on/off
-	viper.SetDefault("webhook.port", "8085")  // Port for webhook service
-
-	viper.SetDefault("admin.enabled", true)
-	viper.SetDefault("admin.port", "8088") // Port for admin service
-
-	viper.SetDefault("log.level", "info") // Set default log level
-
-	viper.SetDefault("server.readtimeout", 5*time.Second)
-	viper.SetDefault("server.writetimeout", 10*time.Second)
+	viper.SetDefault("app.version", Version)           // Application version
 
 	// Configure environment variables
 	viper.SetEnvPrefix("optimizely")
@@ -92,10 +75,15 @@ func main() {
 		log.Info().Err(err).Msg("Skip loading configuration from config file.")
 	}
 
+	conf := config.NewAgentConfig()
+	if err := viper.Unmarshal(conf); err != nil {
+		log.Error().Err(err).Msg("Unable to marshall configuration")
+	}
+
 	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
-	sg := server.NewGroup(ctx)                              // Create a new server group to manage the individual http listeners
+	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
 	optlyCache := optimizely.NewCache(ctx)
 
 	// goroutine to check for signals to gracefully shutdown listeners
@@ -109,9 +97,9 @@ func main() {
 		cancel()
 	}()
 
-	sg.GoListenAndServe("api", api.NewDefaultRouter(optlyCache))
-	sg.GoListenAndServe("webhook", webhook.NewDefaultRouter(optlyCache))
-	sg.GoListenAndServe("admin", admin.NewRouter()) // Admin should be added last.
+	sg.GoListenAndServe("api", conf.Api.Port, api.NewDefaultRouter(optlyCache, conf.Api))
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, webhook.NewRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("admin", conf.Admin.Port, admin.NewRouter(conf.Admin)) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

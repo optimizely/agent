@@ -18,27 +18,22 @@
 package admin
 
 import (
+	"github.com/optimizely/sidedoor/config"
 	"net/http"
-
-	"github.com/optimizely/sidedoor/pkg/admin/handlers"
-	"github.com/spf13/viper"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 )
 
 // Version holds the admin version
 var Version string // can be set at compile time
 
 // NewRouter returns HTTP admin router
-func NewRouter() http.Handler {
+func NewRouter(conf config.AdminConfig) http.Handler {
 	r := chi.NewRouter()
 
-	version := viper.GetString("app.version")
-	author := viper.GetString("app.author")
-	appName := viper.GetString("app.name")
-
-	optlyAdmin := handlers.NewAdmin(version, author, appName)
+	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))

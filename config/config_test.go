@@ -41,6 +41,9 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.False(t, conf.Admin.Enabled)
 	assert.Equal(t, "3002", conf.Admin.Port)
+	assert.Equal(t, "0.1.0", conf.Admin.Version)
+	assert.Equal(t, "Optimizely Inc.", conf.Admin.Author)
+	assert.Equal(t, "optimizely", conf.Admin.Name)
 
 	assert.True(t, conf.Api.Enabled)
 	assert.Equal(t, 100, conf.Api.MaxConns)

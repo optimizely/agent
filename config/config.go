@@ -20,6 +20,37 @@ import (
 	"time"
 )
 
+func NewAgentConfig() *AgentConfig {
+
+	config := AgentConfig{
+		Log: LogConfig{
+			Pretty: false,
+			Level:  "info",
+		},
+		Api: ApiConfig{
+			MaxConns: 0,
+			Enabled:  true,
+			Port:     "8080",
+		},
+		Admin: AdminConfig{
+			Author:  "Optimizely Inc.",
+			Name:    "optimizely",
+			Enabled: true,
+			Port:    "8088",
+		},
+		Webhook: WebhookConfig{
+			Enabled: true,
+			Port:    "8085",
+		},
+		Server: ServerConfig{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		},
+	}
+
+	return &config
+}
+
 type AgentConfig struct {
 	Log     LogConfig     `yaml:"log"`
 	Api     ApiConfig     `yaml:"api"`
@@ -45,6 +76,9 @@ type ApiConfig struct {
 }
 
 type AdminConfig struct {
+	Version string `yaml:"version"`
+	Author  string `yaml:"author"`
+	Name    string `yaml:"name"`
 	Enabled bool   `yaml:"enabled"`
 	Port    string `yaml:"port"`
 }

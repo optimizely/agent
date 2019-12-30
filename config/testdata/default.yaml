@@ -5,6 +5,9 @@ log:
   pretty: true
   level: debug
 admin:
+  version: 0.1.0
+  author: Optimizely Inc.
+  name: optimizely
   port: 3002
 api:
   enabled: true

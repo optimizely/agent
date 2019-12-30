@@ -39,15 +39,15 @@ const signaturePrefix = "sha1="
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct {
-	optlyCache        optimizely.Cache
-	webhookProjectMap map[int64]config.WebhookProject
+	optlyCache optimizely.Cache
+	ProjectMap map[int64]config.WebhookProject
 }
 
 // NewWebhookHandler returns a new instance of OptlyWebhookHandler
-func NewWebhookHandler(optlyCache optimizely.Cache, webhookConfig config.WebhookConfig) *OptlyWebhookHandler {
+func NewWebhookHandler(optlyCache optimizely.Cache, projectMap map[int64]config.WebhookProject) *OptlyWebhookHandler {
 	return &OptlyWebhookHandler{
-		optlyCache:        optlyCache,
-		webhookProjectMap: webhookConfig.Projects,
+		optlyCache: optlyCache,
+		ProjectMap: projectMap,
 	}
 }
 
@@ -66,7 +66,7 @@ func (h *OptlyWebhookHandler) computeSignature(payload []byte, secretKey string)
 
 // validateSignature computes and compares message digest
 func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload []byte, projectID int64) bool {
-	webhookConfig, ok := h.webhookProjectMap[projectID]
+	webhookConfig, ok := h.ProjectMap[projectID]
 	if !ok {
 		log.Error().Str("Project ID", strconv.FormatInt(projectID, 10)).Msg("No webhook configuration found for project ID.")
 		return false
@@ -100,7 +100,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if there is configuration corresponding to the project
-	webhookConfig, ok := h.webhookProjectMap[webhookMsg.ProjectID]
+	webhookConfig, ok := h.ProjectMap[webhookMsg.ProjectID]
 	if !ok {
 		log.Error().Str("Project ID", strconv.FormatInt(webhookMsg.ProjectID, 10)).Msg("No webhook configured for Project ID.")
 		w.WriteHeader(http.StatusNoContent)

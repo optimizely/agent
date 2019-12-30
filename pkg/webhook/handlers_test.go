@@ -65,12 +65,10 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 }
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
-	var testWebhookConfigs = config.WebhookConfig{
-		Projects: map[int64]config.WebhookProject{
-			42: {
-				SDKKeys: []string{"myDatafile"},
-				Secret:  "I am secret",
-			},
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
 		},
 	}
 	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs)
@@ -101,13 +99,11 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 
 func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 	testCache := optlytest.NewCache()
-	var testWebhookConfigs = config.WebhookConfig{
-		Projects: map[int64]config.WebhookProject{
-			42: {
-				SDKKeys:            []string{"myDatafile"},
-				Secret:             "I am secret",
-				SkipSignatureCheck: true,
-			},
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys:            []string{"myDatafile"},
+			Secret:             "I am secret",
+			SkipSignatureCheck: true,
 		},
 	}
 	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
@@ -138,12 +134,10 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 
 func TestHandleWebhookValidMessage(t *testing.T) {
 	testCache := optlytest.NewCache()
-	var testWebhookConfigs = config.WebhookConfig{
-		Projects: map[int64]config.WebhookProject{
-			42: {
-				SDKKeys: []string{"myDatafile"},
-				Secret:  "I am secret",
-			},
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
 		},
 	}
 	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
