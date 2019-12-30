@@ -17,13 +17,14 @@
 package config
 
 import (
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestDefaultConfig(t *testing.T) {
+func TestViperUnmarshal(t *testing.T) {
 	viper.SetConfigFile("./testdata/default.yaml")
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig()
@@ -45,9 +46,9 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "Optimizely Inc.", conf.Admin.Author)
 	assert.Equal(t, "optimizely", conf.Admin.Name)
 
-	assert.True(t, conf.Api.Enabled)
-	assert.Equal(t, 100, conf.Api.MaxConns)
-	assert.Equal(t, "3000", conf.Api.Port)
+	assert.True(t, conf.API.Enabled)
+	assert.Equal(t, 100, conf.API.MaxConns)
+	assert.Equal(t, "3000", conf.API.Port)
 
 	assert.True(t, conf.Webhook.Enabled)
 	assert.Equal(t, "3001", conf.Webhook.Port)
@@ -57,6 +58,32 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "secret-20000", conf.Webhook.Projects[20000].Secret)
 	assert.Equal(t, []string{"xxx", "yyy", "zzz"}, conf.Webhook.Projects[20000].SDKKeys)
 	assert.False(t, conf.Webhook.Projects[20000].SkipSignatureCheck)
+
+	viper.Reset()
+}
+
+func TestDefaultConfig(t *testing.T) {
+	conf := NewAgentConfig()
+
+	assert.Equal(t, 5*time.Second, conf.Server.ReadTimeout)
+	assert.Equal(t, 10*time.Second, conf.Server.WriteTimeout)
+
+	assert.False(t, conf.Log.Pretty)
+	assert.Equal(t, "info", conf.Log.Level)
+
+	assert.True(t, conf.Admin.Enabled)
+	assert.Equal(t, "8088", conf.Admin.Port)
+	assert.Equal(t, "", conf.Admin.Version)
+	assert.Equal(t, "Optimizely Inc.", conf.Admin.Author)
+	assert.Equal(t, "optimizely", conf.Admin.Name)
+
+	assert.True(t, conf.API.Enabled)
+	assert.Equal(t, 0, conf.API.MaxConns)
+	assert.Equal(t, "8080", conf.API.Port)
+
+	assert.True(t, conf.Webhook.Enabled)
+	assert.Equal(t, "8085", conf.Webhook.Port)
+	assert.Empty(t, conf.Webhook.Projects)
 
 	viper.Reset()
 }

@@ -97,7 +97,7 @@ func main() {
 		cancel()
 	}()
 
-	sg.GoListenAndServe("api", conf.Api.Port, api.NewDefaultRouter(optlyCache, conf.Api))
+	sg.GoListenAndServe("api", conf.API.Port, api.NewDefaultRouter(optlyCache, conf.API))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, webhook.NewRouter(optlyCache, conf.Webhook))
 	sg.GoListenAndServe("admin", conf.Admin.Port, admin.NewRouter(conf.Admin)) // Admin should be added last.
 

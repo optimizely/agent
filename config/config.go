@@ -14,12 +14,14 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
+// Package config contains all the configuration attributes for running Optimizely Agent
 package config
 
 import (
 	"time"
 )
 
+// NewAgentConfig returns the default configuration for Optimizely Agent
 func NewAgentConfig() *AgentConfig {
 
 	config := AgentConfig{
@@ -27,7 +29,7 @@ func NewAgentConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
-		Api: ApiConfig{
+		API: APIConfig{
 			MaxConns: 0,
 			Enabled:  true,
 			Port:     "8080",
@@ -51,30 +53,35 @@ func NewAgentConfig() *AgentConfig {
 	return &config
 }
 
+// AgentConfig is the top level configuration struct
 type AgentConfig struct {
 	Log     LogConfig     `yaml:"log"`
-	Api     ApiConfig     `yaml:"api"`
+	API     APIConfig     `yaml:"api"`
 	Admin   AdminConfig   `yaml:"admin"`
 	Webhook WebhookConfig `yaml:"webhook"`
 	Server  ServerConfig  `yaml:"server"`
 }
 
+// LogConfig holds the log configuration
 type LogConfig struct {
 	Pretty bool   `yaml:"pretty"`
 	Level  string `yaml:"level"`
 }
 
+// ServerConfig holds the global http server configs
 type ServerConfig struct {
 	ReadTimeout  time.Duration `yaml:"readtimeout"`
 	WriteTimeout time.Duration `yaml:"writetimeout"`
 }
 
-type ApiConfig struct {
+// APIConfig holds the REST API configuration
+type APIConfig struct {
 	MaxConns int    `yaml:"maxconns"`
 	Enabled  bool   `yaml:"enabled"`
 	Port     string `yaml:"port"`
 }
 
+// AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
 	Version string `yaml:"version"`
 	Author  string `yaml:"author"`
@@ -83,13 +90,14 @@ type AdminConfig struct {
 	Port    string `yaml:"port"`
 }
 
-// WebhookConfig represents configuration of a single Optimizely webhook
+// WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
 	Enabled  bool                     `yaml:"enabled"`
 	Port     string                   `yaml:"port"`
 	Projects map[int64]WebhookProject `mapstructure:"projects"`
 }
 
+// WebhookProject holds the configuration for a single Project webhook
 type WebhookProject struct {
 	SDKKeys            []string `yaml:"sdkKeys"`
 	Secret             string   `yaml:"secret"`

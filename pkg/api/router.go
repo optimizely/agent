@@ -72,7 +72,7 @@ type RouterOptions struct {
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultRouter(optlyCache optimizely.Cache, conf config.ApiConfig) http.Handler {
+func NewDefaultRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.Handler {
 	spec := &RouterOptions{
 		maxConns:      conf.MaxConns,
 		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
