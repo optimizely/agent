@@ -55,11 +55,17 @@ func NewAgentConfig() *AgentConfig {
 
 // AgentConfig is the top level configuration struct
 type AgentConfig struct {
-	Log     LogConfig     `yaml:"log"`
-	API     APIConfig     `yaml:"api"`
 	Admin   AdminConfig   `yaml:"admin"`
-	Webhook WebhookConfig `yaml:"webhook"`
+	API     APIConfig     `yaml:"api"`
+	Log     LogConfig     `yaml:"log"`
+	Optly   OptlyConfig   `yaml:"optly"`
 	Server  ServerConfig  `yaml:"server"`
+	Webhook WebhookConfig `yaml:"webhook"`
+}
+
+// OptlyConfig holds the set of SDK keys to bootstrap during initialization
+type OptlyConfig struct {
+	SDKKeys []string `yaml:"sdkKeys"`
 }
 
 // LogConfig holds the log configuration

@@ -19,17 +19,9 @@ package server
 import (
 	"context"
 	"testing"
-
-	"github.com/spf13/viper"
 )
 
 func TestServeAndShutdown(t *testing.T) {
-	viper.SetDefault("valid1.enabled", true)
-	viper.SetDefault("valid1.port", "1000")
-
-	viper.SetDefault("valid2.enabled", true)
-	viper.SetDefault("valid2.port", "1001")
-
 	ctx, cancel := context.WithCancel(context.Background())
 	sg := NewGroup(ctx, conf)
 

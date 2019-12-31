@@ -19,16 +19,17 @@ package optimizely
 
 import (
 	"context"
-	"github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/sidedoor/pkg/event"
-	"github.com/rs/zerolog/log"
 	"sync"
 
-	"github.com/optimizely/go-sdk/pkg/client"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	cmap "github.com/orcaman/concurrent-map"
-	"github.com/spf13/viper"
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/event"
 
+	"github.com/optimizely/go-sdk/pkg/client"
+	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
+
+	cmap "github.com/orcaman/concurrent-map"
+	"github.com/rs/zerolog/log"
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -41,7 +42,7 @@ type OptlyCache struct {
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context) *OptlyCache {
+func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
 	cache := &OptlyCache{
 		ctx:      ctx,
 		wg:       sync.WaitGroup{},
@@ -49,13 +50,12 @@ func NewCache(ctx context.Context) *OptlyCache {
 		optlyMap: cmap.New(),
 	}
 
-	cache.init()
+	cache.init(conf)
 	return cache
 }
 
-func (c *OptlyCache) init() {
-	sdkKeys := viper.GetStringSlice("optimizely.sdkKeys")
-	for _, sdkKey := range sdkKeys {
+func (c *OptlyCache) init(conf config.OptlyConfig) {
+	for _, sdkKey := range conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
 		}
@@ -100,7 +100,7 @@ func (c *OptlyCache) Wait() {
 
 func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
-	configManager := config.NewPollingProjectConfigManager(sdkKey)
+	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey)
 	if _, err := configManager.GetConfig(); err != nil {
 		return &OptlyClient{}, err
 	}
