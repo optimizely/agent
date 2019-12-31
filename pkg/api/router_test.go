@@ -141,7 +141,6 @@ func (suite *RouterTestSuite) SetupTest() {
 		maxConns:      1,
 		experimentAPI: new(MockExperimentAPI),
 		featureAPI:    new(MockFeatureAPI),
-		userEventAPI:  new(MockUserEventAPI),
 		userAPI:       new(MockUserAPI),
 		middleware:    new(MockOptlyMiddleware),
 	}

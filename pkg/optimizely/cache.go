@@ -22,7 +22,6 @@ import (
 	"sync"
 
 	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/event"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
@@ -105,14 +104,11 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
-	ep := event.GetOptlyEventProcessor()
-
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
-		client.WithEventProcessor(ep),
 	)
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
