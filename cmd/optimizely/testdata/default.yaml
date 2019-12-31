@@ -5,17 +5,18 @@ log:
   pretty: true
   level: debug
 admin:
+  enabled: false
   version: 0.1.0
   author: Optimizely Inc.
   name: optimizely
-  port: 3002
+  port: "3002"
 api:
   enabled: true
   maxconns: 100
-  port: 3000
+  port: "3000"
 webhook:
   enabled: true
-  port: 3001
+  port: "3001"
   projects:
     10000:
       sdkKeys:
@@ -31,7 +32,6 @@ webhook:
         - zzz
       secret: secret-20000
 optly:
-  test: cool
   sdkkeys:
     - ddd
     - eee

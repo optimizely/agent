@@ -40,9 +40,7 @@ import (
 var Version string // default set at compile time
 
 //https://github.com/spf13/viper/issues/188
-func loadConfig() (*config.AgentConfig, error) {
-	v := viper.New()
-
+func loadConfig(v *viper.Viper) (*config.AgentConfig, error) {
 	// Set defaults
 	v.SetDefault("config.filename", "config.yaml") // Configuration file name
 	v.SetDefault("app.version", Version)           // Application version
@@ -96,7 +94,7 @@ func initLogging(conf config.LogConfig) {
 
 func main() {
 
-	conf, err := loadConfig()
+	conf, err := loadConfig(viper.New())
 	initLogging(conf.Log)
 
 	if err != nil {
