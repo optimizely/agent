@@ -30,3 +30,9 @@ webhook:
         - yyy
         - zzz
       secret: secret-20000
+optly:
+  test: cool
+  sdkkeys:
+    - ddd
+    - eee
+    - fff

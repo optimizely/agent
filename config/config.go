@@ -65,7 +65,7 @@ type AgentConfig struct {
 
 // OptlyConfig holds the set of SDK keys to bootstrap during initialization
 type OptlyConfig struct {
-	SDKKeys []string `yaml:"sdkKeys"`
+	SDKKeys []string `yaml:"sdkkeys"`
 }
 
 // LogConfig holds the log configuration

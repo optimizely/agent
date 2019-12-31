@@ -57,7 +57,7 @@ func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
 func (c *OptlyCache) init(conf config.OptlyConfig) {
 	for _, sdkKey := range conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
-			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
+			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
 		}
 	}
 }
