@@ -31,18 +31,15 @@ func NewAgentConfig() *AgentConfig {
 		},
 		API: APIConfig{
 			MaxConns: 0,
-			Enabled:  true,
 			Port:     "8080",
 		},
 		Admin: AdminConfig{
-			Author:  "Optimizely Inc.",
-			Name:    "optimizely",
-			Enabled: true,
-			Port:    "8088",
+			Author: "Optimizely Inc.",
+			Name:   "optimizely",
+			Port:   "8088",
 		},
 		Webhook: WebhookConfig{
-			Enabled: true,
-			Port:    "8085",
+			Port: "8085",
 		},
 		Server: ServerConfig{
 			ReadTimeout:  5 * time.Second,
@@ -83,7 +80,6 @@ type ServerConfig struct {
 // APIConfig holds the REST API configuration
 type APIConfig struct {
 	MaxConns int    `yaml:"maxconns"`
-	Enabled  bool   `yaml:"enabled"`
 	Port     string `yaml:"port"`
 }
 
@@ -92,13 +88,11 @@ type AdminConfig struct {
 	Version string `yaml:"version"`
 	Author  string `yaml:"author"`
 	Name    string `yaml:"name"`
-	Enabled bool   `yaml:"enabled"`
 	Port    string `yaml:"port"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
-	Enabled  bool                     `yaml:"enabled"`
 	Port     string                   `yaml:"port"`
 	Projects map[int64]WebhookProject `mapstructure:"projects"`
 }

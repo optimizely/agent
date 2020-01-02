@@ -32,17 +32,14 @@ func TestDefaultConfig(t *testing.T) {
 	assert.False(t, conf.Log.Pretty)
 	assert.Equal(t, "info", conf.Log.Level)
 
-	assert.True(t, conf.Admin.Enabled)
 	assert.Equal(t, "8088", conf.Admin.Port)
 	assert.Equal(t, "", conf.Admin.Version)
 	assert.Equal(t, "Optimizely Inc.", conf.Admin.Author)
 	assert.Equal(t, "optimizely", conf.Admin.Name)
 
-	assert.True(t, conf.API.Enabled)
 	assert.Equal(t, 0, conf.API.MaxConns)
 	assert.Equal(t, "8080", conf.API.Port)
 
-	assert.True(t, conf.Webhook.Enabled)
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)
 }

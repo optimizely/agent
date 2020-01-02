@@ -37,7 +37,6 @@ func assertLog(t *testing.T, actual config.LogConfig) {
 }
 
 func assertAdmin(t *testing.T, actual config.AdminConfig) {
-	assert.False(t, actual.Enabled)
 	assert.Equal(t, "3002", actual.Port)
 	assert.Equal(t, "0.1.0", actual.Version)
 	assert.Equal(t, "Optimizely Inc.", actual.Author)
@@ -45,14 +44,11 @@ func assertAdmin(t *testing.T, actual config.AdminConfig) {
 }
 
 func assertAPI(t *testing.T, actual config.APIConfig) {
-	assert.True(t, actual.Enabled)
 	assert.Equal(t, 100, actual.MaxConns)
 	assert.Equal(t, "3000", actual.Port)
 }
 
 func assertWebhook(t *testing.T, actual config.WebhookConfig) {
-
-	assert.True(t, actual.Enabled)
 	assert.Equal(t, "3001", actual.Port)
 	assert.Equal(t, "secret-10000", actual.Projects[10000].Secret)
 	assert.Equal(t, []string{"aaa", "bbb", "ccc"}, actual.Projects[10000].SDKKeys)
@@ -89,17 +85,14 @@ func TestViperProps(t *testing.T) {
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
 
-	v.Set("admin.enabled", "false")
 	v.Set("admin.port", "3002")
 	v.Set("admin.version", "0.1.0")
 	v.Set("admin.author", "Optimizely Inc.")
 	v.Set("admin.name", "optimizely")
 
-	v.Set("api.enabled", true)
 	v.Set("api.maxconns", 100)
 	v.Set("api.port", "3000")
 
-	v.Set("webhook.enabled", true)
 	v.Set("webhook.port", "3001")
 	v.Set("webhook.projects.10000.secret", "secret-10000")
 	v.Set("webhook.projects.10000.sdkkeys", []string{"aaa", "bbb", "ccc"})
@@ -128,17 +121,14 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
 
-	_ = os.Setenv("OPTIMIZELY_ADMIN_ENABLED", "false")
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
 	_ = os.Setenv("OPTIMIZELY_ADMIN_VERSION", "0.1.0")
 	_ = os.Setenv("OPTIMIZELY_ADMIN_AUTHOR", "Optimizely Inc.")
 	_ = os.Setenv("OPTIMIZELY_ADMIN_NAME", "optimizely")
 
-	_ = os.Setenv("OPTIMIZELY_API_ENABLED", "true")
 	_ = os.Setenv("OPTIMIZELY_API_MAXCONNS", "100")
 	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")
 
-	_ = os.Setenv("OPTIMIZELY_WEBHOOK_ENABLED", "true")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PORT", "3001")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SECRET", "secret-10000")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SDKKEYS", "aaa,bbb,ccc")
