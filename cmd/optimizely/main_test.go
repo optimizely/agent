@@ -70,8 +70,7 @@ func TestViperYaml(t *testing.T) {
 	v := viper.New()
 	v.Set("config.filename", "./testdata/default.yaml")
 
-	actual, err := loadConfig(v)
-	assert.NoError(t, err)
+	actual := loadConfig(v)
 
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
@@ -111,8 +110,8 @@ func TestViperProps(t *testing.T) {
 
 	v.Set("optly.sdkkeys", []string{"ddd", "eee", "fff"})
 
-	actual, err := loadConfig(v)
-	assert.NoError(t, err)
+	assert.NoError(t, initConfig(v))
+	actual := loadConfig(v)
 
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
@@ -150,8 +149,9 @@ func TestViperEnv(t *testing.T) {
 
 	_ = os.Setenv("OPTIMIZELY_OPTLY_SDKKEYS", "ddd,eee,fff")
 
-	actual, err := loadConfig(viper.New())
-	assert.NoError(t, err)
+	v := viper.New()
+	assert.NoError(t, initConfig(v))
+	actual := loadConfig(v)
 
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)

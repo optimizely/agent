@@ -39,53 +39,52 @@ import (
 // Version holds the admin version
 var Version string // default set at compile time
 
-//https://github.com/spf13/viper/issues/188
-func loadConfig(v *viper.Viper) (*config.AgentConfig, error) {
-	// Set defaults
+func initConfig(v *viper.Viper) error {
+	// Set explicit defaults
 	v.SetDefault("config.filename", "config.yaml") // Configuration file name
 	v.SetDefault("app.version", Version)           // Application version
 
+	// Load defaults from the AgentConfig by loading the marshaled values as yaml
+	// https://github.com/spf13/viper/issues/188
 	defaultConf := config.NewAgentConfig()
 	b, err := yaml.Marshal(defaultConf)
 	if err != nil {
-		return defaultConf, err
+		return err
 	}
 
 	dc := bytes.NewReader(b)
 	v.SetConfigType("yaml")
-	if err2 := v.MergeConfig(dc); err2 != nil {
-		return defaultConf, err2
-	}
+	return v.MergeConfig(dc)
+}
 
-	// Read configuration from file
-	configFile := v.GetString("config.filename")
-	v.SetConfigFile(configFile)
-	if err3 := v.MergeInConfig(); err3 != nil {
-		if _, ok := err3.(viper.ConfigParseError); ok {
-			return defaultConf, err3
-		}
-		// dont return error if file is missing. overwrite file is optional
-	}
-
+func loadConfig(v *viper.Viper) *config.AgentConfig {
 	// Configure environment variables
 	v.SetEnvPrefix("optimizely")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
-	v.SetConfigType("yaml")
+	// Read configuration from file
+	configFile := v.GetString("config.filename")
+	v.SetConfigFile(configFile)
+	if err := v.MergeInConfig(); err != nil {
+		log.Info().Err(err).Msg("Skip loading configuration from config file.")
+	}
 
-	// refresh configuration with all merged values
 	conf := &config.AgentConfig{}
-	err = v.Unmarshal(&conf)
-	return conf, err
+	if err := v.Unmarshal(conf); err != nil {
+		log.Info().Err(err).Msg("Unable to marshal configuration.")
+	}
+
+	return conf
 }
 
-func initLogging(conf config.LogConfig) {
-	if conf.Pretty {
+func initLogging(v *viper.Viper) {
+	if v.GetBool("log.pretty") {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	if lvl, err := zerolog.ParseLevel(conf.Level); err != nil {
+	level := v.GetString("log.level")
+	if lvl, err := zerolog.ParseLevel(level); err != nil {
 		log.Warn().Err(err).Msg("Error parsing log level")
 	} else {
 		log.Logger = log.Logger.Level(lvl)
@@ -93,13 +92,13 @@ func initLogging(conf config.LogConfig) {
 }
 
 func main() {
-
-	conf, err := loadConfig(viper.New())
-	initLogging(conf.Log)
-
-	if err != nil {
-		log.Info().Err(err).Msg("Skip loading configuration from config file.")
+	v := viper.New()
+	if err := initConfig(v); err != nil {
+		log.Panic().Err(err).Msg("Unable to initialize config")
 	}
+
+	initLogging(v)
+	conf := loadConfig(v)
 
 	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
 	log.Info().Str("api-port", viper.GetString("api.port")).Msg("Starting services.")
