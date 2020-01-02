@@ -20,7 +20,9 @@ package optimizely
 import (
 	"context"
 	"github.com/optimizely/go-sdk/pkg/config"
+
 	"github.com/optimizely/sidedoor/pkg/event"
+	"github.com/optimizely/sidedoor/pkg/metrics"
 	"github.com/rs/zerolog/log"
 	"sync"
 
@@ -28,8 +30,11 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/spf13/viper"
-
 )
+
+const dispatcherMetricsPrefix = "dispatcher."
+
+var stats *metrics.Metrics
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -55,6 +60,7 @@ func NewCache(ctx context.Context) *OptlyCache {
 
 func (c *OptlyCache) init() {
 	sdkKeys := viper.GetStringSlice("optimizely.sdkKeys")
+	stats = metrics.NewMetrics(dispatcherMetricsPrefix)
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
@@ -105,7 +111,7 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
-	ep := event.GetOptlyEventProcessor()
+	ep := event.GetOptlyEventProcessor(stats)
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}

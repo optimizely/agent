@@ -20,12 +20,16 @@ package event
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/optimizely/sidedoor/pkg/metrics"
+
 	"github.com/optimizely/go-sdk/pkg/event"
+
 	"github.com/rs/zerolog/log"
 	snsq "github.com/segmentio/nsq-go"
 	"github.com/spf13/viper"
-	"net/http"
-	"time"
 )
 
 const jsonContentType = "application/json"
@@ -44,7 +48,7 @@ type OptlyEventProcessorConfig struct {
 }
 
 // GetOptlyEventProcessor get the optly event processor using viper configuration variables.
-func GetOptlyEventProcessor() event.Processor {
+func GetOptlyEventProcessor(stats *metrics.Metrics) event.Processor {
 
 	var config OptlyEventProcessorConfig
 	if err := viper.UnmarshalKey("optimizely.eventProcessor", &config); err != nil {
@@ -96,7 +100,7 @@ func GetOptlyEventProcessor() event.Processor {
 	}
 
 	// return a new batch event processor
-	return event.NewBatchEventProcessor(event.WithQueueSize(config.QueueSize), event.WithBatchSize(config.BatchSize), event.WithQueue(q))
+	return event.NewBatchEventProcessor(event.WithQueueSize(config.QueueSize), event.WithBatchSize(config.BatchSize), event.WithQueue(q), event.WithEventDispatcherMetrics(stats))
 }
 
 // OptimizelyEventProcessor - sends events to optimizely API

@@ -24,6 +24,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/optimizely/sidedoor/pkg/metrics"
+
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
@@ -139,9 +141,11 @@ const Consumer = "optimizely.eventProcessor.nsqWithConsumer"
 // NSQProducer boolan.  Start the producer if set to true
 const Producer = "optimizely.eventProcessor.nsqWithProducer"
 
+var stats = metrics.NewMetrics("")
+
 func TestGetEventProcessorWithQueueSize(t *testing.T) {
 	viper.SetDefault(EPQSize, 1000)
-	ep := GetOptlyEventProcessor()
+	ep := GetOptlyEventProcessor(stats)
 	if bep, ok := ep.(*event.BatchEventProcessor); ok {
 		assert.True(t, bep.MaxQueueSize == 1000)
 	}
@@ -149,7 +153,7 @@ func TestGetEventProcessorWithQueueSize(t *testing.T) {
 
 func TestGetEventProcessorWithBatchSize(t *testing.T) {
 	viper.SetDefault(EPBSize, 30)
-	ep := GetOptlyEventProcessor()
+	ep := GetOptlyEventProcessor(stats)
 	if bep, ok := ep.(*event.BatchEventProcessor); ok {
 		assert.True(t, bep.BatchSize == 30)
 	}
@@ -162,7 +166,7 @@ func TestGetEventProcessorWithNSQ(t *testing.T) {
 	viper.Set(Producer, true)
 	viper.Set(NSQStartEmbedded, false)
 
-	ep := GetOptlyEventProcessor()
+	ep := GetOptlyEventProcessor(stats)
 	if bep, ok := ep.(*event.BatchEventProcessor); ok {
 		assert.True(t, bep.BatchSize == 30)
 		if nsq, ok := bep.Q.(*NSQQueue); ok {
@@ -178,7 +182,7 @@ func TestGetEventProcessorWithoutNSQ(t *testing.T) {
 	viper.Reset()
 	viper.SetDefault(EPBSize, 30)
 
-	ep := GetOptlyEventProcessor()
+	ep := GetOptlyEventProcessor(stats)
 	if bep, ok := ep.(*event.BatchEventProcessor); ok {
 		assert.Equal(t, bep.BatchSize, 30)
 		if _, ok := bep.Q.(*NSQQueue); ok {
