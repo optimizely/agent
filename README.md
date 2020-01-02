@@ -10,6 +10,7 @@ Following best practice for go project layout as defined [here](https://github.c
 * **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
 * **bin** - Compiled application binaries.
 * **cmd** - Main applications for this project.
+* **config** - Application configuration.
 * **docs** - User documentation files.
 * **pkg** - Library code that can be used by other applications.
 * **scripts** - Scripts to perform various build, install, analysis, etc operations.
@@ -18,39 +19,59 @@ Following best practice for go project layout as defined [here](https://github.c
 The following `make` targets can be used to build and run the application:
 * **build** - builds optimizely and installs binary in bin/optimizely
 * **clean** - runs `go clean` and removes the bin/ dir
+* **cover** - runs test suite with coverage profiling
+* **cover-html** - generates test coverage html report
 * **install** - installs all dev and ci dependencies
-* **generate-api** - generates APIs from the swagger spec
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **run** - builds and executes the sidedoor binary
 * **test** - recursively tests all .go files
 
 ## Prerequisites
-Install go on OSX:
-```
+Optimizely Agent is implement in [Golang](https://golang.org/) and is required for developing.
+Installers and binary archives can be found for most platforms directly from the Go [downloads](https://golang.org/dl/) page. 
+
+### Install Go on OSX via [Homebrew](https://brew.sh/):
+```bash
 brew install go
 ```
 
-## Client Generation
-This repo currently depends on [OpenAPI](https://swagger.io/specification/) and [OpenAPI Generator](https://github.com/openapitools/openapi-generator) (a [fork](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/migration-from-swagger-codegen.md) of swagger-codegen).
+## Running Optimizely from source
+The Optimizely Agent can be started via the Makefile target `run`.
+```bash
+make run
+```
+This will start the Optimizely Agent with the default configuration in the foreground.
 
-To install the OpenAPI Generator on OSX:
-```
-brew install openapi-generator
-```
+## Configuration Options
+Optimizely Agent configuration can be overridden by a yaml configuration file provided at runtime.
 
-To determine which generators are available you can execute `openapi-generator` without any arguments or refer to the generator source [docs](https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/README.md):
+By default the configuration file will be sourced from the current active directory `e.g. ./config.yaml`.
+Alternative configuration locations can be specified at runtime via environment variable or command line flag.
+```bash
+OPTIMIZELY_CONFIG_FILENAME=config.yaml make run
+```
+An example configuration can be found [here](./cmd/optimizely/testdata/default.yaml)
 
-Types of generators are either CLIENT, SERVER, DOCUMENTATION, SCHEMA and CONFIG.
+Below is a comprehensive list of available configuration properties.
 
-### Generating
-You can use the helper script `generate.sh` to experiment with the various generated assets.
-```
-scripts/generate.sh <GENERATOR_NAME>
-```
-We also provide a Make task `generate-api`:
-```
-make generate-api ARG=<GENERATOR_NAME>
-```
+|Property Name|Env Variable|Description|
+|---|---|---|
+|config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
+|log.level|OPTIMIZELY_LOG_LEVEL|The log level for the application. Default: info|
+|log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
+|server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
+|server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|admin.enabled|OPTIMIZELY_ADMIN_ENABLED|Enable admin http server. Default: true|
+|admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
+|admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
+|admin.version|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
+|admin.version|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
+|api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
+|api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
+|webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
+|webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
+|webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
 ## Credits
 

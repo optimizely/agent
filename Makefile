@@ -32,18 +32,15 @@ $(TARGET):
 build: $(TARGET) ## builds and installs binary in bin/
 	@true
 
-cover:
+cover: ## runs test suite with coverage profiling
 	GO111MODULE=$(GO111MODULE) $(GOTEST) -race ./... -coverprofile=$(COVER_FILE) | sed ''/^ok/s//$$(printf "\033[32mok\033[0m")/'' | sed ''/FAIL/s//$$(printf "\033[31mFAIL\033[0m")/''
 
-cover-html: cover
+cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 clean: ## runs `go clean` and removes the bin/ dir
 	GO111MODULE=$(GO111MODULE) $(GOCLEAN) --modcache
 	rm -rf $(GOBIN)
-
-generate-api: ## generates APIs from the swagger spec
-	scripts/generate.sh $(ARG)
 
 install: ## installs all dev and ci dependencies
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.19.0
