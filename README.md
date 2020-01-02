@@ -27,13 +27,8 @@ The following `make` targets can be used to build and run the application:
 * **test** - recursively tests all .go files
 
 ## Prerequisites
-Optimizely Agent is implement in [Golang](https://golang.org/) and is required for developing.
+Optimizely Agent is implement in [Golang](https://golang.org/) and is required for developing and compiling from source.
 Installers and binary archives can be found for most platforms directly from the Go [downloads](https://golang.org/dl/) page. 
-
-### Install Go on OSX via [Homebrew](https://brew.sh/):
-```bash
-brew install go
-```
 
 ## Running Optimizely from source
 The Optimizely Agent can be started via the Makefile target `run`.
