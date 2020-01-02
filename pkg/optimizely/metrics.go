@@ -19,33 +19,44 @@ package optimizely
 
 import (
 	"expvar"
-
-	"github.com/optimizely/go-sdk/pkg/event"
+	"strconv"
 )
 
 // Metrics initializes expvar metrics
 type Metrics struct {
-	QueueSize    *expvar.Int
-	SuccessFlush *expvar.Int
-	FailFlush    *expvar.Int
-	RetryFlush   *expvar.Int
+	counts *expvar.Map
+
+	prefix string
 }
 
 // NewMetrics initializes metrics
-func NewMetrics(prefixKey string) *Metrics {
+func NewMetrics(prefix string) *Metrics {
 
 	return &Metrics{
-		QueueSize:    expvar.NewInt(prefixKey + ".queueSize"),
-		SuccessFlush: expvar.NewInt(prefixKey + ".successFlush"),
-		FailFlush:    expvar.NewInt(prefixKey + ".failFlush"),
-		RetryFlush:   expvar.NewInt(prefixKey + ".retryFlush"),
+		counts: expvar.NewMap("counter"),
+		prefix: prefix,
 	}
 }
 
-// SetMetrics sets event process metrics to expvar metrics
-func (m *Metrics) SetMetrics(defaultMetrics *event.DefaultMetrics) {
-	m.QueueSize.Set(int64(defaultMetrics.QueueSize))
-	m.FailFlush.Set(defaultMetrics.FailFlushCount)
-	m.RetryFlush.Set(defaultMetrics.RetryFlushCount)
-	m.SuccessFlush.Set(defaultMetrics.SuccessFlushCount)
+func (m *Metrics) Inc(key string) {
+	mergedKey := m.prefix + key
+	m.counts.Add(mergedKey, 1)
+}
+
+func (m *Metrics) Set(key string, val int64) {
+	mergedKey := m.prefix + key
+	v := expvar.Int{}
+	v.Add(val)
+	m.counts.Set(mergedKey, &v)
+}
+func (m *Metrics) Get(key string) int64 {
+	mergedKey := m.prefix + key
+	v := m.counts.Get(mergedKey)
+	vStr := v.String()
+	i, err := strconv.ParseInt(vStr, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return i
+
 }

@@ -23,8 +23,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg/event"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,9 +36,10 @@ func TestMetrics(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	EPMetrics := &event.DefaultMetrics{QueueSize: 20, FailFlushCount: 1, SuccessFlushCount: 3, RetryFlushCount: 5}
+	//EPMetrics := &event.DefaultMetrics{QueueSize: 20, FailFlushCount: 1, SuccessFlushCount: 3, RetryFlushCount: 5}
 	metrics := NewMetrics(metricPrefix)
-	metrics.SetMetrics(EPMetrics)
+	metrics.Set("queueSize", 20)
+
 	expvar.Handler().ServeHTTP(rec, req)
 
 	var expVarMap JSON

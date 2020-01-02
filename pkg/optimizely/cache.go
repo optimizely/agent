@@ -18,19 +18,17 @@
 package optimizely
 
 import (
-	"time"
-
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/event"
-
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
-const dispatcherMetricsPrefix = "counter.dispatcher"
+const dispatcherMetricsPrefix = "dispatcher."
+
+var metrics *Metrics
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -52,24 +50,24 @@ func NewCache() *OptlyCache {
 
 func (c *OptlyCache) init() {
 	sdkKeys := viper.GetStringSlice("optimizely.sdkKeys")
+	metrics = NewMetrics(dispatcherMetricsPrefix)
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
 		}
 	}
 
-	metrics := NewMetrics(dispatcherMetricsPrefix)
-	pollingFrequency := viper.GetDuration("metrics.pollingfreqency")
-	go func() {
-
-		t := time.NewTicker(pollingFrequency)
-		for {
-			select {
-			case <-t.C:
-				metrics.SetMetrics(c.GetEventDispatcherMetrics())
-			}
-		}
-	}()
+	//pollingFrequency := viper.GetDuration("metrics.pollingfreqency")
+	//go func() {
+	//
+	//	t := time.NewTicker(pollingFrequency)
+	//	for {
+	//		select {
+	//		case <-t.C:
+	//			metrics.SetMetrics(c.GetEventDispatcherMetrics())
+	//		}
+	//	}
+	//}()
 }
 
 // GetClient is used to fetch an instance of the OptlyClient when the SDK Key is explicitly supplied.
@@ -106,24 +104,25 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
+		client.WithMetrics(metrics),
 	)
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
 
 // GetEventDispatcherMetrics aggregates metrics from all clients
-func (c *OptlyCache) GetEventDispatcherMetrics() *event.DefaultMetrics {
-
-	clientsMetrics := &event.DefaultMetrics{}
-	for _, client := range c.optlyMap.Items() {
-
-		if client, ok := client.(*OptlyClient); ok {
-			if eventProcessor, goodEP := client.EventProcessor.(*event.BatchEventProcessor); goodEP {
-				if metric, goodMetric := eventProcessor.EventDispatcher.GetMetrics().(*event.DefaultMetrics); goodMetric {
-					clientsMetrics.Add(metric)
-				}
-
-			}
-		}
-	}
-	return clientsMetrics
-}
+//func (c *OptlyCache) GetEventDispatcherMetrics() *event.DefaultMetrics {
+//
+//	clientsMetrics := &event.DefaultMetrics{}
+//	for _, client := range c.optlyMap.Items() {
+//
+//		if client, ok := client.(*OptlyClient); ok {
+//			if eventProcessor, goodEP := client.EventProcessor.(*event.BatchEventProcessor); goodEP {
+//				if metric, goodMetric := eventProcessor.EventDispatcher.GetMetrics().(*event.DefaultMetrics); goodMetric {
+//					clientsMetrics.Add(metric)
+//				}
+//
+//			}
+//		}
+//	}
+//	return clientsMetrics
+//}
