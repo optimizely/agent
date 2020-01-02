@@ -34,9 +34,10 @@ func NewAgentConfig() *AgentConfig {
 			Port:     "8080",
 		},
 		Admin: AdminConfig{
-			Author: "Optimizely Inc.",
-			Name:   "optimizely",
-			Port:   "8088",
+			Version: "",
+			Author:  "Optimizely Inc.",
+			Name:    "optimizely",
+			Port:    "8088",
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",

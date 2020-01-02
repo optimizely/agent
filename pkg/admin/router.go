@@ -26,9 +26,6 @@ import (
 	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 )
 
-// Version holds the admin version
-var Version string // can be set at compile time
-
 // NewRouter returns HTTP admin router
 func NewRouter(conf config.AdminConfig) http.Handler {
 	r := chi.NewRouter()

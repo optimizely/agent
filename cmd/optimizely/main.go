@@ -42,11 +42,11 @@ var Version string // default set at compile time
 func initConfig(v *viper.Viper) error {
 	// Set explicit defaults
 	v.SetDefault("config.filename", "config.yaml") // Configuration file name
-	v.SetDefault("app.version", Version)           // Application version
 
 	// Load defaults from the AgentConfig by loading the marshaled values as yaml
 	// https://github.com/spf13/viper/issues/188
 	defaultConf := config.NewAgentConfig()
+	defaultConf.Admin.Version = Version
 	b, err := yaml.Marshal(defaultConf)
 	if err != nil {
 		return err
@@ -78,13 +78,12 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	return conf
 }
 
-func initLogging(v *viper.Viper) {
-	if v.GetBool("log.pretty") {
+func initLogging(conf config.LogConfig) {
+	if conf.Pretty {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	level := v.GetString("log.level")
-	if lvl, err := zerolog.ParseLevel(level); err != nil {
+	if lvl, err := zerolog.ParseLevel(conf.Level); err != nil {
 		log.Warn().Err(err).Msg("Error parsing log level")
 	} else {
 		log.Logger = log.Logger.Level(lvl)
@@ -97,11 +96,8 @@ func main() {
 		log.Panic().Err(err).Msg("Unable to initialize config")
 	}
 
-	initLogging(v)
 	conf := loadConfig(v)
-
-	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
-	log.Info().Str("api-port", viper.GetString("api.port")).Msg("Starting services.")
+	initLogging(conf.Log)
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
@@ -118,6 +114,7 @@ func main() {
 		cancel()
 	}()
 
+	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
 	sg.GoListenAndServe("api", conf.API.Port, api.NewDefaultRouter(optlyCache, conf.API))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, webhook.NewRouter(optlyCache, conf.Webhook))
 	sg.GoListenAndServe("admin", conf.Admin.Port, admin.NewRouter(conf.Admin)) // Admin should be added last.
