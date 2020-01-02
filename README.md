@@ -68,6 +68,44 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
+## Metrics
+
+The Metrics API exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
+
+Example Request:
+```bash
+curl localhost:8088/metrics
+```
+Example Response:
+```
+{
+	"cmdline": [
+		"bin/sidedoor"
+	],
+	"memstats": {
+		"Alloc": 924136,
+		"TotalAlloc": 924136,
+		"Sys": 71893240,
+		"Lookups": 0,
+		"Mallocs": 4726,
+		"Frees": 172,
+		"HeapAlloc": 924136,
+		...
+	},
+	...
+}
+```
+Custom metrics are also provided for the individual service endpoints and follow the pattern of:
+
+```properties
+"timers.<metric-name>.counts": 0,
+"timers.<metric-name>.responseTime": 0,
+"timers.<metric-name>.responseTimeHist.p50": 0,
+"timers.<metric-name>.responseTimeHist.p90": 0,
+"timers.<metric-name>.responseTimeHist.p95": 0,
+"timers.<metric-name>.responseTimeHist.p99": 0,
+```
+
 ## Credits
 
 This software is used with additional code that is separately downloaded by you. These components are subject to their own license terms which you should review carefully.
