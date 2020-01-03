@@ -21,8 +21,8 @@ import (
 	"time"
 )
 
-// NewAgentConfig returns the default configuration for Optimizely Agent
-func NewAgentConfig() *AgentConfig {
+// NewDefaultConfig returns the default configuration for Optimizely Agent
+func NewDefaultConfig() *AgentConfig {
 
 	config := AgentConfig{
 		Log: LogConfig{

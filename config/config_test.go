@@ -24,7 +24,7 @@ import (
 )
 
 func TestDefaultConfig(t *testing.T) {
-	conf := NewAgentConfig()
+	conf := NewDefaultConfig()
 
 	assert.Equal(t, 5*time.Second, conf.Server.ReadTimeout)
 	assert.Equal(t, 10*time.Second, conf.Server.WriteTimeout)

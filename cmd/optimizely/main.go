@@ -45,7 +45,7 @@ func initConfig(v *viper.Viper) error {
 
 	// Load defaults from the AgentConfig by loading the marshaled values as yaml
 	// https://github.com/spf13/viper/issues/188
-	defaultConf := config.NewAgentConfig()
+	defaultConf := config.NewDefaultConfig()
 	defaultConf.Admin.Version = Version
 	b, err := yaml.Marshal(defaultConf)
 	if err != nil {
