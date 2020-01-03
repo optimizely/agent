@@ -60,6 +60,9 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func assertOptly(t *testing.T, actual config.OptlyConfig) {
 	assert.Equal(t, []string{"ddd", "eee", "fff"}, actual.SDKKeys)
+	assert.Equal(t, 100, actual.Processor.BatchSize)
+	assert.Equal(t, 10000, actual.Processor.QueueSize)
+	assert.Equal(t, 10*time.Second, actual.Processor.FlushInterval)
 }
 
 func TestViperYaml(t *testing.T) {
@@ -102,6 +105,9 @@ func TestViperProps(t *testing.T) {
 	v.Set("webhook.projects.20000.skipsignaturecheck", false)
 
 	v.Set("optly.sdkkeys", []string{"ddd", "eee", "fff"})
+	v.Set("optly.processor.batchsize", 100)
+	v.Set("optly.processor.queuesize", 10000)
+	v.Set("optly.processor.flushInterval", 10*time.Second)
 
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
@@ -138,6 +144,9 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
 	_ = os.Setenv("OPTIMIZELY_OPTLY_SDKKEYS", "ddd,eee,fff")
+	_ = os.Setenv("OPTIMIZELY_OPTLY_PROCESSOR_BATCHSIZE", "100")
+	_ = os.Setenv("OPTIMIZELY_OPTLY_PROCESSOR_QUEUESIZE", "10000")
+	_ = os.Setenv("OPTIMIZELY_OPTLY_PROCESSOR_FLUSHINTERVAL", "10s")
 
 	v := viper.New()
 	assert.NoError(t, initConfig(v))

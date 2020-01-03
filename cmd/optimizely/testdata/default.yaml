@@ -36,3 +36,7 @@ optly:
     - ddd
     - eee
     - fff
+  processor:
+    batchSize: 100
+    queueSize: 10000
+    flushInterval: 10s
