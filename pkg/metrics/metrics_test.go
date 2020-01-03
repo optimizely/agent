@@ -28,15 +28,15 @@ import (
 
 type JSON map[string]interface{}
 
-var sufixList = []string{"queueSize", "successFlush", "failFlush", "retryFlush"}
-var metricPrefix = "dispatcher."
+var metricPrefix = "dispatcher"
+var collectionName = "counter"
 
 func TestMetrics(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metrics := NewMetrics(metricPrefix)
+	metrics := NewMetrics(metricPrefix, collectionName)
 	metrics.Set("queueSize", 20)
 	metrics.Inc("failFlush")
 
@@ -51,21 +51,12 @@ func TestMetrics(t *testing.T) {
 	var expVarMap JSON
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
-	counterExpVarMap := expVarMap["counter"].(map[string]interface{})
-	for _, item := range sufixList {
-		expectedKey := metricPrefix + item
-		value, ok := counterExpVarMap[expectedKey]
-		assert.True(t, ok)
-		switch item {
-		case "dispatcher.queueSize":
-			assert.Equal(t, 20.0, value)
-		case "dispatcher.successFlush":
-			assert.Equal(t, 3.0, value)
-		case "dispatcher.failFlush":
-			assert.Equal(t, 1.0, value)
-		case "dispatcher.retryFlush":
-			assert.Equal(t, 5.0, value)
+	counterExpVarMap := expVarMap[collectionName].(map[string]interface{})
 
-		}
-	}
+	assert.Len(t, counterExpVarMap, 4)
+	assert.Equal(t, 20.0, counterExpVarMap["dispatcher.queueSize"])
+	assert.Equal(t, 3.0, counterExpVarMap["dispatcher.successFlush"])
+	assert.Equal(t, 1.0, counterExpVarMap["dispatcher.failFlush"])
+	assert.Equal(t, 5.0, counterExpVarMap["dispatcher.retryFlush"])
+
 }

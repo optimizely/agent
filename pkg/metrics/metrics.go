@@ -30,23 +30,23 @@ type Metrics struct {
 }
 
 // NewMetrics initializes metrics
-func NewMetrics(prefix string) *Metrics {
+func NewMetrics(prefix, collectionName string) *Metrics {
 
 	return &Metrics{
-		counts: expvar.NewMap("counter"),
+		counts: expvar.NewMap(collectionName),
 		prefix: prefix,
 	}
 }
 
 // Inc increments value for given key by one
 func (m *Metrics) Inc(key string) {
-	mergedKey := m.prefix + key
+	mergedKey := m.prefix + "." + key
 	m.counts.Add(mergedKey, 1)
 }
 
 // Set value for given key
 func (m *Metrics) Set(key string, val int64) {
-	mergedKey := m.prefix + key
+	mergedKey := m.prefix + "." + key
 	v := expvar.Int{}
 	v.Add(val)
 	m.counts.Set(mergedKey, &v)
@@ -54,7 +54,7 @@ func (m *Metrics) Set(key string, val int64) {
 
 // Get returns value for given key
 func (m *Metrics) Get(key string) int64 {
-	mergedKey := m.prefix + key
+	mergedKey := m.prefix + "." + key
 	v := m.counts.Get(mergedKey)
 	vStr := v.String()
 	i, err := strconv.ParseInt(vStr, 10, 64)
