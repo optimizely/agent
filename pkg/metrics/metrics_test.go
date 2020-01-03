@@ -37,14 +37,15 @@ func TestMetrics(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metrics := NewMetrics(metricPrefix, collectionName)
-	metrics.Set("queueSize", 20)
-	metrics.Inc("failFlush")
+	metrics.Set("metric1", 20)
+	metrics.Set("metric2", 123)
+	metrics.Inc("metric3")
 
 	for i := 0; i < 3; i++ {
-		metrics.Inc("successFlush")
+		metrics.Inc("metric4")
 	}
 	for i := 0; i < 5; i++ {
-		metrics.Inc("retryFlush")
+		metrics.Inc("metric5")
 	}
 	expvar.Handler().ServeHTTP(rec, req)
 
@@ -53,10 +54,11 @@ func TestMetrics(t *testing.T) {
 	assert.Nil(t, err)
 	counterExpVarMap := expVarMap[collectionName].(map[string]interface{})
 
-	assert.Len(t, counterExpVarMap, 4)
-	assert.Equal(t, 20.0, counterExpVarMap["dispatcher.queueSize"])
-	assert.Equal(t, 3.0, counterExpVarMap["dispatcher.successFlush"])
-	assert.Equal(t, 1.0, counterExpVarMap["dispatcher.failFlush"])
-	assert.Equal(t, 5.0, counterExpVarMap["dispatcher.retryFlush"])
+	assert.Len(t, counterExpVarMap, 5)
+	assert.Equal(t, 20.0, counterExpVarMap["dispatcher.metric1"])
+	assert.Equal(t, 123.0, counterExpVarMap["dispatcher.metric2"])
+	assert.Equal(t, 3.0, counterExpVarMap["dispatcher.metric4"])
+	assert.Equal(t, 1.0, counterExpVarMap["dispatcher.metric3"])
+	assert.Equal(t, 5.0, counterExpVarMap["dispatcher.metric5"])
 
 }
