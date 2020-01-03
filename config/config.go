@@ -25,26 +25,26 @@ import (
 func NewDefaultConfig() *AgentConfig {
 
 	config := AgentConfig{
-		Log: LogConfig{
-			Pretty: false,
-			Level:  "info",
-		},
-		API: APIConfig{
-			MaxConns: 0,
-			Port:     "8080",
-		},
 		Admin: AdminConfig{
 			Version: "",
 			Author:  "Optimizely Inc.",
 			Name:    "optimizely",
 			Port:    "8088",
 		},
-		Webhook: WebhookConfig{
-			Port: "8085",
+		API: APIConfig{
+			MaxConns: 0,
+			Port:     "8080",
+		},
+		Log: LogConfig{
+			Pretty: false,
+			Level:  "info",
 		},
 		Server: ServerConfig{
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
+		},
+		Webhook: WebhookConfig{
+			Port: "8085",
 		},
 	}
 
