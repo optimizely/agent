@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// Package webhook //
+package webhook
 
 import (
 	"crypto/hmac"
@@ -23,6 +23,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/optimizely/sidedoor/config"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,7 +32,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
 const signatureHeader = "X-Hub-Signature"
@@ -39,20 +39,15 @@ const signaturePrefix = "sha1="
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct {
-	optlyCache       optimizely.Cache
-	webhookConfigMap map[int64]models.OptlyWebhookConfig
+	optlyCache optimizely.Cache
+	ProjectMap map[int64]config.WebhookProject
 }
 
 // NewWebhookHandler returns a new instance of OptlyWebhookHandler
-func NewWebhookHandler(optlyCache optimizely.Cache, webhookConfigs []models.OptlyWebhookConfig) *OptlyWebhookHandler {
-	configMap := make(map[int64]models.OptlyWebhookConfig)
-	for _, config := range webhookConfigs {
-		configMap[config.ProjectID] = config
-	}
-
+func NewWebhookHandler(optlyCache optimizely.Cache, projectMap map[int64]config.WebhookProject) *OptlyWebhookHandler {
 	return &OptlyWebhookHandler{
-		optlyCache:       optlyCache,
-		webhookConfigMap: configMap,
+		optlyCache: optlyCache,
+		ProjectMap: projectMap,
 	}
 }
 
@@ -71,7 +66,7 @@ func (h *OptlyWebhookHandler) computeSignature(payload []byte, secretKey string)
 
 // validateSignature computes and compares message digest
 func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload []byte, projectID int64) bool {
-	webhookConfig, ok := h.webhookConfigMap[projectID]
+	webhookConfig, ok := h.ProjectMap[projectID]
 	if !ok {
 		log.Error().Str("Project ID", strconv.FormatInt(projectID, 10)).Msg("No webhook configuration found for project ID.")
 		return false
@@ -93,7 +88,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var webhookMsg models.OptlyMessage
+	var webhookMsg OptlyMessage
 	err = json.Unmarshal(body, &webhookMsg)
 	if err != nil {
 		log.Error().Msg("Unable to parse webhook message.")
@@ -105,7 +100,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check if there is configuration corresponding to the project
-	webhookConfig, ok := h.webhookConfigMap[webhookMsg.ProjectID]
+	webhookConfig, ok := h.ProjectMap[webhookMsg.ProjectID]
 	if !ok {
 		log.Error().Str("Project ID", strconv.FormatInt(webhookMsg.ProjectID, 10)).Msg("No webhook configured for Project ID.")
 		w.WriteHeader(http.StatusNoContent)

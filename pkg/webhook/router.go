@@ -18,46 +18,19 @@
 package webhook
 
 import (
-	"net/http"
-
-	"github.com/optimizely/sidedoor/pkg/webhook/handlers"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
+	"github.com/optimizely/sidedoor/config"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
-// RouterOptions defines the configuration parameters for Router
-type RouterOptions struct {
-	cache          optimizely.Cache
-	webhookConfigs []models.OptlyWebhookConfig
-}
-
-// NewDefaultRouter creates a new router
-func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
-	// Parse webhook configurations
-	var config []models.OptlyWebhookConfig
-	if err := viper.UnmarshalKey("webhook.configs", &config); err != nil {
-		log.Info().Msg("Unable to parse webhooks.")
-	}
-
-	spec := &RouterOptions{
-		cache:          optlyCache,
-		webhookConfigs: config,
-	}
-
-	return NewRouter(spec)
-}
-
 // NewRouter returns HTTP API router
-func NewRouter(opt *RouterOptions) *chi.Mux {
+func NewRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
-	webhookAPI := handlers.NewWebhookHandler(opt.cache, opt.webhookConfigs)
+	webhookAPI := NewWebhookHandler(optlyCache, conf.Projects)
 
 	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
 	return r

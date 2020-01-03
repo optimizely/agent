@@ -21,12 +21,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/optimizely/sidedoor/config"
 	"net/http"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 // Server has generic functionality for service: it starts the service and performs basic checks
@@ -37,21 +37,17 @@ type Server struct {
 
 // NewServer initializes new service.
 // Configuration is pulled from viper configuration.
-func NewServer(name string, handler http.Handler) (Server, error) {
-	if !viper.GetBool(name + ".enabled") {
+func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
+	if port == "0" {
 		return Server{}, fmt.Errorf(`"%s" not enabled`, name)
 	}
-
-	port := viper.GetString(name + ".port")
-	rto := viper.GetDuration("server.readtimeout")
-	wto := viper.GetDuration("server.writetimeout")
 
 	logger := log.With().Str("port", port).Str("name", name).Logger()
 	srv := &http.Server{
 		Addr:         ":" + port,
 		Handler:      handler,
-		ReadTimeout:  rto,
-		WriteTimeout: wto,
+		ReadTimeout:  conf.ReadTimeout,
+		WriteTimeout: conf.WriteTimeout,
 	}
 
 	return Server{srv: srv, logger: logger}, nil

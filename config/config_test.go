@@ -14,30 +14,32 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package admin //
-package admin
+package config
 
 import (
-	"github.com/optimizely/sidedoor/config"
-	"net/http"
+	"testing"
+	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/admin/handlers"
+	"github.com/stretchr/testify/assert"
 )
 
-// NewRouter returns HTTP admin router
-func NewRouter(conf config.AdminConfig) http.Handler {
-	r := chi.NewRouter()
+func TestDefaultConfig(t *testing.T) {
+	conf := NewDefaultConfig()
 
-	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
-	r.Use(optlyAdmin.AppInfoHeader)
+	assert.Equal(t, 5*time.Second, conf.Server.ReadTimeout)
+	assert.Equal(t, 10*time.Second, conf.Server.WriteTimeout)
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	assert.False(t, conf.Log.Pretty)
+	assert.Equal(t, "info", conf.Log.Level)
 
-	r.Get("/health", optlyAdmin.Health)
-	r.Get("/info", optlyAdmin.AppInfo)
-	r.Get("/metrics", optlyAdmin.Metrics)
+	assert.Equal(t, "8088", conf.Admin.Port)
+	assert.Equal(t, "", conf.Admin.Version)
+	assert.Equal(t, "Optimizely Inc.", conf.Admin.Author)
+	assert.Equal(t, "optimizely", conf.Admin.Name)
 
-	return r
+	assert.Equal(t, 0, conf.API.MaxConns)
+	assert.Equal(t, "8080", conf.API.Port)
+
+	assert.Equal(t, "8085", conf.Webhook.Port)
+	assert.Empty(t, conf.Webhook.Projects)
 }

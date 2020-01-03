@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package models //
-package models
+// Package webhook //
+package webhook
 
 // DatafileUpdateData model which represents data specific to datafile update
 type DatafileUpdateData struct {
@@ -31,12 +31,4 @@ type OptlyMessage struct {
 	Timestamp int64              `json:"timestamp"`
 	Event     string             `json:"event"`
 	Data      DatafileUpdateData `json:"data"`
-}
-
-// OptlyWebhookConfig represents configuration of a single Optimizely webhook
-type OptlyWebhookConfig struct {
-    ProjectID           int64                   `yaml:"projectId"`
-    SDKKeys             []string                `yaml:"sdkKeys"`
-    Secret              string                  `yaml:"secret"`
-    SkipSignatureCheck  bool                    `yaml:"skipSignatureCheck" default:"false"`
 }

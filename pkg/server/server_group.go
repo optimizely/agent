@@ -19,6 +19,7 @@ package server
 
 import (
 	"context"
+	"github.com/optimizely/sidedoor/config"
 	"net/http"
 	"sync"
 
@@ -31,10 +32,11 @@ type Group struct {
 	stop context.CancelFunc
 	eg   *errgroup.Group
 	ctx  context.Context
+	conf config.ServerConfig
 }
 
 // NewGroup creares a new server group.
-func NewGroup(ctx context.Context) *Group {
+func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 	nctx, stop := context.WithCancel(ctx)
 	eg, gctx := errgroup.WithContext(nctx)
 
@@ -42,6 +44,7 @@ func NewGroup(ctx context.Context) *Group {
 		stop: stop,
 		eg:   eg,
 		ctx:  gctx,
+		conf: conf,
 	}
 }
 
@@ -49,8 +52,8 @@ func NewGroup(ctx context.Context) *Group {
 // Two goroutines are started. One for the http listener and one
 // to initiate a graceful shutdown. This method blocks on adding the
 // go routines to maintain startup order of each listener.
-func (g *Group) GoListenAndServe(name string, handler http.Handler) {
-	server, err := NewServer(name, handler)
+func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
+	server, err := NewServer(name, port, handler, g.conf)
 	if err != nil {
 		log.Info().Err(err).Msg("Not starting server")
 		return

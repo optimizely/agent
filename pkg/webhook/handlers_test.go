@@ -14,18 +14,17 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package handlers
+package webhook
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/optimizely/sidedoor/config"
 	"github.com/optimizely/sidedoor/pkg/optlytest"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/optimizely/sidedoor/pkg/webhook/models"
 )
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {
@@ -42,11 +41,11 @@ func TestHandleWebhookInvalidMessage(t *testing.T) {
 
 func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 	optlyHandler := OptlyWebhookHandler{}
-	webhookMsg := models.OptlyMessage{
+	webhookMsg := OptlyMessage{
 		ProjectID: 43,
 		Timestamp: 43434343,
 		Event:     "project.datafile_updated",
-		Data: models.DatafileUpdateData{
+		Data: DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
@@ -66,19 +65,18 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 }
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
-	var testWebhookConfigs = []models.OptlyWebhookConfig{
-		{
-			ProjectID: 42,
-			SDKKeys:   []string{"myDatafile"},
-			Secret:    "I am secret",
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
 		},
 	}
 	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs)
-	webhookMsg := models.OptlyMessage{
+	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
-		Data: models.DatafileUpdateData{
+		Data: DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
@@ -101,20 +99,19 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 
 func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 	testCache := optlytest.NewCache()
-	var testWebhookConfigs = []models.OptlyWebhookConfig {
-		{
-			ProjectID: 42,
-			SDKKeys: []string{"myDatafile"},
-			Secret:  "I am secret",
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys:            []string{"myDatafile"},
+			Secret:             "I am secret",
 			SkipSignatureCheck: true,
 		},
 	}
 	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
-	webhookMsg := models.OptlyMessage{
+	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
-		Data:      models.DatafileUpdateData{
+		Data: DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
@@ -137,19 +134,18 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 
 func TestHandleWebhookValidMessage(t *testing.T) {
 	testCache := optlytest.NewCache()
-	var testWebhookConfigs = []models.OptlyWebhookConfig{
-		{
-			ProjectID: 42,
-			SDKKeys:   []string{"myDatafile"},
-			Secret:    "I am secret",
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
 		},
 	}
 	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
-	webhookMsg := models.OptlyMessage{
+	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
 		Event:     "project.datafile_updated",
-		Data: models.DatafileUpdateData{
+		Data: DatafileUpdateData{
 			Revision:    101,
 			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
 			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",

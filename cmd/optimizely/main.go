@@ -16,67 +16,74 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"gopkg.in/yaml.v2"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+
+	"github.com/optimizely/sidedoor/config"
 	"github.com/optimizely/sidedoor/pkg/admin"
 	"github.com/optimizely/sidedoor/pkg/api"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/server"
 	"github.com/optimizely/sidedoor/pkg/webhook"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 // Version holds the admin version
 var Version string // default set at compile time
 
-func loadConfig() error {
-	// Set defaults
-	viper.SetDefault("config.filename", "config.yaml") // Configuration file name
+func initConfig(v *viper.Viper) error {
+	// Set explicit defaults
+	v.SetDefault("config.filename", "config.yaml") // Configuration file name
 
-	viper.SetDefault("app.version", Version)          // Application version
-	viper.SetDefault("app.author", "Optimizely Inc.") // Application author
-	viper.SetDefault("app.name", "optimizely")        // Appplication name
+	// Load defaults from the AgentConfig by loading the marshaled values as yaml
+	// https://github.com/spf13/viper/issues/188
+	defaultConf := config.NewDefaultConfig()
+	defaultConf.Admin.Version = Version
+	b, err := yaml.Marshal(defaultConf)
+	if err != nil {
+		return err
+	}
 
-	viper.SetDefault("api.enabled", true) // Property to turn api service on/off
-	viper.SetDefault("api.port", "8080")  // Port for serving Optimizely APIs
-
-	viper.SetDefault("webhook.enabled", true) // Property to turn webhook service on/off
-	viper.SetDefault("webhook.port", "8085")  // Port for webhook service
-
-	viper.SetDefault("admin.enabled", true)
-	viper.SetDefault("admin.port", "8088") // Port for admin service
-
-	viper.SetDefault("log.level", "info") // Set default log level
-
-	viper.SetDefault("server.readtimeout", 5*time.Second)
-	viper.SetDefault("server.writetimeout", 10*time.Second)
-
-	// Configure environment variables
-	viper.SetEnvPrefix("optimizely")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
-	// Read configuration from file
-	configFile := viper.GetString("config.filename")
-	viper.SetConfigFile(configFile)
-	viper.SetConfigType("yaml")
-	return viper.ReadInConfig()
+	dc := bytes.NewReader(b)
+	v.SetConfigType("yaml")
+	return v.MergeConfig(dc)
 }
 
-func initLogging() {
-	if viper.GetBool("log.pretty") {
+func loadConfig(v *viper.Viper) *config.AgentConfig {
+	// Configure environment variables
+	v.SetEnvPrefix("optimizely")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
+	// Read configuration from file
+	configFile := v.GetString("config.filename")
+	v.SetConfigFile(configFile)
+	if err := v.MergeInConfig(); err != nil {
+		log.Info().Err(err).Msg("Skip loading configuration from config file.")
+	}
+
+	conf := &config.AgentConfig{}
+	if err := v.Unmarshal(conf); err != nil {
+		log.Info().Err(err).Msg("Unable to marshal configuration.")
+	}
+
+	return conf
+}
+
+func initLogging(conf config.LogConfig) {
+	if conf.Pretty {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	if lvl, err := zerolog.ParseLevel(viper.GetString("log.level")); err != nil {
+	if lvl, err := zerolog.ParseLevel(conf.Level); err != nil {
 		log.Warn().Err(err).Msg("Error parsing log level")
 	} else {
 		log.Logger = log.Logger.Level(lvl)
@@ -84,19 +91,17 @@ func initLogging() {
 }
 
 func main() {
-
-	err := loadConfig()
-	initLogging()
-
-	if err != nil {
-		log.Info().Err(err).Msg("Skip loading configuration from config file.")
+	v := viper.New()
+	if err := initConfig(v); err != nil {
+		log.Panic().Err(err).Msg("Unable to initialize config")
 	}
 
-	log.Info().Str("version", viper.GetString("app.version")).Msg("Starting services.")
+	conf := loadConfig(v)
+	initLogging(conf.Log)
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
-	sg := server.NewGroup(ctx)                              // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache(ctx)
+	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
+	optlyCache := optimizely.NewCache(ctx, conf.Optly)
 
 	// goroutine to check for signals to gracefully shutdown listeners
 	go func() {
@@ -109,9 +114,10 @@ func main() {
 		cancel()
 	}()
 
-	sg.GoListenAndServe("api", api.NewDefaultRouter(optlyCache))
-	sg.GoListenAndServe("webhook", webhook.NewDefaultRouter(optlyCache))
-	sg.GoListenAndServe("admin", admin.NewRouter()) // Admin should be added last.
+	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
+	sg.GoListenAndServe("api", conf.API.Port, api.NewDefaultRouter(optlyCache, conf.API))
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, webhook.NewRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("admin", conf.Admin.Port, admin.NewRouter(conf.Admin)) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {
