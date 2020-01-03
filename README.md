@@ -27,11 +27,11 @@ The following `make` targets can be used to build and run the application:
 * **test** - recursively tests all .go files
 
 ## Prerequisites
-Optimizely Agent is implement in [Golang](https://golang.org/) and is required for developing and compiling from source.
-Installers and binary archives can be found for most platforms directly from the Go [downloads](https://golang.org/dl/) page. 
+Optimizely Agent is implemented in [Golang](https://golang.org/). Golang is required for developing and compiling from source.
+Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
 ## Running Optimizely from source
-The Optimizely Agent can be started via the Makefile target `run`.
+The Optimizely Agent can be started via the following make command:
 ```bash
 make run
 ```
@@ -52,11 +52,10 @@ Below is a comprehensive list of available configuration properties.
 |Property Name|Env Variable|Description|
 |---|---|---|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
-|log.level|OPTIMIZELY_LOG_LEVEL|The log level for the application. Default: info|
+|log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
-|admin.enabled|OPTIMIZELY_ADMIN_ENABLED|Enable admin http server. Default: true|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
 |admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
 |admin.version|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
