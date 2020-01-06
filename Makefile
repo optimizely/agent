@@ -33,7 +33,7 @@ build: $(TARGET) ## builds and installs binary in bin/
 	@true
 
 cover: ## runs test suite with coverage profiling
-	GO111MODULE=$(GO111MODULE) $(GOTEST) ./... -coverprofile=$(COVER_FILE) | sed ''/^ok/s//$$(printf "\033[32mok\033[0m")/'' | sed ''/FAIL/s//$$(printf "\033[31mFAIL\033[0m")/''
+	GO111MODULE=$(GO111MODULE) $(GOTEST) -race ./... -coverprofile=$(COVER_FILE)
 
 cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
