@@ -49,19 +49,30 @@ type OptlyMiddlewareTestSuite struct {
 
 func (suite *OptlyMiddlewareTestSuite) SetupTest() {
 	mockCache := new(MockCache)
-	mockCache.On("GetClient", "ERROR").Return(new(optimizely.OptlyClient), fmt.Errorf("Error"))
+	mockCache.On("GetClient", "ERROR").Return(new(optimizely.OptlyClient), fmt.Errorf("error"))
+	mockCache.On("GetClient", "403").Return(new(optimizely.OptlyClient), fmt.Errorf("403 forbidden"))
 	mockCache.On("GetClient", "EXPECTED").Return(&expectedClient, nil)
 	suite.mw = &CachedOptlyMiddleware{mockCache}
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetError() {
-	handler := suite.mw.ClientCtx(ErrorHandler(suite))
+	handler := suite.mw.ClientCtx(ErrorHandler())
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "ERROR")
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	suite.Equal(http.StatusInternalServerError, rec.Code)
+}
+
+func (suite *OptlyMiddlewareTestSuite) TestGetInvalid() {
+	handler := suite.mw.ClientCtx(ErrorHandler())
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Add(OptlySDKHeader, "403")
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusForbidden, rec.Code)
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetClientMissingHeader() {
@@ -103,7 +114,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 
 func (suite *OptlyMiddlewareTestSuite) TestGetUserContextError() {
 	mux := chi.NewMux()
-	handler := ErrorHandler(suite)
+	handler := ErrorHandler()
 	mux.With(suite.mw.UserCtx).Get("/{userID}/features", handler)
 
 	req := httptest.NewRequest("GET", "//features?foo=true&bar=yes&baz=100", nil)
@@ -114,31 +125,28 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContextError() {
 }
 
 // ErrorHandler will panic if reached.
-func ErrorHandler(suite *OptlyMiddlewareTestSuite) http.HandlerFunc {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+func ErrorHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		panic("test entered test handler, this should not happen")
 	}
-	return http.HandlerFunc(fn)
 }
 
 func AssertOptlyClientHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyClient) http.HandlerFunc {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		actual, err := GetOptlyClient(r)
 		suite.NoError(err)
 		suite.Same(expected, actual)
 
 	}
-	return http.HandlerFunc(fn)
 }
 
 func AssertOptlyContextHandler(suite *OptlyMiddlewareTestSuite, expected *optimizely.OptlyContext) http.HandlerFunc {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		actual, err := GetOptlyContext(r)
 		suite.NoError(err)
 		suite.Equal(expected, actual)
 
 	}
-	return http.HandlerFunc(fn)
 }
 
 func TestOptlyMiddleware(t *testing.T) {

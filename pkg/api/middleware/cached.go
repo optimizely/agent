@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
@@ -36,9 +37,6 @@ const OptlyContextKey = contextKey("optlyContext")
 
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
-
-// OptlyRequestHeader is the header key for the request ID
-const OptlyRequestHeader = "X-Request-Id"
 
 // CachedOptlyMiddleware implements OptlyMiddleware backed by a cache
 type CachedOptlyMiddleware struct {
@@ -59,7 +57,14 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		optlyClient, err := ctx.Cache.GetClient(sdkKey)
 		if err != nil {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
-			RenderError(fmt.Errorf("failed to instantiate Optimizely for SDK Key: %s", sdkKey), http.StatusInternalServerError, w, r)
+
+			// Check if error indicates a 403 from the CDN. Ideally we'd use errors.Is(), but the go-sdk isn't 1.13
+			if strings.Contains(err.Error(), "403") {
+				RenderError(err, http.StatusForbidden, w, r)
+			} else {
+				RenderError(fmt.Errorf("failed to instantiate Optimizely for SDK Key: %s", sdkKey), http.StatusInternalServerError, w, r)
+			}
+
 			return
 		}
 
