@@ -7,9 +7,6 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 0.2.0
-servers:
-- url: https://fullstack.api.optimizely.com
-  description: "Hosted Optimizely Decision Service"
 security:
   - SdkKeyAuth: []
 paths:
@@ -29,6 +26,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Experiment'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /experiments/{experimentKey}:
     parameters:
     - $ref: '#/components/parameters/experimentKeyParam'
@@ -45,6 +44,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Experiment'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
 #  /experiments/{experimentKey}/variations:
@@ -103,6 +104,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Feature'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /features/{featureKey}:
     parameters:
     - $ref: '#/components/parameters/featureKeyParam'
@@ -119,6 +122,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feature'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
 #  /features/{featureKey}/variations:
@@ -192,6 +197,8 @@ paths:
       responses:
         '204':
           description: No content, user not included in the experiment
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Event does not exist
       requestBody:
@@ -217,6 +224,8 @@ paths:
                 $ref: '#/components/schemas/Variation'
         '204':
           description: No content, user not included in the experiment
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
     post:
@@ -236,6 +245,8 @@ paths:
                 $ref: '#/components/schemas/Variation'
         '204':
           description: No content, user not included in the experiment
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
   /users/{userId}/experiments/{experimentKey}/variations/{variationKey}:
@@ -258,6 +269,8 @@ paths:
           description: Forced variation was already set
         '400':
           description: Invalid user id, experiment key, or variation key
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /users/{userId}/experiments/{experimentKey}/variations:
     parameters:
     - $ref: '#/components/parameters/userIdParam'
@@ -273,6 +286,8 @@ paths:
           description: Any forced variation was deleted
         '400':
           description: Invalid user id or experiment key
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /users/{userId}/features:
     parameters:
       - $ref: '#/components/parameters/userIdParam'
@@ -294,6 +309,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FeatureDecision'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Activate ALL features resulting from an experiment or rollout
       operationId: activateAllFeatures
@@ -313,6 +330,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FeatureDecision'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /users/{userId}/features/{featureKey}:
     parameters:
     - $ref: '#/components/parameters/userIdParam'
@@ -334,6 +353,8 @@ paths:
                 $ref: '#/components/schemas/FeatureDecision'
         '204':
           description: No content, user not included in the experiment
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Feature does not exist
     post:
@@ -353,6 +374,8 @@ paths:
                 $ref: '#/components/schemas/FeatureDecision'
         '204':
           description: No content, user not included in the experiment
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: Feature does not exist
 components:
@@ -408,7 +431,18 @@ components:
           schema:
             type: object
             additionalProperties: true
+  responses:
+    Forbidden:
+      description: You do not have necessary permissions for the resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      properties:
+        error:
+          type: string
     Experiment:
       properties:
         id:
