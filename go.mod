@@ -9,7 +9,7 @@ require (
 	github.com/go-kit/kit v0.9.0
 	github.com/google/uuid v1.1.1
 	github.com/nsqio/nsq v1.2.0
-	github.com/optimizely/go-sdk v1.0.0-rc1.0.20191220182858-688a80ef4c37
+	github.com/optimizely/go-sdk v1.0.0-rc1.0.20200107184850-19a849ccb715
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/rs/zerolog v1.15.0
 	github.com/segmentio/nsq-go v1.2.2

@@ -48,7 +48,7 @@ type OptlyEventProcessorConfig struct {
 }
 
 // GetOptlyEventProcessor get the optly event processor using viper configuration variables.
-func GetOptlyEventProcessor(stats *metrics.Metrics) event.Processor {
+func GetOptlyEventProcessor(metricsRegistry *metrics.Registry) event.Processor {
 
 	var config OptlyEventProcessorConfig
 	if err := viper.UnmarshalKey("optimizely.eventProcessor", &config); err != nil {
@@ -100,7 +100,8 @@ func GetOptlyEventProcessor(stats *metrics.Metrics) event.Processor {
 	}
 
 	// return a new batch event processor
-	return event.NewBatchEventProcessor(event.WithQueueSize(config.QueueSize), event.WithBatchSize(config.BatchSize), event.WithQueue(q), event.WithEventDispatcherMetrics(stats))
+	return event.NewBatchEventProcessor(event.WithQueueSize(config.QueueSize), event.WithBatchSize(config.BatchSize),
+		event.WithQueue(q), event.WithEventDispatcherMetrics(metricsRegistry))
 }
 
 // OptimizelyEventProcessor - sends events to optimizely API

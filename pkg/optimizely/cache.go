@@ -32,9 +32,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-const dispatcherMetricsPrefix = "dispatcher."
+const dispatcherMetricsPrefix = "counter.dispatcher"
 
-var stats *metrics.Metrics
+var metricsRegistry *metrics.Registry
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -60,7 +60,7 @@ func NewCache(ctx context.Context) *OptlyCache {
 
 func (c *OptlyCache) init() {
 	sdkKeys := viper.GetStringSlice("optimizely.sdkKeys")
-	stats = metrics.NewMetrics(dispatcherMetricsPrefix)
+	metricsRegistry = metrics.NewRegistry(dispatcherMetricsPrefix)
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Opimizely Client.")
@@ -111,7 +111,7 @@ func initOptlyClient(sdkKey string) (*OptlyClient, error) {
 		return &OptlyClient{}, err
 	}
 
-	ep := event.GetOptlyEventProcessor(stats)
+	ep := event.GetOptlyEventProcessor(metricsRegistry)
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}

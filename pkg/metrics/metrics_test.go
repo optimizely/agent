@@ -28,37 +28,122 @@ import (
 
 type JSON map[string]interface{}
 
-var metricPrefix = "dispatcher"
-var collectionName = "counter"
+var metricPrefix = "prefix"
 
-func TestMetrics(t *testing.T) {
+func TestCounterValid(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metrics := NewMetrics(metricPrefix, collectionName)
-	metrics.Set("metric1", 20)
-	metrics.Set("metric2", 123)
-	metrics.Inc("metric3")
+	metricsRegistry := NewRegistry(metricPrefix)
+	counter := metricsRegistry.GetCounter("counter_metrics")
+	counter.Add(12)
+	counter.Add(23)
 
-	for i := 0; i < 3; i++ {
-		metrics.Inc("metric4")
-	}
-	for i := 0; i < 5; i++ {
-		metrics.Inc("metric5")
-	}
 	expvar.Handler().ServeHTTP(rec, req)
 
 	var expVarMap JSON
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
-	counterExpVarMap := expVarMap[collectionName].(map[string]interface{})
+	assert.Equal(t, 35.0, expVarMap["prefix.counter_metrics"])
 
-	assert.Len(t, counterExpVarMap, 5)
-	assert.Equal(t, 20.0, counterExpVarMap["dispatcher.metric1"])
-	assert.Equal(t, 123.0, counterExpVarMap["dispatcher.metric2"])
-	assert.Equal(t, 3.0, counterExpVarMap["dispatcher.metric4"])
-	assert.Equal(t, 1.0, counterExpVarMap["dispatcher.metric3"])
-	assert.Equal(t, 5.0, counterExpVarMap["dispatcher.metric5"])
+}
+
+func TestCounterEmptyPrefix(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry("")
+	counter := metricsRegistry.GetCounter("empty_counter_metrics")
+	counter.Add(12)
+	counter.Add(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	_, ok := expVarMap["prefix.empty_counter_metrics"]
+	assert.False(t, ok)
+}
+
+func TestCounterMultipleRetrievals(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry(metricPrefix)
+	counterKey := "next_counter_metrics"
+	counter := metricsRegistry.GetCounter(counterKey)
+	counter.Add(12)
+
+	nextCounter := metricsRegistry.GetCounter(counterKey)
+	nextCounter.Add(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 35.0, expVarMap["prefix."+counterKey])
+}
+
+func TestGaugeValid(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry(metricPrefix)
+	gauge := metricsRegistry.GetGauge("gauge_metrics")
+	gauge.Set(12)
+	gauge.Set(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 23.0, expVarMap["prefix.gauge_metrics"])
+
+}
+
+func TestGaugeEmptyPrefix(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry("")
+	gauge := metricsRegistry.GetGauge("empty_gauge_metrics")
+	gauge.Set(12)
+	gauge.Set(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	_, ok := expVarMap["prefix.empty_gauge_metrics"]
+	assert.False(t, ok)
+}
+
+func TestGaugeMultipleRetrievals(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry(metricPrefix)
+	guageKey := "next_gauge_metrics"
+	gauge := metricsRegistry.GetGauge(guageKey)
+	gauge.Set(12)
+	nextGauge := metricsRegistry.GetGauge(guageKey)
+	nextGauge.Set(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 23.0, expVarMap["prefix."+guageKey])
 
 }
