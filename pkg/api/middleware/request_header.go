@@ -23,6 +23,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// OptlyRequestHeader is the header key for the request ID
+const OptlyRequestHeader = "X-Request-Id"
+
 // SetRequestID sets request ID obtained from the request header itself or from newly generated id
 func SetRequestID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
