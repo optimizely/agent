@@ -18,16 +18,15 @@
 package api
 
 import (
+	"github.com/optimizely/sidedoor/config"
 	"net/http"
-
-	"github.com/optimizely/sidedoor/pkg/api/handlers"
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/spf13/viper"
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
+	"github.com/optimizely/sidedoor/pkg/api/handlers"
+	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
 var userEventTimer func(http.Handler) http.Handler
@@ -73,9 +72,9 @@ type RouterOptions struct {
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultRouter(optlyCache optimizely.Cache) http.Handler {
+func NewDefaultRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.Handler {
 	spec := &RouterOptions{
-		maxConns:      viper.GetInt("api.maxconns"),
+		maxConns:      conf.MaxConns,
 		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		experimentAPI: new(handlers.ExperimentHandler),
 		featureAPI:    new(handlers.FeatureHandler),

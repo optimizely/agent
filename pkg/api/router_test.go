@@ -309,15 +309,18 @@ func (suite *RouterTestSuite) TestThrottleConfig() {
 
 	wg2 := sync.WaitGroup{}
 	wg2.Add(1)
+
+	mux := suite.mux // copy pointer to avoid data race
+
 	go func() {
 		wg2.Done()
 		rec := httptest.NewRecorder()
-		suite.mux.ServeHTTP(rec, req)
+		mux.ServeHTTP(rec, req)
 	}()
 	wg2.Wait()
 
 	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
+	mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusServiceUnavailable, rec.Code)
 	wg1.Done()
 }

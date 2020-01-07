@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"testing"
 
-	cmap "github.com/orcaman/concurrent-map"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/suite"
-
+	"github.com/optimizely/sidedoor/config"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+
+	cmap "github.com/orcaman/concurrent-map"
+	"github.com/stretchr/testify/suite"
 )
 
 var counter int
@@ -78,8 +78,7 @@ func (suite *CacheTestSuite) TestGetError() {
 }
 
 func (suite *CacheTestSuite) TestInit() {
-	viper.SetDefault("optimizely.sdkKeys", "one")
-	suite.cache.init()
+	suite.cache.init(config.OptlyConfig{SDKKeys: []string{"one"}})
 	suite.True(suite.cache.optlyMap.Has("one"))
 	suite.False(suite.cache.optlyMap.Has("two"))
 }
