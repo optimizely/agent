@@ -48,6 +48,8 @@ func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeat
 	return features, err
 }
 
+var ErrFeatureNotFound = errors.New("feature not found")
+
 // GetFeature returns the feature definition
 func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.OptimizelyFeature, error) {
 
@@ -60,7 +62,7 @@ func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.Optimizely
 		return feature, nil
 	}
 
-	return optimizelyconfig.OptimizelyFeature{}, errors.New("unable to get feature for featureKey " + featureKey)
+	return optimizelyconfig.OptimizelyFeature{}, ErrFeatureNotFound
 }
 
 // ListExperiments returns all available experiments

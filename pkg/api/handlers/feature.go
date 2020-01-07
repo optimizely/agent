@@ -18,6 +18,8 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -57,11 +59,17 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 
 	featureKey := chi.URLParam(r, "featureKey")
 	feature, err := optlyClient.GetFeature(featureKey)
-	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
+	var statusCode int
+	switch err {
+	case optimizely.ErrFeatureNotFound:
+		statusCode = http.StatusNotFound
+		err = fmt.Errorf("feature with key %v not found", featureKey)
+	case nil:
+		render.JSON(w, r, feature)
 		return
+	default:
+		statusCode = http.StatusInternalServerError
 	}
-
-	render.JSON(w, r, feature)
+	middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+	RenderError(err, statusCode, w, r)
 }
