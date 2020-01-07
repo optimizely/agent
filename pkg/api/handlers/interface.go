@@ -33,11 +33,6 @@ type ExperimentAPI interface {
 	ListExperiments(w http.ResponseWriter, r *http.Request)
 }
 
-// UserEventAPI defines the supported user event apis.
-type UserEventAPI interface {
-	AddUserEvent(w http.ResponseWriter, r *http.Request)
-}
-
 // UserAPI defines the supported user scoped APIs.
 type UserAPI interface {
 	ListFeatures(w http.ResponseWriter, r *http.Request)
@@ -52,5 +47,3 @@ type UserAPI interface {
 	SetForcedVariation(w http.ResponseWriter, r *http.Request)
 	RemoveForcedVariation(w http.ResponseWriter, r *http.Request)
 }
-
-// TODO ExperimentApi

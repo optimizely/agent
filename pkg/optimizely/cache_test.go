@@ -78,7 +78,8 @@ func (suite *CacheTestSuite) TestGetError() {
 }
 
 func (suite *CacheTestSuite) TestInit() {
-	suite.cache.init(config.OptlyConfig{SDKKeys: []string{"one"}})
+	suite.cache.conf = config.OptlyConfig{SDKKeys: []string{"one"}}
+	suite.cache.init()
 	suite.True(suite.cache.optlyMap.Has("one"))
 	suite.False(suite.cache.optlyMap.Has("two"))
 }
@@ -89,7 +90,7 @@ func TestCacheTestSuite(t *testing.T) {
 	suite.Run(t, new(CacheTestSuite))
 }
 
-func mockLoader(sdkKey string) (*OptlyClient, error) {
+func mockLoader(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, error) {
 	if sdkKey == "ERROR" {
 		return &OptlyClient{}, fmt.Errorf("Error")
 	}

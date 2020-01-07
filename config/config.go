@@ -39,6 +39,13 @@ func NewDefaultConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
+		Optly: OptlyConfig{
+			Processor: ProcessorConfig{
+				BatchSize:     10,
+				QueueSize:     1000,
+				FlushInterval: 30 * time.Second,
+			},
+		},
 		Server: ServerConfig{
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
@@ -63,7 +70,15 @@ type AgentConfig struct {
 
 // OptlyConfig holds the set of SDK keys to bootstrap during initialization
 type OptlyConfig struct {
-	SDKKeys []string `yaml:"sdkkeys"`
+	Processor ProcessorConfig `yaml:"processor"`
+	SDKKeys   []string        `yaml:"sdkkeys"`
+}
+
+// ProcessorConfig holds the configuration options for the Optimizely Event Processor.
+type ProcessorConfig struct {
+	BatchSize     int           `yaml:"batchSize" default:"10"`
+	QueueSize     int           `yaml:"queueSize" default:"1000"`
+	FlushInterval time.Duration `yaml:"flushInterval" default:"30s"`
 }
 
 // LogConfig holds the log configuration

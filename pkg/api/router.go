@@ -29,7 +29,6 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-var userEventTimer func(http.Handler) http.Handler
 var listFeaturesTimer func(http.Handler) http.Handler
 var getFeatureTimer func(http.Handler) http.Handler
 var listExperimentsTimer func(http.Handler) http.Handler
@@ -45,7 +44,6 @@ var setForcedVariationTimer func(http.Handler) http.Handler
 var removeForcedVariationTimer func(http.Handler) http.Handler
 
 func init() {
-	userEventTimer = middleware.Metricize("user-event")
 	listFeaturesTimer = middleware.Metricize("list-features")
 	getFeatureTimer = middleware.Metricize("get-feature")
 	listExperimentsTimer = middleware.Metricize("list-experiments")
@@ -67,7 +65,6 @@ type RouterOptions struct {
 	middleware    middleware.OptlyMiddleware
 	experimentAPI handlers.ExperimentAPI
 	featureAPI    handlers.FeatureAPI
-	userEventAPI  handlers.UserEventAPI
 	userAPI       handlers.UserAPI
 }
 
@@ -78,7 +75,6 @@ func NewDefaultRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.H
 		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		experimentAPI: new(handlers.ExperimentHandler),
 		featureAPI:    new(handlers.FeatureHandler),
-		userEventAPI:  new(handlers.UserEventHandler),
 		userAPI:       new(handlers.UserHandler),
 	}
 
@@ -96,8 +92,6 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
-
-	r.With(chimw.AllowContentType("application/json"), userEventTimer).Post("/user-event", opt.userEventAPI.AddUserEvent)
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
