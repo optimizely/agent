@@ -129,10 +129,6 @@ guuid
 (c) 2009,2014 Google Inc. All rights reserved. 
 License (BSD 3-Clause): github.com/google/uuid
 
-nsq 
-Matt Reiferson and Jehiah Czebotar
-License (MIT): github.com/nsqio/nsq
-
 optimizely go sdk 
 (c) 2016-2017, Optimizely, Inc. and contributors
 License (Apache 2): github.com/optimizely/go-sdk
@@ -144,10 +140,6 @@ License (MIT): github.com/orcaman/concurrent-map
 zerolog 
 (c) 2017 Olivier Poitrey
 License (MIT): github.com/rs/zerolog
-
-nsq-go 
-(c) 2016 Segment
-License (MIT): github.com/segmentio/nsq-go
 
 viper 
 (c) 2014 Steve Francia
