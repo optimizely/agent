@@ -22,14 +22,18 @@ import (
 	"sync"
 
 	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/metrics"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/event"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
 )
+
+var metricsRegistry *metrics.Registry
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -56,6 +60,7 @@ func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
 }
 
 func (c *OptlyCache) init() {
+	metricsRegistry = metrics.NewRegistry()
 	for _, sdkKey := range c.conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
@@ -106,12 +111,17 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, 
 		return &OptlyClient{}, err
 	}
 
+	q := event.NewInMemoryQueue(conf.QueueSize)
+	ep := event.NewBatchEventProcessor(event.WithQueueSize(conf.QueueSize),
+		event.WithBatchSize(conf.BatchSize), event.WithQueue(q),
+		event.WithEventDispatcherMetrics(metricsRegistry))
+
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
-		client.WithBatchEventProcessor(conf.BatchSize, conf.QueueSize, conf.FlushInterval),
+		client.WithEventProcessor(ep),
 	)
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
