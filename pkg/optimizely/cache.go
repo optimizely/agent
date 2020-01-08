@@ -27,6 +27,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/event"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -110,12 +111,17 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, 
 		return &OptlyClient{}, err
 	}
 
+	q := event.NewInMemoryQueue(conf.QueueSize)
+	ep := event.NewBatchEventProcessor(event.WithQueueSize(conf.QueueSize),
+		event.WithBatchSize(conf.BatchSize), event.WithQueue(q),
+		event.WithEventDispatcherMetrics(metricsRegistry))
+
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
-		client.WithBatchEventProcessor(conf.BatchSize, conf.QueueSize, conf.FlushInterval),
+		client.WithEventProcessor(ep),
 	)
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
