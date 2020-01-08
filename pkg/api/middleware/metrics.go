@@ -66,7 +66,7 @@ func Metricize(key string) func(http.Handler) http.Handler {
 			if ok {
 				defer func() {
 					endTime := time.Now()
-					timeDiff := endTime.Sub(startTime).Seconds()
+					timeDiff := endTime.Sub(startTime).Seconds() * 1000.0 // display time in milliseconds
 					singleMetric.ResponseTime.Add(timeDiff)
 					singleMetric.ResponseTimeHistogram.Observe(timeDiff)
 				}()
