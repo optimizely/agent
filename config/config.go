@@ -107,6 +107,12 @@ type AdminConfig struct {
 	Port    string `yaml:"port"`
 }
 
+type RedisConfig struct {
+	Address  string `yaml:"host"`
+	Password string `yaml:"password"`
+	Database int    `yaml:"database"`
+}
+
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
 	Port     string                   `yaml:"port"`

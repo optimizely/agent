@@ -3,13 +3,14 @@ package redis
 import (
 	"fmt"
 	"github.com/go-redis/redis/v7"
+	"github.com/optimizely/sidedoor/config"
 )
 
-func NewClient() *redis.Client {
+func NewClient(conf config.RedisConfig) *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     conf.Address,
+		Password: conf.Password,
+		DB:       conf.Database,
 	})
 
 	pong, err := client.Ping().Result()
