@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"net/http"
 
 	"github.com/optimizely/sidedoor/pkg/api/models"
@@ -61,4 +62,12 @@ func GetLogger(r *http.Request) *zerolog.Logger {
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, status)
 	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
+}
+
+func GetFeature(r *http.Request) (*config.OptimizelyFeature, error) {
+	feature, ok := r.Context().Value(OptlyFeatureKey).(*config.OptimizelyFeature)
+	if !ok {
+		return nil, fmt.Errorf("feature not available")
+	}
+	return feature, nil
 }

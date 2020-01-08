@@ -96,7 +96,7 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
-		r.With(getFeatureTimer).Get("/{featureKey}", opt.featureAPI.GetFeature)
+		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
