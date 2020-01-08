@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Miscellaneous clean-up and of docs and openapi spec
 - Add top level config package to consolidate configuration
 - Incorporate OptimizelyConfig into feature and experiment models
+- Add get experiment and list experiment endpoints
 - Add user features endpoint for batched decision responses
 - Add windows tooling
 - Add credit section to README
