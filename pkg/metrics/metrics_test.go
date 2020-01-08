@@ -23,6 +23,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/optimizely/go-sdk/pkg/metrics"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,8 +66,8 @@ func TestCounterEmptyPrefix(t *testing.T) {
 	var expVarMap JSON
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
-	_, ok := expVarMap["prefix.empty_counter_metrics"]
-	assert.False(t, ok)
+	assert.Equal(t, 35.0, expVarMap["empty_counter_metrics"])
+
 }
 
 func TestCounterMultipleRetrievals(t *testing.T) {
@@ -87,6 +89,15 @@ func TestCounterMultipleRetrievals(t *testing.T) {
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
 	assert.Equal(t, 35.0, expVarMap["prefix."+counterKey])
+}
+
+func TestCounterEmptyKey(t *testing.T) {
+
+	metricsRegistry := NewRegistry(metricPrefix)
+	counter := metricsRegistry.GetCounter("")
+
+	assert.Equal(t, &metrics.NoopCounter{}, counter)
+
 }
 
 func TestGaugeValid(t *testing.T) {
@@ -123,8 +134,7 @@ func TestGaugeEmptyPrefix(t *testing.T) {
 	var expVarMap JSON
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
-	_, ok := expVarMap["prefix.empty_gauge_metrics"]
-	assert.False(t, ok)
+	assert.Equal(t, 23.0, expVarMap["empty_gauge_metrics"])
 }
 
 func TestGaugeMultipleRetrievals(t *testing.T) {
@@ -145,5 +155,14 @@ func TestGaugeMultipleRetrievals(t *testing.T) {
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
 	assert.Equal(t, 23.0, expVarMap["prefix."+guageKey])
+
+}
+
+func TestGaugeEmptyKey(t *testing.T) {
+
+	metricsRegistry := NewRegistry(metricPrefix)
+	gauge := metricsRegistry.GetGauge("")
+
+	assert.Equal(t, &metrics.NoopGauge{}, gauge)
 
 }

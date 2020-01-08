@@ -18,7 +18,6 @@
 package metrics
 
 import (
-	"expvar"
 	"sync"
 
 	"github.com/optimizely/go-sdk/pkg/metrics"
@@ -52,45 +51,44 @@ func (m *Registry) GetCounter(key string) metrics.Counter {
 
 	if key == "" {
 		log.Warn().Msg("metrics counter key is empty")
-		return &metrics.BasicCounter{}
+		return &metrics.NoopCounter{}
 	}
-	combinedKey := m.prefix + "." + key
-	if expvar.Get(combinedKey) == nil {
-		return m.createCounter(combinedKey)
+	combinedKey := key
+	if m.prefix != "" {
+		combinedKey = m.prefix + "." + key
 	}
 
-	m.counterLock.RLock()
-	defer m.counterLock.RUnlock()
+	m.counterLock.Lock()
+	defer m.counterLock.Unlock()
 	if val, ok := m.metricsCounterVars[combinedKey]; ok {
 		return val
 	}
-	log.Warn().Msg("unable to get counter metrics for key " + combinedKey)
-	return &metrics.BasicCounter{}
+
+	return m.createCounter(combinedKey)
 }
 
 // GetGauge gets go-kit expvar Gauge
 func (m *Registry) GetGauge(key string) metrics.Gauge {
+
 	if key == "" {
-		log.Info().Msg("metrics gauge key is empty")
-		return &metrics.BasicGauge{}
+		log.Warn().Msg("metrics gauge key is empty")
+		return &metrics.NoopGauge{}
 	}
 
-	combinedKey := m.prefix + "." + key
-	if expvar.Get(combinedKey) == nil {
-		return m.createGauge(combinedKey)
+	combinedKey := key
+	if m.prefix != "" {
+		combinedKey = m.prefix + "." + key
 	}
-	m.gaugeLock.RLock()
-	defer m.gaugeLock.RUnlock()
+
+	m.gaugeLock.Lock()
+	defer m.gaugeLock.Unlock()
 	if val, ok := m.metricsGaugeVars[combinedKey]; ok {
 		return val
 	}
-	log.Warn().Msg("unable to get gauge metrics for key " + combinedKey)
-	return &metrics.BasicGauge{}
+	return m.createGauge(combinedKey)
 }
 
 func (m *Registry) createGauge(key string) *go_kit_expvar.Gauge {
-	m.gaugeLock.Lock()
-	defer m.gaugeLock.Unlock()
 	gaugeVar := go_kit_expvar.NewGauge(key)
 	m.metricsGaugeVars[key] = gaugeVar
 	return gaugeVar
@@ -98,8 +96,6 @@ func (m *Registry) createGauge(key string) *go_kit_expvar.Gauge {
 }
 
 func (m *Registry) createCounter(key string) *go_kit_expvar.Counter {
-	m.counterLock.Lock()
-	defer m.counterLock.Unlock()
 	counterVar := go_kit_expvar.NewCounter(key)
 	m.metricsCounterVars[key] = counterVar
 	return counterVar

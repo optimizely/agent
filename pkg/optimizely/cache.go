@@ -33,7 +33,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const dispatcherMetricsPrefix = "counter.dispatcher"
+const metricsPrefix = "counter"
 
 var metricsRegistry *metrics.Registry
 
@@ -60,7 +60,7 @@ func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
 }
 
 func (c *OptlyCache) init(conf config.OptlyConfig) {
-	metricsRegistry = metrics.NewRegistry(dispatcherMetricsPrefix)
+	metricsRegistry = metrics.NewRegistry(metricsPrefix)
 	for _, sdkKey := range conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
