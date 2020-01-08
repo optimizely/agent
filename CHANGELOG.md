@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [0.9.0] - January 6th, 2019
+- Capture response time metrics in milliseconds
 - Bump to 1.0.0-rc1@d1b332c of the Optimizely go-sdk
 - Add metric visibility into event dispatcher
 - Miscellaneous clean-up and of docs and openapi spec
