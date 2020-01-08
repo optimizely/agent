@@ -22,7 +22,6 @@ import (
 	"sync"
 
 	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/event"
 	"github.com/optimizely/sidedoor/pkg/metrics"
 
 	"github.com/optimizely/go-sdk/pkg/client"
@@ -38,10 +37,11 @@ var metricsRegistry *metrics.Registry
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader   func(string) (*OptlyClient, error)
+	loader   func(string, config.ProcessorConfig) (*OptlyClient, error)
 	optlyMap cmap.ConcurrentMap
 	ctx      context.Context
 	wg       sync.WaitGroup
+	conf     config.OptlyConfig
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
@@ -51,15 +51,16 @@ func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
 		wg:       sync.WaitGroup{},
 		loader:   initOptlyClient,
 		optlyMap: cmap.New(),
+		conf:     conf,
 	}
 
-	cache.init(conf)
+	cache.init()
 	return cache
 }
 
-func (c *OptlyCache) init(conf config.OptlyConfig) {
+func (c *OptlyCache) init() {
 	metricsRegistry = metrics.NewRegistry()
-	for _, sdkKey := range conf.SDKKeys {
+	for _, sdkKey := range c.conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
 		}
@@ -73,7 +74,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey)
+	oc, err := c.loader(sdkKey, c.conf.Processor)
 	if err != nil {
 		return oc, err
 	}
@@ -102,21 +103,19 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
-func initOptlyClient(sdkKey string) (*OptlyClient, error) {
+func initOptlyClient(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey)
 	if _, err := configManager.GetConfig(); err != nil {
 		return &OptlyClient{}, err
 	}
 
-	ep := event.GetOptlyEventProcessor(metricsRegistry)
-
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
-		client.WithEventProcessor(ep),
+		client.WithBatchEventProcessor(conf.BatchSize, conf.QueueSize, conf.FlushInterval),
 	)
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
