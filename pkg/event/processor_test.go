@@ -141,7 +141,7 @@ const Consumer = "optimizely.eventProcessor.nsqWithConsumer"
 // NSQProducer boolan.  Start the producer if set to true
 const Producer = "optimizely.eventProcessor.nsqWithProducer"
 
-var metricsRegistry = metrics.NewRegistry("")
+var metricsRegistry = metrics.NewRegistry()
 
 func TestGetEventProcessorWithQueueSize(t *testing.T) {
 	viper.SetDefault(EPQSize, 1000)

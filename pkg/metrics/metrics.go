@@ -26,9 +26,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	counterPrefix = "counter"
+	gaugePrefix   = "gauge"
+)
+
 // Registry initializes expvar metrics registry
 type Registry struct {
-	prefix             string
 	metricsCounterVars map[string]*go_kit_expvar.Counter
 	metricsGaugeVars   map[string]*go_kit_expvar.Gauge
 
@@ -37,10 +41,9 @@ type Registry struct {
 }
 
 // NewRegistry initializes metrics registry
-func NewRegistry(prefix string) *Registry {
+func NewRegistry() *Registry {
 
 	return &Registry{
-		prefix:             prefix,
 		metricsCounterVars: map[string]*go_kit_expvar.Counter{},
 		metricsGaugeVars:   map[string]*go_kit_expvar.Gauge{},
 	}
@@ -53,10 +56,8 @@ func (m *Registry) GetCounter(key string) metrics.Counter {
 		log.Warn().Msg("metrics counter key is empty")
 		return &metrics.NoopCounter{}
 	}
-	combinedKey := key
-	if m.prefix != "" {
-		combinedKey = m.prefix + "." + key
-	}
+
+	combinedKey := counterPrefix + "." + key
 
 	m.counterLock.Lock()
 	defer m.counterLock.Unlock()
@@ -75,10 +76,7 @@ func (m *Registry) GetGauge(key string) metrics.Gauge {
 		return &metrics.NoopGauge{}
 	}
 
-	combinedKey := key
-	if m.prefix != "" {
-		combinedKey = m.prefix + "." + key
-	}
+	combinedKey := gaugePrefix + "." + key
 
 	m.gaugeLock.Lock()
 	defer m.gaugeLock.Unlock()

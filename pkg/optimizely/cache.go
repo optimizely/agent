@@ -33,8 +33,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const metricsPrefix = "counter"
-
 var metricsRegistry *metrics.Registry
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -60,7 +58,7 @@ func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
 }
 
 func (c *OptlyCache) init(conf config.OptlyConfig) {
-	metricsRegistry = metrics.NewRegistry(metricsPrefix)
+	metricsRegistry = metrics.NewRegistry()
 	for _, sdkKey := range conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
