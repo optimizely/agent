@@ -51,7 +51,7 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	feature, err := middleware.GetFeature(r)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetFeature")
-		RenderError(err, http.StatusNotFound, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 	} else {
 		render.JSON(w, r, feature)
 	}
