@@ -23,7 +23,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/agent/config"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,7 +31,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 const signatureHeader = "X-Hub-Signature"

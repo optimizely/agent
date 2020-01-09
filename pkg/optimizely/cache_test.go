@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"

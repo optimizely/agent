@@ -21,8 +21,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/metrics"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"

@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/agent/config"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"

@@ -29,10 +29,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/routers"
-	"github.com/optimizely/sidedoor/pkg/server"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/routers"
+	"github.com/optimizely/agent/pkg/server"
 )
 
 // Version holds the admin version

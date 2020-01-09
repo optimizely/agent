@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.

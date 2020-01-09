@@ -1,4 +1,4 @@
-module github.com/optimizely/sidedoor
+module github.com/optimizely/agent
 
 go 1.13
 

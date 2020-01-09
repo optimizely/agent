@@ -26,9 +26,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
 // TestCache implements the Cache interface and is used in testing.

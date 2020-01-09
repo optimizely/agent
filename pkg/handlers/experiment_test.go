@@ -24,9 +24,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/middleware"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
