@@ -56,10 +56,10 @@ Below is a comprehensive list of available configuration properties.
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|admin.author|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
+|admin.name|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
 |admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
-|admin.version|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
-|admin.version|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
