@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package router //
-package router
+// Package routers //
+package routers
 
 import (
 	"encoding/json"

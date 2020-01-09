@@ -31,7 +31,7 @@ import (
 
 	"github.com/optimizely/sidedoor/config"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/router"
+	"github.com/optimizely/sidedoor/pkg/routers"
 	"github.com/optimizely/sidedoor/pkg/server"
 )
 
@@ -114,9 +114,9 @@ func main() {
 	}()
 
 	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Port, router.NewDefaultAPIRouter(optlyCache, conf.API))
-	sg.GoListenAndServe("webhook", conf.Webhook.Port, router.NewWebhookRouter(optlyCache, conf.Webhook))
-	sg.GoListenAndServe("admin", conf.Admin.Port, router.NewAdminRouter(conf.Admin)) // Admin should be added last.
+	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API))
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(conf.Admin)) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

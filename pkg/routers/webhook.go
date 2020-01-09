@@ -14,36 +14,26 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handler //
-package handler
+// Package routers //
+package routers
 
 import (
-	"net/http"
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handlers"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-// FeatureAPI defines the supported feature apis.
-type FeatureAPI interface {
-	GetFeature(w http.ResponseWriter, r *http.Request)
-	ListFeatures(w http.ResponseWriter, r *http.Request)
-}
+// NewWebhookRouter returns HTTP API router
+func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
+	r := chi.NewRouter()
 
-// ExperimentAPI defines the supported experiment apis.
-type ExperimentAPI interface {
-	GetExperiment(w http.ResponseWriter, r *http.Request)
-	ListExperiments(w http.ResponseWriter, r *http.Request)
-}
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
 
-// UserAPI defines the supported user scoped APIs.
-type UserAPI interface {
-	ListFeatures(w http.ResponseWriter, r *http.Request)
-	GetFeature(w http.ResponseWriter, r *http.Request)
-	TrackFeatures(w http.ResponseWriter, r *http.Request)
-	TrackFeature(w http.ResponseWriter, r *http.Request)
-
-	TrackEvent(w http.ResponseWriter, r *http.Request)
-
-	ActivateExperiment(w http.ResponseWriter, r *http.Request)
-	GetVariation(w http.ResponseWriter, r *http.Request)
-	SetForcedVariation(w http.ResponseWriter, r *http.Request)
-	RemoveForcedVariation(w http.ResponseWriter, r *http.Request)
+	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
+	return r
 }

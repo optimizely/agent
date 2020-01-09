@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handler //
-package handler
+// Package handlers //
+package handlers
 
 import (
 	"context"

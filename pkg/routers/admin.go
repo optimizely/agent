@@ -14,53 +14,31 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handler //
-package handler
+// Package routers //
+package routers
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handlers"
+
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-
-	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 )
 
-// ErrorResponse Model
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
+// NewAdminRouter returns HTTP admin router
+func NewAdminRouter(conf config.AdminConfig) http.Handler {
+	r := chi.NewRouter()
 
-// RenderError sets the request status and renders the error message.
-func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
-	render.Status(r, status)
-	render.JSON(w, r, ErrorResponse{Error: err.Error()})
-}
+	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
+	r.Use(optlyAdmin.AppInfoHeader)
 
-// ParseRequestBody reads the request body from the request and unmarshals it
-// into the provided interface. Note that we're sanitizing the returned error
-// so that it is not leaked back to the requestor.
-func ParseRequestBody(r *http.Request, v interface{}) error {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		msg := "error reading request body"
-		middleware2.GetLogger(r).Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)
-	}
+	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	if len(body) == 0 {
-		middleware2.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
-		return nil
-	}
+	r.Get("/health", optlyAdmin.Health)
+	r.Get("/info", optlyAdmin.AppInfo)
+	r.Get("/metrics", optlyAdmin.Metrics)
 
-	err = json.Unmarshal(body, &v)
-	if err != nil {
-		msg := "error parsing request body"
-		middleware2.GetLogger(r).Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)
-	}
-
-	return nil
+	return r
 }

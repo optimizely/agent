@@ -14,14 +14,14 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package router //
-package router
+// Package routers //
+package routers
 
 import (
 	"net/http"
 
 	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/handler"
+	"github.com/optimizely/sidedoor/pkg/handlers"
 	"github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 
@@ -64,9 +64,9 @@ func init() {
 type APIOptions struct {
 	maxConns      int
 	middleware    middleware.OptlyMiddleware
-	experimentAPI handler.ExperimentAPI
-	featureAPI    handler.FeatureAPI
-	userAPI       handler.UserAPI
+	experimentAPI handlers.ExperimentAPI
+	featureAPI    handlers.FeatureAPI
+	userAPI       handlers.UserAPI
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
@@ -74,9 +74,9 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig) htt
 	spec := &APIOptions{
 		maxConns:      conf.MaxConns,
 		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		experimentAPI: new(handler.ExperimentHandler),
-		featureAPI:    new(handler.FeatureHandler),
-		userAPI:       new(handler.UserHandler),
+		experimentAPI: new(handlers.ExperimentHandler),
+		featureAPI:    new(handlers.FeatureHandler),
+		userAPI:       new(handlers.UserHandler),
 	}
 
 	return NewAPIRouter(spec)
