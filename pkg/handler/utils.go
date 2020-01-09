@@ -14,54 +14,49 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// Package handler //
+package handler
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/api/models"
+	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 )
 
-// FeatureHandler implements the FeatureAPI interface
-type FeatureHandler struct{}
-
-// ListFeatures - List all features
-func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	features, err := optlyClient.ListFeatures()
-	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling ListFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	render.JSON(w, r, features)
+// RenderError sets the request status and renders the error message.
+func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	render.Status(r, status)
+	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
 }
 
-// GetFeature - Get requested feature
-func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
+// ParseRequestBody reads the request body from the request and unmarshals it
+// into the provided interface. Note that we're sanitizing the returned error
+// so that it is not leaked back to the requestor.
+func ParseRequestBody(r *http.Request, v interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
+		msg := "error reading request body"
+		middleware2.GetLogger(r).Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
 	}
 
-	featureKey := chi.URLParam(r, "featureKey")
-	feature, err := optlyClient.GetFeature(featureKey)
-	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
+	if len(body) == 0 {
+		middleware2.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
+		return nil
 	}
 
-	render.JSON(w, r, feature)
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		msg := "error parsing request body"
+		middleware2.GetLogger(r).Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
+	}
+
+	return nil
 }

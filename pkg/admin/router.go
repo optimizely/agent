@@ -19,18 +19,19 @@ package admin
 
 import (
 	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handler"
+
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/admin/handlers"
 )
 
 // NewRouter returns HTTP admin router
 func NewRouter(conf config.AdminConfig) http.Handler {
 	r := chi.NewRouter()
 
-	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
+	optlyAdmin := handler.NewAdmin(conf.Version, conf.Author, conf.Name)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))

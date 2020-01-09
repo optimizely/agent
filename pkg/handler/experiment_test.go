@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// Package handler //
+package handler
 
 import (
 	"context"
@@ -24,8 +24,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
+	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -49,7 +49,7 @@ type OptlyMWExperiment struct {
 
 func (o *OptlyMWExperiment) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, o.optlyClient)
+		ctx := context.WithValue(r.Context(), middleware2.OptlyClientKey, o.optlyClient)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

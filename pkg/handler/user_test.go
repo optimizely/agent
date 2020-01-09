@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// Package handler //
+package handler
 
 import (
 	"bytes"
@@ -27,8 +27,8 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/decision"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
 	"github.com/optimizely/sidedoor/pkg/api/models"
+	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
@@ -51,7 +51,7 @@ type UserMW struct {
 
 func (o *UserMW) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, o.optlyClient)
+		ctx := context.WithValue(r.Context(), middleware2.OptlyClientKey, o.optlyClient)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -59,7 +59,7 @@ func (o *UserMW) ClientCtx(next http.Handler) http.Handler {
 func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyContext := optimizely.NewContext("testUser", make(map[string]interface{}))
-		ctx := context.WithValue(r.Context(), middleware.OptlyContextKey, optlyContext)
+		ctx := context.WithValue(r.Context(), middleware2.OptlyContextKey, optlyContext)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

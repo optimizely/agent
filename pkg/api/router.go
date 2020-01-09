@@ -19,13 +19,15 @@ package api
 
 import (
 	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handler"
+	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
+
 	"net/http"
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/api/handlers"
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
+
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
@@ -44,38 +46,38 @@ var setForcedVariationTimer func(http.Handler) http.Handler
 var removeForcedVariationTimer func(http.Handler) http.Handler
 
 func init() {
-	listFeaturesTimer = middleware.Metricize("list-features")
-	getFeatureTimer = middleware.Metricize("get-feature")
-	listExperimentsTimer = middleware.Metricize("list-experiments")
-	getExperimentTimer = middleware.Metricize("get-experiment")
-	trackEventTimer = middleware.Metricize("track-event")
-	listUserFeaturesTimer = middleware.Metricize("list-user-features")
-	trackUserFeaturesTimer = middleware.Metricize("track-user-features")
-	getUserFeatureTimer = middleware.Metricize("get-user-feature")
-	trackUserFeatureTimer = middleware.Metricize("track-user-feature")
-	getVariationTimer = middleware.Metricize("get-variation")
-	activateExperimentTimer = middleware.Metricize("activate-experiment")
-	setForcedVariationTimer = middleware.Metricize("set-forced-variation")
-	removeForcedVariationTimer = middleware.Metricize("remove-forced-variation")
+	listFeaturesTimer = middleware2.Metricize("list-features")
+	getFeatureTimer = middleware2.Metricize("get-feature")
+	listExperimentsTimer = middleware2.Metricize("list-experiments")
+	getExperimentTimer = middleware2.Metricize("get-experiment")
+	trackEventTimer = middleware2.Metricize("track-event")
+	listUserFeaturesTimer = middleware2.Metricize("list-user-features")
+	trackUserFeaturesTimer = middleware2.Metricize("track-user-features")
+	getUserFeatureTimer = middleware2.Metricize("get-user-feature")
+	trackUserFeatureTimer = middleware2.Metricize("track-user-feature")
+	getVariationTimer = middleware2.Metricize("get-variation")
+	activateExperimentTimer = middleware2.Metricize("activate-experiment")
+	setForcedVariationTimer = middleware2.Metricize("set-forced-variation")
+	removeForcedVariationTimer = middleware2.Metricize("remove-forced-variation")
 }
 
 // RouterOptions defines the configuration parameters for Router.
 type RouterOptions struct {
 	maxConns      int
-	middleware    middleware.OptlyMiddleware
-	experimentAPI handlers.ExperimentAPI
-	featureAPI    handlers.FeatureAPI
-	userAPI       handlers.UserAPI
+	middleware    middleware2.OptlyMiddleware
+	experimentAPI handler.ExperimentAPI
+	featureAPI    handler.FeatureAPI
+	userAPI       handler.UserAPI
 }
 
 // NewDefaultRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.Handler {
 	spec := &RouterOptions{
 		maxConns:      conf.MaxConns,
-		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		experimentAPI: new(handlers.ExperimentHandler),
-		featureAPI:    new(handlers.FeatureHandler),
-		userAPI:       new(handlers.UserHandler),
+		middleware:    &middleware2.CachedOptlyMiddleware{Cache: optlyCache},
+		experimentAPI: new(handler.ExperimentHandler),
+		featureAPI:    new(handler.FeatureHandler),
+		userAPI:       new(handler.UserHandler),
 	}
 
 	return NewRouter(spec)
@@ -90,8 +92,8 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime)
-	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
+	r.Use(middleware2.SetTime)
+	r.Use(render.SetContentType(render.ContentTypeJSON), middleware2.SetRequestID)
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)

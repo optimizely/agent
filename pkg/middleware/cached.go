@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
+
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 

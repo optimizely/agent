@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// Package handler //
+package handler
 
 import (
 	"net/http"
@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 )
 
 // ExperimentHandler implements the ExperimentAPI interface
@@ -31,14 +31,14 @@ type ExperimentHandler struct{}
 
 // ListExperiments - List all experiments
 func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
+	optlyClient, err := middleware2.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 	experiments, err := optlyClient.ListExperiments()
 	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling ListExperiments")
+		middleware2.GetLogger(r).Error().Msg("Calling ListExperiments")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -47,7 +47,7 @@ func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Reque
 
 // GetExperiment - Get requested experiment
 func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
+	optlyClient, err := middleware2.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
@@ -55,7 +55,7 @@ func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request
 	experimentKey := chi.URLParam(r, "experimentKey")
 	experiment, err := optlyClient.GetExperiment(experimentKey)
 	if err != nil {
-		middleware.GetLogger(r).Error().Str("experimentKey", experimentKey).Msg("Calling GetExperiment")
+		middleware2.GetLogger(r).Error().Str("experimentKey", experimentKey).Msg("Calling GetExperiment")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
