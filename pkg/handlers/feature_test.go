@@ -26,7 +26,7 @@ import (
 
 	"github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
 
 	"github.com/go-chi/chi"
 	"github.com/optimizely/go-sdk/pkg/entities"

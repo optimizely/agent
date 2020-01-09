@@ -27,8 +27,30 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optlytest"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
 )
+
+// TestCache implements the Cache interface and is used in testing.
+type TestCache struct {
+	testClient *optimizelytest.TestClient
+}
+
+// NewCache returns a new implementation of TestCache
+func NewCache() *TestCache {
+	testClient := optimizelytest.NewClient()
+	return &TestCache{
+		testClient: testClient,
+	}
+}
+
+// GetClient returns a default OptlyClient for testing
+func (tc *TestCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
+	return &optimizely.OptlyClient{
+		OptimizelyClient: tc.testClient.OptimizelyClient,
+		ConfigManager:    nil,
+	}, nil
+}
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {
 	jsonValue, _ := json.Marshal("Invalid message")
@@ -101,7 +123,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 }
 
 func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
-	testCache := optlytest.NewCache()
+	testCache := NewCache()
 	var testWebhookConfigs = map[int64]config.WebhookProject{
 		42: {
 			SDKKeys:            []string{"myDatafile"},
@@ -136,7 +158,7 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 }
 
 func TestHandleWebhookValidMessage(t *testing.T) {
-	testCache := optlytest.NewCache()
+	testCache := NewCache()
 	var testWebhookConfigs = map[int64]config.WebhookProject{
 		42: {
 			SDKKeys: []string{"myDatafile"},

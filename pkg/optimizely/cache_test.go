@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"

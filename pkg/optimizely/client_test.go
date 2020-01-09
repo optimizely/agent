@@ -20,7 +20,7 @@ package optimizely
 import (
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
 
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"

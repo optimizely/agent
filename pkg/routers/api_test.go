@@ -27,7 +27,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
