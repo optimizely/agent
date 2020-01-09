@@ -19,9 +19,11 @@ package webhook
 
 import (
 	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handler"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
@@ -30,7 +32,7 @@ func NewRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux 
 	r := chi.NewRouter()
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
-	webhookAPI := NewWebhookHandler(optlyCache, conf.Projects)
+	webhookAPI := handler.NewWebhookHandler(optlyCache, conf.Projects)
 
 	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
 	return r
