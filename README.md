@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/optimizely/sidedoor.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/sidedoor)
-[![codecov](https://codecov.io/gh/optimizely/sidedoor/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/sidedoor)
+[![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent)
+[![codecov](https://codecov.io/gh/optimizely/agent/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/agent)
 # Optimizely Agent
 Optimizely Agent is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
 a highly available and distributed web application.
@@ -23,7 +23,7 @@ The following `make` targets can be used to build and run the application:
 * **cover-html** - generates test coverage html report
 * **install** - installs all dev and ci dependencies
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
-* **run** - builds and executes the sidedoor binary
+* **run** - builds and executes the optimizely binary
 * **test** - recursively tests all .go files
 
 ## Prerequisites
@@ -79,7 +79,7 @@ Example Response:
 ```
 {
 	"cmdline": [
-		"bin/sidedoor"
+		"bin/optimizely"
 	],
 	"memstats": {
 		"Alloc": 924136,

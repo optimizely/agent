@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 var defaultClient = optimizely.OptlyClient{}

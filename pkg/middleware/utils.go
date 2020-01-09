@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"

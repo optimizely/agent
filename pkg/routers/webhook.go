@@ -18,13 +18,13 @@
 package routers
 
 import (
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/handlers"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 // NewWebhookRouter returns HTTP API router

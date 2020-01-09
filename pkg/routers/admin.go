@@ -18,8 +18,8 @@
 package routers
 
 import (
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/handlers"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
 
 	"net/http"
 

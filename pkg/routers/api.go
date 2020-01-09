@@ -20,10 +20,10 @@ package routers
 import (
 	"net/http"
 
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/handlers"
-	"github.com/optimizely/sidedoor/pkg/middleware"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
+	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/pkg/optimizely"
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"

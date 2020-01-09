@@ -17,7 +17,7 @@
 package server
 
 import (
-	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/agent/config"
 	"net/http"
 	"sync"
 	"testing"

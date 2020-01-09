@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/middleware"
+	"github.com/optimizely/agent/pkg/middleware"
 )
 
 // Experiment Model

@@ -25,7 +25,7 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 type contextKey string

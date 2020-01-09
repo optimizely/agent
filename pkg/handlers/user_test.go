@@ -27,9 +27,9 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/decision"
 
-	"github.com/optimizely/sidedoor/pkg/middleware"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
-	"github.com/optimizely/sidedoor/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/go-chi/chi"
 	"github.com/optimizely/go-sdk/pkg/entities"
