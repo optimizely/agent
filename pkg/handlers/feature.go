@@ -34,13 +34,6 @@ type Feature struct {
 	Enabled   bool              `json:"enabled"`
 }
 
-// FeatureVariation Model
-type FeatureVariation struct {
-	ID        int32             `json:"id"`
-	Key       string            `json:"key"`
-	Variables map[string]string `json:"variables,omitempty"`
-}
-
 // FeatureHandler implements the FeatureAPI interface
 type FeatureHandler struct{}
 
