@@ -105,3 +105,42 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+// FeatureCtx extracts the featureKey URL param and adds a Feature to the request context.
+// If no such feature exists in the current config, returns 404
+// If no OptlyClient client is available, returns 500
+// Note: This middleware has two dependencies:
+//	- ClientCtx middleware should be running prior to this one
+//	- featureKey must be available as a URL param
+func (ctx *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: consider using the cache instead of the request context
+		optlyClient, err := GetOptlyClient(r)
+		if err != nil {
+			RenderError(fmt.Errorf("optlyClient not available in FeatureCtx"), http.StatusInternalServerError, w, r)
+			return
+		}
+
+		featureKey := chi.URLParam(r, "featureKey")
+		if featureKey == "" {
+			RenderError(fmt.Errorf("invalid request, missing featureKey in FeatureCtx"), http.StatusBadRequest, w, r)
+			return
+		}
+
+		feature, err := optlyClient.GetFeature(featureKey)
+		var statusCode int
+		switch err {
+		case nil:
+			GetLogger(r).Debug().Str("featureKey", featureKey).Msg("Added feature to request context in FeatureCtx")
+			ctx := context.WithValue(r.Context(), OptlyFeatureKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		case optimizely.ErrFeatureNotFound:
+			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
+		RenderError(err, statusCode, w, r)
+	})
+}
