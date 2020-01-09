@@ -18,3 +18,12 @@ require (
 	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+exclude (
+	github.com/coreos/etcd v3.3.10+incompatible
+	github.com/coreos/etcd v3.3.11+incompatible
+	github.com/coreos/etcd v3.3.12+incompatible
+	github.com/coreos/etcd v3.3.13+incompatible
+	github.com/coreos/etcd v3.3.15+incompatible
+	github.com/gorilla/websocket v1.4.0
+)
