@@ -25,7 +25,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/api/models"
 	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
@@ -228,13 +227,13 @@ func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyCo
 	return optlyClient, optlyContext, nil
 }
 
-// getModelOfFeatureDecision - Returns a models.Feature representing the feature decision from the provided client and context
-func getModelOfFeatureDecision(featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) (*models.Feature, error) {
+// getModelOfFeatureDecision - Returns a Feature representing the feature decision from the provided client and context
+func getModelOfFeatureDecision(featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) (*Feature, error) {
 	enabled, variables, err := optlyClient.GetFeatureWithContext(featureKey, optlyContext)
 	if err != nil {
 		return nil, err
 	}
-	return &models.Feature{
+	return &Feature{
 		Key:       featureKey,
 		Enabled:   enabled,
 		Variables: variables,
@@ -263,7 +262,7 @@ func renderFeatures(w http.ResponseWriter, r *http.Request, optlyClient *optimiz
 	}
 
 	featuresCount := len(features)
-	featureModels := make([]*models.Feature, 0, featuresCount)
+	featureModels := make([]*Feature, 0, featuresCount)
 	for _, feature := range features {
 		featureModel, err := getModelOfFeatureDecision(feature.Key, optlyClient, optlyContext)
 		if err != nil {
@@ -287,7 +286,7 @@ func renderVariation(w http.ResponseWriter, r *http.Request, experimentKey strin
 		return
 	}
 
-	variationModel := &models.Variation{
+	variationModel := &Variation{
 		Key: variation.Key,
 		ID:  variation.ID,
 	}

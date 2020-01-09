@@ -25,14 +25,18 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/api/models"
 	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 )
+
+// ErrorResponse Model
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 // RenderError sets the request status and renders the error message.
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, status)
-	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
+	render.JSON(w, r, ErrorResponse{Error: err.Error()})
 }
 
 // ParseRequestBody reads the request body from the request and unmarshals it

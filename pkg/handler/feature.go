@@ -26,6 +26,21 @@ import (
 	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 )
 
+// Feature Model
+type Feature struct {
+	Key       string            `json:"key"`
+	Variables map[string]string `json:"variables,omitempty"`
+	ID        int32             `json:"id,omitempty"`
+	Enabled   bool              `json:"enabled"`
+}
+
+// FeatureVariation Model
+type FeatureVariation struct {
+	ID        int32             `json:"id"`
+	Key       string            `json:"key"`
+	Variables map[string]string `json:"variables,omitempty"`
+}
+
 // FeatureHandler implements the FeatureAPI interface
 type FeatureHandler struct{}
 

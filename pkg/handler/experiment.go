@@ -26,6 +26,19 @@ import (
 	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
 )
 
+// Experiment Model
+type Experiment struct {
+	ID         int32                `json:"id"`
+	Key        string               `json:"key"`
+	Variations map[string]Variation `json:"variations,omitempty"`
+}
+
+// Variation Model
+type Variation struct {
+	ID  string `json:"id"`
+	Key string `json:"key"`
+}
+
 // ExperimentHandler implements the ExperimentAPI interface
 type ExperimentHandler struct{}
 
