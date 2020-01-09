@@ -27,8 +27,7 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/decision"
 
-	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
-
+	"github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -50,7 +49,7 @@ type UserMW struct {
 
 func (o *UserMW) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), middleware2.OptlyClientKey, o.optlyClient)
+		ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, o.optlyClient)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -58,7 +57,7 @@ func (o *UserMW) ClientCtx(next http.Handler) http.Handler {
 func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyContext := optimizely.NewContext("testUser", make(map[string]interface{}))
-		ctx := context.WithValue(r.Context(), middleware2.OptlyContextKey, optlyContext)
+		ctx := context.WithValue(r.Context(), middleware.OptlyContextKey, optlyContext)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

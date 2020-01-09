@@ -25,7 +25,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
+	"github.com/optimizely/sidedoor/pkg/middleware"
 )
 
 // ErrorResponse Model
@@ -46,19 +46,19 @@ func ParseRequestBody(r *http.Request, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := "error reading request body"
-		middleware2.GetLogger(r).Error().Err(err).Msg(msg)
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
 		return fmt.Errorf(msg)
 	}
 
 	if len(body) == 0 {
-		middleware2.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
+		middleware.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
 		return nil
 	}
 
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		msg := "error parsing request body"
-		middleware2.GetLogger(r).Error().Err(err).Msg(msg)
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
 		return fmt.Errorf(msg)
 	}
 

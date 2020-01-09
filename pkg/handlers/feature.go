@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
+	"github.com/optimizely/sidedoor/pkg/middleware"
 )
 
 // Feature Model
@@ -46,7 +46,7 @@ type FeatureHandler struct{}
 
 // ListFeatures - List all features
 func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware2.GetOptlyClient(r)
+	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
@@ -54,7 +54,7 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 	features, err := optlyClient.ListFeatures()
 	if err != nil {
-		middleware2.GetLogger(r).Error().Msg("Calling ListFeature")
+		middleware.GetLogger(r).Error().Msg("Calling ListFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -64,7 +64,7 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 // GetFeature - Get requested feature
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware2.GetOptlyClient(r)
+	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
@@ -73,7 +73,7 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	featureKey := chi.URLParam(r, "featureKey")
 	feature, err := optlyClient.GetFeature(featureKey)
 	if err != nil {
-		middleware2.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

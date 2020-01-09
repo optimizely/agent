@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	middleware2 "github.com/optimizely/sidedoor/pkg/middleware"
+	"github.com/optimizely/sidedoor/pkg/middleware"
 )
 
 // Experiment Model
@@ -44,14 +44,14 @@ type ExperimentHandler struct{}
 
 // ListExperiments - List all experiments
 func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware2.GetOptlyClient(r)
+	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 	experiments, err := optlyClient.ListExperiments()
 	if err != nil {
-		middleware2.GetLogger(r).Error().Msg("Calling ListExperiments")
+		middleware.GetLogger(r).Error().Msg("Calling ListExperiments")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -60,7 +60,7 @@ func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Reque
 
 // GetExperiment - Get requested experiment
 func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware2.GetOptlyClient(r)
+	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
@@ -68,7 +68,7 @@ func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request
 	experimentKey := chi.URLParam(r, "experimentKey")
 	experiment, err := optlyClient.GetExperiment(experimentKey)
 	if err != nil {
-		middleware2.GetLogger(r).Error().Str("experimentKey", experimentKey).Msg("Calling GetExperiment")
+		middleware.GetLogger(r).Error().Str("experimentKey", experimentKey).Msg("Calling GetExperiment")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
