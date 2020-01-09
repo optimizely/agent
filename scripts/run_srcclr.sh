@@ -3,7 +3,7 @@ set -e
 
 # aborts build (via exit 1) if srcclr scan detects vulnerabilities
 
-RESULTS=$(srcclr scan . --json | jq '.records[].vulnerabilities')
+RESULTS=$(srcclr scan . --json --allow-dirty | jq '.records[].vulnerabilities')
 NUM_RESULTS=$(echo "$RESULTS" | jq '.|length')
 
 if [[ "$NUM_RESULTS" != "0" ]]; then
