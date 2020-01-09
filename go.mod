@@ -20,7 +20,6 @@ require (
 )
 
 exclude (
-	github.com/coreos/etcd v3.3.10+incompatible
 	github.com/coreos/etcd v3.3.11+incompatible
 	github.com/coreos/etcd v3.3.12+incompatible
 	github.com/coreos/etcd v3.3.13+incompatible
