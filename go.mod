@@ -21,5 +21,6 @@ require (
 
 exclude (
 	github.com/coreos/etcd v3.3.10+incompatible
+	github.com/coreos/etcd v3.3.11+incompatible
 	github.com/gorilla/websocket v1.4.0
 )
