@@ -38,8 +38,6 @@ jobs:
       name: srcclr
       os: linux
       dist: xenial
-      addons:
-        srcclr: true
       install:
         - curl -sSL https://www.sourceclear.com/install | bash
       script:
