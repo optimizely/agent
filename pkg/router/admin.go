@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package admin //
-package admin
+// Package router //
+package router
 
 import (
 	"github.com/optimizely/sidedoor/config"
@@ -27,8 +27,8 @@ import (
 	"github.com/go-chi/render"
 )
 
-// NewRouter returns HTTP admin router
-func NewRouter(conf config.AdminConfig) http.Handler {
+// NewAdminRouter returns HTTP admin router
+func NewAdminRouter(conf config.AdminConfig) http.Handler {
 	r := chi.NewRouter()
 
 	optlyAdmin := handler.NewAdmin(conf.Version, conf.Author, conf.Name)

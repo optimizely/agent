@@ -18,22 +18,21 @@ package main
 import (
 	"bytes"
 	"context"
-	"gopkg.in/yaml.v2"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
 	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/admin"
-	"github.com/optimizely/sidedoor/pkg/api"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
+	"github.com/optimizely/sidedoor/pkg/router"
 	"github.com/optimizely/sidedoor/pkg/server"
-	"github.com/optimizely/sidedoor/pkg/webhook"
 )
 
 // Version holds the admin version
@@ -115,9 +114,9 @@ func main() {
 	}()
 
 	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Port, api.NewDefaultRouter(optlyCache, conf.API))
-	sg.GoListenAndServe("webhook", conf.Webhook.Port, webhook.NewRouter(optlyCache, conf.Webhook))
-	sg.GoListenAndServe("admin", conf.Admin.Port, admin.NewRouter(conf.Admin)) // Admin should be added last.
+	sg.GoListenAndServe("api", conf.API.Port, router.NewDefaultAPIRouter(optlyCache, conf.API))
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, router.NewWebhookRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("admin", conf.Admin.Port, router.NewAdminRouter(conf.Admin)) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

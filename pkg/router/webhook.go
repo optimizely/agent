@@ -14,8 +14,8 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package webhook //
-package webhook
+// Package router //
+package router
 
 import (
 	"github.com/optimizely/sidedoor/config"
@@ -27,8 +27,8 @@ import (
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
-// NewRouter returns HTTP API router
-func NewRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
+// NewWebhookRouter returns HTTP API router
+func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
