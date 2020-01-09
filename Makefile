@@ -27,7 +27,7 @@ LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION}"
 
 all: test build ## all
 $(TARGET):
-	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
+	GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
 
 build: $(TARGET) ## builds and installs binary in bin/
 	@true

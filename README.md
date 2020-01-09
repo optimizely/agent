@@ -45,7 +45,7 @@ Alternative configuration locations can be specified at runtime via environment 
 ```bash
 OPTIMIZELY_CONFIG_FILENAME=config.yaml make run
 ```
-An example configuration can be found [here](./cmd/optimizely/testdata/default.yaml)
+An example configuration can be found [here](cmd/testdata/default.yaml)
 
 Below is a comprehensive list of available configuration properties.
 
