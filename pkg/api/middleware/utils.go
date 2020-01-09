@@ -64,6 +64,7 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
 }
 
+// GetFeature returns any OptimizelyFeature set from the request context
 func GetFeature(r *http.Request) (*config.OptimizelyFeature, error) {
 	feature, ok := r.Context().Value(OptlyFeatureKey).(*config.OptimizelyFeature)
 	if !ok {

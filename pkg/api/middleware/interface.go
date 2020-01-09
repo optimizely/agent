@@ -27,6 +27,4 @@ type OptlyMiddleware interface {
 	ClientCtx(next http.Handler) http.Handler
 	// UserCtx adds a UserContext to the request context.
 	UserCtx(next http.Handler) http.Handler
-	// FeatureCtx adds a Feature to the request context.
-	FeatureCtx(next http.Handler) http.Handler
 }

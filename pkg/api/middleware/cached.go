@@ -105,33 +105,3 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-// FeatureCtx extracts the featureID URL param and adds a Feature to the request context, or returns 404
-// if no such feature exists
-// Note: this depends on ClientCtx middleware already having run. If no client is available in request context,
-// it will return 500
-func (ctx *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyClient, err := GetOptlyClient(r)
-		if err != nil {
-			RenderError(fmt.Errorf("optlyClient not available in FeatureCtx"), http.StatusInternalServerError, w, r)
-			return
-		}
-		featureKey := chi.URLParam(r, "featureKey")
-		feature, err := optlyClient.GetFeature(featureKey)
-		var statusCode int
-		switch err {
-		case nil:
-			GetLogger(r).Debug().Str("featureKey", featureKey).Msg("Added feature to request context")
-			ctx := context.WithValue(r.Context(), OptlyFeatureKey, &feature)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		case optimizely.ErrFeatureNotFound:
-			statusCode = http.StatusNotFound
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature")
-		RenderError(err, statusCode, w, r)
-	})
-}
