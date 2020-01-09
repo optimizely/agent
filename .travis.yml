@@ -50,8 +50,8 @@ jobs:
       before_script: skip
       script:
         - PowerShell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
-        - PowerShell -File build.ps1 noninteractive
-        # - PowerShell -Command Start-Process -Filepath "bin\optimizely.exe" -NoNewWindow
+        - PowerShell -File "scripts\build.ps1" noninteractive
+        - PowerShell -File "scripts\check_exe.ps1"
 
     - stage: build
       if: type = push AND tag IS present
