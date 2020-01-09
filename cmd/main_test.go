@@ -17,10 +17,11 @@
 package main
 
 import (
-	"github.com/optimizely/sidedoor/config"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/optimizely/sidedoor/config"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"

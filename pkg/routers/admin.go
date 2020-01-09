@@ -14,13 +14,31 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package models //
-package models
+// Package routers //
+package routers
 
-// Feature Model
-type Feature struct {
-	Key       string            `json:"key"`
-	Variables map[string]string `json:"variables,omitempty"`
-	ID        int32             `json:"id,omitempty"`
-	Enabled   bool              `json:"enabled"`
+import (
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handlers"
+
+	"net/http"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+)
+
+// NewAdminRouter returns HTTP admin router
+func NewAdminRouter(conf config.AdminConfig) http.Handler {
+	r := chi.NewRouter()
+
+	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
+	r.Use(optlyAdmin.AppInfoHeader)
+
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+
+	r.Get("/health", optlyAdmin.Health)
+	r.Get("/info", optlyAdmin.AppInfo)
+	r.Get("/metrics", optlyAdmin.Metrics)
+
+	return r
 }

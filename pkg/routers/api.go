@@ -14,19 +14,20 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package api //
-package api
+// Package routers //
+package routers
 
 import (
-	"github.com/optimizely/sidedoor/config"
 	"net/http"
+
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handlers"
+	"github.com/optimizely/sidedoor/pkg/middleware"
+	"github.com/optimizely/sidedoor/pkg/optimizely"
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/api/handlers"
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
-	"github.com/optimizely/sidedoor/pkg/optimizely"
 )
 
 var listFeaturesTimer func(http.Handler) http.Handler
@@ -59,8 +60,8 @@ func init() {
 	removeForcedVariationTimer = middleware.Metricize("remove-forced-variation")
 }
 
-// RouterOptions defines the configuration parameters for Router.
-type RouterOptions struct {
+// APIOptions defines the configuration parameters for Router.
+type APIOptions struct {
 	maxConns      int
 	middleware    middleware.OptlyMiddleware
 	experimentAPI handlers.ExperimentAPI
@@ -68,9 +69,9 @@ type RouterOptions struct {
 	userAPI       handlers.UserAPI
 }
 
-// NewDefaultRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.Handler {
-	spec := &RouterOptions{
+// NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.Handler {
+	spec := &APIOptions{
 		maxConns:      conf.MaxConns,
 		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		experimentAPI: new(handlers.ExperimentHandler),
@@ -78,11 +79,11 @@ func NewDefaultRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.H
 		userAPI:       new(handlers.UserHandler),
 	}
 
-	return NewRouter(spec)
+	return NewAPIRouter(spec)
 }
 
-// NewRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewRouter(opt *RouterOptions) *chi.Mux {
+// NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
+func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
 
 	if opt.maxConns > 0 {

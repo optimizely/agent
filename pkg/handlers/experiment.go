@@ -23,45 +23,54 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
+	"github.com/optimizely/sidedoor/pkg/middleware"
 )
 
-// FeatureHandler implements the FeatureAPI interface
-type FeatureHandler struct{}
-
-// ListFeatures - List all features
-func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	features, err := optlyClient.ListFeatures()
-	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling ListFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	render.JSON(w, r, features)
+// Experiment Model
+type Experiment struct {
+	ID         int32                `json:"id"`
+	Key        string               `json:"key"`
+	Variations map[string]Variation `json:"variations,omitempty"`
 }
 
-// GetFeature - Get requested feature
-func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
+// Variation Model
+type Variation struct {
+	ID  string `json:"id"`
+	Key string `json:"key"`
+}
+
+// ExperimentHandler implements the ExperimentAPI interface
+type ExperimentHandler struct{}
+
+// ListExperiments - List all experiments
+func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
-
-	featureKey := chi.URLParam(r, "featureKey")
-	feature, err := optlyClient.GetFeature(featureKey)
+	experiments, err := optlyClient.ListExperiments()
 	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+		middleware.GetLogger(r).Error().Msg("Calling ListExperiments")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+	render.JSON(w, r, experiments)
+}
 
-	render.JSON(w, r, feature)
+// GetExperiment - Get requested experiment
+func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request) {
+	optlyClient, err := middleware.GetOptlyClient(r)
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+	experimentKey := chi.URLParam(r, "experimentKey")
+	experiment, err := optlyClient.GetExperiment(experimentKey)
+	if err != nil {
+		middleware.GetLogger(r).Error().Str("experimentKey", experimentKey).Msg("Calling GetExperiment")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+	render.JSON(w, r, experiment)
 }

@@ -27,9 +27,7 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/decision"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
-	"github.com/optimizely/sidedoor/pkg/api/models"
-
+	"github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -106,11 +104,11 @@ func (suite *UserTestSuite) TestGetFeatureWithFeatureTest() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual models.Feature
+	var actual Feature
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := models.Feature{
+	expected := Feature{
 		Key:     "one",
 		Enabled: true,
 	}
@@ -130,11 +128,11 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureRollout() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual models.Feature
+	var actual Feature
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := models.Feature{
+	expected := Feature{
 		Key:     "one",
 		Enabled: true,
 	}
@@ -154,11 +152,11 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual models.Feature
+	var actual Feature
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := models.Feature{
+	expected := Feature{
 		Key:     "one",
 		Enabled: true,
 	}
@@ -269,7 +267,7 @@ func (suite *UserTestSuite) TestSetForcedVariation() {
 	req = httptest.NewRequest("GET", "/features/my_feat", nil)
 	rec = httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-	var actual models.Feature
+	var actual Feature
 	json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.True(actual.Enabled)
 
@@ -281,7 +279,7 @@ func (suite *UserTestSuite) TestSetForcedVariation() {
 	req = httptest.NewRequest("GET", "/features/my_feat", nil)
 	rec = httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-	var actualRepeated models.Feature
+	var actualRepeated Feature
 	json.Unmarshal(rec.Body.Bytes(), &actualRepeated)
 	suite.True(actualRepeated.Enabled)
 }
@@ -312,7 +310,7 @@ func (suite *UserTestSuite) TestRemoveForcedVariation() {
 	rec = httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
-	var actual models.Feature
+	var actual Feature
 	json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.False(actual.Enabled)
 }
@@ -335,11 +333,11 @@ func (suite *UserTestSuite) TestGetVariation() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual models.Variation
+	var actual Variation
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := models.Variation{
+	expected := Variation{
 		Key: testVariation.Key,
 		ID:  testVariation.ID,
 	}
@@ -356,11 +354,11 @@ func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual models.Variation
+	var actual Variation
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := models.Variation{}
+	expected := Variation{}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
 	suite.Equal(expected, actual)
@@ -377,11 +375,11 @@ func (suite *UserTestSuite) TestActivateExperiment() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual models.Variation
+	var actual Variation
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := models.Variation{
+	expected := Variation{
 		Key: testVariation.Key,
 		ID:  testVariation.ID,
 	}
@@ -411,20 +409,20 @@ func (suite *UserTestSuite) TestListFeatures() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual []models.Feature
+	var actual []Feature
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.ElementsMatch([]models.Feature{
-		models.Feature{
+	suite.ElementsMatch([]Feature{
+		Feature{
 			Enabled: true,
 			Key:     "featureA",
 		},
-		models.Feature{
+		Feature{
 			Enabled: false,
 			Key:     "featureB",
 		},
-		models.Feature{
+		Feature{
 			Enabled: true,
 			Key:     "featureC",
 			Variables: map[string]string{
@@ -456,20 +454,20 @@ func (suite *UserTestSuite) TestTrackFeatures() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual []models.Feature
+	var actual []Feature
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.ElementsMatch([]models.Feature{
-		models.Feature{
+	suite.ElementsMatch([]Feature{
+		Feature{
 			Enabled: true,
 			Key:     "featureA",
 		},
-		models.Feature{
+		Feature{
 			Enabled: true,
 			Key:     "featureB",
 		},
-		models.Feature{
+		Feature{
 			Enabled: true,
 			Key:     "featureC",
 			Variables: map[string]string{
@@ -543,9 +541,9 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 func assertError(t *testing.T, rec *httptest.ResponseRecorder, msg string, code int) {
 	assert.Equal(t, code, rec.Code)
 
-	var actual models.ErrorResponse
+	var actual ErrorResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	assert.NoError(t, err)
 
-	assert.Equal(t, models.ErrorResponse{Error: msg}, actual)
+	assert.Equal(t, ErrorResponse{Error: msg}, actual)
 }

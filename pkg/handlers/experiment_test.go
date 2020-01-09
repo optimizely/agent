@@ -24,8 +24,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/api/middleware"
-	"github.com/optimizely/sidedoor/pkg/api/models"
+	"github.com/optimizely/sidedoor/pkg/middleware"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 	"github.com/optimizely/sidedoor/pkg/optimizelytest"
 
@@ -127,11 +126,11 @@ func (suite *ExperimentTestSuite) TestGetExperimentsMissingExperiments() {
 
 	suite.Equal(http.StatusInternalServerError, rec.Code)
 	// Unmarshal response
-	var actual models.ErrorResponse
+	var actual ErrorResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.ErrorResponse{Error: `unable to get experiment for experimentKey experiment-404`}, actual)
+	suite.Equal(ErrorResponse{Error: `unable to get experiment for experimentKey experiment-404`}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -156,11 +155,11 @@ func TestExperimentMissingClientCtx(t *testing.T) {
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
 
 		// Unmarshal response
-		var actual models.ErrorResponse
+		var actual ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, models.ErrorResponse{Error: "optlyClient not available"}, actual)
+		assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
 	}
 }

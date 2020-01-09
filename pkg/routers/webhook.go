@@ -14,12 +14,26 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package models //
-package models
+// Package routers //
+package routers
 
-// Experiment Model
-type Experiment struct {
-	ID         int32                `json:"id"`
-	Key        string               `json:"key"`
-	Variations map[string]Variation `json:"variations,omitempty"`
+import (
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/handlers"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+
+	"github.com/optimizely/sidedoor/pkg/optimizely"
+)
+
+// NewWebhookRouter returns HTTP API router
+func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
+
+	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
+	return r
 }

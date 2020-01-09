@@ -21,13 +21,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/optimizely/sidedoor/pkg/api/models"
 	"github.com/optimizely/sidedoor/pkg/optimizely"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+// ErrorResponse Model
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.
 func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
@@ -60,5 +64,5 @@ func GetLogger(r *http.Request) *zerolog.Logger {
 // RenderError sets the request status and renders the error message.
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, status)
-	render.JSON(w, r, models.ErrorResponse{Error: err.Error()})
+	render.JSON(w, r, ErrorResponse{Error: err.Error()})
 }

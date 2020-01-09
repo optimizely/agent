@@ -14,30 +14,53 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package admin //
-package admin
+// Package handlers //
+package handlers
 
 import (
-	"github.com/optimizely/sidedoor/config"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/optimizely/sidedoor/pkg/admin/handlers"
+
+	"github.com/optimizely/sidedoor/pkg/middleware"
 )
 
-// NewRouter returns HTTP admin router
-func NewRouter(conf config.AdminConfig) http.Handler {
-	r := chi.NewRouter()
+// ErrorResponse Model
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
-	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
-	r.Use(optlyAdmin.AppInfoHeader)
+// RenderError sets the request status and renders the error message.
+func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	render.Status(r, status)
+	render.JSON(w, r, ErrorResponse{Error: err.Error()})
+}
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+// ParseRequestBody reads the request body from the request and unmarshals it
+// into the provided interface. Note that we're sanitizing the returned error
+// so that it is not leaked back to the requestor.
+func ParseRequestBody(r *http.Request, v interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := "error reading request body"
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
+	}
 
-	r.Get("/health", optlyAdmin.Health)
-	r.Get("/info", optlyAdmin.AppInfo)
-	r.Get("/metrics", optlyAdmin.Metrics)
+	if len(body) == 0 {
+		middleware.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
+		return nil
+	}
 
-	return r
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		msg := "error parsing request body"
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
+	}
+
+	return nil
 }

@@ -14,17 +14,20 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package webhook
+// Package handlers //
+package handlers
 
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optlytest"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/sidedoor/pkg/optlytest"
 )
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {
