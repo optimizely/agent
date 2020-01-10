@@ -47,16 +47,12 @@ jobs:
       name: windows build.ps1 test
       os: windows
       language: shell
-      addons:
-        artifacts: true
-          working_dir: bin
-          paths:
-            - optimizely.exe
       before_script: skip
       script:
         - PowerShell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
         - PowerShell -File "scripts\build.ps1" noninteractive
         - PowerShell -File "scripts\check_exe.ps1"
+        - scripts/upload_artifacts.sh
 
     - stage: build
       if: type = push AND tag IS present
