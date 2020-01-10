@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - January 9th, 2020
+- Rename repo to optimizely/agent and update imports
+- Improve CI builds for Windows and SourceClear
+- Major /pkg refactoring
+- Exclude vulnerabilities identified through SourceClear
+
 ## [0.9.0] - January 8th, 2020
 - Capture response time metrics in milliseconds
 - Bump to 1.0.0-rc1@d1b332c of the Optimizely go-sdk
