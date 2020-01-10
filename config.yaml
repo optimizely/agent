@@ -18,6 +18,21 @@ log:
     pretty: true
 
 ##
+## server: http server configuration options
+##
+server:
+    #
+    # readtimeout: the maximum duration for reading the entire request, including the body.
+    # Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
+    #
+    readtimeout: 5s
+    #
+    # writetimeout: the maximum duration before timing out writes of the response.
+    # Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
+    #
+    writetimeout: 10s
+
+##
 ## api: api service configuration
 ##
 api:
@@ -65,7 +80,7 @@ webhook:
     #
     # projects: a map of Optimizely Projects to one or more SDK keys
     #
-    projects:
+#    projects:
         #
         # <project-id>: Optimizely project id as an integer
         #
@@ -73,12 +88,15 @@ webhook:
             #
             # sdkKeys: a list of SDKs linked to this project
             #
-            sdkKeys:
-                - <sdk-key-1>
-                - <sdk-key-1>
-            secret: secret-10000
-            skipSignatureCheck: true
-        20000:
-            sdkKeys:
-                - xxx
-            secret: secret-20000
+#            sdkKeys:
+#                - <sdk-key-1>
+#                - <sdk-key-1>
+            #
+            # secret: webhook secret used the validate the notification
+            #
+#            secret: secret-10000
+            #
+            # skipSignatureCheck: override the signature check (not recommended for production)
+            #
+#            skipSignatureCheck: true
+
