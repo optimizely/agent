@@ -1,70 +1,48 @@
-##
 ## config.yaml provides a default set of configuration options
-##
 
 ##
-## log configurations
+## log: logger configuration
 ##
 log:
-    #
     # level: log level used to filter logs of lesser severity (from highest to lowest):
     # panic, fatal, error, warn, info, debug, trace
-    #
     level: info
-    #
     # pretty: enable colorized console logging. setting to false will output
     # structured JSON logs. Recommended false in production.
-    #
     pretty: true
 
 ##
-## server: http server configuration options
+## server: http server configuration
 ##
 server:
-    #
     # readtimeout: the maximum duration for reading the entire request, including the body.
     # Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    #
     readtimeout: 5s
-    #
     # writetimeout: the maximum duration before timing out writes of the response.
     # Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    #
     writetimeout: 10s
 
 ##
 ## api: api service configuration
 ##
 api:
-    #
     # maxconns: the maximum number of concurrent requests handled by the api listener
-    #
     maxconns: 100
-    #
     # port: http listener port
-    #
     port: "8080"
 
 ##
 ## admin: admin service configuration
 ##
 admin:
-    #
     # author: service author included in the /info response
-    #
 #    author: "Optimizely Inc."
-    #
     # name: name of the running application included in the /info response
-    #
 #    name: "optimizely'
-    #
     # version: version of the application included in the /info response and startup logs
     # Defaults to the latest git tag `git describe --tags`
-    #
 #    version: "custom-build"
-    #
     # port: http listener port
-    #
     port: "8088"
 
 ##
@@ -73,30 +51,17 @@ admin:
 ## trigger an immediate download of the datafile from the CDN
 ##
 webhook:
-    #
     # port: http listener port
-    #
     port: "8089"
-    #
     # projects: a map of Optimizely Projects to one or more SDK keys
-    #
 #    projects:
-        #
         # <project-id>: Optimizely project id as an integer
-        #
 #        <project-id>:
-            #
             # sdkKeys: a list of SDKs linked to this project
-            #
 #            sdkKeys:
 #                - <sdk-key-1>
 #                - <sdk-key-1>
-            #
             # secret: webhook secret used the validate the notification
-            #
 #            secret: secret-10000
-            #
             # skipSignatureCheck: override the signature check (not recommended for production)
-            #
 #            skipSignatureCheck: true
-
