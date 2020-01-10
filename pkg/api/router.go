@@ -94,8 +94,7 @@ func NewRouter(opt *RouterOptions) *chi.Mux {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/features", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
-		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
+		r.With(listFeaturesTimer, opt.middleware.ClientCtx).Get("/", opt.featureAPI.ListFeatures)
 		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 

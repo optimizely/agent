@@ -108,13 +108,9 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 
 // FeatureCtx extracts the featureKey URL param and adds a Feature to the request context.
 // If no such feature exists in the current config, returns 404
-// If no OptlyClient client is available, returns 500
-// Note: This middleware has two dependencies:
-//	- ClientCtx middleware should be running prior to this one
-//	- featureKey must be available as a URL param
-func (ctx *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: consider using the cache instead of the request context
+// Note: featureKey must be available as a URL param
+func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
+	featureCtxHandler :=  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyClient, err := GetOptlyClient(r)
 		if err != nil {
 			RenderError(fmt.Errorf("optlyClient not available in FeatureCtx"), http.StatusInternalServerError, w, r)
@@ -143,4 +139,5 @@ func (ctx *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 		GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
 		RenderError(err, statusCode, w, r)
 	})
+	return mw.ClientCtx(featureCtxHandler)
 }
