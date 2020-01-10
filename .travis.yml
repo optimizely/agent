@@ -47,6 +47,11 @@ jobs:
       name: windows build.ps1 test
       os: windows
       language: shell
+      addons:
+        artifacts: true
+          working_dir: bin
+          paths:
+            - optimizely.exe
       before_script: skip
       script:
         - PowerShell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
