@@ -58,9 +58,10 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	feature, err := middleware.GetFeature(r)
 	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetFeature")
+		middleware.GetLogger(r).Error().Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
-	} else {
-		render.JSON(w, r, feature)
+		return
 	}
+
+	render.JSON(w, r, feature)
 }

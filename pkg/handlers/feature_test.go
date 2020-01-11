@@ -14,8 +14,6 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// TODO (probably in here, maybe elsewhere?), add additional test coverage for returning the 404 when it's not found
-
 // Package handlers //
 package handlers
 
@@ -142,7 +140,7 @@ func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.ErrorResponse{Error: "feature not available"}, actual)
+	suite.Equal(ErrorResponse{Error: "feature not available"}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
