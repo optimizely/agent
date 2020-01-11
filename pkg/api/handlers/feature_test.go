@@ -35,7 +35,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -58,10 +57,15 @@ func (o *OptlyMWFeature) ClientCtx(next http.Handler) http.Handler {
 
 func (o *OptlyMWFeature) FeatureCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &optimizelyconfig.OptimizelyFeature{
-			Key: "one",
-		})
-		next.ServeHTTP(w, r.WithContext(ctx))
+		featureKey := chi.URLParam(r, "featureKey")
+		if featureKey == "one" {
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &optimizelyconfig.OptimizelyFeature{
+				Key: "one",
+			})
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			next.ServeHTTP(w, r)
+		}
 	})
 
 }
@@ -140,7 +144,7 @@ func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(models.ErrorResponse{Error: `unable to get feature for featureKey feature-404`}, actual)
+	suite.Equal(models.ErrorResponse{Error: "feature not available"}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -149,27 +153,3 @@ func TestFeatureTestSuite(t *testing.T) {
 	suite.Run(t, new(FeatureTestSuite))
 }
 
-func TestFeatureMissingClientCtx(t *testing.T) {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
-	req := httptest.NewRequest("GET", "/", nil)
-
-	featureHander := new(FeatureHandler)
-	handlers := []func(w http.ResponseWriter, r *http.Request){
-		featureHander.ListFeatures,
-		featureHander.GetFeature,
-	}
-
-	for _, handler := range handlers {
-		rec := httptest.NewRecorder()
-		http.HandlerFunc(handler).ServeHTTP(rec, req)
-
-		// Unmarshal response
-		var actual models.ErrorResponse
-		err := json.Unmarshal(rec.Body.Bytes(), &actual)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, models.ErrorResponse{Error: "optlyClient not available"}, actual)
-	}
-}
