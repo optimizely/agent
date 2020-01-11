@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/agent/config"
 	"net/http"
 	"time"
 

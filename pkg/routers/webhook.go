@@ -14,62 +14,26 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package routers //
+package routers
 
 import (
 	"github.com/optimizely/agent/config"
-	"net/http"
-	"sync"
-	"testing"
-	"time"
+	"github.com/optimizely/agent/pkg/handlers"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
+// NewWebhookRouter returns HTTP API router
+func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
+	r := chi.NewRouter()
 
-var conf = config.ServerConfig{}
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
 
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
-
-	wg.Wait()
-	srv.Shutdown()
-}
-
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
-	}
-}
-
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
-}
-
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
-	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
-
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
+	return r
 }

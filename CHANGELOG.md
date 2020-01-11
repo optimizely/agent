@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - January 9th, 2020
+- Rename repo to optimizely/agent and update imports
+- Improve CI builds for Windows and SourceClear
+- Major /pkg refactoring
+- Exclude vulnerabilities identified through SourceClear
+
+## [0.9.0] - January 8th, 2020
+- Capture response time metrics in milliseconds
+- Bump to 1.0.0-rc1@d1b332c of the Optimizely go-sdk
+- Add metric visibility into event dispatcher
+- Miscellaneous clean-up and of docs and openapi spec
+- Add top level config package to consolidate configuration
+- Incorporate OptimizelyConfig into feature and experiment models
+- Add get experiment and list experiment endpoints
+- Add user features endpoint for batched decision responses
+- Add windows tooling
+- Add credit section to README
+- Improve service shutdown
+
 ## [0.8.1] - December 4th, 2019
 - Bump to 1.0.0-rc1@973644b of the Optimizely go-sdk
 - Update test harness with new interface

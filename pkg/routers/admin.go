@@ -14,62 +14,31 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package routers //
+package routers
 
 import (
 	"github.com/optimizely/agent/config"
-	"net/http"
-	"sync"
-	"testing"
-	"time"
+	"github.com/optimizely/agent/pkg/handlers"
 
-	"github.com/stretchr/testify/assert"
+	"net/http"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
+// NewAdminRouter returns HTTP admin router
+func NewAdminRouter(conf config.AdminConfig) http.Handler {
+	r := chi.NewRouter()
 
-var conf = config.ServerConfig{}
+	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
+	r.Use(optlyAdmin.AppInfoHeader)
 
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
-	}
+	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
+	r.Get("/health", optlyAdmin.Health)
+	r.Get("/info", optlyAdmin.AppInfo)
+	r.Get("/metrics", optlyAdmin.Metrics)
 
-	wg.Wait()
-	srv.Shutdown()
-}
-
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
-	}
-}
-
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
-}
-
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
-	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
-
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+	return r
 }

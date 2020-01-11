@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/optimizely/sidedoor.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/sidedoor)
-[![codecov](https://codecov.io/gh/optimizely/sidedoor/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/sidedoor)
+[![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent)
+[![codecov](https://codecov.io/gh/optimizely/agent/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/agent)
 # Optimizely Agent
 Optimizely Agent is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
 a highly available and distributed web application.
@@ -23,7 +23,7 @@ The following `make` targets can be used to build and run the application:
 * **cover-html** - generates test coverage html report
 * **install** - installs all dev and ci dependencies
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
-* **run** - builds and executes the sidedoor binary
+* **run** - builds and executes the optimizely binary
 * **test** - recursively tests all .go files
 
 ## Prerequisites
@@ -45,7 +45,7 @@ Alternative configuration locations can be specified at runtime via environment 
 ```bash
 OPTIMIZELY_CONFIG_FILENAME=config.yaml make run
 ```
-An example configuration can be found [here](./cmd/optimizely/testdata/default.yaml)
+An example configuration can be found [here](config.yaml)
 
 Below is a comprehensive list of available configuration properties.
 
@@ -56,10 +56,10 @@ Below is a comprehensive list of available configuration properties.
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|admin.author|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
+|admin.name|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
 |admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
-|admin.version|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
-|admin.version|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
@@ -79,7 +79,7 @@ Example Response:
 ```
 {
 	"cmdline": [
-		"bin/sidedoor"
+		"bin/optimizely"
 	],
 	"memstats": {
 		"Alloc": 924136,
@@ -129,10 +129,6 @@ guuid
 (c) 2009,2014 Google Inc. All rights reserved. 
 License (BSD 3-Clause): github.com/google/uuid
 
-nsq 
-Matt Reiferson and Jehiah Czebotar
-License (MIT): github.com/nsqio/nsq
-
 optimizely go sdk 
 (c) 2016-2017, Optimizely, Inc. and contributors
 License (Apache 2): github.com/optimizely/go-sdk
@@ -144,10 +140,6 @@ License (MIT): github.com/orcaman/concurrent-map
 zerolog 
 (c) 2017 Olivier Poitrey
 License (MIT): github.com/rs/zerolog
-
-nsq-go 
-(c) 2016 Segment
-License (MIT): github.com/segmentio/nsq-go
 
 viper 
 (c) 2014 Steve Francia

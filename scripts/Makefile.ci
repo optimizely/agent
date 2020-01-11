@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 ci_build_static_binary: ## build static binary
-	CGO_ENABLED=0 GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
+	CGO_ENABLED=0 GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
 
 ci_build_dockerimage: ## build minimal docker image of optimizely
 	docker build \

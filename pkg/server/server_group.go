@@ -19,7 +19,7 @@ package server
 
 import (
 	"context"
-	"github.com/optimizely/sidedoor/config"
+	"github.com/optimizely/agent/config"
 	"net/http"
 	"sync"
 
