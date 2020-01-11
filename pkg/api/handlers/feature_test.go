@@ -14,12 +14,15 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
+// TODO (probably in here, maybe elsewhere?), add additional test coverage for returning the 404 when it's not found
+
 // Package handlers //
 package handlers
 
 import (
 	"context"
 	"encoding/json"
+	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -53,6 +56,16 @@ func (o *OptlyMWFeature) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
+func (o *OptlyMWFeature) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &optimizelyconfig.OptimizelyFeature{
+			Key: "one",
+		})
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+
+}
+
 // Setup Mux
 func (suite *FeatureTestSuite) SetupTest() {
 
@@ -67,9 +80,8 @@ func (suite *FeatureTestSuite) SetupTest() {
 	featureAPI := new(FeatureHandler)
 	optlyMW := &OptlyMWFeature{optlyClient}
 
-	mux.Use(optlyMW.ClientCtx)
-	mux.Get("/features", featureAPI.ListFeatures)
-	mux.Get("/features/{featureKey}", featureAPI.GetFeature)
+	mux.With(optlyMW.ClientCtx).Get("/features", featureAPI.ListFeatures)
+	mux.With(optlyMW.FeatureCtx).Get("/features/{featureKey}", featureAPI.GetFeature)
 
 	suite.mux = mux
 	suite.tc = testClient

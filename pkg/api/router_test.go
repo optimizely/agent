@@ -34,6 +34,7 @@ import (
 
 const clientHeaderKey = "X-Client-Header"
 const userHeaderKey = "X-User-Header"
+const featureHeaderKey = "X-Feature-Header"
 
 type MockOptlyMiddleware struct{}
 
@@ -47,6 +48,13 @@ func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(userHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(featureHeaderKey, "expected")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -165,7 +173,8 @@ func (suite *RouterTestSuite) TestGetFeature() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
+	suite.Empty(rec.Header().Get(clientHeaderKey))
 	suite.Empty(rec.Header().Get(userHeaderKey))
 
 	expected := map[string]string{
