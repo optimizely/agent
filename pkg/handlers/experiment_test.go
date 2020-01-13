@@ -53,6 +53,22 @@ func (o *OptlyMWExperiment) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
+func (o *OptlyMWExperiment) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		experimentKey := chi.URLParam(r, "experimentKey")
+		if experimentKey == "one" {
+			ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &config.OptimizelyExperiment{
+				Key:           "one",
+				ID:            "1",
+				VariationsMap: map[string]config.OptimizelyVariation{},
+			})
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
 // Setup Mux
 func (suite *ExperimentTestSuite) SetupTest() {
 
@@ -67,9 +83,8 @@ func (suite *ExperimentTestSuite) SetupTest() {
 	experimentAPI := new(ExperimentHandler)
 	optlyMW := &OptlyMWExperiment{optlyClient}
 
-	mux.Use(optlyMW.ClientCtx)
-	mux.Get("/experiments", experimentAPI.ListExperiments)
-	mux.Get("/experiments/{experimentKey}", experimentAPI.GetExperiment)
+	mux.With(optlyMW.ClientCtx).Get("/experiments", experimentAPI.ListExperiments)
+	mux.With(optlyMW.ExperimentCtx).Get("/experiments/{experimentKey}", experimentAPI.GetExperiment)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -130,7 +145,7 @@ func (suite *ExperimentTestSuite) TestGetExperimentsMissingExperiments() {
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(ErrorResponse{Error: `unable to get experiment for experimentKey experiment-404`}, actual)
+	suite.Equal(ErrorResponse{Error: "experiment not available"}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -145,21 +160,14 @@ func TestExperimentMissingClientCtx(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
 	experimentHandler := new(ExperimentHandler)
-	handlers := []func(w http.ResponseWriter, r *http.Request){
-		experimentHandler.ListExperiments,
-		experimentHandler.GetExperiment,
-	}
+	rec := httptest.NewRecorder()
+	http.HandlerFunc(experimentHandler.ListExperiments).ServeHTTP(rec, req)
 
-	for _, handler := range handlers {
-		rec := httptest.NewRecorder()
-		http.HandlerFunc(handler).ServeHTTP(rec, req)
+	// Unmarshal response
+	var actual ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	assert.NoError(t, err)
 
-		// Unmarshal response
-		var actual ErrorResponse
-		err := json.Unmarshal(rec.Body.Bytes(), &actual)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
-	}
+	assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+	assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
 }

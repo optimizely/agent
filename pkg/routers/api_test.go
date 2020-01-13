@@ -36,6 +36,7 @@ import (
 const clientHeaderKey = "X-Client-Header"
 const userHeaderKey = "X-User-Header"
 const featureHeaderKey = "X-Feature-Header"
+const experimentHeaderKey = "X-Experiment-Header"
 
 type MockOptlyMiddleware struct{}
 
@@ -56,6 +57,13 @@ func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 func (m *MockOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(featureHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(experimentHeaderKey, "expected")
 		next.ServeHTTP(w, r)
 	})
 }

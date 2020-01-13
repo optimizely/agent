@@ -20,7 +20,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,6 +29,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )
@@ -55,7 +55,7 @@ func (o *OptlyMWFeature) FeatureCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		featureKey := chi.URLParam(r, "featureKey")
 		if featureKey == "one" {
-			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &optimizelyconfig.OptimizelyFeature{
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &config.OptimizelyFeature{
 				Key: "one",
 			})
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -148,4 +148,3 @@ func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 func TestFeatureTestSuite(t *testing.T) {
 	suite.Run(t, new(FeatureTestSuite))
 }
-
