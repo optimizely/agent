@@ -39,6 +39,9 @@ const OptlyContextKey = contextKey("optlyContext")
 // OptlyFeatureKey is the context key used by FeatureCtx for setting a Feature
 const OptlyFeatureKey = contextKey("featureKey")
 
+// OptlyExperimentKey is the context key used by ExperimentCtx for setting an Experiment
+const OptlyExperimentKey = contextKey("experimentKey")
+
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
 
@@ -107,7 +110,7 @@ func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	})
 }
 
-// FeatureCtx extracts the featureKey URL param and adds a Feature to the request context.
+// FeatureCtx extracts the featureKey URL param and adds an optimizelyconfig.OptimizelyFeature to the request context.
 // If no such feature exists in the current config, returns 404
 // Note: featureKey must be available as a URL param
 func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
@@ -137,8 +140,44 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 		default:
 			statusCode = http.StatusInternalServerError
 		}
-		GetLogger(r).Error().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
+		GetLogger(r).Debug().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
 		RenderError(err, statusCode, w, r)
 	})
 	return mw.ClientCtx(featureCtxHandler)
+}
+
+// ExperimentCtx extracts the experimentKey URL param and adds a optimizelyconfig.OptimizelyExperiment to the request context.
+// If no such experiment exists in the current config, returns 404
+// Note: experimentKey must be available as a URL param
+func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
+	experimentCtxHandler :=  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		optlyClient, err := GetOptlyClient(r)
+		if err != nil {
+			RenderError(fmt.Errorf("optlyClient not available in ExperimentCtx"), http.StatusInternalServerError, w, r)
+			return
+		}
+
+		experimentKey := chi.URLParam(r, "experimentKey")
+		if experimentKey == "" {
+			RenderError(fmt.Errorf("invalid request, missing experimentKey in ExperimentCtx"), http.StatusBadRequest, w, r)
+			return
+		}
+
+		feature, err := optlyClient.GetExperiment(experimentKey)
+		var statusCode int
+		switch err {
+		case nil:
+			GetLogger(r).Debug().Str("experimentKey", experimentKey).Msg("Added experiment to request context in ExperimentCtx")
+			ctx := context.WithValue(r.Context(), OptlyExperimentKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		case optimizely.ErrExperimentNotFound:
+			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		GetLogger(r).Debug().Err(err).Str("experimentKey", experimentKey).Msg("Calling GetExperiment in ExperimentCtx")
+		RenderError(err, statusCode, w, r)
+	})
+	return mw.ClientCtx(experimentCtxHandler)
 }

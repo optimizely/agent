@@ -100,9 +100,8 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
-		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
-		r.With(getExperimentTimer).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
+		r.With(listExperimentsTimer, opt.middleware.ClientCtx).Get("/", opt.experimentAPI.ListExperiments)
+		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {

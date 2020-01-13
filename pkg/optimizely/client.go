@@ -79,6 +79,8 @@ func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.Optimize
 	return experiments, err
 }
 
+var ErrExperimentNotFound = errors.New("experiment not found")
+
 // GetExperiment returns the experiment definition
 func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.OptimizelyExperiment, error) {
 	optimizelyConfig := c.GetOptimizelyConfig()
@@ -90,7 +92,7 @@ func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.Opti
 		return experiment, nil
 	}
 
-	return optimizelyconfig.OptimizelyExperiment{}, errors.New("unable to get experiment for experimentKey " + experimentKey)
+	return optimizelyconfig.OptimizelyExperiment{}, ErrExperimentNotFound
 }
 
 // UpdateConfig uses config manager to sync and set project config
