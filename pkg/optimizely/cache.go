@@ -22,8 +22,6 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/metrics"
-
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -32,8 +30,6 @@ import (
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
 )
-
-var metricsRegistry *metrics.Registry
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
@@ -62,7 +58,6 @@ func NewCache(ctx context.Context, conf config.OptlyConfig, metricsRegistry *Met
 }
 
 func (c *OptlyCache) init() {
-	metricsRegistry = metrics.NewRegistry()
 	for _, sdkKey := range c.conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
