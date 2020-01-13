@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"errors"
+	"fmt"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
@@ -48,7 +49,8 @@ func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeat
 	return features, err
 }
 
-var ErrFeatureNotFound = errors.New("feature not found")
+
+var ErrEntityNotFound = errors.New("Entity not found")
 
 // GetFeature returns the feature definition
 func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.OptimizelyFeature, error) {
@@ -62,7 +64,7 @@ func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.Optimizely
 		return feature, nil
 	}
 
-	return optimizelyconfig.OptimizelyFeature{}, ErrFeatureNotFound
+	return optimizelyconfig.OptimizelyFeature{}, fmt.Errorf("featureKey %s: %w", featureKey, ErrEntityNotFound)
 }
 
 // ListExperiments returns all available experiments
@@ -79,8 +81,6 @@ func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.Optimize
 	return experiments, err
 }
 
-var ErrExperimentNotFound = errors.New("experiment not found")
-
 // GetExperiment returns the experiment definition
 func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.OptimizelyExperiment, error) {
 	optimizelyConfig := c.GetOptimizelyConfig()
@@ -92,7 +92,7 @@ func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.Opti
 		return experiment, nil
 	}
 
-	return optimizelyconfig.OptimizelyExperiment{}, ErrExperimentNotFound
+	return optimizelyconfig.OptimizelyExperiment{}, fmt.Errorf("experimentKey %s: %w", experimentKey, ErrEntityNotFound)
 }
 
 // UpdateConfig uses config manager to sync and set project config

@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -129,13 +130,13 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 
 		feature, err := optlyClient.GetFeature(featureKey)
 		var statusCode int
-		switch err {
-		case nil:
+		switch {
+		case err == nil:
 			GetLogger(r).Debug().Str("featureKey", featureKey).Msg("Added feature to request context in FeatureCtx")
 			ctx := context.WithValue(r.Context(), OptlyFeatureKey, &feature)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
-		case optimizely.ErrFeatureNotFound:
+		case errors.Is(err, optimizely.ErrEntityNotFound):
 			statusCode = http.StatusNotFound
 		default:
 			statusCode = http.StatusInternalServerError
@@ -164,13 +165,13 @@ func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
 
 		experiment, err := optlyClient.GetExperiment(experimentKey)
 		var statusCode int
-		switch err {
-		case nil:
+		switch {
+		case err == nil:
 			GetLogger(r).Debug().Str("experimentKey", experimentKey).Msg("Added experiment to request context in ExperimentCtx")
 			ctx := context.WithValue(r.Context(), OptlyExperimentKey, &experiment)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
-		case optimizely.ErrExperimentNotFound:
+		case errors.Is(err, optimizely.ErrEntityNotFound):
 			statusCode = http.StatusNotFound
 		default:
 			statusCode = http.StatusInternalServerError
