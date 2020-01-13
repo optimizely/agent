@@ -95,12 +95,14 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/features", func(r chi.Router) {
-		r.With(listFeaturesTimer, opt.middleware.ClientCtx).Get("/", opt.featureAPI.ListFeatures)
+		r.Use(opt.middleware.ClientCtx)
+		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
 		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
-		r.With(listExperimentsTimer, opt.middleware.ClientCtx).Get("/", opt.experimentAPI.ListExperiments)
+		r.Use(opt.middleware.ClientCtx)
+		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
 		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 

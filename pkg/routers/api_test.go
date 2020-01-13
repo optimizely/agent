@@ -183,7 +183,7 @@ func (suite *RouterTestSuite) TestGetFeature() {
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
-	suite.Empty(rec.Header().Get(clientHeaderKey))
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Empty(rec.Header().Get(userHeaderKey))
 
 	expected := map[string]string{
