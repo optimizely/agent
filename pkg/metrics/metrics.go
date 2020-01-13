@@ -20,44 +20,49 @@ package metrics
 import (
 	"sync"
 
-	"github.com/optimizely/go-sdk/pkg/metrics"
+	go_kit_metrics "github.com/go-kit/kit/metrics"
 
 	go_kit_expvar "github.com/go-kit/kit/metrics/expvar"
 	"github.com/rs/zerolog/log"
 )
 
+// CounterPrefix stores the prefix for Counter
 const (
-	counterPrefix = "counter"
-	gaugePrefix   = "gauge"
+	CounterPrefix = "counter"
+	GaugePrefix   = "gauge"
+	TimerPrefix   = "timer"
 )
 
 // Registry initializes expvar metrics registry
 type Registry struct {
-	metricsCounterVars map[string]*go_kit_expvar.Counter
-	metricsGaugeVars   map[string]*go_kit_expvar.Gauge
+	metricsCounterVars   map[string]go_kit_metrics.Counter
+	metricsGaugeVars     map[string]go_kit_metrics.Gauge
+	metricsHistogramVars map[string]go_kit_metrics.Histogram
 
-	gaugeLock   sync.RWMutex
-	counterLock sync.RWMutex
+	gaugeLock     sync.RWMutex
+	counterLock   sync.RWMutex
+	histogramLock sync.RWMutex
 }
 
 // NewRegistry initializes metrics registry
 func NewRegistry() *Registry {
 
 	return &Registry{
-		metricsCounterVars: map[string]*go_kit_expvar.Counter{},
-		metricsGaugeVars:   map[string]*go_kit_expvar.Gauge{},
+		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
+		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
+		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
 	}
 }
 
 // GetCounter gets go-kit expvar Counter
-func (m *Registry) GetCounter(key string) metrics.Counter {
+func (m *Registry) GetCounter(key string) go_kit_metrics.Counter {
 
 	if key == "" {
 		log.Warn().Msg("metrics counter key is empty")
-		return &metrics.NoopCounter{}
+		return nil
 	}
 
-	combinedKey := counterPrefix + "." + key
+	combinedKey := CounterPrefix + "." + key
 
 	m.counterLock.Lock()
 	defer m.counterLock.Unlock()
@@ -69,14 +74,14 @@ func (m *Registry) GetCounter(key string) metrics.Counter {
 }
 
 // GetGauge gets go-kit expvar Gauge
-func (m *Registry) GetGauge(key string) metrics.Gauge {
+func (m *Registry) GetGauge(key string) go_kit_metrics.Gauge {
 
 	if key == "" {
 		log.Warn().Msg("metrics gauge key is empty")
-		return &metrics.NoopGauge{}
+		return nil
 	}
 
-	combinedKey := gaugePrefix + "." + key
+	combinedKey := GaugePrefix + "." + key
 
 	m.gaugeLock.Lock()
 	defer m.gaugeLock.Unlock()
@@ -84,6 +89,42 @@ func (m *Registry) GetGauge(key string) metrics.Gauge {
 		return val
 	}
 	return m.createGauge(combinedKey)
+}
+
+// GetTimer gets go-kit expvar Counter
+func (m *Registry) GetTimer(key string) go_kit_metrics.Counter {
+	if key == "" {
+		log.Warn().Msg("metrics timer key is empty")
+		return nil
+	}
+
+	combinedKey := TimerPrefix + "." + key
+
+	m.counterLock.Lock()
+	defer m.counterLock.Unlock()
+	if val, ok := m.metricsCounterVars[combinedKey]; ok {
+		return val
+	}
+
+	return m.createCounter(combinedKey)
+}
+
+// GetHistogram gets go-kit Histogram
+func (m *Registry) GetHistogram(prefix, key string) go_kit_metrics.Histogram {
+
+	if key == "" {
+		log.Warn().Msg("metrics gauge key is empty")
+		return nil
+	}
+
+	combinedKey := prefix + "." + key
+
+	m.histogramLock.Lock()
+	defer m.histogramLock.Unlock()
+	if val, ok := m.metricsHistogramVars[combinedKey]; ok {
+		return val
+	}
+	return m.createHistogram(combinedKey)
 }
 
 func (m *Registry) createGauge(key string) *go_kit_expvar.Gauge {
@@ -97,5 +138,12 @@ func (m *Registry) createCounter(key string) *go_kit_expvar.Counter {
 	counterVar := go_kit_expvar.NewCounter(key)
 	m.metricsCounterVars[key] = counterVar
 	return counterVar
+
+}
+
+func (m *Registry) createHistogram(key string) *go_kit_expvar.Histogram {
+	histogramVar := go_kit_expvar.NewHistogram(key, 50)
+	m.metricsHistogramVars[key] = histogramVar
+	return histogramVar
 
 }

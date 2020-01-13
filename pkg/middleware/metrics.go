@@ -22,11 +22,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/expvar"
+	go_kit_metrics "github.com/go-kit/kit/metrics"
+	"github.com/optimizely/agent/pkg/metrics"
 )
-
-const metricPrefix = "timers."
 
 type contextString string
 
@@ -34,27 +32,25 @@ const responseTime = contextString("responseTime")
 
 // Metrics struct contains url hit counts, response time and its histogram
 type Metrics struct {
-	HitCounts             metrics.Counter
-	ResponseTime          metrics.Counter
-	ResponseTimeHistogram metrics.Histogram
+	HitCounts             go_kit_metrics.Counter
+	ResponseTime          go_kit_metrics.Counter
+	ResponseTimeHistogram go_kit_metrics.Histogram
 }
 
 // NewMetrics initialized metrics
-func NewMetrics(key string) *Metrics {
-
-	uniqueName := metricPrefix + key
+func NewMetrics(key string, metricsRegistry *metrics.Registry) *Metrics {
 
 	return &Metrics{
-		HitCounts:             expvar.NewCounter(uniqueName + ".counts"),
-		ResponseTime:          expvar.NewCounter(uniqueName + ".responseTime"),
-		ResponseTimeHistogram: expvar.NewHistogram(uniqueName+".responseTimeHist", 50),
+		HitCounts:             metricsRegistry.GetTimer(key + ".hits"),
+		ResponseTime:          metricsRegistry.GetTimer(key + ".responseTime"),
+		ResponseTimeHistogram: metricsRegistry.GetHistogram(metrics.TimerPrefix, key+".responseTimeHist"),
 	}
 }
 
 // Metricize updates counts, total response time, and response time histogram
 // for each URL hit, key being a combination of a method and route pattern
-func Metricize(key string) func(http.Handler) http.Handler {
-	singleMetric := NewMetrics(key)
+func Metricize(key string, metricsRegistry *metrics.Registry) func(http.Handler) http.Handler {
+	singleMetric := NewMetrics(key, metricsRegistry)
 
 	f := func(h http.Handler) http.Handler {
 

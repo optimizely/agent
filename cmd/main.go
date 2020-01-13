@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
@@ -98,9 +99,12 @@ func main() {
 	conf := loadConfig(v)
 	initLogging(conf.Log)
 
+	agentMetricsRegistry := metrics.NewRegistry()
+	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)
+
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache(ctx, conf.Optly)
+	optlyCache := optimizely.NewCache(ctx, conf.Optly, sdkMetricsRegistry)
 
 	// goroutine to check for signals to gracefully shutdown listeners
 	go func() {
@@ -114,7 +118,7 @@ func main() {
 	}()
 
 	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API))
+	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
 	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(conf.Admin)) // Admin should be added last.
 

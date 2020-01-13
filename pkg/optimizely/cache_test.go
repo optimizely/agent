@@ -90,7 +90,7 @@ func TestCacheTestSuite(t *testing.T) {
 	suite.Run(t, new(CacheTestSuite))
 }
 
-func mockLoader(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, error) {
+func mockLoader(sdkKey string, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
 	if sdkKey == "ERROR" {
 		return &OptlyClient{}, fmt.Errorf("Error")
 	}

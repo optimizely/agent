@@ -38,21 +38,23 @@ var metricsRegistry *metrics.Registry
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader   func(string, config.ProcessorConfig) (*OptlyClient, error)
-	optlyMap cmap.ConcurrentMap
-	ctx      context.Context
-	wg       sync.WaitGroup
-	conf     config.OptlyConfig
+	loader          func(string, config.ProcessorConfig, *MetricsRegistry) (*OptlyClient, error)
+	optlyMap        cmap.ConcurrentMap
+	ctx             context.Context
+	wg              sync.WaitGroup
+	conf            config.OptlyConfig
+	metricsRegistry *MetricsRegistry
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
+func NewCache(ctx context.Context, conf config.OptlyConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 	cache := &OptlyCache{
-		ctx:      ctx,
-		wg:       sync.WaitGroup{},
-		loader:   initOptlyClient,
-		optlyMap: cmap.New(),
-		conf:     conf,
+		ctx:             ctx,
+		wg:              sync.WaitGroup{},
+		loader:          initOptlyClient,
+		optlyMap:        cmap.New(),
+		conf:            conf,
+		metricsRegistry: metricsRegistry,
 	}
 
 	cache.init()
@@ -75,7 +77,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.conf.Processor)
+	oc, err := c.loader(sdkKey, c.conf.Processor, c.metricsRegistry)
 	if err != nil {
 		return oc, err
 	}
@@ -104,7 +106,7 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
-func initOptlyClient(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, error) {
+func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey)
 	if _, err := configManager.GetConfig(); err != nil {

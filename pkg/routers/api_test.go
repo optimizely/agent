@@ -27,6 +27,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/stretchr/testify/assert"
@@ -133,17 +134,20 @@ type RouterTestSuite struct {
 	mux *chi.Mux
 }
 
+var metricsRegistry = metrics.NewRegistry()
+
 func (suite *RouterTestSuite) SetupTest() {
 
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
 	opts := &APIOptions{
-		maxConns:      1,
-		experimentAPI: new(MockExperimentAPI),
-		featureAPI:    new(MockFeatureAPI),
-		userAPI:       new(MockUserAPI),
-		middleware:    new(MockOptlyMiddleware),
+		maxConns:        1,
+		experimentAPI:   new(MockExperimentAPI),
+		featureAPI:      new(MockFeatureAPI),
+		userAPI:         new(MockUserAPI),
+		middleware:      new(MockOptlyMiddleware),
+		metricsRegistry: metricsRegistry,
 	}
 
 	suite.mux = NewAPIRouter(opts)
