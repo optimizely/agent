@@ -1,6 +1,6 @@
 # The name of the executable (default is current directory name)
 TARGET := "optimizely"
-APP_VERSION ?= $(shell git describe --tags)
+APP_VERSION ?= $(shell git describe --tags 2> /dev/null)
 .DEFAULT_GOAL := help
 
 COVER_FILE := cover.out
@@ -25,9 +25,9 @@ MAKEFLAGS += --silent
 # -w Omit the DWARF symbol table.
 LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION}"
 
-.PHONY: all clean
+.PHONY: all lint clean
 
-all: test build ## all
+all: test lint build ## runs the test, lint and build targets
 
 $(TARGET): check-go
 	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
@@ -37,7 +37,7 @@ build: $(TARGET) check-go ## builds and installs binary in bin/
 
 check-go:
 ifndef GOPATH
-	$(error "go is not available please install golang")
+	$(error "go is not available please install golang, https://golang.org/dl/")
 endif
 
 clean: check-go ## runs `go clean` and removes the bin/ dir

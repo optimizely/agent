@@ -31,7 +31,7 @@ Optimizely Agent is implemented in [Golang](https://golang.org/). Golang is requ
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
 ## Running Optimizely from source
-The Optimizely Agent can be started via the following make command:
+Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
@@ -45,7 +45,7 @@ Alternative configuration locations can be specified at runtime via environment 
 ```bash
 OPTIMIZELY_CONFIG_FILENAME=config.yaml make run
 ```
-An example configuration can be found [here](config.yaml)
+The default configuration can be found [here](config.yaml).
 
 Below is a comprehensive list of available configuration properties.
 
