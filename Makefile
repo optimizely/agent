@@ -50,7 +50,7 @@ cover: check-go ## runs test suite with coverage profiling
 cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
-install: check-go ## installs all dev and ci dependencies
+install: check-go ## installs all dev and ci dependencies, but does not install golang
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.19.0
 
 lint: check-go ## runs `golangci-lint` linters defined in `.golangci.yml` file

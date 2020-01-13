@@ -21,7 +21,7 @@ The following `make` targets can be used to build and run the application:
 * **clean** - runs `go clean` and removes the bin/ dir
 * **cover** - runs test suite with coverage profiling
 * **cover-html** - generates test coverage html report
-* **install** - installs all dev and ci dependencies
+* **install** - installs all dev and ci dependencies, but does not install golang
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **run** - builds and executes the optimizely binary
 * **test** - recursively tests all .go files
