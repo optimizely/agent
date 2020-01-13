@@ -50,7 +50,7 @@ func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeat
 }
 
 
-var ErrEntityNotFound = errors.New("Entity not found")
+var ErrEntityNotFound = errors.New("not found")
 
 // GetFeature returns the feature definition
 func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.OptimizelyFeature, error) {
@@ -64,7 +64,7 @@ func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.Optimizely
 		return feature, nil
 	}
 
-	return optimizelyconfig.OptimizelyFeature{}, fmt.Errorf("featureKey %s: %w", featureKey, ErrEntityNotFound)
+	return optimizelyconfig.OptimizelyFeature{}, fmt.Errorf("feature %s %w", featureKey, ErrEntityNotFound)
 }
 
 // ListExperiments returns all available experiments
@@ -92,7 +92,7 @@ func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.Opti
 		return experiment, nil
 	}
 
-	return optimizelyconfig.OptimizelyExperiment{}, fmt.Errorf("experimentKey %s: %w", experimentKey, ErrEntityNotFound)
+	return optimizelyconfig.OptimizelyExperiment{}, fmt.Errorf("experiment %s %w", experimentKey, ErrEntityNotFound)
 }
 
 // UpdateConfig uses config manager to sync and set project config

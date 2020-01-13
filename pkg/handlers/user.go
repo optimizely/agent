@@ -73,9 +73,13 @@ func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
-
-	featureKey := chi.URLParam(r, "featureKey")
-	renderFeature(w, r, featureKey, optlyClient, optlyContext)
+	feature, err := middleware.GetFeature(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+	renderFeature(w, r, feature.Key, optlyClient, optlyContext)
 }
 
 // TrackFeature - Return the feature and record impression if applicable.
@@ -87,19 +91,24 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	featureKey := chi.URLParam(r, "featureKey")
+	feature, err := middleware.GetFeature(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
 
 	// HACK - Triggers an impression event when applicable. This is not
 	// ideal since we're making TWO decisions now. OASIS-5549
-	enabled, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext)
-	middleware.GetLogger(r).Info().Str("featureKey", featureKey).Bool("enabled", enabled).Msg("Calling IsFeatureEnabled")
+	enabled, softErr := optlyClient.IsFeatureEnabled(feature.Key, *optlyContext.UserContext)
+	middleware.GetLogger(r).Info().Str("featureKey", feature.Key).Bool("enabled", enabled).Msg("Calling IsFeatureEnabled")
 
 	if softErr != nil {
 		// Swallowing the error to allow the response to be made and not break downstream consumers.
-		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", featureKey).Msg("Calling IsFeatureEnabled")
+		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", feature.Key).Msg("Calling IsFeatureEnabled")
 	}
 
-	renderFeature(w, r, featureKey, optlyClient, optlyContext)
+	renderFeature(w, r, feature.Key, optlyClient, optlyContext)
 }
 
 // GetVariation - Return the variation that a user is bucketed into

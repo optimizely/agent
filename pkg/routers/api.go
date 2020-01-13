@@ -113,8 +113,8 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 
 		r.With(listUserFeaturesTimer).Get("/features", opt.userAPI.ListFeatures)
 		r.With(trackUserFeaturesTimer).Post("/features", opt.userAPI.TrackFeatures)
-		r.With(getUserFeatureTimer).Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.With(trackUserFeatureTimer).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(getUserFeatureTimer, opt.middleware.FeatureCtx).Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.With(trackUserFeatureTimer, opt.middleware.FeatureCtx).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 		r.With(getVariationTimer).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
 		r.With(activateExperimentTimer).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
 		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)

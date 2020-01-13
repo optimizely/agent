@@ -32,6 +32,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -62,6 +63,16 @@ func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 	})
 }
 
+func (o *UserMW) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		featureKey := chi.URLParam(r, "featureKey")
+		feature := config.OptimizelyFeature{Key: featureKey}
+		ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+
+}
+
 // Setup Mux
 func (suite *UserTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
@@ -80,9 +91,9 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
 
 	mux.Get("/features", userAPI.ListFeatures)
-	mux.Get("/features/{featureKey}", userAPI.GetFeature)
+	mux.With(userMW.FeatureCtx).Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features", userAPI.TrackFeatures)
-	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
+	mux.With(userMW.FeatureCtx).Post("/features/{featureKey}", userAPI.TrackFeature)
 
 	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
 	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
