@@ -119,8 +119,14 @@ func (h *UserHandler) GetVariation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	experimentKey := chi.URLParam(r, "experimentKey")
-	renderVariation(w, r, experimentKey, false, optlyClient, optlyContext)
+	experiment, err := middleware.GetExperiment(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetExperiment")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	renderVariation(w, r, experiment.Key, false, optlyClient, optlyContext)
 }
 
 // ActivateExperiment - Return the variatoin that a user is bucketed into and track an impression event
@@ -131,8 +137,14 @@ func (h *UserHandler) ActivateExperiment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	experimentKey := chi.URLParam(r, "experimentKey")
-	renderVariation(w, r, experimentKey, true, optlyClient, optlyContext) // true to send impression
+	experiment, err := middleware.GetExperiment(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetExperiment")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	renderVariation(w, r, experiment.Key, true, optlyClient, optlyContext) // true to send impression
 }
 
 // SetForcedVariation - set a forced variation

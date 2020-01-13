@@ -73,6 +73,16 @@ func (o *UserMW) FeatureCtx(next http.Handler) http.Handler {
 
 }
 
+func (o *UserMW) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		experimentKey := chi.URLParam(r, "experimentKey")
+		experiment := config.OptimizelyExperiment{Key: experimentKey}
+		ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+
+}
+
 // Setup Mux
 func (suite *UserTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
@@ -95,8 +105,8 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/features", userAPI.TrackFeatures)
 	mux.With(userMW.FeatureCtx).Post("/features/{featureKey}", userAPI.TrackFeature)
 
-	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
-	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
+	mux.With(userMW.ExperimentCtx).Get("/experiments/{experimentKey}", userAPI.GetVariation)
+	mux.With(userMW.ExperimentCtx).Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
 	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
 	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
 
