@@ -19,10 +19,10 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/optimizely/go-sdk/pkg/config"
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/go-sdk/pkg/config"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"

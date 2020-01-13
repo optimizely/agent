@@ -182,9 +182,9 @@ func (suite *RouterTestSuite) TestGetFeature() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Empty(rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 
 	expected := map[string]string{
 		"featureKey": "one",
@@ -213,6 +213,7 @@ func (suite *RouterTestSuite) TestGetUserFeature() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 
 	expected := map[string]string{
 		"userID":     "me",
@@ -258,6 +259,7 @@ func (suite *RouterTestSuite) TestGetVariation() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
 
 	expected := map[string]string{
 		"userID":        "me",
@@ -274,6 +276,7 @@ func (suite *RouterTestSuite) TestActivateExperiment() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
 
 	expected := map[string]string{
 		"userID":        "me",
