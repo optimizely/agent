@@ -14,53 +14,60 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package middleware //
-package middleware
+// Package optimizely //
+package optimizely
 
 import (
-	"context"
-	"net/http"
-	"time"
+	"encoding/json"
+	"expvar"
+	"net/http/httptest"
+	"testing"
 
 	"github.com/optimizely/agent/pkg/metrics"
+
+	"github.com/stretchr/testify/assert"
 )
 
-type contextString string
+type JSON map[string]interface{}
 
-const responseTime = contextString("responseTime")
+func TestCounterValid(t *testing.T) {
 
-// Metricize updates counts, total response time, and response time histogram
-// for each URL hit, key being a combination of a method and route pattern
-func Metricize(key string, metricsRegistry *metrics.Registry) func(http.Handler) http.Handler {
-	singleMetric := metricsRegistry.NewTimer(key)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
 
-	f := func(h http.Handler) http.Handler {
+	metricsRegistry := metrics.NewRegistry()
+	metricsSDKRegistry := NewRegistry(metricsRegistry)
 
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			startTime, ok := ctx.Value(responseTime).(time.Time)
-			if ok {
-				defer func() {
-					endTime := time.Now()
-					timeDiff := endTime.Sub(startTime).Seconds() * 1000.0 // display time in milliseconds
-					singleMetric.Update(timeDiff)
-				}()
-			}
+	counter := metricsSDKRegistry.GetCounter("metrics")
+	counter.Add(12)
+	counter.Add(23)
 
-			h.ServeHTTP(w, r)
-		}
-		return http.HandlerFunc(fn)
-	}
-	return f
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 35.0, expVarMap["counter.metrics"])
+
 }
 
-// SetTime middleware sets the start time in request context
-func SetTime(next http.Handler) http.Handler {
+func TestGaugeValid(t *testing.T) {
 
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
 
-		ctx := context.WithValue(r.Context(), responseTime, time.Now())
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-	return http.HandlerFunc(fn)
+	metricsRegistry := metrics.NewRegistry()
+	metricsSDKRegistry := NewRegistry(metricsRegistry)
+
+	gauge := metricsSDKRegistry.GetGauge("metrics")
+	gauge.Set(12)
+	gauge.Set(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 23.0, expVarMap["gauge.metrics"])
+
 }

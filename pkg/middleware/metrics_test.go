@@ -26,6 +26,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/optimizely/agent/pkg/metrics"
+
 	"github.com/stretchr/testify/suite"
 )
 
@@ -51,7 +53,7 @@ func (rm *RequestMetrics) SetupRoute(key string) {
 	r := httptest.NewRequest("GET", "/", nil)
 
 	rm.req = r.WithContext(context.WithValue(r.Context(), responseTime, time.Now()))
-	rm.handler = http.Handler(Metricize(key)(getTestMetrics()))
+	rm.handler = http.Handler(Metricize(key, metrics.NewRegistry())(getTestMetrics()))
 
 }
 
@@ -79,7 +81,7 @@ func (rm RequestMetrics) getCode() int {
 	return rm.rw.(*httptest.ResponseRecorder).Code
 }
 
-var sufixList = []string{".counts", ".responseTime", ".responseTimeHist.p50", ".responseTimeHist.p90", ".responseTimeHist.p95", ".responseTimeHist.p99"}
+var sufixList = []string{".hits", ".responseTime", ".responseTimeHist.p50", ".responseTimeHist.p90", ".responseTimeHist.p95", ".responseTimeHist.p99"}
 
 func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 
@@ -92,7 +94,7 @@ func (suite *RequestMetrics) TestUpdateMetricsHitOnce() {
 
 	expVarMap := suite.getMetricsMap()
 	for _, item := range sufixList {
-		expectedKey := metricPrefix + "some_key" + item
+		expectedKey := metrics.TimerPrefix + ".some_key" + item
 		value, ok := expVarMap[expectedKey]
 		suite.True(ok)
 
@@ -116,7 +118,7 @@ func (suite *RequestMetrics) TestUpdateMetricsHitMultiple() {
 
 	expVarMap := suite.getMetricsMap()
 
-	expectedKey := metricPrefix + "different_key.counts"
+	expectedKey := metrics.TimerPrefix + ".different_key.hits"
 	value, ok := expVarMap[expectedKey]
 	suite.True(ok)
 
