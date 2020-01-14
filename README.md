@@ -21,7 +21,7 @@ The following `make` targets can be used to build and run the application:
 * **clean** - runs `go clean` and removes the bin/ dir
 * **cover** - runs test suite with coverage profiling
 * **cover-html** - generates test coverage html report
-* **install** - installs all dev and ci dependencies
+* **install** - installs all dev and ci dependencies, but does not install golang
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
 * **run** - builds and executes the optimizely binary
 * **test** - recursively tests all .go files
@@ -31,7 +31,7 @@ Optimizely Agent is implemented in [Golang](https://golang.org/). Golang is requ
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
 ## Running Optimizely from source
-The Optimizely Agent can be started via the following make command:
+Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
@@ -45,7 +45,7 @@ Alternative configuration locations can be specified at runtime via environment 
 ```bash
 OPTIMIZELY_CONFIG_FILENAME=config.yaml make run
 ```
-An example configuration can be found [here](config.yaml)
+The default configuration can be found [here](config.yaml).
 
 Below is a comprehensive list of available configuration properties.
 
