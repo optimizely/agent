@@ -150,21 +150,28 @@ func (suite *ExperimentTestSuite) TestGetExperimentsMissingExperiments() {
 func TestExperimentTestSuite(t *testing.T) {
 	suite.Run(t, new(ExperimentTestSuite))
 }
-
 func TestExperimentMissingClientCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
 	req := httptest.NewRequest("GET", "/", nil)
 
 	experimentHandler := new(ExperimentHandler)
-	rec := httptest.NewRecorder()
-	http.HandlerFunc(experimentHandler.ListExperiments).ServeHTTP(rec, req)
+	handlers := []func(w http.ResponseWriter, r *http.Request){
+		experimentHandler.ListExperiments,
+		experimentHandler.GetExperiment,
+	}
 
-	// Unmarshal response
-	var actual ErrorResponse
-	err := json.Unmarshal(rec.Body.Bytes(), &actual)
-	assert.NoError(t, err)
+	for _, handler := range handlers {
+		rec := httptest.NewRecorder()
+		http.HandlerFunc(handler).ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-	assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
+		// Unmarshal response
+		var actual ErrorResponse
+		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+		assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
+	}
 }
+
