@@ -54,7 +54,7 @@ type CachedOptlyMiddleware struct {
 // ClientCtx adds a pointer to an OptlyClient to the request context.
 // Precedence is given for any SDK key provided within the request header
 // else the default OptlyClient will be used.
-func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sdkKey := r.Header.Get(OptlySDKHeader)
 		if sdkKey == "" {
@@ -62,7 +62,7 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		optlyClient, err := ctx.Cache.GetClient(sdkKey)
+		optlyClient, err := mw.Cache.GetClient(sdkKey)
 		if err != nil {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 
@@ -85,7 +85,7 @@ func (ctx *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 // to create an optimizely.UserContext which will be used by downstream handlers.
 // Future iterations of this middleware would capture pulling additional
 // detail from a UPS or attribute store.
-func (ctx *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
+func (mw *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		userID := chi.URLParam(r, "userID")

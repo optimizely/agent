@@ -50,6 +50,7 @@ func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeat
 }
 
 
+// ErrEntityNotFound is returned when no entity exists with a given key
 var ErrEntityNotFound = errors.New("not found")
 
 // GetFeature returns the feature definition
