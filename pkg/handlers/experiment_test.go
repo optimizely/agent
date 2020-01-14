@@ -127,23 +127,6 @@ func (suite *ExperimentTestSuite) TestGetExperiment() {
 	suite.Equal(experiment, actual)
 }
 
-func (suite *ExperimentTestSuite) TestGetExperimentsMissingExperiments() {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
-	req, err := http.NewRequest("GET", "/experiments/experiment-404", nil)
-	suite.Nil(err)
-
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusInternalServerError, rec.Code)
-	// Unmarshal response
-	var actual ErrorResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	suite.Equal(ErrorResponse{Error: "experiment not available"}, actual)
-}
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
@@ -174,4 +157,3 @@ func TestExperimentMissingClientCtx(t *testing.T) {
 		assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
 	}
 }
-
