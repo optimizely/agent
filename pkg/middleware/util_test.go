@@ -20,6 +20,7 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"net/http/httptest"
 	"testing"
 
@@ -78,4 +79,40 @@ func TestGetLogger(t *testing.T) {
 	assert.Contains(t, out.String(), `"requestId":"12345"`)
 	assert.Contains(t, out.String(), `"sdkKey":"some_key"`)
 
+}
+
+func TestGetFeature(t *testing.T) {
+	expected := &config.OptimizelyFeature{Key: "one"}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	ctx := context.WithValue(req.Context(), OptlyFeatureKey, expected)
+
+	actual, err := GetFeature(req.WithContext(ctx))
+	assert.Equal(t, expected, actual)
+	assert.NoError(t, err)
+}
+
+func TestGetFeatureNotSet(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	actual, err := GetFeature(req)
+	assert.Nil(t, actual)
+	assert.Error(t, err)
+}
+
+func TestGetExperiment(t *testing.T) {
+	expected := &config.OptimizelyExperiment{Key: "one"}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	ctx := context.WithValue(req.Context(), OptlyExperimentKey, expected)
+
+	actual, err := GetExperiment(req.WithContext(ctx))
+	assert.Equal(t, expected, actual)
+	assert.NoError(t, err)
+}
+
+func TestGetExperimentNotSet(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	actual, err := GetExperiment(req)
+	assert.Nil(t, actual)
+	assert.Error(t, err)
 }
