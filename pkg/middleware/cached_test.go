@@ -18,6 +18,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -155,8 +156,11 @@ func (suite *OptlyMiddlewareTestSuite) TestFeatureCtxFeatureFound() {
 		suite.True(ok)
 		suite.Equal(expected, actual)
 	}
-	mux.With(suite.mw.ClientCtx, suite.mw.FeatureCtx).Get("/features/{featureKey}", handler)
+	mux.With(suite.mw.FeatureCtx).Get("/features/{featureKey}", handler)
 	req := httptest.NewRequest("GET", "/features/one", nil)
+	req = req.WithContext(context.WithValue(req.Context(), OptlyClientKey, &optimizely.OptlyClient{
+		OptimizelyClient: suite.tc.OptimizelyClient,
+	}))
 	req.Header.Add(OptlySDKHeader, "WITH_TEST_CLIENT")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
@@ -168,8 +172,11 @@ func (suite *OptlyMiddlewareTestSuite) TestFeatureCtxFeatureNotFound() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		suite.Fail("FeatureCtx should have returned 404 response without calling handler")
 	}
-	mux.With(suite.mw.ClientCtx, suite.mw.FeatureCtx).Get("/features/{featureKey}", handler)
+	mux.With(suite.mw.FeatureCtx).Get("/features/{featureKey}", handler)
 	req := httptest.NewRequest("GET", "/features/two", nil)
+	req = req.WithContext(context.WithValue(req.Context(), OptlyClientKey, &optimizely.OptlyClient{
+		OptimizelyClient: suite.tc.OptimizelyClient,
+	}))
 	req.Header.Add(OptlySDKHeader, "WITH_TEST_CLIENT")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
@@ -181,8 +188,11 @@ func (suite *OptlyMiddlewareTestSuite) TestFeatureCtxNoURLParam() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		suite.Fail("FeatureCtx should have returned 400 response without calling handler")
 	}
-	mux.With(suite.mw.ClientCtx, suite.mw.FeatureCtx).Get("/features/{featureKey}/", handler)
+	mux.With(suite.mw.FeatureCtx).Get("/features/{featureKey}/", handler)
 	req := httptest.NewRequest("GET", "/features//", nil)
+	req = req.WithContext(context.WithValue(req.Context(), OptlyClientKey, &optimizely.OptlyClient{
+		OptimizelyClient: suite.tc.OptimizelyClient,
+	}))
 	req.Header.Add(OptlySDKHeader, "WITH_TEST_CLIENT")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
@@ -194,12 +204,12 @@ func (suite *OptlyMiddlewareTestSuite) TestExperimentCtxExperimentFound() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		actual, ok := r.Context().Value(OptlyExperimentKey).(*config.OptimizelyExperiment)
 		expected := &config.OptimizelyExperiment{
-			ID: suite.tc.ProjectConfig.ExperimentKeyToIDMap["expOne"],
-			Key:           "expOne",
+			ID:  suite.tc.ProjectConfig.ExperimentKeyToIDMap["expOne"],
+			Key: "expOne",
 			VariationsMap: map[string]config.OptimizelyVariation{
 				"variation_1": {
-					ID:  "9999",
-					Key: "variation_1",
+					ID:           "9999",
+					Key:          "variation_1",
 					VariablesMap: map[string]config.OptimizelyVariable{},
 				},
 			},
@@ -207,8 +217,11 @@ func (suite *OptlyMiddlewareTestSuite) TestExperimentCtxExperimentFound() {
 		suite.True(ok)
 		suite.Equal(expected, actual)
 	}
-	mux.With(suite.mw.ClientCtx, suite.mw.ExperimentCtx).Get("/experiments/{experimentKey}", handler)
+	mux.With(suite.mw.ExperimentCtx).Get("/experiments/{experimentKey}", handler)
 	req := httptest.NewRequest("GET", "/experiments/expOne", nil)
+	req = req.WithContext(context.WithValue(req.Context(), OptlyClientKey, &optimizely.OptlyClient{
+		OptimizelyClient: suite.tc.OptimizelyClient,
+	}))
 	req.Header.Add(OptlySDKHeader, "WITH_TEST_CLIENT")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
@@ -220,8 +233,11 @@ func (suite *OptlyMiddlewareTestSuite) TestExperimentCtxExperimentNotFound() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		suite.Fail("ExperimentCtx should have returned 404 response without calling handler")
 	}
-	mux.With(suite.mw.ClientCtx, suite.mw.ExperimentCtx).Get("/experiments/{experimentKey}", handler)
+	mux.With(suite.mw.ExperimentCtx).Get("/experiments/{experimentKey}", handler)
 	req := httptest.NewRequest("GET", "/experiments/expTwo", nil)
+	req = req.WithContext(context.WithValue(req.Context(), OptlyClientKey, &optimizely.OptlyClient{
+		OptimizelyClient: suite.tc.OptimizelyClient,
+	}))
 	req.Header.Add(OptlySDKHeader, "WITH_TEST_CLIENT")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
@@ -233,8 +249,11 @@ func (suite *OptlyMiddlewareTestSuite) TestExperimentCtxNoURLParam() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		suite.Fail("ExperimentCtx should have returned 400 response without calling handler")
 	}
-	mux.With(suite.mw.ClientCtx, suite.mw.ExperimentCtx).Get("/experiments/{experimentKey}/", handler)
+	mux.With(suite.mw.ExperimentCtx).Get("/experiments/{experimentKey}/", handler)
 	req := httptest.NewRequest("GET", "/experiments//", nil)
+	req = req.WithContext(context.WithValue(req.Context(), OptlyClientKey, &optimizely.OptlyClient{
+		OptimizelyClient: suite.tc.OptimizelyClient,
+	}))
 	req.Header.Add(OptlySDKHeader, "WITH_TEST_CLIENT")
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
