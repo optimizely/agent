@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/optimizely"
+
 	"github.com/optimizely/go-sdk/pkg/config"
 
 	"github.com/go-chi/render"

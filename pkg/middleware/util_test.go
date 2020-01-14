@@ -20,13 +20,14 @@ package middleware
 import (
 	"bytes"
 	"context"
-	"github.com/optimizely/go-sdk/pkg/config"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/optimizely/agent/pkg/optimizely"
+
+	"github.com/optimizely/go-sdk/pkg/config"
 )
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.
