@@ -56,12 +56,16 @@ func (o *OptlyMWExperiment) ClientCtx(next http.Handler) http.Handler {
 func (o *OptlyMWExperiment) ExperimentCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		experimentKey := chi.URLParam(r, "experimentKey")
-		experiment := config.OptimizelyExperiment{
-			Key:           experimentKey,
-			VariationsMap: map[string]config.OptimizelyVariation{},
+		if experimentKey == "one" {
+			experiment := config.OptimizelyExperiment{
+				Key:           experimentKey,
+				VariationsMap: map[string]config.OptimizelyVariation{},
+			}
+			ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			next.ServeHTTP(w, r)
 		}
-		ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -125,6 +129,24 @@ func (suite *ExperimentTestSuite) TestGetExperiment() {
 	suite.NoError(err)
 
 	suite.Equal(experiment, actual)
+}
+
+func (suite *ExperimentTestSuite) TestGetExperimentsMissingExperiments() {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/experiments/experiment-404", nil)
+	suite.Nil(err)
+
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusInternalServerError, rec.Code)
+	// Unmarshal response
+	var actual ErrorResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.Equal(ErrorResponse{Error: "experiment not available"}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create

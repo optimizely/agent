@@ -66,9 +66,13 @@ func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 func (o *UserMW) FeatureCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		featureKey := chi.URLParam(r, "featureKey")
-		feature := config.OptimizelyFeature{Key: featureKey}
-		ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		if featureKey == "feature-missing" {
+			next.ServeHTTP(w, r)
+		} else {
+			feature := config.OptimizelyFeature{Key: featureKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
 	})
 
 }
@@ -76,9 +80,13 @@ func (o *UserMW) FeatureCtx(next http.Handler) http.Handler {
 func (o *UserMW) ExperimentCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		experimentKey := chi.URLParam(r, "experimentKey")
-		experiment := config.OptimizelyExperiment{Key: experimentKey}
-		ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		if experimentKey == "experiment-missing" {
+			next.ServeHTTP(w, r)
+		} else {
+			experiment := config.OptimizelyExperiment{Key: experimentKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
 	})
 
 }
@@ -189,6 +197,13 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
 	impression := events[0]
 	suite.Equal("campaign_activated", impression.Impression.Key)
 	suite.Equal("testUser", impression.VisitorID)
+}
+
+func (suite *UserTestSuite) TestGetFeatureMissingFeature() {
+	req := httptest.NewRequest("POST", "/features/feature-missing", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *UserTestSuite) TestTrackEventNoTags() {
@@ -358,11 +373,10 @@ func (suite *UserTestSuite) TestGetVariation() {
 }
 
 func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
-	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	req := httptest.NewRequest("GET", "/experiments/experiment-missing", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 
 	// Unmarshal response
 	var actual Variation

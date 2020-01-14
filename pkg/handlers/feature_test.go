@@ -56,9 +56,13 @@ func (o *OptlyMWFeature) ClientCtx(next http.Handler) http.Handler {
 func (o *OptlyMWFeature) FeatureCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		featureKey := chi.URLParam(r, "featureKey")
-		feature := config.OptimizelyFeature{Key: featureKey}
-		ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		if featureKey == "one" {
+			feature := config.OptimizelyFeature{Key: featureKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			next.ServeHTTP(w, r)
+		}
 	})
 }
 
@@ -120,6 +124,24 @@ func (suite *FeatureTestSuite) TestGetFeature() {
 	suite.NoError(err)
 
 	suite.Equal(feature, actual)
+}
+
+func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/features/feature-404", nil)
+	suite.Nil(err)
+
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusInternalServerError, rec.Code)
+	// Unmarshal response
+	var actual ErrorResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	suite.Equal(ErrorResponse{Error: "feature not available"}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
