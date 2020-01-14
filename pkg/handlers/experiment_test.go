@@ -56,16 +56,12 @@ func (o *OptlyMWExperiment) ClientCtx(next http.Handler) http.Handler {
 func (o *OptlyMWExperiment) ExperimentCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		experimentKey := chi.URLParam(r, "experimentKey")
-		if experimentKey == "one" {
-			ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &config.OptimizelyExperiment{
-				Key:           "one",
-				ID:            "1",
-				VariationsMap: map[string]config.OptimizelyVariation{},
-			})
-			next.ServeHTTP(w, r.WithContext(ctx))
-		} else {
-			next.ServeHTTP(w, r)
+		experiment := config.OptimizelyExperiment{
+			Key: experimentKey,
+			VariationsMap: map[string]config.OptimizelyVariation{},
 		}
+		ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -83,7 +79,8 @@ func (suite *ExperimentTestSuite) SetupTest() {
 	experimentAPI := new(ExperimentHandler)
 	optlyMW := &OptlyMWExperiment{optlyClient}
 
-	mux.With(optlyMW.ClientCtx).Get("/experiments", experimentAPI.ListExperiments)
+	mux.Use(optlyMW.ClientCtx)
+	mux.Get("/experiments", experimentAPI.ListExperiments)
 	mux.With(optlyMW.ExperimentCtx).Get("/experiments/{experimentKey}", experimentAPI.GetExperiment)
 
 	suite.mux = mux
@@ -112,7 +109,7 @@ func (suite *ExperimentTestSuite) TestListExperiments() {
 }
 
 func (suite *ExperimentTestSuite) TestGetExperiment() {
-	experiment := config.OptimizelyExperiment{Key: "one", ID: "1", VariationsMap: map[string]config.OptimizelyVariation{}}
+	experiment := config.OptimizelyExperiment{Key: "one", VariationsMap: map[string]config.OptimizelyVariation{}}
 
 	suite.tc.AddExperiment("one", []entities.Variation{})
 
