@@ -57,7 +57,7 @@ func (o *OptlyMWExperiment) ExperimentCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		experimentKey := chi.URLParam(r, "experimentKey")
 		experiment := config.OptimizelyExperiment{
-			Key: experimentKey,
+			Key:           experimentKey,
 			VariationsMap: map[string]config.OptimizelyVariation{},
 		}
 		ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
@@ -127,33 +127,25 @@ func (suite *ExperimentTestSuite) TestGetExperiment() {
 	suite.Equal(experiment, actual)
 }
 
-
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestExperimentTestSuite(t *testing.T) {
 	suite.Run(t, new(ExperimentTestSuite))
 }
-func TestExperimentMissingClientCtx(t *testing.T) {
+
+func TestListExperimentMissingClientCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
 	req := httptest.NewRequest("GET", "/", nil)
-
 	experimentHandler := new(ExperimentHandler)
-	handlers := []func(w http.ResponseWriter, r *http.Request){
-		experimentHandler.ListExperiments,
-		experimentHandler.GetExperiment,
-	}
+	rec := httptest.NewRecorder()
+	http.HandlerFunc(experimentHandler.ListExperiments).ServeHTTP(rec, req)
 
-	for _, handler := range handlers {
-		rec := httptest.NewRecorder()
-		http.HandlerFunc(handler).ServeHTTP(rec, req)
+	// Unmarshal response
+	var actual ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	assert.NoError(t, err)
 
-		// Unmarshal response
-		var actual ErrorResponse
-		err := json.Unmarshal(rec.Body.Bytes(), &actual)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
-	}
+	assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+	assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
 }
