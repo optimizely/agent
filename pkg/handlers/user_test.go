@@ -191,16 +191,6 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.Equal("testUser", impression.VisitorID)
 }
 
-func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
-	req := httptest.NewRequest("POST", "/features/feature-missing", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code) // TODO should this 404
-}
-
 func (suite *UserTestSuite) TestTrackEventNoTags() {
 	eventKey := "test-event"
 	event := entities.Event{Key: eventKey}
