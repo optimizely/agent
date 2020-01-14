@@ -132,7 +132,7 @@ func TestHistorgramValid(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
-	histogram := metricsRegistry.GetHistogram(TimerPrefix, "metrics")
+	histogram := metricsRegistry.GetHistogram("metrics")
 	histogram.Observe(12)
 	histogram.Observe(23)
 
@@ -141,8 +141,8 @@ func TestHistorgramValid(t *testing.T) {
 	var expVarMap JSON
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
-	assert.Equal(t, 12.0, expVarMap["timer.metrics.p50"])
-	assert.Equal(t, 23.0, expVarMap["timer.metrics.p99"])
+	assert.Equal(t, 12.0, expVarMap["metrics.p50"])
+	assert.Equal(t, 23.0, expVarMap["metrics.p99"])
 
 }
 
@@ -153,9 +153,9 @@ func TestHistogramMultipleRetrievals(t *testing.T) {
 
 	metricsRegistry := NewRegistry()
 	histogramKey := "next_histogram_metrics"
-	histogram := metricsRegistry.GetHistogram(CounterPrefix, histogramKey)
+	histogram := metricsRegistry.GetHistogram(histogramKey)
 	histogram.Observe(12)
-	nextGauge := metricsRegistry.GetHistogram(CounterPrefix, histogramKey)
+	nextGauge := metricsRegistry.GetHistogram(histogramKey)
 	nextGauge.Observe(23)
 
 	expvar.Handler().ServeHTTP(rec, req)
@@ -163,16 +163,59 @@ func TestHistogramMultipleRetrievals(t *testing.T) {
 	var expVarMap JSON
 	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
 	assert.Nil(t, err)
-	assert.Equal(t, 12.0, expVarMap["counter.next_histogram_metrics.p50"])
-	assert.Equal(t, 23.0, expVarMap["counter.next_histogram_metrics.p99"])
+	assert.Equal(t, 12.0, expVarMap["next_histogram_metrics.p50"])
+	assert.Equal(t, 23.0, expVarMap["next_histogram_metrics.p99"])
 
 }
 
 func TestHistogramEmptyKey(t *testing.T) {
 
 	metricsRegistry := NewRegistry()
-	histogram := metricsRegistry.GetHistogram(TimerPrefix, "")
+	histogram := metricsRegistry.GetHistogram("")
 
 	assert.Nil(t, histogram)
+
+}
+func TestTimerValid(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry()
+	timer := metricsRegistry.NewTimer("metrics")
+	timer.Update(12)
+	timer.Update(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 2.0, expVarMap["timer.metrics.hits"])
+	assert.Equal(t, 35.0, expVarMap["timer.metrics.responseTime"])
+	assert.Equal(t, 12.0, expVarMap["timer.metrics.responseTimeHist.p50"])
+	assert.Equal(t, 23.0, expVarMap["timer.metrics.responseTimeHist.p99"])
+}
+
+func TestTimerMultipleRetrievals(t *testing.T) {
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+
+	metricsRegistry := NewRegistry()
+	timerKey := "next_timer_metrics"
+	timer := metricsRegistry.NewTimer(timerKey)
+	timer.Update(12)
+	nextTimer := metricsRegistry.NewTimer(timerKey)
+	nextTimer.Update(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 2.0, expVarMap["timer.next_timer_metrics.hits"])
+	assert.Equal(t, 12.0, expVarMap["timer.next_timer_metrics.responseTimeHist.p50"])
+	assert.Equal(t, 23.0, expVarMap["timer.next_timer_metrics.responseTimeHist.p99"])
 
 }

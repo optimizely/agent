@@ -33,15 +33,48 @@ const (
 	TimerPrefix   = "timer"
 )
 
+// Timer is the collection of some timers
+type Timer struct {
+	hits      go_kit_metrics.Counter
+	totalTime go_kit_metrics.Counter
+	histogram go_kit_metrics.Histogram
+}
+
+// NewTimer constructs Timer
+func (m *Registry) NewTimer(key string) *Timer {
+	if key == "" {
+		log.Warn().Msg("metrics timer key is empty")
+		return nil
+	}
+	combinedKey := TimerPrefix + "." + key
+
+	m.timerLock.Lock()
+	defer m.timerLock.Unlock()
+	if val, ok := m.metricsTimerVars[combinedKey]; ok {
+		return val
+	}
+
+	return m.createTimer(combinedKey)
+}
+
+// Update timer components
+func (t *Timer) Update(delta float64) {
+	t.hits.Add(1)
+	t.totalTime.Add(delta)
+	t.histogram.Observe(delta)
+}
+
 // Registry initializes expvar metrics registry
 type Registry struct {
 	metricsCounterVars   map[string]go_kit_metrics.Counter
 	metricsGaugeVars     map[string]go_kit_metrics.Gauge
 	metricsHistogramVars map[string]go_kit_metrics.Histogram
+	metricsTimerVars     map[string]*Timer
 
 	gaugeLock     sync.RWMutex
 	counterLock   sync.RWMutex
 	histogramLock sync.RWMutex
+	timerLock     sync.RWMutex
 }
 
 // NewRegistry initializes metrics registry
@@ -51,6 +84,7 @@ func NewRegistry() *Registry {
 		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
 		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
 		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
+		metricsTimerVars:     map[string]*Timer{},
 	}
 }
 
@@ -91,40 +125,20 @@ func (m *Registry) GetGauge(key string) go_kit_metrics.Gauge {
 	return m.createGauge(combinedKey)
 }
 
-// GetTimer gets go-kit expvar Counter
-func (m *Registry) GetTimer(key string) go_kit_metrics.Counter {
-	if key == "" {
-		log.Warn().Msg("metrics timer key is empty")
-		return nil
-	}
-
-	combinedKey := TimerPrefix + "." + key
-
-	m.counterLock.Lock()
-	defer m.counterLock.Unlock()
-	if val, ok := m.metricsCounterVars[combinedKey]; ok {
-		return val
-	}
-
-	return m.createCounter(combinedKey)
-}
-
 // GetHistogram gets go-kit Histogram
-func (m *Registry) GetHistogram(prefix, key string) go_kit_metrics.Histogram {
+func (m *Registry) GetHistogram(key string) go_kit_metrics.Histogram {
 
 	if key == "" {
 		log.Warn().Msg("metrics gauge key is empty")
 		return nil
 	}
 
-	combinedKey := prefix + "." + key
-
 	m.histogramLock.Lock()
 	defer m.histogramLock.Unlock()
-	if val, ok := m.metricsHistogramVars[combinedKey]; ok {
+	if val, ok := m.metricsHistogramVars[key]; ok {
 		return val
 	}
-	return m.createHistogram(combinedKey)
+	return m.createHistogram(key)
 }
 
 func (m *Registry) createGauge(key string) *go_kit_expvar.Gauge {
@@ -145,5 +159,17 @@ func (m *Registry) createHistogram(key string) *go_kit_expvar.Histogram {
 	histogramVar := go_kit_expvar.NewHistogram(key, 50)
 	m.metricsHistogramVars[key] = histogramVar
 	return histogramVar
+
+}
+
+func (m *Registry) createTimer(key string) *Timer {
+	timerVar := &Timer{
+		hits:      m.createCounter(key + ".hits"),
+		totalTime: m.createCounter(key + ".responseTime"),
+		histogram: m.createHistogram(key + ".responseTimeHist"),
+	}
+
+	m.metricsTimerVars[key] = timerVar
+	return timerVar
 
 }
