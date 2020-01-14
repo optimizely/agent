@@ -69,6 +69,18 @@ jobs:
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
         # upload packages to artifactory
         - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+        
+    - stage: 'Building Optimizely Agent'
+      if: (branch = master AND type = push) OR type = pull_request OR tag IS present
+      env:
+        SDK=agent
+        SDK_BRANCH=$(if [ -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then echo ${TRAVIS_BRANCH}; else echo "$TRAVIS_PULL_REQUEST_BRANCH"; fi)
+      cache: false
+      before_install:
+        ./pull_travis_ci_tools.sh
+      install: skip
+      script:
+        - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
 
 before_script:
   # https://github.com/travis-ci/gimme

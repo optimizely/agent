@@ -38,7 +38,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "optimizely", conf.Admin.Name)
 
 	assert.Equal(t, 0, conf.API.MaxConns)
-	assert.Equal(t, "8080", conf.API.Port)
+	assert.Equal(t, "3000", conf.API.Port)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)
