@@ -84,13 +84,13 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
-		r.With(getFeatureTimer).Get("/{featureKey}", opt.featureAPI.GetFeature)
+		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
-		r.With(getExperimentTimer).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
+		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
@@ -100,10 +100,10 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 
 		r.With(listUserFeaturesTimer).Get("/features", opt.userAPI.ListFeatures)
 		r.With(trackUserFeaturesTimer).Post("/features", opt.userAPI.TrackFeatures)
-		r.With(getUserFeatureTimer).Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.With(trackUserFeatureTimer).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
-		r.With(getVariationTimer).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
-		r.With(activateExperimentTimer).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
+		r.With(getUserFeatureTimer, opt.middleware.FeatureCtx).Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.With(trackUserFeatureTimer, opt.middleware.FeatureCtx).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(getVariationTimer, opt.middleware.ExperimentCtx).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
+		r.With(activateExperimentTimer, opt.middleware.ExperimentCtx).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
 		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})

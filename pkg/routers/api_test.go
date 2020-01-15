@@ -36,6 +36,8 @@ import (
 
 const clientHeaderKey = "X-Client-Header"
 const userHeaderKey = "X-User-Header"
+const featureHeaderKey = "X-Feature-Header"
+const experimentHeaderKey = "X-Experiment-Header"
 
 type MockOptlyMiddleware struct{}
 
@@ -49,6 +51,20 @@ func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(userHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(featureHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(experimentHeaderKey, "expected")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -172,6 +188,7 @@ func (suite *RouterTestSuite) TestGetFeature() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Empty(rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 
 	expected := map[string]string{
 		"featureKey": "one",
@@ -200,6 +217,7 @@ func (suite *RouterTestSuite) TestGetUserFeature() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 
 	expected := map[string]string{
 		"userID":     "me",
@@ -245,6 +263,7 @@ func (suite *RouterTestSuite) TestGetVariation() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
 
 	expected := map[string]string{
 		"userID":        "me",
@@ -261,6 +280,7 @@ func (suite *RouterTestSuite) TestActivateExperiment() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
 
 	expected := map[string]string{
 		"userID":        "me",

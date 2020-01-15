@@ -20,7 +20,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -41,7 +40,7 @@ type FeatureHandler struct{}
 func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -57,16 +56,9 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 
 // GetFeature - Get requested feature
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
+	feature, err := middleware.GetFeature(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	featureKey := chi.URLParam(r, "featureKey")
-	feature, err := optlyClient.GetFeature(featureKey)
-	if err != nil {
-		middleware.GetLogger(r).Error().Str("featureKey", featureKey).Msg("Calling GetFeature")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

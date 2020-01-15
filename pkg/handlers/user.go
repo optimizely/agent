@@ -38,7 +38,7 @@ type UserHandler struct{}
 func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -70,12 +70,16 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
-
-	featureKey := chi.URLParam(r, "featureKey")
-	renderFeature(w, r, featureKey, optlyClient, optlyContext)
+	feature, err := middleware.GetFeature(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+	renderFeature(w, r, feature.Key, optlyClient, optlyContext)
 }
 
 // TrackFeature - Return the feature and record impression if applicable.
@@ -83,54 +87,71 @@ func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	featureKey := chi.URLParam(r, "featureKey")
+	feature, err := middleware.GetFeature(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
 
 	// HACK - Triggers an impression event when applicable. This is not
 	// ideal since we're making TWO decisions now. OASIS-5549
-	enabled, softErr := optlyClient.IsFeatureEnabled(featureKey, *optlyContext.UserContext)
-	middleware.GetLogger(r).Info().Str("featureKey", featureKey).Bool("enabled", enabled).Msg("Calling IsFeatureEnabled")
+	enabled, softErr := optlyClient.IsFeatureEnabled(feature.Key, *optlyContext.UserContext)
+	middleware.GetLogger(r).Info().Str("featureKey", feature.Key).Bool("enabled", enabled).Msg("Calling IsFeatureEnabled")
 
 	if softErr != nil {
 		// Swallowing the error to allow the response to be made and not break downstream consumers.
-		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", featureKey).Msg("Calling IsFeatureEnabled")
+		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", feature.Key).Msg("Calling IsFeatureEnabled")
 	}
 
-	renderFeature(w, r, featureKey, optlyClient, optlyContext)
+	renderFeature(w, r, feature.Key, optlyClient, optlyContext)
 }
 
 // GetVariation - Return the variation that a user is bucketed into
 func (h *UserHandler) GetVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	experimentKey := chi.URLParam(r, "experimentKey")
-	renderVariation(w, r, experimentKey, false, optlyClient, optlyContext)
+	experiment, err := middleware.GetExperiment(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetExperiment")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	renderVariation(w, r, experiment.Key, false, optlyClient, optlyContext)
 }
 
 // ActivateExperiment - Return the variatoin that a user is bucketed into and track an impression event
 func (h *UserHandler) ActivateExperiment(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	experimentKey := chi.URLParam(r, "experimentKey")
-	renderVariation(w, r, experimentKey, true, optlyClient, optlyContext) // true to send impression
+	experiment, err := middleware.GetExperiment(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetExperiment")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	renderVariation(w, r, experiment.Key, true, optlyClient, optlyContext) // true to send impression
 }
 
 // SetForcedVariation - set a forced variation
 func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	experimentKey := chi.URLParam(r, "experimentKey")
@@ -162,7 +183,7 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	experimentKey := chi.URLParam(r, "experimentKey")
@@ -185,7 +206,7 @@ func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Reque
 func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -196,7 +217,7 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 

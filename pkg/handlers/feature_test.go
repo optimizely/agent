@@ -28,8 +28,10 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
-	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
+
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -51,6 +53,19 @@ func (o *OptlyMWFeature) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
+func (o *OptlyMWFeature) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		featureKey := chi.URLParam(r, "featureKey")
+		if featureKey == "one" {
+			feature := config.OptimizelyFeature{Key: featureKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
 // Setup Mux
 func (suite *FeatureTestSuite) SetupTest() {
 
@@ -67,7 +82,7 @@ func (suite *FeatureTestSuite) SetupTest() {
 
 	mux.Use(optlyMW.ClientCtx)
 	mux.Get("/features", featureAPI.ListFeatures)
-	mux.Get("/features/{featureKey}", featureAPI.GetFeature)
+	mux.With(optlyMW.FeatureCtx).Get("/features/{featureKey}", featureAPI.GetFeature)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -126,7 +141,7 @@ func (suite *FeatureTestSuite) TestGetFeaturesMissingFeature() {
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(ErrorResponse{Error: `unable to get feature for featureKey feature-404`}, actual)
+	suite.Equal(ErrorResponse{Error: "feature not available"}, actual)
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -135,27 +150,19 @@ func TestFeatureTestSuite(t *testing.T) {
 	suite.Run(t, new(FeatureTestSuite))
 }
 
-func TestFeatureMissingClientCtx(t *testing.T) {
+func TestListFeatureMissingClientCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
 	req := httptest.NewRequest("GET", "/", nil)
-
 	featureHander := new(FeatureHandler)
-	handlers := []func(w http.ResponseWriter, r *http.Request){
-		featureHander.ListFeatures,
-		featureHander.GetFeature,
-	}
+	rec := httptest.NewRecorder()
+	http.HandlerFunc(featureHander.ListFeatures).ServeHTTP(rec, req)
 
-	for _, handler := range handlers {
-		rec := httptest.NewRecorder()
-		http.HandlerFunc(handler).ServeHTTP(rec, req)
+	// Unmarshal response
+	var actual ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	assert.NoError(t, err)
 
-		// Unmarshal response
-		var actual ErrorResponse
-		err := json.Unmarshal(rec.Body.Bytes(), &actual)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-		assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
-	}
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
 }

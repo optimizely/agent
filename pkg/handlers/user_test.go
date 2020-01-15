@@ -32,6 +32,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -62,6 +63,34 @@ func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 	})
 }
 
+func (o *UserMW) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		featureKey := chi.URLParam(r, "featureKey")
+		if featureKey == "feature-missing" {
+			next.ServeHTTP(w, r)
+		} else {
+			feature := config.OptimizelyFeature{Key: featureKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+	})
+
+}
+
+func (o *UserMW) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		experimentKey := chi.URLParam(r, "experimentKey")
+		if experimentKey == "experiment-missing" {
+			next.ServeHTTP(w, r)
+		} else {
+			experiment := config.OptimizelyExperiment{Key: experimentKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+	})
+
+}
+
 // Setup Mux
 func (suite *UserTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
@@ -80,12 +109,12 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
 
 	mux.Get("/features", userAPI.ListFeatures)
-	mux.Get("/features/{featureKey}", userAPI.GetFeature)
+	mux.With(userMW.FeatureCtx).Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features", userAPI.TrackFeatures)
-	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
+	mux.With(userMW.FeatureCtx).Post("/features/{featureKey}", userAPI.TrackFeature)
 
-	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
-	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
+	mux.With(userMW.ExperimentCtx).Get("/experiments/{experimentKey}", userAPI.GetVariation)
+	mux.With(userMW.ExperimentCtx).Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
 	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
 	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
 
@@ -170,14 +199,11 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.Equal("testUser", impression.VisitorID)
 }
 
-func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
+func (suite *UserTestSuite) TestGetFeatureMissingFeature() {
 	req := httptest.NewRequest("POST", "/features/feature-missing", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code) // TODO should this 404
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *UserTestSuite) TestTrackEventNoTags() {
@@ -347,11 +373,10 @@ func (suite *UserTestSuite) TestGetVariation() {
 }
 
 func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
-	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	req := httptest.NewRequest("GET", "/experiments/experiment-missing", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 
 	// Unmarshal response
 	var actual Variation
@@ -508,7 +533,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
-		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
+		assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
 	}
 }
 
@@ -534,7 +559,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
-		assertError(t, rec, "optlyContext not available", http.StatusUnprocessableEntity)
+		assertError(t, rec, "optlyContext not available", http.StatusInternalServerError)
 	}
 }
 
