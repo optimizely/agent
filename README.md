@@ -67,6 +67,27 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
+## Running Optimizely via Docker
+Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
+```bash
+docker run -d --name optimizely-agent \
+         -p 8080:8080 \
+         -p 8088:8088 \
+         -p 8085:8085 \
+         --env OPTIMIZELY_LOG_PRETTY=true \
+         optimizely/agent:latest
+```
+The above command also shows how environment variables can be passed in to alter the configuration without having to
+create a config.yaml file.
+
+When a new version is released, 2 images are pushed to dockerhub, they are distinguished by their tags:
+- :latest (same as :X.Y.Z)
+- :alpine (same as :X.Y.Z-alpine)
+
+The difference between latest and alpine is that latest is built `FROM scratch` while alpine is `FROM alpine`.
+- [latest Dockerfile](https://github.com/optimizely/agent/blob/master/scripts/dockerfiles/Dockerfile.static)
+- [alpine Dockerfile](https://github.com/optimizely/agent/blob/master/scripts/dockerfiles/Dockerfile.alpine)
+
 ## Metrics
 
 The Metrics API exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
