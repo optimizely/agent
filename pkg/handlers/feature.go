@@ -40,7 +40,7 @@ type FeatureHandler struct{}
 func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	feature, err := middleware.GetFeature(r)
 	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling GetFeature")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

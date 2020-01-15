@@ -163,6 +163,6 @@ func TestListFeatureMissingClientCtx(t *testing.T) {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	assert.NoError(t, err)
 
-	assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	assert.Equal(t, ErrorResponse{Error: "optlyClient not available"}, actual)
 }

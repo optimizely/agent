@@ -45,7 +45,7 @@ type ExperimentHandler struct{}
 func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	experiments, err := optlyClient.ListExperiments()
@@ -61,7 +61,7 @@ func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Reque
 func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request) {
 	experiment, err := middleware.GetExperiment(r)
 	if err != nil {
-		middleware.GetLogger(r).Error().Msg("Calling GetExperiment")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetExperiment")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

@@ -38,7 +38,7 @@ type UserHandler struct{}
 func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -70,12 +70,12 @@ func (h *UserHandler) TrackEvent(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	feature, err := middleware.GetFeature(r)
 	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetFeature")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -87,13 +87,13 @@ func (h *UserHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
 	feature, err := middleware.GetFeature(r)
 	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetFeature")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
@@ -115,7 +115,7 @@ func (h *UserHandler) TrackFeature(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -133,7 +133,7 @@ func (h *UserHandler) GetVariation(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) ActivateExperiment(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *UserHandler) ActivateExperiment(w http.ResponseWriter, r *http.Request)
 func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	experimentKey := chi.URLParam(r, "experimentKey")
@@ -183,7 +183,7 @@ func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request)
 func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	experimentKey := chi.URLParam(r, "experimentKey")
@@ -206,7 +206,7 @@ func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Reque
 func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -217,7 +217,7 @@ func (h *UserHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) TrackFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 

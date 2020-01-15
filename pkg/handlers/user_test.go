@@ -533,7 +533,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
-		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
+		assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
 	}
 }
 
@@ -559,7 +559,7 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
-		assertError(t, rec, "optlyContext not available", http.StatusUnprocessableEntity)
+		assertError(t, rec, "optlyContext not available", http.StatusInternalServerError)
 	}
 }
 
