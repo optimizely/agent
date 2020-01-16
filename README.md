@@ -27,7 +27,7 @@ The following `make` targets can be used to build and run the application:
 * **test** - recursively tests all .go files
 
 ## Prerequisites
-Optimizely Agent is implemented in [Golang](https://golang.org/). Golang is required for developing and compiling from source.
+Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
 ## Running Optimizely from source
@@ -36,6 +36,27 @@ Once Go is installed, the Optimizely Agent can be started via the following `mak
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
+
+## Running Optimizely via Docker
+Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
+```bash
+docker run -d --name optimizely-agent \
+         -p 8080:8080 \
+         -p 8088:8088 \
+         -p 8085:8085 \
+         --env OPTIMIZELY_LOG_PRETTY=true \
+         optimizely/agent:latest
+```
+The above command also shows how environment variables can be passed in to alter the configuration without having to
+create a config.yaml file. See the [configuration](#configuration-options) for more options.
+
+When a new version is released, 2 images are pushed to dockerhub, they are distinguished by their tags:
+- :latest (same as :X.Y.Z)
+- :alpine (same as :X.Y.Z-alpine)
+
+The difference between latest and alpine is that latest is built `FROM scratch` while alpine is `FROM alpine`.
+- [latest Dockerfile](./scripts/dockerfiles/Dockerfile.static)
+- [alpine Dockerfile](./scripts/dockerfiles/Dockerfile.alpine)
 
 ## Configuration Options
 Optimizely Agent configuration can be overridden by a yaml configuration file provided at runtime.
@@ -67,57 +88,101 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
-## Running Optimizely via Docker
-Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
+## Full Stack API
+
+The core Full Stack API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
+The full API specification is defined in an OpenAPI 3.0 (aka Swagger) [spec](./api/openapi-spec/openapi.yaml).
+
+Each request made into the Full Stack API must include a `X-Optimizely-SDK-Key` in the request header to
+identify the context the request should be evaluated. The SDK key maps to a unique Optimizely Project and
+[Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
+Environments to be serviced by a single Agent.
+
+## Webhooks
+
+The webhook listener used to receive inbound [Webhook](https://docs.developers.optimizely.com/rollouts/docs/webhooks)
+requests from optimizely.com. These webhooks enable PUSH style notifications triggering immediate project configuration updates.
+The webhook listener is configured on its own port (default: 8085) since it can be configured to select traffic from the internet.
+
+To accept webhook requests Agent must be configured by mapping an Optimizely Project Id to a set of SDK keys along
+with the associated secret used for validating the inbound request. An example webhook configuration can
+be found in the the provided [config.yaml](./config.yaml).
+
+## Admin API
+
+The Admin API provides system information about the running process. This can be used to check the availability
+of the service, runtime information and operational metrics. By default the admin listener is configured on port 8088.
+
+### Info
+
+The `/info` endpoint provides basic information about the Optimizely Agent instance.
+
+Example Request:
 ```bash
-docker run -d --name optimizely-agent \
-         -p 8080:8080 \
-         -p 8088:8088 \
-         -p 8085:8085 \
-         --env OPTIMIZELY_LOG_PRETTY=true \
-         optimizely/agent:latest
+curl localhost:8088/info
 ```
-The above command also shows how environment variables can be passed in to alter the configuration without having to
-create a config.yaml file.
 
-When a new version is released, 2 images are pushed to dockerhub, they are distinguished by their tags:
-- :latest (same as :X.Y.Z)
-- :alpine (same as :X.Y.Z-alpine)
+Example Response:
+```json
+{
+    "version": "v0.10.0",
+    "author": "Optimizely Inc.",
+    "app_name": "optimizely"
+}
+```
 
-The difference between latest and alpine is that latest is built `FROM scratch` while alpine is `FROM alpine`.
-- [latest Dockerfile](https://github.com/optimizely/agent/blob/master/scripts/dockerfiles/Dockerfile.static)
-- [alpine Dockerfile](https://github.com/optimizely/agent/blob/master/scripts/dockerfiles/Dockerfile.alpine)
+### Health Check
 
-## Metrics
+The `/health` endpoint is used to determine service availability.
 
-The Metrics API exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
+Example Request:
+```bash
+curl localhost:8088/health
+```
+
+Example Response:
+```json
+{
+    "status": "ok"
+}
+```
+
+Agent will return a HTTP 200 - OK response if and only if all configured listeners are open and all external dependent services can be reached.
+A non-healthy service will return a HTTP 503 - Unavailable response with a descriptive message to help diagnose the issue.
+
+This endpoint can used when placing Agent behind a load balancer to indicate whether a particular instance can receive inbound requests.
+
+### Metrics
+
+The Metrics endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
 
 Example Request:
 ```bash
 curl localhost:8088/metrics
 ```
+
 Example Response:
-```
+```json
 {
-	"cmdline": [
-		"bin/optimizely"
-	],
-	"memstats": {
-		"Alloc": 924136,
-		"TotalAlloc": 924136,
-		"Sys": 71893240,
-		"Lookups": 0,
-		"Mallocs": 4726,
-		"Frees": 172,
-		"HeapAlloc": 924136,
-		...
+    "cmdline": [
+        "bin/optimizely"
+    ],
+    "memstats": {
+        "Alloc": 924136,
+        "TotalAlloc": 924136,
+        "Sys": 71893240,
+        "Lookups": 0,
+        "Mallocs": 4726,
+        "HeapAlloc": 924136,
+        ...
+        "Frees": 172
 	},
 	...
 }
 ```
 Custom metrics are also provided for the individual service endpoints and follow the pattern of:
 
-```properties
+```
 "timers.<metric-name>.counts": 0,
 "timers.<metric-name>.responseTime": 0,
 "timers.<metric-name>.responseTimeHist.p50": 0,
