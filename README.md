@@ -162,7 +162,7 @@ curl localhost:8088/metrics
 ```
 
 Example Response:
-```json
+```
 {
     "cmdline": [
         "bin/optimizely"
@@ -176,8 +176,8 @@ Example Response:
         "HeapAlloc": 924136,
         ...
         "Frees": 172
-	},
-	...
+    },
+    ...
 }
 ```
 Custom metrics are also provided for the individual service endpoints and follow the pattern of:
