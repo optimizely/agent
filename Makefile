@@ -48,7 +48,7 @@ install: ## installs all dev and ci dependencies
 lint: ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false ./...
 
-run: $(TARGET)
+run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET) 
 
 test: ## recursively tests all .go files

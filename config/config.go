@@ -33,7 +33,7 @@ func NewDefaultConfig() *AgentConfig {
 		},
 		API: APIConfig{
 			MaxConns: 0,
-			Port:     "3000",
+			Port:     "8080",
 		},
 		Log: LogConfig{
 			Pretty: false,
