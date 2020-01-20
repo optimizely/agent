@@ -14,62 +14,30 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package optimizely //
+package optimizely
 
 import (
-	"github.com/optimizely/agent/config"
-	"net/http"
-	"sync"
-	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/optimizely/agent/pkg/metrics"
+	go_sdk_metrics "github.com/optimizely/go-sdk/pkg/metrics"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
-
-var conf = config.ServerConfig{}
-
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
-
-	wg.Wait()
-	srv.Shutdown()
+// MetricsRegistry initializes metrics registry
+type MetricsRegistry struct {
+	registry *metrics.Registry
 }
 
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
-	}
+// NewRegistry initializes metrics registry
+func NewRegistry(registry *metrics.Registry) *MetricsRegistry {
+	return &MetricsRegistry{registry: registry}
 }
 
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
+// GetCounter gets sdk Counter
+func (m *MetricsRegistry) GetCounter(key string) go_sdk_metrics.Counter {
+	return m.registry.GetCounter(key)
 }
 
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
-	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
-
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+// GetGauge gets sdk Gauge
+func (m *MetricsRegistry) GetGauge(key string) go_sdk_metrics.Gauge {
+	return m.registry.GetGauge(key)
 }

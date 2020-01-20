@@ -18,9 +18,10 @@
 package optimizely
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
@@ -61,7 +62,13 @@ func (suite *ClientTestSuite) TestGetFeature() {
 		VariablesMap: map[string]config.OptimizelyVariable{}})
 }
 
-func (suite *ClientTestSuite) TestGetNonExistentFeature() {
+func (suite *ClientTestSuite) TestGetFeatureNotFound() {
+	_, err := suite.optlyClient.GetFeature("k1")
+	suite.Error(err)
+	suite.True(errors.Is(err, ErrEntityNotFound))
+}
+
+func (suite *ClientTestSuite) TestGetFeatureWithContextNotFound() {
 	enabled, variationMap, err := suite.optlyClient.GetFeatureWithContext("DNE", suite.optlyContext)
 
 	suite.False(enabled)
@@ -126,6 +133,12 @@ func (suite *ClientTestSuite) TestGetExperiment() {
 	experiment, err := suite.optlyClient.GetExperiment("testExperiment1")
 	suite.Equal(testExperimentKey, experiment.Key)
 	suite.NoError(err)
+}
+
+func (suite *ClientTestSuite) TestGetExperimentNotFound() {
+	_, err := suite.optlyClient.GetExperiment("testExperiment1")
+	suite.Error(err)
+	suite.True(errors.Is(err, ErrEntityNotFound))
 }
 
 func (suite *ClientTestSuite) TestListExperiments() {

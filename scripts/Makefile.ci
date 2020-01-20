@@ -1,21 +1,21 @@
 .DEFAULT_GOAL := help
 
 ci_build_static_binary: ## build static binary
-	CGO_ENABLED=0 GO111MODULE=$(GO111MODULE) $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/$(TARGET)/main.go
+	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
 
 ci_build_dockerimage: ## build minimal docker image of optimizely
 	docker build \
 		-f scripts/dockerfiles/Dockerfile.static \
-		-t optimizely-docker.jfrog.io/optimizely:${APP_VERSION} \
-		-t optimizely-docker.jfrog.io/optimizely:latest \
+		-t optimizely/agent:${APP_VERSION} \
+		-t optimizely/agent:latest \
 		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
 		.
 
 ci_build_dockerimage_alpine: ## build alpine docker image of optimizely
 	docker build \
 	  -f scripts/dockerfiles/Dockerfile.alpine \
-		-t optimizely-docker.jfrog.io/optimizely:${APP_VERSION}-alpine \
-		-t optimizely-docker.jfrog.io/optimizely:alpine \
+		-t optimizely/agent:${APP_VERSION}-alpine \
+		-t optimizely/agent:alpine \
 		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
 		.
 

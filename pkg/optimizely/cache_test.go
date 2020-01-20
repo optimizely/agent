@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/optimizely/sidedoor/config"
-	"github.com/optimizely/sidedoor/pkg/optimizelytest"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"
@@ -90,7 +90,7 @@ func TestCacheTestSuite(t *testing.T) {
 	suite.Run(t, new(CacheTestSuite))
 }
 
-func mockLoader(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, error) {
+func mockLoader(sdkKey string, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
 	if sdkKey == "ERROR" {
 		return &OptlyClient{}, fmt.Errorf("Error")
 	}

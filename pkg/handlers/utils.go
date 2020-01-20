@@ -14,62 +14,53 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package handlers //
+package handlers
 
 import (
-	"github.com/optimizely/agent/config"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
-	"sync"
-	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/go-chi/render"
+
+	"github.com/optimizely/agent/pkg/middleware"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
-
-var conf = config.ServerConfig{}
-
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
-
-	wg.Wait()
-	srv.Shutdown()
+// ErrorResponse Model
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
-	}
+// RenderError sets the request status and renders the error message.
+func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	render.Status(r, status)
+	render.JSON(w, r, ErrorResponse{Error: err.Error()})
 }
 
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
-}
-
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
+// ParseRequestBody reads the request body from the request and unmarshals it
+// into the provided interface. Note that we're sanitizing the returned error
+// so that it is not leaked back to the requestor.
+func ParseRequestBody(r *http.Request, v interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := "error reading request body"
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
 	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
 
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+	if len(body) == 0 {
+		middleware.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
+		return nil
+	}
+
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		msg := "error parsing request body"
+		middleware.GetLogger(r).Error().Err(err).Msg(msg)
+		return fmt.Errorf(msg)
+	}
+
+	return nil
 }

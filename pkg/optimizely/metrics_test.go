@@ -14,62 +14,60 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package optimizely //
+package optimizely
 
 import (
-	"github.com/optimizely/agent/config"
-	"net/http"
-	"sync"
+	"encoding/json"
+	"expvar"
+	"net/http/httptest"
 	"testing"
-	"time"
+
+	"github.com/optimizely/agent/pkg/metrics"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
+type JSON map[string]interface{}
 
-var conf = config.ServerConfig{}
+func TestCounterValid(t *testing.T) {
 
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
-	}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
+	metricsRegistry := metrics.NewRegistry()
+	metricsSDKRegistry := NewRegistry(metricsRegistry)
 
-	wg.Wait()
-	srv.Shutdown()
+	counter := metricsSDKRegistry.GetCounter("metrics")
+	counter.Add(12)
+	counter.Add(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 35.0, expVarMap["counter.metrics"])
+
 }
 
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
-	}
-}
+func TestGaugeValid(t *testing.T) {
 
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
-}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
 
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
-	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
+	metricsRegistry := metrics.NewRegistry()
+	metricsSDKRegistry := NewRegistry(metricsRegistry)
 
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+	gauge := metricsSDKRegistry.GetGauge("metrics")
+	gauge.Set(12)
+	gauge.Set(23)
+
+	expvar.Handler().ServeHTTP(rec, req)
+
+	var expVarMap JSON
+	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	assert.Nil(t, err)
+	assert.Equal(t, 23.0, expVarMap["gauge.metrics"])
+
 }

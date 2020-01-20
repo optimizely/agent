@@ -14,62 +14,21 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package middleware //
+package middleware
 
 import (
-	"github.com/optimizely/agent/config"
 	"net/http"
-	"sync"
-	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
-
-var conf = config.ServerConfig{}
-
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
-
-	wg.Wait()
-	srv.Shutdown()
-}
-
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
-	}
-}
-
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
-}
-
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
-	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
-
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+// OptlyMiddleware encapsultes all middleware
+type OptlyMiddleware interface {
+	// ClientCtx adds an OptlyClient to the request context.
+	ClientCtx(next http.Handler) http.Handler
+	// UserCtx adds a UserContext to the request context.
+	UserCtx(next http.Handler) http.Handler
+	// FeatureCtx adds a Feature to the request context
+	FeatureCtx(next http.Handler) http.Handler
+	// ExperimentCtx adds an Experiment to the request context
+	ExperimentCtx(next http.Handler) http.Handler
 }

@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/optimizely/sidedoor.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/sidedoor)
-[![codecov](https://codecov.io/gh/optimizely/sidedoor/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/sidedoor)
+[![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent)
+[![codecov](https://codecov.io/gh/optimizely/agent/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/agent)
 # Optimizely Agent
 Optimizely Agent is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
 a highly available and distributed web application.
@@ -21,21 +21,42 @@ The following `make` targets can be used to build and run the application:
 * **clean** - runs `go clean` and removes the bin/ dir
 * **cover** - runs test suite with coverage profiling
 * **cover-html** - generates test coverage html report
-* **install** - installs all dev and ci dependencies
+* **install** - installs all dev and ci dependencies, but does not install golang
 * **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
-* **run** - builds and executes the sidedoor binary
+* **run** - builds and executes the optimizely binary
 * **test** - recursively tests all .go files
 
 ## Prerequisites
-Optimizely Agent is implemented in [Golang](https://golang.org/). Golang is required for developing and compiling from source.
+Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
 ## Running Optimizely from source
-The Optimizely Agent can be started via the following make command:
+Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
+
+## Running Optimizely via Docker
+Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
+```bash
+docker run -d --name optimizely-agent \
+         -p 8080:8080 \
+         -p 8088:8088 \
+         -p 8085:8085 \
+         --env OPTIMIZELY_LOG_PRETTY=true \
+         optimizely/agent:latest
+```
+The above command also shows how environment variables can be passed in to alter the configuration without having to
+create a config.yaml file. See the [configuration](#configuration-options) for more options.
+
+When a new version is released, 2 images are pushed to dockerhub, they are distinguished by their tags:
+- :latest (same as :X.Y.Z)
+- :alpine (same as :X.Y.Z-alpine)
+
+The difference between latest and alpine is that latest is built `FROM scratch` while alpine is `FROM alpine`.
+- [latest Dockerfile](./scripts/dockerfiles/Dockerfile.static)
+- [alpine Dockerfile](./scripts/dockerfiles/Dockerfile.alpine)
 
 ## Configuration Options
 Optimizely Agent configuration can be overridden by a yaml configuration file provided at runtime.
@@ -45,7 +66,7 @@ Alternative configuration locations can be specified at runtime via environment 
 ```bash
 OPTIMIZELY_CONFIG_FILENAME=config.yaml make run
 ```
-An example configuration can be found [here](./cmd/optimizely/testdata/default.yaml)
+The default configuration can be found [here](config.yaml).
 
 Below is a comprehensive list of available configuration properties.
 
@@ -56,10 +77,10 @@ Below is a comprehensive list of available configuration properties.
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|admin.author|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
+|admin.name|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
 |admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
-|admin.version|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
-|admin.version|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
@@ -67,36 +88,101 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
-## Metrics
+## Full Stack API
 
-The Metrics API exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
+The core Full Stack API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
+The full API specification is defined in an OpenAPI 3.0 (aka Swagger) [spec](./api/openapi-spec/openapi.yaml).
+
+Each request made into the Full Stack API must include a `X-Optimizely-SDK-Key` in the request header to
+identify the context the request should be evaluated. The SDK key maps to a unique Optimizely Project and
+[Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
+Environments to be serviced by a single Agent.
+
+## Webhooks
+
+The webhook listener used to receive inbound [Webhook](https://docs.developers.optimizely.com/rollouts/docs/webhooks)
+requests from optimizely.com. These webhooks enable PUSH style notifications triggering immediate project configuration updates.
+The webhook listener is configured on its own port (default: 8085) since it can be configured to select traffic from the internet.
+
+To accept webhook requests Agent must be configured by mapping an Optimizely Project Id to a set of SDK keys along
+with the associated secret used for validating the inbound request. An example webhook configuration can
+be found in the the provided [config.yaml](./config.yaml).
+
+## Admin API
+
+The Admin API provides system information about the running process. This can be used to check the availability
+of the service, runtime information and operational metrics. By default the admin listener is configured on port 8088.
+
+### Info
+
+The `/info` endpoint provides basic information about the Optimizely Agent instance.
+
+Example Request:
+```bash
+curl localhost:8088/info
+```
+
+Example Response:
+```json
+{
+    "version": "v0.10.0",
+    "author": "Optimizely Inc.",
+    "app_name": "optimizely"
+}
+```
+
+### Health Check
+
+The `/health` endpoint is used to determine service availability.
+
+Example Request:
+```bash
+curl localhost:8088/health
+```
+
+Example Response:
+```json
+{
+    "status": "ok"
+}
+```
+
+Agent will return a HTTP 200 - OK response if and only if all configured listeners are open and all external dependent services can be reached.
+A non-healthy service will return a HTTP 503 - Unavailable response with a descriptive message to help diagnose the issue.
+
+This endpoint can used when placing Agent behind a load balancer to indicate whether a particular instance can receive inbound requests.
+
+### Metrics
+
+The Metrics endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
 
 Example Request:
 ```bash
 curl localhost:8088/metrics
 ```
+
 Example Response:
 ```
 {
-	"cmdline": [
-		"bin/sidedoor"
-	],
-	"memstats": {
-		"Alloc": 924136,
-		"TotalAlloc": 924136,
-		"Sys": 71893240,
-		"Lookups": 0,
-		"Mallocs": 4726,
-		"Frees": 172,
-		"HeapAlloc": 924136,
-		...
-	},
-	...
+    "cmdline": [
+        "bin/optimizely"
+    ],
+    "memstats": {
+        "Alloc": 924136,
+        "TotalAlloc": 924136,
+        "Sys": 71893240,
+        "Lookups": 0,
+        "Mallocs": 4726,
+        "HeapAlloc": 924136,
+        ...
+        "Frees": 172
+    },
+    ...
 }
 ```
 Custom metrics are also provided for the individual service endpoints and follow the pattern of:
 
-```properties
+```
 "timers.<metric-name>.counts": 0,
 "timers.<metric-name>.responseTime": 0,
 "timers.<metric-name>.responseTimeHist.p50": 0,
@@ -129,10 +215,6 @@ guuid
 (c) 2009,2014 Google Inc. All rights reserved. 
 License (BSD 3-Clause): github.com/google/uuid
 
-nsq 
-Matt Reiferson and Jehiah Czebotar
-License (MIT): github.com/nsqio/nsq
-
 optimizely go sdk 
 (c) 2016-2017, Optimizely, Inc. and contributors
 License (Apache 2): github.com/optimizely/go-sdk
@@ -144,10 +226,6 @@ License (MIT): github.com/orcaman/concurrent-map
 zerolog 
 (c) 2017 Olivier Poitrey
 License (MIT): github.com/rs/zerolog
-
-nsq-go 
-(c) 2016 Segment
-License (MIT): github.com/segmentio/nsq-go
 
 viper 
 (c) 2014 Steve Francia

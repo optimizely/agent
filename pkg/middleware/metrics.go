@@ -14,62 +14,53 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-package server
+// Package middleware //
+package middleware
 
 import (
-	"github.com/optimizely/agent/config"
+	"context"
 	"net/http"
-	"sync"
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/optimizely/agent/pkg/metrics"
 )
 
-var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-})
+type contextString string
 
-var conf = config.ServerConfig{}
+const responseTime = contextString("responseTime")
 
-func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
-	if !assert.NoError(t, err) {
-		return
+// Metricize updates counts, total response time, and response time histogram
+// for each URL hit, key being a combination of a method and route pattern
+func Metricize(key string, metricsRegistry *metrics.Registry) func(http.Handler) http.Handler {
+	singleMetric := metricsRegistry.NewTimer(key)
+
+	f := func(h http.Handler) http.Handler {
+
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			startTime, ok := ctx.Value(responseTime).(time.Time)
+			if ok {
+				defer func() {
+					endTime := time.Now()
+					timeDiff := endTime.Sub(startTime).Seconds() * 1000.0 // display time in milliseconds
+					singleMetric.Update(timeDiff)
+				}()
+			}
+
+			h.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
 	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		wg.Done()
-		srv.ListenAndServe()
-	}()
-
-	wg.Wait()
-	srv.Shutdown()
+	return f
 }
 
-func TestNotEnabled(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
-	if assert.Error(t, err) {
-		assert.Equal(t, `"not-enabled" not enabled`, err.Error())
+// SetTime middleware sets the start time in request context
+func SetTime(next http.Handler) http.Handler {
+
+	fn := func(w http.ResponseWriter, r *http.Request) {
+
+		ctx := context.WithValue(r.Context(), responseTime, time.Now())
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
-}
-
-func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
-	assert.NoError(t, err)
-	ns.ListenAndServe()
-}
-
-func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 8 * time.Second,
-	}
-	ns, err := NewServer("test", "1000", handler, conf)
-	assert.NoError(t, err)
-
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+	return http.HandlerFunc(fn)
 }

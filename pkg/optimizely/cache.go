@@ -21,11 +21,11 @@ import (
 	"context"
 	"sync"
 
-	"github.com/optimizely/sidedoor/config"
-
+	"github.com/optimizely/agent/config"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/event"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -34,21 +34,23 @@ import (
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader   func(string, config.ProcessorConfig) (*OptlyClient, error)
-	optlyMap cmap.ConcurrentMap
-	ctx      context.Context
-	wg       sync.WaitGroup
-	conf     config.OptlyConfig
+	loader          func(string, config.ProcessorConfig, *MetricsRegistry) (*OptlyClient, error)
+	optlyMap        cmap.ConcurrentMap
+	ctx             context.Context
+	wg              sync.WaitGroup
+	conf            config.OptlyConfig
+	metricsRegistry *MetricsRegistry
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.OptlyConfig) *OptlyCache {
+func NewCache(ctx context.Context, conf config.OptlyConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 	cache := &OptlyCache{
-		ctx:      ctx,
-		wg:       sync.WaitGroup{},
-		loader:   initOptlyClient,
-		optlyMap: cmap.New(),
-		conf:     conf,
+		ctx:             ctx,
+		wg:              sync.WaitGroup{},
+		loader:          initOptlyClient,
+		optlyMap:        cmap.New(),
+		conf:            conf,
+		metricsRegistry: metricsRegistry,
 	}
 
 	cache.init()
@@ -70,7 +72,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.conf.Processor)
+	oc, err := c.loader(sdkKey, c.conf.Processor, c.metricsRegistry)
 	if err != nil {
 		return oc, err
 	}
@@ -99,19 +101,24 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
-func initOptlyClient(sdkKey string, conf config.ProcessorConfig) (*OptlyClient, error) {
+func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey)
 	if _, err := configManager.GetConfig(); err != nil {
 		return &OptlyClient{}, err
 	}
 
+	q := event.NewInMemoryQueue(conf.QueueSize)
+	ep := event.NewBatchEventProcessor(event.WithQueueSize(conf.QueueSize),
+		event.WithBatchSize(conf.BatchSize), event.WithQueue(q),
+		event.WithEventDispatcherMetrics(metricsRegistry))
+
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
-		client.WithBatchEventProcessor(conf.BatchSize, conf.QueueSize, conf.FlushInterval),
+		client.WithEventProcessor(ep),
 	)
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
