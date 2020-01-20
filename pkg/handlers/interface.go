@@ -33,6 +33,10 @@ type ExperimentAPI interface {
 	ListExperiments(w http.ResponseWriter, r *http.Request)
 }
 
+type EventsAPI interface {
+	HandleEventSteam(rw http.ResponseWriter, req *http.Request)
+}
+
 // UserAPI defines the supported user scoped APIs.
 type UserAPI interface {
 	ListFeatures(w http.ResponseWriter, r *http.Request)

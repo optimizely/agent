@@ -76,6 +76,12 @@ func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) 
 	renderPathParams(w, r)
 }
 
+type MockEventAPI struct{}
+
+func (m *MockEventAPI) HandleEventSteam(rw http.ResponseWriter, req *http.Request) {
+	renderPathParams(rw, req)
+}
+
 type MockUserAPI struct{}
 
 func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {
@@ -144,6 +150,7 @@ func (suite *RouterTestSuite) SetupTest() {
 		featureAPI:    new(MockFeatureAPI),
 		userAPI:       new(MockUserAPI),
 		middleware:    new(MockOptlyMiddleware),
+		eventsAPI:     new(MockEventAPI),
 	}
 
 	suite.mux = NewAPIRouter(opts)

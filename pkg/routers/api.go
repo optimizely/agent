@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"github.com/go-chi/render"
 	"net/http"
 
 	"github.com/optimizely/agent/config"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
 )
 
 var listFeaturesTimer func(http.Handler) http.Handler
@@ -43,6 +43,7 @@ var getVariationTimer func(http.Handler) http.Handler
 var activateExperimentTimer func(http.Handler) http.Handler
 var setForcedVariationTimer func(http.Handler) http.Handler
 var removeForcedVariationTimer func(http.Handler) http.Handler
+var eventStreamTimer func(http.Handler) http.Handler
 
 func init() {
 	listFeaturesTimer = middleware.Metricize("list-features")
@@ -58,6 +59,7 @@ func init() {
 	activateExperimentTimer = middleware.Metricize("activate-experiment")
 	setForcedVariationTimer = middleware.Metricize("set-forced-variation")
 	removeForcedVariationTimer = middleware.Metricize("remove-forced-variation")
+	eventStreamTimer = middleware.Metricize("event-stream")
 }
 
 // APIOptions defines the configuration parameters for Router.
@@ -67,6 +69,7 @@ type APIOptions struct {
 	experimentAPI handlers.ExperimentAPI
 	featureAPI    handlers.FeatureAPI
 	userAPI       handlers.UserAPI
+	eventsAPI     handlers.EventsAPI
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
@@ -77,6 +80,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig) htt
 		experimentAPI: new(handlers.ExperimentHandler),
 		featureAPI:    new(handlers.FeatureHandler),
 		userAPI:       new(handlers.UserHandler),
+		eventsAPI:     handlers.NewEventStreamHandler(),
 	}
 
 	return NewAPIRouter(spec)
@@ -92,7 +96,13 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	}
 
 	r.Use(middleware.SetTime)
+
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
+
+	r.Route("/notifications/event-stream", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx)
+		r.With(eventStreamTimer).Get("/", opt.eventsAPI.HandleEventSteam)
+	})
 
 	r.Route("/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
