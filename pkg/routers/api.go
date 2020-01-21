@@ -43,7 +43,6 @@ var getVariationTimer func(http.Handler) http.Handler
 var activateExperimentTimer func(http.Handler) http.Handler
 var setForcedVariationTimer func(http.Handler) http.Handler
 var removeForcedVariationTimer func(http.Handler) http.Handler
-var eventStreamTimer func(http.Handler) http.Handler
 
 func init() {
 	listFeaturesTimer = middleware.Metricize("list-features")
@@ -59,7 +58,6 @@ func init() {
 	activateExperimentTimer = middleware.Metricize("activate-experiment")
 	setForcedVariationTimer = middleware.Metricize("set-forced-variation")
 	removeForcedVariationTimer = middleware.Metricize("remove-forced-variation")
-	eventStreamTimer = middleware.Metricize("event-stream")
 }
 
 // APIOptions defines the configuration parameters for Router.
@@ -86,6 +84,11 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig) htt
 	return NewAPIRouter(spec)
 }
 
+func setMiddleWareTime(r chi.Router) {
+	r.Use(middleware.SetTime)
+	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
+}
+
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
@@ -95,28 +98,28 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime)
-
-	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
-
 	r.Route("/notifications/event-stream", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(eventStreamTimer).Get("/", opt.eventsAPI.HandleEventSteam)
+		r.Get("/", opt.eventsAPI.HandleEventSteam)
 	})
 
 	r.Route("/features", func(r chi.Router) {
+		setMiddleWareTime(r)
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
 		r.With(getFeatureTimer).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
+		setMiddleWareTime(r)
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
 		r.With(getExperimentTimer).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
+		setMiddleWareTime(r)
+
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
 		r.With(trackEventTimer).Post("/events/{eventKey}", opt.userAPI.TrackEvent)

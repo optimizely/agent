@@ -20,7 +20,7 @@ type MessageChan chan []byte
 // and broadcast event data to all registered connections
 type EventStreamBroker struct {
 
-	// Events are pushed to this channel by the main UDP daemon
+	// Events are pushed to this channel by the registered decision listener
 	Notifier chan notification.DecisionNotification
 
 	// New client connections
