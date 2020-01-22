@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -87,12 +87,6 @@ func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
-type MockUserEventAPI struct{}
-
-func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
 type MockUserAPI struct{}
 
 func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {
@@ -115,19 +109,21 @@ func (m *MockUserAPI) TrackFeatures(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
-func (m *MockUserAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
 func (m *MockUserAPI) GetVariation(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
 func (m *MockUserAPI) ActivateExperiment(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
+type MockUserOverrideAPI struct{}
+
+func (m *MockUserOverrideAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
+func (m *MockUserOverrideAPI) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
@@ -162,6 +158,7 @@ func (suite *RouterTestSuite) SetupTest() {
 		experimentAPI:   new(MockExperimentAPI),
 		featureAPI:      new(MockFeatureAPI),
 		userAPI:         new(MockUserAPI),
+		userOverrideAPI: new(MockUserOverrideAPI),
 		middleware:      new(MockOptlyMiddleware),
 		metricsRegistry: metricsRegistry,
 	}
@@ -290,7 +287,7 @@ func (suite *RouterTestSuite) TestActivateExperiment() {
 }
 
 func (suite *RouterTestSuite) TestSetForcedVariation() {
-	req := httptest.NewRequest("PUT", "/users/me/experiments/exp_key/variations/var_key", nil)
+	req := httptest.NewRequest("PUT", "/overrides/users/me/experiments/exp_key/variations/var_key", nil)
 	rec := httptest.NewRecorder()
 
 	suite.mux.ServeHTTP(rec, req)
@@ -307,7 +304,7 @@ func (suite *RouterTestSuite) TestSetForcedVariation() {
 }
 
 func (suite *RouterTestSuite) TestRemoveForcedVariation() {
-	req := httptest.NewRequest("DELETE", "/users/me/experiments/exp_key/variations", nil)
+	req := httptest.NewRequest("DELETE", "/overrides/users/me/experiments/exp_key/variations", nil)
 	rec := httptest.NewRecorder()
 
 	suite.mux.ServeHTTP(rec, req)

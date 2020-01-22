@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -38,6 +38,7 @@ type APIOptions struct {
 	experimentAPI   handlers.ExperimentAPI
 	featureAPI      handlers.FeatureAPI
 	userAPI         handlers.UserAPI
+	userOverrideAPI handlers.UserOverrideAPI
 	metricsRegistry *metrics.Registry
 }
 
@@ -49,6 +50,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		experimentAPI:   new(handlers.ExperimentHandler),
 		featureAPI:      new(handlers.FeatureHandler),
 		userAPI:         new(handlers.UserHandler),
+		userOverrideAPI: new(handlers.UserOverrideHandler),
 		metricsRegistry: metricsRegistry,
 	}
 
@@ -104,8 +106,13 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(trackUserFeatureTimer, opt.middleware.FeatureCtx).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 		r.With(getVariationTimer, opt.middleware.ExperimentCtx).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
 		r.With(activateExperimentTimer, opt.middleware.ExperimentCtx).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
-		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
-		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
+	})
+
+	r.Route("/overrides/users/{userID}", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
+
+		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userOverrideAPI.SetForcedVariation)
+		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userOverrideAPI.RemoveForcedVariation)
 	})
 
 	return r

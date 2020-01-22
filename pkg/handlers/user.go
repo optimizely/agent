@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -145,60 +144,6 @@ func (h *UserHandler) ActivateExperiment(w http.ResponseWriter, r *http.Request)
 	}
 
 	renderVariation(w, r, experiment.Key, true, optlyClient, optlyContext) // true to send impression
-}
-
-// SetForcedVariation - set a forced variation
-func (h *UserHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-	experimentKey := chi.URLParam(r, "experimentKey")
-	if experimentKey == "" {
-		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
-		return
-	}
-	variationKey := chi.URLParam(r, "variationKey")
-	if variationKey == "" {
-		RenderError(errors.New("empty variationKey"), http.StatusBadRequest, w, r)
-		return
-	}
-
-	wasSet, err := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
-	switch {
-	case err != nil:
-		middleware.GetLogger(r).Error().Err(err).Msg("error setting forced variation")
-		RenderError(err, http.StatusInternalServerError, w, r)
-
-	case wasSet:
-		w.WriteHeader(http.StatusCreated)
-
-	default:
-		w.WriteHeader(http.StatusNoContent)
-	}
-}
-
-// RemoveForcedVariation - Remove a forced variation
-func (h *UserHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-	experimentKey := chi.URLParam(r, "experimentKey")
-	if experimentKey == "" {
-		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
-		return
-	}
-
-	err = optlyClient.RemoveForcedVariation(experimentKey, optlyContext.UserContext.ID)
-	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("error removing forced variation")
-		RenderError(err, http.StatusInternalServerError, w, r)
-	} else {
-		w.WriteHeader(http.StatusNoContent)
-	}
 }
 
 // ListFeatures - List all feature decisions for a user
