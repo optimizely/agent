@@ -120,6 +120,7 @@ func main() {
 	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
 	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("oauth", conf.OAuth.Port, routers.NewOAuthRouter())
 	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(conf.Admin)) // Admin should be added last.
 
 	// wait for server group to shutdown

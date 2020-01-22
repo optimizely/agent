@@ -39,6 +39,9 @@ func NewDefaultConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
+		OAuth: OAuthConfig{
+			Port: "8084",
+		},
 		Optly: OptlyConfig{
 			Processor: ProcessorConfig{
 				BatchSize:     10,
@@ -63,6 +66,7 @@ type AgentConfig struct {
 	Admin   AdminConfig   `yaml:"admin"`
 	API     APIConfig     `yaml:"api"`
 	Log     LogConfig     `yaml:"log"`
+	OAuth   OAuthConfig   `yaml:"oauth"`
 	Optly   OptlyConfig   `yaml:"optly"`
 	Server  ServerConfig  `yaml:"server"`
 	Webhook WebhookConfig `yaml:"webhook"`
@@ -95,8 +99,9 @@ type ServerConfig struct {
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
-	MaxConns int    `yaml:"maxconns"`
-	Port     string `yaml:"port"`
+	MaxConns int               `yaml:"maxconns"`
+	Port     string            `yaml:"port"`
+	Auth     ServiceAuthConfig `yaml:"auth"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
@@ -118,4 +123,21 @@ type WebhookProject struct {
 	SDKKeys            []string `yaml:"sdkKeys"`
 	Secret             string   `yaml:"secret"`
 	SkipSignatureCheck bool     `yaml:"skipSignatureCheck" default:"false"`
+}
+
+// OAuthClientCredentials are used for issuing access tokens
+type OAuthClientCredentials struct {
+	ID     string `yaml:"id"`
+	Secret string `yaml:"secret"`
+}
+
+// ServiceAuthConfig holds the authentication configuration for a particular service
+type ServiceAuthConfig struct {
+	TTL     time.Duration            `yaml:"ttl"`
+	Clients []OAuthClientCredentials `yaml:"clients"`
+}
+
+// OAuthConfig holds the configuration for the OAuth API
+type OAuthConfig struct {
+	Port string `yaml:"port"`
 }
