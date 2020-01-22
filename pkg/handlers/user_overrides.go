@@ -26,6 +26,11 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 )
 
+// Override defines the overrides to be applied.
+type Override struct {
+	VariationKey string `json:"variationKey"`
+}
+
 // UserOverrideHandler implements the UserAPI interface
 type UserOverrideHandler struct{}
 
@@ -41,13 +46,14 @@ func (h *UserOverrideHandler) SetForcedVariation(w http.ResponseWriter, r *http.
 		RenderError(errors.New("empty experimentKey"), http.StatusBadRequest, w, r)
 		return
 	}
-	variationKey := chi.URLParam(r, "variationKey")
-	if variationKey == "" {
+
+	override := &Override{}
+	if err = ParseRequestBody(r, override); err != nil {
 		RenderError(errors.New("empty variationKey"), http.StatusBadRequest, w, r)
 		return
 	}
 
-	wasSet, err := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, variationKey)
+	wasSet, err := optlyClient.SetForcedVariation(experimentKey, optlyContext.UserContext.ID, override.VariationKey)
 	switch {
 	case err != nil:
 		middleware.GetLogger(r).Error().Err(err).Msg("error setting forced variation")

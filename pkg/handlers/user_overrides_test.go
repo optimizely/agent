@@ -18,6 +18,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -52,8 +54,11 @@ func (suite *UserOverridesTestSuite) SetupTest() {
 	userMW := &UserMW{optlyClient}
 
 	mux.Use(userMW.ClientCtx, userMW.UserCtx)
-	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
-	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
+	mux.Put("/experiments/{experimentKey}", userAPI.SetForcedVariation)
+	mux.Delete("/experiments/{experimentKey}", userAPI.RemoveForcedVariation)
+
+	mux.Put("/experiments/{experimentKey}/", userAPI.SetForcedVariation)       // Added for testing
+	mux.Delete("/experiments/{experimentKey}/", userAPI.RemoveForcedVariation) // Added for testing
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -64,7 +69,11 @@ func (suite *UserOverridesTestSuite) TestSetForcedVariation() {
 	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
 	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 
-	req := httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
+	override := &Override{VariationKey: "variation_enabled"}
+	body, err := json.Marshal(override)
+	suite.NoError(err)
+
+	req := httptest.NewRequest("PUT", "/experiments/"+featureExp.Key, bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusCreated, rec.Code)
@@ -78,7 +87,7 @@ func (suite *UserOverridesTestSuite) TestSetForcedVariation() {
 	suite.True(ok)
 	suite.Equal("variation_enabled", actual)
 
-	req = httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
+	req = httptest.NewRequest("PUT", "/experiments/"+featureExp.Key, bytes.NewBuffer(body))
 	rec = httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusNoContent, rec.Code)
@@ -89,7 +98,7 @@ func (suite *UserOverridesTestSuite) TestSetForcedVariation() {
 }
 
 func (suite *UserOverridesTestSuite) TestSetForcedVariationEmptyExperimentKey() {
-	req := httptest.NewRequest("PUT", "/experiments//variations/variation_enabled", nil)
+	req := httptest.NewRequest("PUT", "/experiments//", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusBadRequest, rec.Code)
@@ -105,7 +114,7 @@ func (suite *UserOverridesTestSuite) TestRemoveForcedVariation() {
 		UserID:        "testUser",
 	}, "variation_enabled")
 
-	req := httptest.NewRequest("DELETE", "/experiments/"+featureExp.Key+"/variations", nil)
+	req := httptest.NewRequest("DELETE", "/experiments/"+featureExp.Key, nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusNoContent, rec.Code)
@@ -119,7 +128,7 @@ func (suite *UserOverridesTestSuite) TestRemoveForcedVariation() {
 }
 
 func (suite *UserOverridesTestSuite) TestRemoveForcedVariationEmptyExperimentKey() {
-	req := httptest.NewRequest("DELETE", "/experiments//variations", nil)
+	req := httptest.NewRequest("DELETE", "/experiments//", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusBadRequest, rec.Code)
