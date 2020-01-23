@@ -97,7 +97,7 @@ func CoerceType(s string) interface{} {
 		}
 	}
 
-	if i, err := strconv.ParseInt(s, 0, 64); err == nil {
+	if i, err := strconv.ParseInt(s, 10, 0); err == nil {
 		return i
 	}
 
