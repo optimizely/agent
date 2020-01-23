@@ -114,9 +114,10 @@ func (suite *OptlyMiddlewareTestSuite) TestGetClient() {
 
 func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 	attributes := map[string]interface{}{
-		"foo": "true",
-		"bar": "yes",
-		"baz": "100",
+		"bool":  true,
+		"str":   "yes",
+		"int":   int64(100),
+		"float": 1.00,
 	}
 	expected := optimizely.NewContext("test", attributes)
 
@@ -124,7 +125,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 	handler := AssertOptlyContextHandler(suite, expected)
 	mux.With(suite.mw.UserCtx).Get("/{userID}", handler)
 
-	req := httptest.NewRequest("GET", "/test?foo=true&bar=yes&baz=100", nil)
+	req := httptest.NewRequest("GET", "/test?bool=true&str=yes&baz=100&fiz=1.0", nil)
 	rec := httptest.NewRecorder()
 
 	mux.ServeHTTP(rec, req)
