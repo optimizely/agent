@@ -287,7 +287,7 @@ func (suite *RouterTestSuite) TestActivateExperiment() {
 }
 
 func (suite *RouterTestSuite) TestSetForcedVariation() {
-	req := httptest.NewRequest("PUT", "/overrides/users/me/experiments/exp_key/variations/var_key", nil)
+	req := httptest.NewRequest("PUT", "/overrides/users/me/experiments/exp_key", nil)
 	rec := httptest.NewRecorder()
 
 	suite.mux.ServeHTTP(rec, req)
@@ -298,13 +298,12 @@ func (suite *RouterTestSuite) TestSetForcedVariation() {
 	expected := map[string]string{
 		"userID":        "me",
 		"experimentKey": "exp_key",
-		"variationKey":  "var_key",
 	}
 	suite.assertValid(rec, expected)
 }
 
 func (suite *RouterTestSuite) TestRemoveForcedVariation() {
-	req := httptest.NewRequest("DELETE", "/overrides/users/me/experiments/exp_key/variations", nil)
+	req := httptest.NewRequest("DELETE", "/overrides/users/me/experiments/exp_key", nil)
 	rec := httptest.NewRecorder()
 
 	suite.mux.ServeHTTP(rec, req)

@@ -111,8 +111,8 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r.Route("/overrides/users/{userID}", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
-		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userOverrideAPI.SetForcedVariation)
-		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userOverrideAPI.RemoveForcedVariation)
+		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}", opt.userOverrideAPI.SetForcedVariation)
+		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}", opt.userOverrideAPI.RemoveForcedVariation)
 	})
 
 	return r
