@@ -19,14 +19,14 @@ package routers
 
 import (
 	"github.com/go-chi/chi"
-	"net/http"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
 )
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewOAuthRouter() *chi.Mux {
+func NewOAuthRouter(authConfigs []*config.ServiceAuthConfig) *chi.Mux {
 	r := chi.NewRouter()
-	r.Post("/oauth/v2/accessToken", func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusNotImplemented)
-	})
+	handler := handlers.NewOAuthHandler(authConfigs)
+	r.Get("/oauth/v2/accessToken", handler.GetAccessToken)
 	return r
 }

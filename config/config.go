@@ -99,13 +99,14 @@ type ServerConfig struct {
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
+	Auth     ServiceAuthConfig `yaml:"auth"`
 	MaxConns int               `yaml:"maxconns"`
 	Port     string            `yaml:"port"`
-	Auth     ServiceAuthConfig `yaml:"auth"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
+	Auth     ServiceAuthConfig `yaml:"auth"`
 	Version string `yaml:"version"`
 	Author  string `yaml:"author"`
 	Name    string `yaml:"name"`
