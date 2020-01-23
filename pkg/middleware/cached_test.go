@@ -125,7 +125,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 	handler := AssertOptlyContextHandler(suite, expected)
 	mux.With(suite.mw.UserCtx).Get("/{userID}", handler)
 
-	req := httptest.NewRequest("GET", "/test?bool=true&str=yes&baz=100&fiz=1.0", nil)
+	req := httptest.NewRequest("GET", "/test?bool=true&str=yes&int=100&float=1.0", nil)
 	rec := httptest.NewRecorder()
 
 	mux.ServeHTTP(rec, req)

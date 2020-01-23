@@ -88,7 +88,7 @@ func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
 	return experiment, nil
 }
 
-// Coerce data type from string
+// CoerceType coerces typed value from string
 func CoerceType(s string) interface{} {
 	if i, err := strconv.ParseInt(s, 0, 64); err == nil {
 		return i
