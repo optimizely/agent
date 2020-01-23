@@ -90,6 +90,13 @@ func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
 
 // CoerceType coerces typed value from string
 func CoerceType(s string) interface{} {
+
+	if u, err := strconv.Unquote(s); err == nil {
+		if u != s {
+			return u
+		}
+	}
+
 	if i, err := strconv.ParseInt(s, 0, 64); err == nil {
 		return i
 	}

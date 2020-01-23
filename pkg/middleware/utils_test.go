@@ -126,10 +126,26 @@ func TestCoerceType(t *testing.T) {
 	assert.Equal(t, true, CoerceType("True"))
 
 	assert.Equal(t, false, CoerceType("false"))
-	assert.Equal(t, false, CoerceType("false"))
+	assert.Equal(t, false, CoerceType("False"))
 
 	assert.Equal(t, 1.00, CoerceType("1.0"))
 	assert.Equal(t, 1.01, CoerceType("1.01"))
 
 	assert.Equal(t, "1.0a", CoerceType("1.0a"))
+}
+
+func TestCoerceTypeQuoted(t *testing.T) {
+	assert.Equal(t, "1", CoerceType(`"1"`))
+	assert.Equal(t, "10", CoerceType(`"10"`))
+
+	assert.Equal(t, "true", CoerceType(`"true"`))
+	assert.Equal(t, "True", CoerceType(`"True"`))
+
+	assert.Equal(t, "false", CoerceType(`"false"`))
+	assert.Equal(t, "False", CoerceType(`"False"`))
+
+	assert.Equal(t, "1.0", CoerceType(`"1.0"`))
+	assert.Equal(t, "1.01", CoerceType(`"1.01"`))
+
+	assert.Equal(t, "1.0a", CoerceType(`"1.0a"`))
 }
