@@ -72,17 +72,21 @@ Below is a comprehensive list of available configuration properties.
 
 |Property Name|Env Variable|Description|
 |---|---|---|
+|author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
+|name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
+|version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
-|admin.author|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
-|admin.name|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
-|admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|optly.sdkkeys|OPTIMIZELY_OPTLY_SDK_KEYS|List of SDK keys used to initialize on startup|
+|optly.processor.batchSize|OPTIMIZELY_OPTLY_PROCESSOR_BATCHSIZE|The number of events in a batch. Default: 10|
+|optly.processor.queueSize|OPTIMIZELY_OPTLY_PROCESSOR_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
+|optly.processor.flushInterval|OPTIMIZELY_OPTLY_PROCESSOR_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|

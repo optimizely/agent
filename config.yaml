@@ -78,7 +78,7 @@ opyly:
     processor:
         ## the number of events in a batch
         batchSize: 10
-        ## the size of the buffered queue, setting this too low may result in events being dropped
+        ## the max number of events pending dispatch, setting this too low may result in events being dropped
         queueSize: 1000
         ## the maximum time between events being dispatched
         flushInterval: 30s
