@@ -52,6 +52,7 @@ jobs:
         - PowerShell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
         - PowerShell -File "scripts\build.ps1" noninteractive
         - PowerShell -File "scripts\check_exe.ps1"
+      after_success:
         - ( [ ${TRAVIS_EVENT_TYPE} = "push" ] && [ ! -z ${TRAVIS_TAG} ] ) && scripts/upload_artifacts.sh
 
     - stage: build
