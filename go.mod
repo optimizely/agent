@@ -11,13 +11,14 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/optimizely/go-sdk v1.0.1-0.20200128173910-895dbc7355a5
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
+	github.com/pkg/errors v0.8.1
 	github.com/rs/zerolog v1.15.0
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.4
 )
 
 exclude (

@@ -38,35 +38,26 @@ s.headers.update({'X-Optimizely-SDK-Key': '<<YOUR-SDK-KEY>>'})
 
 Future examples will assume this session is being maintained.
 
-### List Features
-The `/features` endpoint returns a list of all available features.
+### Get current environment configuration
+The `/config` endpoint returns a manifest of the current working environment.
 
 ```python
-resp = s.get('http://localhost:8080/features')
-features = resp.json()
+resp = s.get('http://localhost:8080/v1/config')
+env = resp.json()
 
-for feature in features:
-    print(feature['Key'])
-```
-
-### Get Feature
-The `/features/:key` endpoint returns the feature associated with the key provided in the path parameter.
-
-```python
-feature_key = 'feature-key'
-resp = s.get('http://localhost:8080/features/{}'.format(feature_key))
-
-print(resp.json())
+for key in env['featuresMap']:
+    print(key)
 ```
 
 ### Activate Feature
-The `/users/:userId/features/:key` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user. In this case we'll provide a `userId` via a path parameter. The `userId` will be used to determine how the feature feature will be returned, if at all. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature available to a large audience.
+The `/activate?featureKey={key}` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user to make the relative bucketing decision. In this case we'll provide a `userId` via the request body. The `userId` will be used to determine how the feature feature will be evaluated. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature available to the selected audience.
 
 From an API standpoint the presence of a Feature Test or Rollout is abstracted away from the response and only the resulting variation or enabled feature is returned.
 
 ```python
-user_id = 'test-user'
-resp = s.post('http://localhost:8080/users/{}/features/{}'.format(user_id, feature_key))
+params = { "featureKey": "my-feature" }
+payload = { "userId": "test-user" }
+resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
 
 print(resp.json())
 ```

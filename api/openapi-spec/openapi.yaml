@@ -10,95 +10,28 @@ info:
 security:
   - SdkKeyAuth: []
 paths:
-  /experiments:
+  /v1/config:
     get:
-      summary: Return all experiments
-      operationId: listExperiments
-      description: List experiments returns all available experiments and their variations.
-      tags:
-        - experiments
+      summary: Return the Optimizely Config for the given environment
+      operationId: getConfig
+      description: Return all available experiment and features definitions for this environment.
       responses:
         '200':
           description: Valid response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Experiment'
+                description: Optimizely Configuration
+                $ref: '#/components/schemas/OptimizelyConfig'
         '403':
           $ref: '#/components/responses/Forbidden'
-  /experiments/{experimentKey}:
+  /v1/track:
     parameters:
-    - $ref: '#/components/parameters/experimentKeyParam'
-    get:
-      summary: Return variation for a given user and experiment
-      operationId: getExperiment
-      description: Get experiment returns the corresponding experiment for the given experimentKey.
-      tags:
-        - experiments
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Experiment'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Experiment does not exist
-  /features:
-    get:
-      summary: Return all features
-      operationId: listFeatures
-      description: List features returns all available features and their variations.
-      tags:
-        - features
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                description: List of features
-                type: array
-                items:
-                  $ref: '#/components/schemas/Feature'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /features/{featureKey}:
-    parameters:
-    - $ref: '#/components/parameters/featureKeyParam'
-    get:
-      summary: Return the feature
-      operationId: getFeature
-      description: Get feature returns the corresponding feature for the given featureKey.
-      tags:
-        - features
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Feature'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Experiment does not exist
-  /users/{userId}/events/{eventKey}:
-    parameters:
-    - $ref: '#/components/parameters/userIdParam'
-    - $ref: '#/components/parameters/eventKeyParam'
-    - $ref: '#/components/parameters/attributesParam'
+      - $ref: '#/components/parameters/eventKeyParam'
     post:
       summary: Track event for the given user.
       operationId: trackEvent
-      description: Posting and event sends user and event details to Optimizely’s analytics backend for the analysis of
-                   a feature test or a/b test.
-      tags:
-        - users
+      description: Track sends event and user details to Optimizely’s analytics backend for the analysis of a feature test or experiment.
       responses:
         '204':
           description: No content, user not included in the experiment
@@ -107,155 +40,41 @@ paths:
         '404':
           description: Event does not exist
       requestBody:
-        $ref: '#/components/requestBodies/EventTags'
-  /users/{userId}/experiments/{experimentKey}:
+        $ref: '#/components/requestBodies/TrackContext'
+  /v1/activate:
     parameters:
-    - $ref: '#/components/parameters/userIdParam'
-    - $ref: '#/components/parameters/experimentKeyParam'
-    - $ref: '#/components/parameters/attributesParam'
-    get:
-      summary: Return variation decision for an experiment
-      operationId: getVariation
-      description: Read the experiment decision for the supplied user ID and experiment key. Experiment variations do
-                   not have variables so the response simply contains the variation key and id.
-      tags:
-        - users
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Variation'
-        '204':
-          description: No content, user not included in the experiment
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Experiment does not exist
-    post:
-      summary: Activate experiment and return variation
-      operationId: activateExperiment
-      description: Read the experiment decision for the supplied user ID and experiment key. Experiment variations do
-                   not have variables so the response simply contains the variation key and id. This method will send a
-                   tracking impression event to the Optimizely analytics backend for experiment reporting.
-      tags:
-        - users
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Variation'
-        '204':
-          description: No content, user not included in the experiment
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Experiment does not exist
-  /users/{userId}/features:
-    parameters:
-      - $ref: '#/components/parameters/userIdParam'
-      - $ref: '#/components/parameters/attributesParam'
-    get:
-      summary: Return ALL features resulting from an experiment or rollout
-      operationId: listFeatureDecisions
-      description: List feature decisions iterates over all features and returns the feature decisions in the context
-                   of the given user. All features are included regardless of whether the feature is enabled. The
-                   response includes the enabled status of the feature in addition to any configured variables.
-      tags:
-        - users
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FeatureDecision'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-    post:
-      summary: Activate ALL features resulting from an experiment or rollout
-      operationId: activateAllFeatures
-      description: List feature decisions iterates over all features and returns the feature definition in the context
-                   of the given user. All features are included regardless of whether the feature is enabled. The
-                   response includes the enabled status of the feature in addition to any configured variables. Any
-                   feature that is part of a feature test(s) will also send an impression event to the Optimizely
-                   analytics backend for reporting analysis.
-      tags:
-        - users
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FeatureDecision'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /users/{userId}/features/{featureKey}:
-    parameters:
-    - $ref: '#/components/parameters/userIdParam'
-    - $ref: '#/components/parameters/featureKeyParam'
-    - $ref: '#/components/parameters/attributesParam'
-    get:
-      summary: Return feature resulting from an experiment or rollout
-      operationId: getFeatureDecision
-      description: Read the feature flag decision for the supplied user ID and experiment key.  The response is
-                   determined by the feature test(s) and/or feature rollout defined for the supplied feature key.
-      tags:
-        - users
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeatureDecision'
-        '204':
-          description: No content, user not included in the experiment
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Feature does not exist
-    post:
-      summary: Activate feature and return associated variable values
-      operationId: activateFeature
-      description: Read the feature flag decisions for the supplied user ID. The response value is determined by the
-                   feature test(s) and/or feature rollout defined for the supplied feature key. If the decision was mafe
-                   as part of a feature test, then this API will send an impression event to Optimizely tracking servers.
-      tags:
-        - users
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeatureDecision'
-        '204':
-          description: No content, user not included in the experiment
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Feature does not exist
-  /overrides/users/{userId}/experiments/{experimentKey}:
-    parameters:
-      - $ref: '#/components/parameters/userIdParam'
+      - $ref: '#/components/parameters/featureKeyParam'
       - $ref: '#/components/parameters/experimentKeyParam'
+      - $ref: '#/components/parameters/disableTrackingParam'
+      - $ref: '#/components/parameters/typeParam'
+      - $ref: '#/components/parameters/enabledParam'
+    post:
+      summary: Activate selected features and experiments for the given user.
+      operationId: activate
+      description: Activate iterates over all corresponding features
+        and experiments and returns the decision for the given user.
+        An impression event will sent to the Optimizely analytics backend
+        for any decision made for and experiment or feature test.
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Decision'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      requestBody:
+        $ref: '#/components/requestBodies/ActivateContext'
+  /v1/override:
     put:
-      summary: Set a forced variation for a user in an experiment
-      operationId: setForcedVariation
-      description: Set forced variation stores the experiment and variation detail to be consumed by future user
-        based decisions. This override is only stored locally and inmemory for debugging and testing purposes
-        and should not be used for production overrides.
-      tags:
-        - overrides
+      summary: Override an experiment decision for a user
+      operationId: override
+      description: Override a experiment or feature test decision used in future user based decisions. This override is only stored locally
+        in memory for debugging and testing purposes and should not be used
+        for production overrides.
       responses:
         '201':
           description: Forced variation set
@@ -266,79 +85,75 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
-        $ref: '#/components/requestBodies/Override'
-    delete:
-      summary: Remove any forced variation for a user in an experiment
-      operationId: deleteForcedVariation
-      description: Delete forced variation removes any stored variation override associated with the user and experiment.
-      tags:
-        - overrides
-      responses:
-        '204':
-          description: Any forced variation was deleted
-        '400':
-          description: Invalid user id or experiment key
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        $ref: '#/components/requestBodies/OverrideContext'
 components:
   parameters:
-    attributesParam:
+    disableTrackingParam:
       in: query
-      name: attributes
+      name: disableTracking
       required: false
+      description: Setting to true will disable impression tracking for ab experiments and feature tests.
       schema:
-        type: object
-        additionalProperties:
-          type: string
+        type: boolean
+    enabledParam:
+      in: query
+      name: enabled
+      required: false
+      description: Filter the activation response to return only enabled descisions.
+      schema:
+        type: boolean
     eventKeyParam:
-      in: path
+      in: query
       name: eventKey
       required: true
       description: Key of the event we're tracking
       schema:
         type: string
     experimentKeyParam:
-      in: path
+      in: query
       name: experimentKey
-      required: true
-      description: Key of the experiment we're activating
+      description: Key for the Optimizely Experiment
       schema:
-        type: string
+        type: array
+        items:
+          type: string
     featureKeyParam:
-      in: path
+      in: query
       name: featureKey
-      required: true
-      description: Key of the feature we're activating
+      description: Key for the Optimizely Feature
       schema:
-        type: string
-    userIdParam:
-      name: userId
-      in: path
-      required: true
-      description: Id associated with the user
-      schema:
-        type: string
-    variationKeyParam:
-      name: variationKey
-      in: path
-      required: true
-      description: Key of the variation we're fetching
-      schema:
-        type: string
-  requestBodies:
-    EventTags:
+        type: array
+        items:
+          type: string
+    typeParam:
+      in: query
+      name: type
       required: false
-      content:
-        application/json:
-          schema:
-            type: object
-            additionalProperties: true
-    Override:
+      description: Limit the decisions to either experiment or features
+      schema:
+        type: string
+        enum:
+          - features
+          - experiments
+  requestBodies:
+    ActivateContext:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Override'
+            $ref: '#/components/schemas/ActivateContext'
+    OverrideContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OverrideContext'
+    TrackContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TrackContext'
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -361,10 +176,9 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Variation'
-      # Both properties are required
       required:
-      - id
-      - key
+        - id
+        - key
     Feature:
       properties:
         id:
@@ -379,37 +193,89 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Experiment'
-      # Both properties are required
       required:
-      - id
-      - key
-    FeatureDecision:
+        - id
+        - key
+    Decision:
       properties:
-        id:
-          type: integer
-        key:
+        #        id:
+        #          type: integer
+        featureKey:
           type: string
+        experimentKey:
+          type: string
+        variationKey:
+          type: string
+        type:
+          type: string
+          enum:
+            - feature
+            - experiment
         enabled:
           type: boolean
         variables:
           type: object
           additionalProperties:
             type: string
-      # Both properties are required
       required:
-      - id
-      - key
-    Override:
+        #        - id
+        - key
+    ActivateContext:
       properties:
-        variationKey:
+        userId:
           type: string
+        userAttributes:
+          type: object
+          additionalProperties: true
+    DescribeContext:
+      properties:
+        experimentKey:
+          type: array
+          items:
+            type: string
+        featureKey:
+          type: array
+          items:
+            type: string
+    OverrideContext:
+      type: array
+      items:
+        type: object
+        properties:
+          userId:
+            type: string
+          experimentKey:
+            type: string
+          variationKey:
+            type: string
+    OptimizelyConfig:
+      properties:
+        revision:
+          type: string
+        experimentMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Experiment'
+        featureMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Feature'
+    TrackContext:
+      properties:
+        eventTags:
+          type: object
+          additionalProperties: true
+        userId:
+          type: string
+        userAttributes:
+          type: object
+          additionalProperties: true
     Variation:
       properties:
         id:
           type: string
         key:
           type: string
-      # Both properties are required
       required:
         - id
         - key
@@ -431,20 +297,3 @@ components:
       in: header
       name: X-Optimizely-SDK-Key
       type: apiKey
-tags:
-  - name: experiments
-    description: Collection of APIs to describe the Optimizely Experiment set.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: features
-    description: Collection of APIs to describe the Optimizely Feature set.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: users
-    description: Collection of APIs to make decisions given the context of a specified user.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: overrides
-    description: Collection of APIs used to override the default decision logic.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
