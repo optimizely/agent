@@ -24,13 +24,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
-
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
-	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
+
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/suite"
 )
 
