@@ -6,7 +6,12 @@ author: "Optimizely Inc."
 name: "optimizely"
 ## version of the application included in the /info response and startup logs
 ## Defaults to the latest git tag `git describe --tags`
-#    version: custom-build
+#version: custom-build
+
+## list of SDK keys to be pre-fetched during startup (recommended for production)
+#sdkkeys:
+#    - <sdk-key-1>
+#    - <sdk-key-2>
 
 ##
 ## log: logger configuration
@@ -67,18 +72,12 @@ webhook:
 #            skipSignatureCheck: true
 
 ##
-## optly (short for optimizely) configs are passed used to configure the underlying SDK instance
+## event processor configurations
 ##
-opyly:
-#    ## list of SDK keys to be pre-fetched during startup (recommended for production)
-#    sdkkeys:
-#        - <sdk-key-1>
-#        - <sdk-key-2>
-    ## event processor configurations
-    processor:
-        ## the number of events in a batch
-        batchSize: 10
-        ## the max number of events pending dispatch, setting this too low may result in events being dropped
-        queueSize: 1000
-        ## the maximum time between events being dispatched
-        flushInterval: 30s
+processor:
+    ## the number of events in a batch
+    batchSize: 10
+    ## the max number of events pending dispatch, setting this too low may result in events being dropped
+    queueSize: 1000
+    ## the maximum time between events being dispatched
+    flushInterval: 30s
