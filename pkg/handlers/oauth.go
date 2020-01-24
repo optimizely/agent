@@ -65,8 +65,6 @@ func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
 }
 
 func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w http.ResponseWriter, r *http.Request) {
-	// Create a new token object, specifying signing method and the claims
-	// you would like it to contain.
 	expires := time.Now().Add(ttl).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sdk_key": sdkKey,
