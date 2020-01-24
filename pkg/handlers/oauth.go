@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,22 +18,16 @@
 package handlers
 
 import (
-	"crypto/subtle"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/middleware"
 	"net/http"
 	"time"
 )
 
-type clientCredentials struct {
-	ttl    time.Duration
-	secret []byte
-}
-
 type OAuthHandler struct {
-	clientCredentials map[string]clientCredentials
 	hmacSecret        []byte
 }
 
@@ -44,25 +38,9 @@ type tokenResponse struct {
 
 func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	h := &OAuthHandler{
-		clientCredentials: make(map[string]clientCredentials),
-		// TODO: return error if empty string secret
 		hmacSecret:     []byte(authConfig.HMACSecret),
 	}
-	for _, clientCreds := range authConfig.Clients {
-		h.clientCredentials[clientCreds.ID] = clientCredentials{
-			secret: []byte(clientCreds.Secret),
-			ttl:    authConfig.TTL,
-		}
-	}
 	return h
-}
-
-func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
-	reqSecret := []byte(reqSecretStr)
-	if len(configSecret) != len(reqSecret) {
-		return false
-	}
-	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
 }
 
 func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w http.ResponseWriter, r *http.Request) {
@@ -81,32 +59,19 @@ func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w 
 // GetAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
 func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
-	grantType := queryParams.Get("grant_type")
-	if grantType == "" {
-		RenderError(errors.New("grant_type query parameter required"), http.StatusBadRequest, w, r)
-		return
-	}
-	clientID := queryParams.Get("client_id")
-	if clientID == "" {
-		RenderError(errors.New("client_id query parameter required"), http.StatusBadRequest, w, r)
-		return
-	}
-	clientSecret := queryParams.Get("client_secret")
-	if clientSecret == "" {
-		RenderError(errors.New("client_secret query parameter required"), http.StatusBadRequest, w, r)
-		return
-	}
 	sdkKey := queryParams.Get("sdk_key")
 	if sdkKey == "" {
 		RenderError(errors.New("sdk_key query parameter required"), http.StatusBadRequest, w, r)
 		return
 	}
 
-	clientCreds, ok := h.clientCredentials[clientID]
-	if ok && matchClientSecret(clientSecret, clientCreds.secret) {
-		renderTokenResponse(sdkKey, clientCreds.ttl, h.hmacSecret, w, r)
-	} else {
-		RenderError(errors.New("Invalid client_id or client_secret"), http.StatusUnauthorized, w, r)
+	clientCreds, err := middleware.GetClientCreds(r)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetClientCreds")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
 	}
+
+	renderTokenResponse(sdkKey, clientCreds.TTL, h.hmacSecret, w, r)
 }
 

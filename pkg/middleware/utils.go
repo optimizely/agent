@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -34,6 +34,9 @@ import (
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
+
+// Type for strings used as context keys by middlewares
+type contextKey string
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.
 func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
@@ -85,4 +88,13 @@ func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
 		return nil, fmt.Errorf("experiment not available")
 	}
 	return experiment, nil
+}
+
+// GetClientCreds returns OAuth client credentials from the request context
+func GetClientCreds(r *http.Request) (*ClientCredentials, error) {
+	clientCreds, ok := r.Context().Value(oAuthClientCreds).(*ClientCredentials)
+	if !ok {
+		return nil, fmt.Errorf("client credentials not available")
+	}
+	return clientCreds, nil
 }

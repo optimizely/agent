@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -40,6 +40,7 @@ type APIOptions struct {
 	userAPI         handlers.UserAPI
 	metricsRegistry *metrics.Registry
 	oAuthHandler    *handlers.OAuthHandler
+	authConfig      *config.ServiceAuthConfig
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
@@ -52,6 +53,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		userAPI:         new(handlers.UserHandler),
 		metricsRegistry: metricsRegistry,
 		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
+		authConfig:      &conf.Auth,
 	}
 
 	return NewAPIRouter(spec)
@@ -110,7 +112,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
 
-	r.Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
+	r.With(middleware.OAuthMiddleware(opt.authConfig)).Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
 
 	return r
 }
