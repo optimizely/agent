@@ -20,6 +20,7 @@ package handlers
 import (
 	"crypto/subtle"
 	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/optimizely/agent/config"
 	"net/http"
 	"time"
@@ -59,8 +60,25 @@ func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
 	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
 }
 
-// GetAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
-func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
+func renderTokenResponse(sdkKey string, ttl time.Duration, w http.ResponseWriter, r *http.Request) {
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sdk_key": sdkKey,
+		"expires": time.Now().Add(ttl).Unix(),
+	})
+	// TODO: get signing secret from config
+	tokenString, err := token.SignedString([]byte("hmacseekrit"))
+	if err != nil {
+		RenderError(err, http.StatusInternalServerError, w, r)
+	}
+	w.Header().Set("Content-Type", "application/jwt")
+	w.WriteHeader(200)
+	w.Write([]byte(tokenString))
+}
+
+// GetAPIAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
+func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	grantType := queryParams.Get("grant_type")
 	if grantType == "" {
@@ -77,10 +95,15 @@ func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 		RenderError(errors.New("client_secret query parameter required"), http.StatusBadRequest, w, r)
 		return
 	}
+	sdkKey := queryParams.Get("sdk_key")
+	if clientSecret == "" {
+		RenderError(errors.New("sdk_key query parameter required"), http.StatusBadRequest, w, r)
+		return
+	}
 
 	for _, clientCreds := range h.clientCredentials {
 		if clientCreds.id == clientID && matchClientSecret(clientSecret, clientCreds.secret) {
-			w.WriteHeader(http.StatusOK)
+			renderTokenResponse(sdkKey, clientCreds.ttl, w, r)
 			return
 		}
 	}

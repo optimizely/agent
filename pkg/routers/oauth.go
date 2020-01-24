@@ -27,6 +27,6 @@ import (
 func NewOAuthRouter(authConfigs []*config.ServiceAuthConfig) *chi.Mux {
 	r := chi.NewRouter()
 	handler := handlers.NewOAuthHandler(authConfigs)
-	r.Get("/oauth/v2/accessToken", handler.GetAccessToken)
+	r.Get("/oauth/v2/api/accessToken", handler.GetAPIAccessToken)
 	return r
 }
