@@ -69,7 +69,7 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	messageChan := make(MessageChan)
 
 	// Each connection also adds one decision listener
-	id,err := optlyClient.DecisionService.OnDecision(func(decision notification.DecisionNotification) {
+	id, err2 := optlyClient.DecisionService.OnDecision(func(decision notification.DecisionNotification) {
 		jsonEvent, err := json.Marshal(decision)
 		if err != nil {
 			middleware.GetLogger(req).Error().Str("decision", string(decision.Type)).Msg("encoding decision to json")
@@ -78,8 +78,8 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 		}
 	})
 
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, rw, req)
+	if err2 != nil {
+		RenderError(err2, http.StatusUnprocessableEntity, rw, req)
 		return
 	}
 
