@@ -68,6 +68,23 @@ func TestAppInfoHandler(t *testing.T) {
 	assert.NotEmpty(t, actual.Uptime)
 }
 
+func TestAppConfigHandler(t *testing.T) {
+
+	req := httptest.NewRequest("GET", "/config", nil)
+	rec := httptest.NewRecorder()
+
+	a := NewAdmin(testConfig)
+	a.AppConfig(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
+
+	actual := &config.AgentConfig{}
+	err := json.Unmarshal(rec.Body.Bytes(), actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, &testConfig, actual)
+}
+
 func TestAppInfoHeaderHandler(t *testing.T) {
 	req := httptest.NewRequest("GET", "/info", nil)
 	rec := httptest.NewRecorder()
