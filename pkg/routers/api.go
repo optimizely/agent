@@ -39,6 +39,7 @@ type APIOptions struct {
 	featureAPI      handlers.FeatureAPI
 	userAPI         handlers.UserAPI
 	metricsRegistry *metrics.Registry
+	oAuthHandler    *handlers.OAuthHandler
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
@@ -50,6 +51,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		featureAPI:      new(handlers.FeatureHandler),
 		userAPI:         new(handlers.UserHandler),
 		metricsRegistry: metricsRegistry,
+		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
 	}
 
 	return NewAPIRouter(spec)
@@ -107,6 +109,8 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
+
+	r.Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAPIAccessToken)
 
 	return r
 }

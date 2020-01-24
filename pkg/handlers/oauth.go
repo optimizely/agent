@@ -38,20 +38,18 @@ type OAuthHandler struct {
 	hmacSecret        []byte
 }
 
-func NewOAuthHandler(authConfigs []*config.ServiceAuthConfig, hmacSecret string) *OAuthHandler {
+func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	h := &OAuthHandler{
 		clientCredentials: []clientCredentials{},
 		// TODO: return error if empty string secret
-		hmacSecret: []byte(hmacSecret),
+		hmacSecret: []byte(authConfig.HMACSecret),
 	}
-	for _, authConfig := range authConfigs {
-		for _, clientCreds := range authConfig.Clients {
-			h.clientCredentials = append(h.clientCredentials, clientCredentials{
-				id:     clientCreds.ID,
-				secret: []byte(clientCreds.Secret),
-				ttl:    authConfig.TTL,
-			})
-		}
+	for _, clientCreds := range authConfig.Clients {
+		h.clientCredentials = append(h.clientCredentials, clientCredentials{
+			id:     clientCreds.ID,
+			secret: []byte(clientCreds.Secret),
+			ttl:    authConfig.TTL,
+		})
 	}
 	return h
 }
@@ -76,7 +74,7 @@ func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w 
 	}
 	render.JSON(w, r, map[string]interface{}{
 		"access_token": tokenString,
-		"expires": expires,
+		"expires":      expires,
 	})
 }
 
