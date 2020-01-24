@@ -56,7 +56,8 @@ func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry 
 	return cache
 }
 
-func (c *OptlyCache) init(sdkKeys []string) {
+// Init takes a slice of sdkKeys to warm the cache upon startup
+func (c *OptlyCache) Init(sdkKeys []string) {
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
@@ -71,7 +72,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.conf.Processor, c.metricsRegistry)
+	oc, err := c.loader(sdkKey, c.conf, c.metricsRegistry)
 	if err != nil {
 		return oc, err
 	}
