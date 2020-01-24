@@ -40,12 +40,10 @@ func NewDefaultConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
-		Optly: OptlyConfig{
-			Processor: ProcessorConfig{
-				BatchSize:     10,
-				QueueSize:     1000,
-				FlushInterval: 30 * time.Second,
-			},
+		Processor: ProcessorConfig{
+			BatchSize:     10,
+			QueueSize:     1000,
+			FlushInterval: 30 * time.Second,
 		},
 		Server: ServerConfig{
 			ReadTimeout:  5 * time.Second,
@@ -65,18 +63,19 @@ type AgentConfig struct {
 	Author  string `yaml:"author" json:"author"`
 	Name    string `yaml:"name" json:"name"`
 
-	Admin   AdminConfig   `yaml:"admin" json:"admin"`
-	API     APIConfig     `yaml:"api" json:"api"`
-	Log     LogConfig     `yaml:"log" json:"log"`
-	Optly   OptlyConfig   `yaml:"optly" json:"optly"`
-	Server  ServerConfig  `yaml:"server" json:"server"`
-	Webhook WebhookConfig `yaml:"webhook" json:"webhook"`
+	SDKKeys []string `yaml:"sdkkeys" json:"sdkkeys"`
+
+	Admin     AdminConfig     `yaml:"admin" json:"admin"`
+	API       APIConfig       `yaml:"api" json:"api"`
+	Log       LogConfig       `yaml:"log" json:"log"`
+	Processor ProcessorConfig `yaml:"processor" json:"processor"`
+	Server    ServerConfig    `yaml:"server" json:"server"`
+	Webhook   WebhookConfig   `yaml:"webhook" json:"webhook"`
 }
 
 // OptlyConfig holds the set of SDK keys to bootstrap during initialization
 type OptlyConfig struct {
 	Processor ProcessorConfig `yaml:"processor" json:"processor"`
-	SDKKeys   []string        `yaml:"sdkkeys" json:"sdkkeys"`
 }
 
 // ProcessorConfig holds the configuration options for the Optimizely Event Processor.

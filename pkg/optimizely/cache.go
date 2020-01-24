@@ -38,12 +38,12 @@ type OptlyCache struct {
 	optlyMap        cmap.ConcurrentMap
 	ctx             context.Context
 	wg              sync.WaitGroup
-	conf            config.OptlyConfig
+	conf            config.ProcessorConfig
 	metricsRegistry *MetricsRegistry
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.OptlyConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 	cache := &OptlyCache{
 		ctx:             ctx,
 		wg:              sync.WaitGroup{},
@@ -53,12 +53,11 @@ func NewCache(ctx context.Context, conf config.OptlyConfig, metricsRegistry *Met
 		metricsRegistry: metricsRegistry,
 	}
 
-	cache.init()
 	return cache
 }
 
-func (c *OptlyCache) init() {
-	for _, sdkKey := range c.conf.SDKKeys {
+func (c *OptlyCache) init(sdkKeys []string) {
+	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
 		}

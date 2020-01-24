@@ -43,4 +43,8 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)
+
+	assert.Equal(t, 10, conf.Processor.BatchSize)
+	assert.Equal(t, 1000, conf.Processor.QueueSize)
+	assert.Equal(t, 30*time.Second, conf.Processor.FlushInterval)
 }
