@@ -54,8 +54,8 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	}
 
 	if optlyClient == nil {
-		err := fmt.Errorf("optlyContext not available")
-		RenderError(err, http.StatusUnprocessableEntity, rw, req)
+		e := fmt.Errorf("optlyContext not available")
+		RenderError(e, http.StatusUnprocessableEntity, rw, req)
 		return
 	}
 
@@ -85,12 +85,13 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 
 	// Remove the decision listener if we exited.
 	defer func() {
-		optlyClient.DecisionService.RemoveOnDecision(id)
+		err := optlyClient.DecisionService.RemoveOnDecision(id)
+		middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
 	}()
 
 	// "raw" query string option
 	// If provided, send raw JSON lines instead of SSE-compliant strings.
-	req.ParseForm()
+	_ = req.ParseForm()
 	raw := len(req.Form["raw"]) > 0
 
 	// Listen to connection close and un-register messageChan
@@ -99,7 +100,8 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	// remove the decision listener if the connection is closed
 	go func() {
 		<-notify
-		optlyClient.DecisionService.RemoveOnDecision(id)
+		err := optlyClient.DecisionService.RemoveOnDecision(id)
+		middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
 	}()
 
 	// block waiting or messages broadcast on this connection's messageChan
@@ -107,10 +109,10 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 		// Write to the ResponseWriter
 		if raw {
 			// Raw JSON events, one per line
-			fmt.Fprintf(rw, "%s\n", <-messageChan)
+			_, _ = fmt.Fprintf(rw, "%s\n", <-messageChan)
 		} else {
 			// Server Sent Events compatible
-			fmt.Fprintf(rw, "data: %s\n\n", <-messageChan)
+			_, _ = fmt.Fprintf(rw, "data: %s\n\n", <-messageChan)
 		}
 		// Flush the data immediately instead of buffering it for later.
 		// The flush will fail if the connection is closed.  That will cause the handler to exit.
