@@ -106,11 +106,11 @@ type APIConfig struct {
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Auth     ServiceAuthConfig `yaml:"auth"`
-	Version string `yaml:"version"`
-	Author  string `yaml:"author"`
-	Name    string `yaml:"name"`
-	Port    string `yaml:"port"`
+	Auth    ServiceAuthConfig `yaml:"auth"`
+	Version string            `yaml:"version"`
+	Author  string            `yaml:"author"`
+	Name    string            `yaml:"name"`
+	Port    string            `yaml:"port"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
@@ -140,5 +140,6 @@ type ServiceAuthConfig struct {
 
 // OAuthConfig holds the configuration for the OAuth API
 type OAuthConfig struct {
-	Port string `yaml:"port"`
+	Port       string `yaml:"port"`
+	HMACSecret string `yaml:"hmacSecret"`
 }

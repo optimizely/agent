@@ -121,6 +121,7 @@ func main() {
 	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
 	sg.GoListenAndServe("oauth", conf.OAuth.Port, routers.NewOAuthRouter(
+		&conf.OAuth,
 		// TODO: any way to represent this more elegantly in config?
 		// Bad: directly reading the Auth properties of the service configs, needing to hard-code this list here
 		[]*config.ServiceAuthConfig{

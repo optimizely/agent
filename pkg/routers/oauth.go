@@ -24,9 +24,9 @@ import (
 )
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewOAuthRouter(authConfigs []*config.ServiceAuthConfig) *chi.Mux {
+func NewOAuthRouter(conf *config.OAuthConfig, authConfigs []*config.ServiceAuthConfig) *chi.Mux {
 	r := chi.NewRouter()
-	handler := handlers.NewOAuthHandler(authConfigs)
+	handler := handlers.NewOAuthHandler(authConfigs, conf.HMACSecret)
 	r.Get("/oauth/v2/api/accessToken", handler.GetAPIAccessToken)
 	return r
 }

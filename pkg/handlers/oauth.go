@@ -21,31 +21,35 @@ import (
 	"crypto/subtle"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
 	"net/http"
 	"time"
 )
 
 type clientCredentials struct {
-	id        string
-	ttl       time.Duration
-	secret    []byte
+	id     string
+	ttl    time.Duration
+	secret []byte
 }
 
 type OAuthHandler struct {
 	clientCredentials []clientCredentials
+	hmacSecret        []byte
 }
 
-func NewOAuthHandler(authConfigs []*config.ServiceAuthConfig) *OAuthHandler {
+func NewOAuthHandler(authConfigs []*config.ServiceAuthConfig, hmacSecret string) *OAuthHandler {
 	h := &OAuthHandler{
 		clientCredentials: []clientCredentials{},
+		// TODO: return error if empty string secret
+		hmacSecret: []byte(hmacSecret),
 	}
 	for _, authConfig := range authConfigs {
 		for _, clientCreds := range authConfig.Clients {
 			h.clientCredentials = append(h.clientCredentials, clientCredentials{
-				id:        clientCreds.ID,
-				secret:    []byte(clientCreds.Secret),
-				ttl:       authConfig.TTL,
+				id:     clientCreds.ID,
+				secret: []byte(clientCreds.Secret),
+				ttl:    authConfig.TTL,
 			})
 		}
 	}
@@ -60,21 +64,22 @@ func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
 	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
 }
 
-func renderTokenResponse(sdkKey string, ttl time.Duration, w http.ResponseWriter, r *http.Request) {
+func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w http.ResponseWriter, r *http.Request) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
+	expires := time.Now().Add(ttl).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sdk_key": sdkKey,
-		"expires": time.Now().Add(ttl).Unix(),
+		"expires": expires,
 	})
-	// TODO: get signing secret from config
-	tokenString, err := token.SignedString([]byte("hmacseekrit"))
+	tokenString, err := token.SignedString(hmacSecret)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 	}
-	w.Header().Set("Content-Type", "application/jwt")
-	w.WriteHeader(200)
-	w.Write([]byte(tokenString))
+	render.JSON(w, r, map[string]interface{}{
+		"access_token": tokenString,
+		"expires": expires,
+	})
 }
 
 // GetAPIAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
@@ -103,7 +108,7 @@ func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request)
 
 	for _, clientCreds := range h.clientCredentials {
 		if clientCreds.id == clientID && matchClientSecret(clientSecret, clientCreds.secret) {
-			renderTokenResponse(sdkKey, clientCreds.ttl, w, r)
+			renderTokenResponse(sdkKey, clientCreds.ttl, h.hmacSecret, w, r)
 			return
 		}
 	}
