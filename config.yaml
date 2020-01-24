@@ -40,7 +40,7 @@ server:
 ##
 api:
     ## the maximum number of concurrent requests handled by the api listener
-    maxconns: 100
+#    maxconns: 10000
     ## http listener port
     port: "8080"
 
