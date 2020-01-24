@@ -1,0 +1,66 @@
+## config.yaml provides a default set of configuration options
+
+##
+## log: logger configuration
+##
+log:
+    ## log level used to filter logs of lesser severity (from highest to lowest):
+    ## panic, fatal, error, warn, info, debug, trace
+    level: info
+    ## enable pretty colorized console logging. setting to false will output
+    ## structured JSON logs. Recommended false in production.
+    pretty: true
+
+##
+## http server configuration
+##
+server:
+    ## the maximum duration for reading the entire request, including the body.
+    ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
+    readtimeout: 5s
+    ## the maximum duration before timing out writes of the response.
+    ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
+    writetimeout: 10s
+
+##
+## api service configuration
+##
+api:
+    ## the maximum number of concurrent requests handled by the api listener
+    maxconns: 100
+    ## http listener port
+    port: "8080"
+
+##
+## admin service configuration
+##
+admin:
+    ## service author included in the /info response
+    author: "Optimizely Inc."
+    ## name of the running application included in the /info response
+    name: "optimizely"
+#    ## version of the application included in the /info response and startup logs
+#    ## Defaults to the latest git tag `git describe --tags`
+#    version: custom-build
+    ## http listener port
+    port: "8088"
+
+##
+## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will
+## trigger an immediate download of the datafile from the CDN
+##
+webhook:
+    ## http listener port
+    port: "8089"
+#    ## a map of Optimizely Projects to one or more SDK keys
+#    projects:
+#        ## <project-id>: Optimizely project id as an integer
+#        <project-id>:
+#            ## sdkKeys: a list of SDKs linked to this project
+#            sdkKeys:
+#                - <sdk-key-1>
+#                - <sdk-key-1>
+#            ## secret: webhook secret used the validate the notification
+#            secret: <secret-10000>
+#            ## skipSignatureCheck: override the signature check (not recommended for production)
+#            skipSignatureCheck: true

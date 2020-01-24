@@ -20,8 +20,11 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/optimizely/agent/pkg/optimizely"
+
+	"github.com/optimizely/go-sdk/pkg/config"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
@@ -65,4 +68,51 @@ func GetLogger(r *http.Request) *zerolog.Logger {
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
 	render.Status(r, status)
 	render.JSON(w, r, ErrorResponse{Error: err.Error()})
+}
+
+// GetFeature returns an OptimizelyFeature from the request context
+func GetFeature(r *http.Request) (*config.OptimizelyFeature, error) {
+	feature, ok := r.Context().Value(OptlyFeatureKey).(*config.OptimizelyFeature)
+	if !ok {
+		return nil, fmt.Errorf("feature not available")
+	}
+	return feature, nil
+}
+
+// GetExperiment returns an OptimizelyExperiment from the request context
+func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
+	experiment, ok := r.Context().Value(OptlyExperimentKey).(*config.OptimizelyExperiment)
+	if !ok {
+		return nil, fmt.Errorf("experiment not available")
+	}
+	return experiment, nil
+}
+
+// CoerceType coerces typed value from string
+func CoerceType(s string) interface{} {
+
+	if u, err := strconv.Unquote(s); err == nil {
+		if u != s {
+			return u
+		}
+	}
+
+	if i, err := strconv.ParseInt(s, 10, 0); err == nil {
+		return i
+	}
+
+	if d, err := strconv.ParseFloat(s, 64); err == nil {
+		return d
+	}
+
+	// Not using ParseBool since is support too many variants (e.g. 0, 1, FALSE, TRUE)
+	if s == "false" {
+		return false
+	}
+
+	if s == "true" {
+		return true
+	}
+
+	return s
 }

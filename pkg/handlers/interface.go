@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -48,6 +48,10 @@ type UserAPI interface {
 
 	ActivateExperiment(w http.ResponseWriter, r *http.Request)
 	GetVariation(w http.ResponseWriter, r *http.Request)
+}
+
+// UserOverrideAPI defines supported override functionality
+type UserOverrideAPI interface {
 	SetForcedVariation(w http.ResponseWriter, r *http.Request)
 	RemoveForcedVariation(w http.ResponseWriter, r *http.Request)
 }

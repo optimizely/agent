@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -25,13 +25,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
-
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -62,6 +61,34 @@ func (o *UserMW) UserCtx(next http.Handler) http.Handler {
 	})
 }
 
+func (o *UserMW) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		featureKey := chi.URLParam(r, "featureKey")
+		if featureKey == "feature-missing" {
+			next.ServeHTTP(w, r)
+		} else {
+			feature := config.OptimizelyFeature{Key: featureKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyFeatureKey, &feature)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+	})
+
+}
+
+func (o *UserMW) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		experimentKey := chi.URLParam(r, "experimentKey")
+		if experimentKey == "experiment-missing" {
+			next.ServeHTTP(w, r)
+		} else {
+			experiment := config.OptimizelyExperiment{Key: experimentKey}
+			ctx := context.WithValue(r.Context(), middleware.OptlyExperimentKey, &experiment)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+	})
+
+}
+
 // Setup Mux
 func (suite *UserTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
@@ -80,14 +107,12 @@ func (suite *UserTestSuite) SetupTest() {
 	mux.Post("/events/{eventKey}/", userAPI.TrackEvent) // Needed to assert non-empty eventKey
 
 	mux.Get("/features", userAPI.ListFeatures)
-	mux.Get("/features/{featureKey}", userAPI.GetFeature)
+	mux.With(userMW.FeatureCtx).Get("/features/{featureKey}", userAPI.GetFeature)
 	mux.Post("/features", userAPI.TrackFeatures)
-	mux.Post("/features/{featureKey}", userAPI.TrackFeature)
+	mux.With(userMW.FeatureCtx).Post("/features/{featureKey}", userAPI.TrackFeature)
 
-	mux.Get("/experiments/{experimentKey}", userAPI.GetVariation)
-	mux.Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
-	mux.Put("/experiments/{experimentKey}/variations/{variationKey}", userAPI.SetForcedVariation)
-	mux.Delete("/experiments/{experimentKey}/variations", userAPI.RemoveForcedVariation)
+	mux.With(userMW.ExperimentCtx).Get("/experiments/{experimentKey}", userAPI.GetVariation)
+	mux.With(userMW.ExperimentCtx).Post("/experiments/{experimentKey}", userAPI.ActivateExperiment)
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -170,14 +195,11 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.Equal("testUser", impression.VisitorID)
 }
 
-func (suite *UserTestSuite) TestGetFeaturesMissingFeature() {
-	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-	// pass 'nil' as the third parameter.
+func (suite *UserTestSuite) TestGetFeatureMissingFeature() {
 	req := httptest.NewRequest("POST", "/features/feature-missing", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code) // TODO should this 404
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *UserTestSuite) TestTrackEventNoTags() {
@@ -254,74 +276,6 @@ func (suite *UserTestSuite) TestTrackEventEmptyKey() {
 	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
 }
 
-func (suite *UserTestSuite) TestSetForcedVariation() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
-	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-
-	req := httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusCreated, rec.Code)
-
-	req = httptest.NewRequest("GET", "/features/my_feat", nil)
-	rec = httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	var actual Feature
-	json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.True(actual.Enabled)
-
-	req = httptest.NewRequest("PUT", "/experiments/"+featureExp.Key+"/variations/variation_enabled", nil)
-	rec = httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNoContent, rec.Code)
-
-	req = httptest.NewRequest("GET", "/features/my_feat", nil)
-	rec = httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	var actualRepeated Feature
-	json.Unmarshal(rec.Body.Bytes(), &actualRepeated)
-	suite.True(actualRepeated.Enabled)
-}
-
-func (suite *UserTestSuite) TestSetForcedVariationEmptyExperimentKey() {
-	req := httptest.NewRequest("PUT", "/experiments//variations/variation_enabled", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *UserTestSuite) TestRemoveForcedVariation() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
-	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-
-	suite.tc.ForcedVariations.SetVariation(decision.ExperimentOverrideKey{
-		ExperimentKey: featureExp.Key,
-		UserID:        "testUser",
-	}, "variation_enabled")
-
-	req := httptest.NewRequest("DELETE", "/experiments/"+featureExp.Key+"/variations", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNoContent, rec.Code)
-
-	req = httptest.NewRequest("GET", "/features/my_feat", nil)
-	rec = httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusOK, rec.Code)
-	var actual Feature
-	json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.False(actual.Enabled)
-}
-
-func (suite *UserTestSuite) TestRemoveForcedVariationEmptyExperimentKey() {
-	req := httptest.NewRequest("DELETE", "/experiments//variations", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
 func (suite *UserTestSuite) TestGetVariation() {
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
@@ -347,11 +301,10 @@ func (suite *UserTestSuite) TestGetVariation() {
 }
 
 func (suite *UserTestSuite) TestGetVariationMissingExperiment() {
-	req := httptest.NewRequest("GET", "/experiments/one", nil)
+	req := httptest.NewRequest("GET", "/experiments/experiment-missing", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 
 	// Unmarshal response
 	var actual Variation
@@ -508,7 +461,7 @@ func TestUserMissingClientCtx(t *testing.T) {
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		http.HandlerFunc(handler).ServeHTTP(rec, req)
-		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
+		assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
 	}
 }
 
@@ -527,14 +480,12 @@ func TestUserMissingOptlyCtx(t *testing.T) {
 		userHandler.TrackFeature,
 		userHandler.TrackFeatures,
 		userHandler.TrackEvent,
-		userHandler.SetForcedVariation,
-		userHandler.RemoveForcedVariation,
 	}
 
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
-		assertError(t, rec, "optlyContext not available", http.StatusUnprocessableEntity)
+		assertError(t, rec, "optlyContext not available", http.StatusInternalServerError)
 	}
 }
 

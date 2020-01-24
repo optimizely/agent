@@ -20,7 +20,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -46,7 +45,7 @@ type ExperimentHandler struct{}
 func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 	experiments, err := optlyClient.ListExperiments()
@@ -60,15 +59,9 @@ func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Reque
 
 // GetExperiment - Get requested experiment
 func (h *ExperimentHandler) GetExperiment(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
+	experiment, err := middleware.GetExperiment(r)
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-	experimentKey := chi.URLParam(r, "experimentKey")
-	experiment, err := optlyClient.GetExperiment(experimentKey)
-	if err != nil {
-		middleware.GetLogger(r).Error().Str("experimentKey", experimentKey).Msg("Calling GetExperiment")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetExperiment")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

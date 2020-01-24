@@ -14,53 +14,30 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package middleware //
-package middleware
+// Package optimizely //
+package optimizely
 
 import (
-	"context"
-	"net/http"
-	"time"
-
 	"github.com/optimizely/agent/pkg/metrics"
+	go_sdk_metrics "github.com/optimizely/go-sdk/pkg/metrics"
 )
 
-type contextString string
-
-const responseTime = contextString("responseTime")
-
-// Metricize updates counts, total response time, and response time histogram
-// for each URL hit, key being a combination of a method and route pattern
-func Metricize(key string, metricsRegistry *metrics.Registry) func(http.Handler) http.Handler {
-	singleMetric := metricsRegistry.NewTimer(key)
-
-	f := func(h http.Handler) http.Handler {
-
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			startTime, ok := ctx.Value(responseTime).(time.Time)
-			if ok {
-				defer func() {
-					endTime := time.Now()
-					timeDiff := endTime.Sub(startTime).Seconds() * 1000.0 // display time in milliseconds
-					singleMetric.Update(timeDiff)
-				}()
-			}
-
-			h.ServeHTTP(w, r)
-		}
-		return http.HandlerFunc(fn)
-	}
-	return f
+// MetricsRegistry initializes metrics registry
+type MetricsRegistry struct {
+	registry *metrics.Registry
 }
 
-// SetTime middleware sets the start time in request context
-func SetTime(next http.Handler) http.Handler {
+// NewRegistry initializes metrics registry
+func NewRegistry(registry *metrics.Registry) *MetricsRegistry {
+	return &MetricsRegistry{registry: registry}
+}
 
-	fn := func(w http.ResponseWriter, r *http.Request) {
+// GetCounter gets sdk Counter
+func (m *MetricsRegistry) GetCounter(key string) go_sdk_metrics.Counter {
+	return m.registry.GetCounter(key)
+}
 
-		ctx := context.WithValue(r.Context(), responseTime, time.Now())
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-	return http.HandlerFunc(fn)
+// GetGauge gets sdk Gauge
+func (m *MetricsRegistry) GetGauge(key string) go_sdk_metrics.Gauge {
+	return m.registry.GetGauge(key)
 }

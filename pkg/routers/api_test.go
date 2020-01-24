@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -27,6 +27,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/stretchr/testify/assert"
@@ -35,6 +36,8 @@ import (
 
 const clientHeaderKey = "X-Client-Header"
 const userHeaderKey = "X-User-Header"
+const featureHeaderKey = "X-Feature-Header"
+const experimentHeaderKey = "X-Experiment-Header"
 
 type MockOptlyMiddleware struct{}
 
@@ -48,6 +51,20 @@ func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(userHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(featureHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *MockOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(experimentHeaderKey, "expected")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -67,12 +84,6 @@ func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-type MockUserEventAPI struct{}
-
-func (m *MockUserEventAPI) AddUserEvent(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
@@ -104,19 +115,21 @@ func (m *MockUserAPI) TrackFeatures(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
-func (m *MockUserAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
 func (m *MockUserAPI) GetVariation(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
 func (m *MockUserAPI) ActivateExperiment(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
+type MockUserOverrideAPI struct{}
+
+func (m *MockUserOverrideAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
+	renderPathParams(w, r)
+}
+
+func (m *MockUserOverrideAPI) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
@@ -139,18 +152,22 @@ type RouterTestSuite struct {
 	mux *chi.Mux
 }
 
+var metricsRegistry = metrics.NewRegistry()
+
 func (suite *RouterTestSuite) SetupTest() {
 
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
 	opts := &APIOptions{
-		maxConns:      1,
-		experimentAPI: new(MockExperimentAPI),
-		featureAPI:    new(MockFeatureAPI),
-		userAPI:       new(MockUserAPI),
-		middleware:    new(MockOptlyMiddleware),
+		maxConns:        1,
+		experimentAPI:   new(MockExperimentAPI),
+		featureAPI:      new(MockFeatureAPI),
+		userAPI:         new(MockUserAPI),
 		eventsAPI:     new(MockEventAPI),
+		userOverrideAPI: new(MockUserOverrideAPI),
+		middleware:      new(MockOptlyMiddleware),
+		metricsRegistry: metricsRegistry,
 	}
 
 	suite.mux = NewAPIRouter(opts)
@@ -175,6 +192,7 @@ func (suite *RouterTestSuite) TestGetFeature() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Empty(rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 
 	expected := map[string]string{
 		"featureKey": "one",
@@ -203,6 +221,7 @@ func (suite *RouterTestSuite) TestGetUserFeature() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
 
 	expected := map[string]string{
 		"userID":     "me",
@@ -248,6 +267,7 @@ func (suite *RouterTestSuite) TestGetVariation() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
 
 	expected := map[string]string{
 		"userID":        "me",
@@ -264,6 +284,7 @@ func (suite *RouterTestSuite) TestActivateExperiment() {
 
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("expected", rec.Header().Get(userHeaderKey))
+	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
 
 	expected := map[string]string{
 		"userID":        "me",
@@ -273,7 +294,7 @@ func (suite *RouterTestSuite) TestActivateExperiment() {
 }
 
 func (suite *RouterTestSuite) TestSetForcedVariation() {
-	req := httptest.NewRequest("PUT", "/users/me/experiments/exp_key/variations/var_key", nil)
+	req := httptest.NewRequest("PUT", "/overrides/users/me/experiments/exp_key", nil)
 	rec := httptest.NewRecorder()
 
 	suite.mux.ServeHTTP(rec, req)
@@ -284,13 +305,12 @@ func (suite *RouterTestSuite) TestSetForcedVariation() {
 	expected := map[string]string{
 		"userID":        "me",
 		"experimentKey": "exp_key",
-		"variationKey":  "var_key",
 	}
 	suite.assertValid(rec, expected)
 }
 
 func (suite *RouterTestSuite) TestRemoveForcedVariation() {
-	req := httptest.NewRequest("DELETE", "/users/me/experiments/exp_key/variations", nil)
+	req := httptest.NewRequest("DELETE", "/overrides/users/me/experiments/exp_key", nil)
 	rec := httptest.NewRecorder()
 
 	suite.mux.ServeHTTP(rec, req)

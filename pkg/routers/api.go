@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -23,6 +23,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 
@@ -30,55 +31,29 @@ import (
 	chimw "github.com/go-chi/chi/middleware"
 )
 
-var listFeaturesTimer func(http.Handler) http.Handler
-var getFeatureTimer func(http.Handler) http.Handler
-var listExperimentsTimer func(http.Handler) http.Handler
-var getExperimentTimer func(http.Handler) http.Handler
-var trackEventTimer func(http.Handler) http.Handler
-var listUserFeaturesTimer func(http.Handler) http.Handler
-var trackUserFeaturesTimer func(http.Handler) http.Handler
-var getUserFeatureTimer func(http.Handler) http.Handler
-var trackUserFeatureTimer func(http.Handler) http.Handler
-var getVariationTimer func(http.Handler) http.Handler
-var activateExperimentTimer func(http.Handler) http.Handler
-var setForcedVariationTimer func(http.Handler) http.Handler
-var removeForcedVariationTimer func(http.Handler) http.Handler
-
-func init() {
-	listFeaturesTimer = middleware.Metricize("list-features")
-	getFeatureTimer = middleware.Metricize("get-feature")
-	listExperimentsTimer = middleware.Metricize("list-experiments")
-	getExperimentTimer = middleware.Metricize("get-experiment")
-	trackEventTimer = middleware.Metricize("track-event")
-	listUserFeaturesTimer = middleware.Metricize("list-user-features")
-	trackUserFeaturesTimer = middleware.Metricize("track-user-features")
-	getUserFeatureTimer = middleware.Metricize("get-user-feature")
-	trackUserFeatureTimer = middleware.Metricize("track-user-feature")
-	getVariationTimer = middleware.Metricize("get-variation")
-	activateExperimentTimer = middleware.Metricize("activate-experiment")
-	setForcedVariationTimer = middleware.Metricize("set-forced-variation")
-	removeForcedVariationTimer = middleware.Metricize("remove-forced-variation")
-}
-
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns      int
-	middleware    middleware.OptlyMiddleware
-	experimentAPI handlers.ExperimentAPI
-	featureAPI    handlers.FeatureAPI
-	userAPI       handlers.UserAPI
-	eventsAPI     handlers.EventsAPI
+	maxConns        int
+	middleware      middleware.OptlyMiddleware
+	experimentAPI   handlers.ExperimentAPI
+	featureAPI      handlers.FeatureAPI
+	userAPI         handlers.UserAPI
+	eventsAPI       handlers.EventsAPI
+	userOverrideAPI handlers.UserOverrideAPI
+	metricsRegistry *metrics.Registry
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig) http.Handler {
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIOptions{
-		maxConns:      conf.MaxConns,
-		middleware:    &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		experimentAPI: new(handlers.ExperimentHandler),
-		featureAPI:    new(handlers.FeatureHandler),
-		userAPI:       new(handlers.UserHandler),
-		eventsAPI:     handlers.NewEventStreamHandler(),
+		maxConns:        conf.MaxConns,
+		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
+		experimentAPI:   new(handlers.ExperimentHandler),
+		featureAPI:      new(handlers.FeatureHandler),
+		userAPI:         new(handlers.UserHandler),
+		eventsAPI:       handlers.NewEventStreamHandler(),
+		userOverrideAPI: new(handlers.UserOverrideHandler),
+		metricsRegistry: metricsRegistry,
 	}
 
 	return NewAPIRouter(spec)
@@ -92,6 +67,20 @@ func setMiddleWareTime(r chi.Router) {
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
+
+	listFeaturesTimer := middleware.Metricize("list-features", opt.metricsRegistry)
+	getFeatureTimer := middleware.Metricize("get-feature", opt.metricsRegistry)
+	listExperimentsTimer := middleware.Metricize("list-experiments", opt.metricsRegistry)
+	getExperimentTimer := middleware.Metricize("get-experiment", opt.metricsRegistry)
+	trackEventTimer := middleware.Metricize("track-event", opt.metricsRegistry)
+	listUserFeaturesTimer := middleware.Metricize("list-user-features", opt.metricsRegistry)
+	trackUserFeaturesTimer := middleware.Metricize("track-user-features", opt.metricsRegistry)
+	getUserFeatureTimer := middleware.Metricize("get-user-feature", opt.metricsRegistry)
+	trackUserFeatureTimer := middleware.Metricize("track-user-feature", opt.metricsRegistry)
+	getVariationTimer := middleware.Metricize("get-variation", opt.metricsRegistry)
+	activateExperimentTimer := middleware.Metricize("activate-experiment", opt.metricsRegistry)
+	setForcedVariationTimer := middleware.Metricize("set-forced-variation", opt.metricsRegistry)
+	removeForcedVariationTimer := middleware.Metricize("remove-forced-variation", opt.metricsRegistry)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -107,14 +96,14 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		setMiddleWareTime(r)
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
-		r.With(getFeatureTimer).Get("/{featureKey}", opt.featureAPI.GetFeature)
+		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
 		setMiddleWareTime(r)
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
-		r.With(getExperimentTimer).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
+		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
@@ -126,12 +115,17 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 
 		r.With(listUserFeaturesTimer).Get("/features", opt.userAPI.ListFeatures)
 		r.With(trackUserFeaturesTimer).Post("/features", opt.userAPI.TrackFeatures)
-		r.With(getUserFeatureTimer).Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.With(trackUserFeatureTimer).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
-		r.With(getVariationTimer).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
-		r.With(activateExperimentTimer).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
-		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
-		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
+		r.With(getUserFeatureTimer, opt.middleware.FeatureCtx).Get("/features/{featureKey}", opt.userAPI.GetFeature)
+		r.With(trackUserFeatureTimer, opt.middleware.FeatureCtx).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
+		r.With(getVariationTimer, opt.middleware.ExperimentCtx).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
+		r.With(activateExperimentTimer, opt.middleware.ExperimentCtx).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
+	})
+
+	r.Route("/overrides/users/{userID}", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
+
+		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}", opt.userOverrideAPI.SetForcedVariation)
+		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}", opt.userOverrideAPI.RemoveForcedVariation)
 	})
 
 	return r
