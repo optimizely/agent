@@ -100,6 +100,7 @@ func (suite *EventStreamTestSuite) TestFeatureTestStream() {
 		if rec.Body.Len() >= len(expected) {
 			break
 		}
+		time.Sleep(100)
 	}
 	suite.Equal(http.StatusOK, rec.Code)
 
@@ -130,6 +131,38 @@ func (suite *EventStreamTestSuite) TestActivateExperiment() {
 		if rec.Body.Len() >= len(expected) {
 			break
 		}
+		time.Sleep(100)
+	}
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	response := string(rec.Body.Bytes())
+	suite.Equal(expected,response)
+}
+
+func (suite *EventStreamTestSuite) TestActivateExperimentRaw() {
+	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
+	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
+
+	req := httptest.NewRequest("GET", "/notifications/event-stream?raw=yes", nil)
+	rec := httptest.NewRecorder()
+
+	go func() {
+		time.Sleep(100)
+		suite.tc.OptimizelyClient.Activate("one", entities.UserContext{"testUser", make(map[string]interface{})})
+	}()
+
+	// start the mux with a go routine because the event stream will hang
+	go suite.mux.ServeHTTP(rec, req)
+
+	expected := "{\"Type\":\"ab-test\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"experimentKey\":\"one\",\"variationKey\":\"variation_a\"}}\n"
+
+	for {
+		// wait for the body to come in.
+		if rec.Body.Len() >= len(expected) {
+			break
+		}
+		time.Sleep(100)
 	}
 	suite.Equal(http.StatusOK, rec.Code)
 

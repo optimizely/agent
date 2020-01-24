@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/go-sdk/pkg/notification"
-	"log"
 	"net/http"
 )
 
@@ -50,9 +49,8 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	id,err := optlyClient.DecisionService.OnDecision(func(decision notification.DecisionNotification) {
 		jsonEvent, err := json.Marshal(decision)
 		if err != nil {
-			log.Println("Error encoding event to JSON")
+			middleware.GetLogger(req).Error().Str("decision", string(decision.Type)).Msg("encoding decision to json")
 		} else {
-			log.Println("Sending json to the channel.")
 			messageChan <- jsonEvent
 		}
 	})
@@ -94,8 +92,6 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 		// Flush the data immediately instead of buffering it for later.
 		// The flush will fail if the connection is closed.  That will cause the handler to exit.
 		flusher.Flush()
-
-		log.Println("flushing")
 	}
 
 }
