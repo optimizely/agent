@@ -26,12 +26,22 @@ func NewDefaultConfig() *AgentConfig {
 
 	config := AgentConfig{
 		Admin: AdminConfig{
+			Auth: ServiceAuthConfig{
+				Clients:    make([]OAuthClientCredentials, 0),
+				HMACSecret: "",
+				TTL:        0,
+			},
 			Version: "",
 			Author:  "Optimizely Inc.",
 			Name:    "optimizely",
 			Port:    "8088",
 		},
 		API: APIConfig{
+			Auth: ServiceAuthConfig{
+				Clients:    make([]OAuthClientCredentials, 0),
+				HMACSecret: "",
+				TTL:        0,
+			},
 			MaxConns: 0,
 			Port:     "8080",
 		},
