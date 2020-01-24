@@ -105,8 +105,13 @@ func CoerceType(s string) interface{} {
 		return d
 	}
 
-	if b, err := strconv.ParseBool(s); err == nil {
-		return b
+	// Not using ParseBool since is support too many variants (e.g. 0, 1, FALSE, TRUE)
+	if s == "false" {
+		return false
+	}
+
+	if s == "true" {
+		return true
 	}
 
 	return s
