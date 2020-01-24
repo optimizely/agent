@@ -33,7 +33,8 @@ type ExperimentAPI interface {
 	ListExperiments(w http.ResponseWriter, r *http.Request)
 }
 
-type EventsAPI interface {
+// NotificationsAPI defines support for notification via server side events
+type NotificationsAPI interface {
 	HandleEventSteam(rw http.ResponseWriter, req *http.Request)
 }
 

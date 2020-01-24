@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -184,8 +184,9 @@ func TestEventStreamTestSuite(t *testing.T) {
 func TestEventStreamMissingOptlyCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequest("GET", "/", nil)
 	mw := new(EventStreamMW)
+	mw.optlyClient = nil
 
 	handler := NewEventStreamHandler()
 	handlers := []func(w http.ResponseWriter, r *http.Request){

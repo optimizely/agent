@@ -33,27 +33,27 @@ import (
 
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns        int
-	middleware      middleware.OptlyMiddleware
-	experimentAPI   handlers.ExperimentAPI
-	featureAPI      handlers.FeatureAPI
-	userAPI         handlers.UserAPI
-	eventsAPI       handlers.EventsAPI
-	userOverrideAPI handlers.UserOverrideAPI
-	metricsRegistry *metrics.Registry
+	maxConns         int
+	middleware       middleware.OptlyMiddleware
+	experimentAPI    handlers.ExperimentAPI
+	featureAPI       handlers.FeatureAPI
+	userAPI          handlers.UserAPI
+	notificationsAPI handlers.NotificationsAPI
+	userOverrideAPI  handlers.UserOverrideAPI
+	metricsRegistry  *metrics.Registry
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIOptions{
-		maxConns:        conf.MaxConns,
-		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		experimentAPI:   new(handlers.ExperimentHandler),
-		featureAPI:      new(handlers.FeatureHandler),
-		userAPI:         new(handlers.UserHandler),
-		eventsAPI:       handlers.NewEventStreamHandler(),
-		userOverrideAPI: new(handlers.UserOverrideHandler),
-		metricsRegistry: metricsRegistry,
+		maxConns:         conf.MaxConns,
+		middleware:       &middleware.CachedOptlyMiddleware{Cache: optlyCache},
+		experimentAPI:    new(handlers.ExperimentHandler),
+		featureAPI:       new(handlers.FeatureHandler),
+		userAPI:          new(handlers.UserHandler),
+		notificationsAPI: handlers.NewEventStreamHandler(),
+		userOverrideAPI:  new(handlers.UserOverrideHandler),
+		metricsRegistry:  metricsRegistry,
 	}
 
 	return NewAPIRouter(spec)
@@ -89,7 +89,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 
 	r.Route("/notifications/event-stream", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.Get("/", opt.eventsAPI.HandleEventSteam)
+		r.Get("/", opt.notificationsAPI.HandleEventSteam)
 	})
 
 	r.Route("/features", func(r chi.Router) {

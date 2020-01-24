@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package handlers //
 package handlers
 
 import (
@@ -16,7 +33,7 @@ type MessageChan chan []byte
 type EventStreamHandler struct {
 }
 
-// Implement the http.Handler interface.
+// HandleEventSteam implements the http.Handler interface.
 // This allows us to wrap HTTP handlers (see auth_handler.go)
 // http://golang.org/pkg/net/http/#Handler
 func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *http.Request) {
@@ -32,6 +49,12 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	optlyClient, err := middleware.GetOptlyClient(req)
 
 	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, rw, req)
+		return
+	}
+
+	if optlyClient == nil {
+		err := fmt.Errorf("optlyContext not available")
 		RenderError(err, http.StatusUnprocessableEntity, rw, req)
 		return
 	}
@@ -96,7 +119,7 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 
 }
 
-// EventStreamHandler factory
+// NewEventStreamHandler is the EventStreamHandler factory
 func NewEventStreamHandler() (esh *EventStreamHandler) {
 	// Instantiate a esh
 	esh = &EventStreamHandler{}
