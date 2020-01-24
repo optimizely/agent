@@ -15,7 +15,6 @@ type MessageChan chan []byte
 
 // A EventStreamHandler handles in coming connections,
 type EventStreamHandler struct {
-
 }
 
 // Implement the http.Handler interface.
@@ -93,7 +92,10 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 			fmt.Fprintf(rw, "data: %s\n\n", <-messageChan)
 		}
 		// Flush the data immediately instead of buffering it for later.
+		// The flush will fail if the connection is closed.  That will cause the handler to exit.
 		flusher.Flush()
+
+		log.Println("flushing")
 	}
 
 }
