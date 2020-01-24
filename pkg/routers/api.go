@@ -110,7 +110,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
 
-	r.Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAPIAccessToken)
+	r.Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
 
 	return r
 }

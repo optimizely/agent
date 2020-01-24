@@ -28,28 +28,31 @@ import (
 )
 
 type clientCredentials struct {
-	id     string
 	ttl    time.Duration
 	secret []byte
 }
 
 type OAuthHandler struct {
-	clientCredentials []clientCredentials
+	clientCredentials map[string]clientCredentials
 	hmacSecret        []byte
+}
+
+type tokenResponse struct {
+	AccessToken string `json:"access_token"`
+	Expires     int64  `json:"expires"`
 }
 
 func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	h := &OAuthHandler{
-		clientCredentials: []clientCredentials{},
+		clientCredentials: make(map[string]clientCredentials),
 		// TODO: return error if empty string secret
-		hmacSecret: []byte(authConfig.HMACSecret),
+		hmacSecret:     []byte(authConfig.HMACSecret),
 	}
 	for _, clientCreds := range authConfig.Clients {
-		h.clientCredentials = append(h.clientCredentials, clientCredentials{
-			id:     clientCreds.ID,
+		h.clientCredentials[clientCreds.ID] = clientCredentials{
 			secret: []byte(clientCreds.Secret),
 			ttl:    authConfig.TTL,
-		})
+		}
 	}
 	return h
 }
@@ -72,14 +75,11 @@ func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w 
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 	}
-	render.JSON(w, r, map[string]interface{}{
-		"access_token": tokenString,
-		"expires":      expires,
-	})
+	render.JSON(w, r, tokenResponse{tokenString, expires})
 }
 
-// GetAPIAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
-func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+// GetAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
+func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	grantType := queryParams.Get("grant_type")
 	if grantType == "" {
@@ -97,17 +97,16 @@ func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	sdkKey := queryParams.Get("sdk_key")
-	if clientSecret == "" {
+	if sdkKey == "" {
 		RenderError(errors.New("sdk_key query parameter required"), http.StatusBadRequest, w, r)
 		return
 	}
 
-	for _, clientCreds := range h.clientCredentials {
-		if clientCreds.id == clientID && matchClientSecret(clientSecret, clientCreds.secret) {
-			renderTokenResponse(sdkKey, clientCreds.ttl, h.hmacSecret, w, r)
-			return
-		}
+	clientCreds, ok := h.clientCredentials[clientID]
+	if ok && matchClientSecret(clientSecret, clientCreds.secret) {
+		renderTokenResponse(sdkKey, clientCreds.ttl, h.hmacSecret, w, r)
+	} else {
+		RenderError(errors.New("Invalid client_id or client_secret"), http.StatusUnauthorized, w, r)
 	}
-
-	RenderError(errors.New("Invalid client_id or client_secret"), http.StatusUnauthorized, w, r)
 }
+
