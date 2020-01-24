@@ -154,7 +154,7 @@ This endpoint can used when placing Agent behind a load balancer to indicate whe
 
 ### Metrics
 
-The Metrics endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
+The `/metrics` endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
 
 Example Request:
 ```bash
