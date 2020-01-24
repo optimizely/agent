@@ -19,16 +19,15 @@ package handlers
 
 import (
 	"errors"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/jwt"
 	"github.com/optimizely/agent/pkg/middleware"
 	"net/http"
-	"time"
 )
 
 type OAuthHandler struct {
-	hmacSecret        []byte
+	hmacSecret []byte
 }
 
 type tokenResponse struct {
@@ -38,25 +37,12 @@ type tokenResponse struct {
 
 func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	h := &OAuthHandler{
-		hmacSecret:     []byte(authConfig.HMACSecret),
+		hmacSecret: []byte(authConfig.HMACSecret),
 	}
 	return h
 }
 
-func renderTokenResponse(sdkKey string, ttl time.Duration, hmacSecret []byte, w http.ResponseWriter, r *http.Request) {
-	expires := time.Now().Add(ttl).Unix()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sdk_key": sdkKey,
-		"expires": expires,
-	})
-	tokenString, err := token.SignedString(hmacSecret)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-	}
-	render.JSON(w, r, tokenResponse{tokenString, expires})
-}
-
-// GetAccessToken returns a JWT access token for an Agent service, derived from the provided client ID and client secret
+// GetAccessToken returns a JWT access token for the API service
 func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	sdkKey := queryParams.Get("sdk_key")
@@ -72,6 +58,12 @@ func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderTokenResponse(sdkKey, clientCreds.TTL, h.hmacSecret, w, r)
-}
+	accessToken, expires, err := jwt.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
 
+	render.JSON(w, r, tokenResponse{accessToken, expires})
+}
