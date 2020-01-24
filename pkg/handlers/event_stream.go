@@ -67,7 +67,6 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 
 	// Each connection registers its own message channel with the EventStreamHandler's connections registry
 	messageChan := make(MessageChan)
-
 	// Each connection also adds one decision listener
 	id, err2 := optlyClient.DecisionService.OnDecision(func(decision notification.DecisionNotification) {
 		jsonEvent, err := json.Marshal(decision)
@@ -86,7 +85,9 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	// Remove the decision listener if we exited.
 	defer func() {
 		err := optlyClient.DecisionService.RemoveOnDecision(id)
-		middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
+		if err != nil {
+			middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
+		}
 	}()
 
 	// "raw" query string option
@@ -96,27 +97,32 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 
 	// Listen to connection close and un-register messageChan
 	notify := req.Context().Done()
-
-	// remove the decision listener if the connection is closed
-	go func() {
-		<-notify
-		err := optlyClient.DecisionService.RemoveOnDecision(id)
-		middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
-	}()
-
 	// block waiting or messages broadcast on this connection's messageChan
 	for {
+		select {
 		// Write to the ResponseWriter
-		if raw {
-			// Raw JSON events, one per line
-			_, _ = fmt.Fprintf(rw, "%s\n", <-messageChan)
-		} else {
-			// Server Sent Events compatible
-			_, _ = fmt.Fprintf(rw, "data: %s\n\n", <-messageChan)
+		case msg := <-messageChan:
+			if raw {
+				// Raw JSON events, one per line
+				_, _ = fmt.Fprintf(rw, "%s\n", msg)
+			} else {
+				// Server Sent Events compatible
+				_, _ = fmt.Fprintf(rw, "data: %s\n\n", msg)
+			}
+			// Flush the data immediately instead of buffering it for later.
+			// The flush will fail if the connection is closed.  That will cause the handler to exit.
+			flusher.Flush()
+			fmt.Println("received message", msg)
+		// Remove the decision listener if the connection is closed and exit
+		case sig := <-notify:
+			err := optlyClient.DecisionService.RemoveOnDecision(id)
+			if err != nil {
+				middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
+			}
+			fmt.Println("received close on the request.  So, we are shutting down this handler", sig)
+			return
 		}
-		// Flush the data immediately instead of buffering it for later.
-		// The flush will fail if the connection is closed.  That will cause the handler to exit.
-		flusher.Flush()
+
 	}
 
 }

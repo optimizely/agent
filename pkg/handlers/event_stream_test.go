@@ -86,22 +86,25 @@ func (suite *EventStreamTestSuite) TestFeatureTestStream() {
 	rec := httptest.NewRecorder()
 
 	go func() {
+		// sleep for 100 milliseconds to allow the handler to start
 		time.Sleep(100)
 		suite.tc.OptimizelyClient.IsFeatureEnabled("one", entities.UserContext{"testUser", make(map[string]interface{})})
 	}()
 
-	// start the mux with a go routine because the event stream will hang
-	go suite.mux.ServeHTTP(rec, req)
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1,cancelFun := context.WithCancel(ctx)
+	// wait 1 second for the request to be serviced and then cancel the request which closes the request
+	// and notifies the handler. This causes the handler to shuts down properly
+	go func() {
+		time.Sleep(1 * time.Second)
+		cancelFun()
+	}()
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
 	expected := "data: {\"Type\":\"feature\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"feature\":{\"featureEnabled\":true,\"featureKey\":\"one\",\"source\":\"feature-test\",\"sourceInfo\":{\"experimentKey\":\"1\",\"variationKey\":\"2\"}}}}\n\n"
 
-	for {
-		// wait for the body to come in.
-		if rec.Body.Len() >= len(expected) {
-			break
-		}
-		time.Sleep(100)
-	}
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
@@ -117,22 +120,25 @@ func (suite *EventStreamTestSuite) TestActivateExperiment() {
 	rec := httptest.NewRecorder()
 
 	go func() {
+		// sleep for 100 milliseconds to allow the handler to start
 		time.Sleep(100)
 		suite.tc.OptimizelyClient.Activate("one", entities.UserContext{"testUser", make(map[string]interface{})})
 	}()
 
-	// start the mux with a go routine because the event stream will hang
-	go suite.mux.ServeHTTP(rec, req)
-
 	expected := "data: {\"Type\":\"ab-test\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"experimentKey\":\"one\",\"variationKey\":\"variation_a\"}}\n\n"
 
-	for {
-		// wait for the body to come in.
-		if rec.Body.Len() >= len(expected) {
-			break
-		}
-		time.Sleep(100)
-	}
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1,cancelFun := context.WithCancel(ctx)
+
+	// wait 1 second for the request to be serviced and then cancel the request which closes the request
+	// notifies the handler, and the handler shuts down properly
+	go func() {
+		time.Sleep(1 * time.Second)
+		cancelFun()
+	}()
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
@@ -152,18 +158,22 @@ func (suite *EventStreamTestSuite) TestActivateExperimentRaw() {
 		suite.tc.OptimizelyClient.Activate("one", entities.UserContext{"testUser", make(map[string]interface{})})
 	}()
 
-	// start the mux with a go routine because the event stream will hang
-	go suite.mux.ServeHTTP(rec, req)
-
 	expected := "{\"Type\":\"ab-test\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"experimentKey\":\"one\",\"variationKey\":\"variation_a\"}}\n"
 
-	for {
-		// wait for the body to come in.
-		if rec.Body.Len() >= len(expected) {
-			break
-		}
-		time.Sleep(100)
-	}
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1,cancelFun := context.WithCancel(ctx)
+
+	// wait 1 second for the request to be serviced and then cancel the request which closes the request
+	// and notifies the handler. This causes the handler to shuts down properly
+	go func() {
+		time.Sleep(1 * time.Second)
+		cancelFun()
+	}()
+
+	// start the mux
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
+
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
