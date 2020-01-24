@@ -26,8 +26,8 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 )
 
-// Override defines the overrides to be applied.
-type Override struct {
+// UserOverrideBody defines the overrides to be applied.
+type UserOverrideBody struct {
 	VariationKey string `json:"variationKey"`
 }
 
@@ -47,7 +47,7 @@ func (h *UserOverrideHandler) SetForcedVariation(w http.ResponseWriter, r *http.
 		return
 	}
 
-	override := &Override{}
+	override := &UserOverrideBody{}
 	if err = ParseRequestBody(r, override); err != nil {
 		RenderError(errors.New("empty variationKey"), http.StatusBadRequest, w, r)
 		return
