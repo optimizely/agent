@@ -43,7 +43,19 @@ func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
 	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
 }
 
-func OAuthMiddleware(authConfig *config.ServiceAuthConfig) func(http.Handler) http.Handler {
+var ErrInvalidHMACSecret = errors.New("HMACSecret unavailable")
+
+var ErrInvalidClients = errors.New("Clients unavailable")
+
+func OAuthMiddleware(authConfig *config.ServiceAuthConfig) (func(http.Handler) http.Handler, error) {
+	if authConfig.HMACSecret == "" {
+		return nil, ErrInvalidHMACSecret
+	}
+
+	if  len(authConfig.Clients) == 0 {
+		return nil, ErrInvalidClients
+	}
+
 	clientCredentials := make(map[string]ClientCredentials)
 	for _, clientCreds := range authConfig.Clients {
 		clientCredentials[clientCreds.ID] = ClientCredentials{
@@ -84,5 +96,5 @@ func OAuthMiddleware(authConfig *config.ServiceAuthConfig) func(http.Handler) ht
 				RenderError(errors.New("Invalid client_id or client_secret"), http.StatusUnauthorized, w, r)
 			}
 		})
-	}
+	}, nil
 }

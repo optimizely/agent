@@ -26,6 +26,8 @@ import (
 // BuildAPIAccessToken returns a token for accessing the API service using the argument SDK key and TTL. It also returns the expiration timestamp.
 func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (string, int64, error) {
 	expires := time.Now().Add(ttl).Unix()
+	// TODO: should use any of these standards claims? https://tools.ietf.org/html/rfc7519#section-4.1
+	// Should change "expires" to "exp" to match the standard one?
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sdk_key": sdkKey,
 		"expires": expires,

@@ -29,6 +29,7 @@ import (
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
 // APIOptions defines the configuration parameters for Router.
@@ -112,7 +113,13 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
 
-	r.With(middleware.OAuthMiddleware(opt.authConfig)).Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
+	oAuthMiddleware, err := middleware.OAuthMiddleware(opt.authConfig)
+	if err != nil {
+		log.Debug().Err(err).Msg("API accessToken endpoint disabled")
+	} else {
+		log.Debug().Msg("API accessToken endpoint enabled")
+		r.With(oAuthMiddleware).Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
+	}
 
 	return r
 }
