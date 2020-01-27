@@ -50,7 +50,7 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (string, int64, error)
 	})
 	tokenString, err := token.SignedString(key)
 	if err != nil {
-		return "", 0, fmt.Errorf("error building API access token: %w", err)
+		return "", 0, fmt.Errorf("error building Admin access token: %w", err)
 	}
 	return tokenString, expires, nil
 }
