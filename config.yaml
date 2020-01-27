@@ -30,12 +30,6 @@ api:
     maxconns: 100
     ## http listener port
     port: "8080"
-    auth:
-        ttl: 30m
-        hmacSecret: hmac_seekrit
-        clients:
-            - id: pawel
-              secret: hmac_seekrit
 
 ##
 ## admin service configuration
