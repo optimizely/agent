@@ -38,7 +38,7 @@ type APIOptions struct {
 	experimentAPI    handlers.ExperimentAPI
 	featureAPI       handlers.FeatureAPI
 	userAPI          handlers.UserAPI
-	notificationsAPI handlers.NotificationsAPI
+	notificationsAPI handlers.NotificationAPI
 	userOverrideAPI  handlers.UserOverrideAPI
 	metricsRegistry  *metrics.Registry
 }

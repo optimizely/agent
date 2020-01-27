@@ -29,56 +29,56 @@ import (
 // Each http handler call creates a new channel and pumps decision service messages onto it.
 type MessageChan chan []byte
 
-// A EventStreamHandler handles in coming connections,
-type EventStreamHandler struct {
+// A NotificationHandler handles in coming connections as server side event streams streaming notifications
+// per SDK Key (defined in the header)
+type NotificationHandler struct {
 }
 
 // HandleEventSteam implements the http.Handler interface.
 // This allows us to wrap HTTP handlers (see auth_handler.go)
 // http://golang.org/pkg/net/http/#Handler
-func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *http.Request) {
+func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.Request) {
 	// Make sure that the writer supports flushing.
-	//
-	flusher, ok := rw.(http.Flusher)
+	flusher, ok := w.(http.Flusher)
 
 	if !ok {
-		http.Error(rw, "Streaming unsupported!", http.StatusInternalServerError)
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
 		return
 	}
 
-	optlyClient, err := middleware.GetOptlyClient(req)
+	optlyClient, err := middleware.GetOptlyClient(r)
 
 	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, rw, req)
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
 	if optlyClient == nil {
 		e := fmt.Errorf("optlyContext not available")
-		RenderError(e, http.StatusUnprocessableEntity, rw, req)
+		RenderError(e, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
 	// Set the headers related to event streaming.
-	rw.Header().Set("Content-Type", "text/event-stream")
-	rw.Header().Set("Cache-Control", "no-cache")
-	rw.Header().Set("Connection", "keep-alive")
-	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	// Each connection registers its own message channel with the EventStreamHandler's connections registry
+	// Each connection registers its own message channel with the NotificationHandler's connections registry
 	messageChan := make(MessageChan)
 	// Each connection also adds one decision listener
 	id, err2 := optlyClient.DecisionService.OnDecision(func(decision notification.DecisionNotification) {
 		jsonEvent, err := json.Marshal(decision)
 		if err != nil {
-			middleware.GetLogger(req).Error().Str("decision", string(decision.Type)).Msg("encoding decision to json")
+			middleware.GetLogger(r).Error().Str("decision", string(decision.Type)).Msg("encoding decision to json")
 		} else {
 			messageChan <- jsonEvent
 		}
 	})
 
 	if err2 != nil {
-		RenderError(err2, http.StatusUnprocessableEntity, rw, req)
+		RenderError(err2, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
@@ -86,17 +86,17 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 	defer func() {
 		err := optlyClient.DecisionService.RemoveOnDecision(id)
 		if err != nil {
-			middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
+			middleware.GetLogger(r).Error().AnErr("removingOnDecision", err)
 		}
 	}()
 
 	// "raw" query string option
 	// If provided, send raw JSON lines instead of SSE-compliant strings.
-	_ = req.ParseForm()
-	raw := len(req.Form["raw"]) > 0
+	_ = r.ParseForm()
+	raw := len(r.Form["raw"]) > 0
 
 	// Listen to connection close and un-register messageChan
-	notify := req.Context().Done()
+	notify := r.Context().Done()
 	// block waiting or messages broadcast on this connection's messageChan
 	for {
 		select {
@@ -104,10 +104,10 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 		case msg := <-messageChan:
 			if raw {
 				// Raw JSON events, one per line
-				_, _ = fmt.Fprintf(rw, "%s\n", msg)
+				_, _ = fmt.Fprintf(w, "%s\n", msg)
 			} else {
 				// Server Sent Events compatible
-				_, _ = fmt.Fprintf(rw, "data: %s\n\n", msg)
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", msg)
 			}
 			// Flush the data immediately instead of buffering it for later.
 			// The flush will fail if the connection is closed.  That will cause the handler to exit.
@@ -117,7 +117,7 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 		case sig := <-notify:
 			err := optlyClient.DecisionService.RemoveOnDecision(id)
 			if err != nil {
-				middleware.GetLogger(req).Error().AnErr("removingOnDecision", err)
+				middleware.GetLogger(r).Error().AnErr("removingOnDecision", err)
 			}
 			fmt.Println("received close on the request.  So, we are shutting down this handler", sig)
 			return
@@ -127,10 +127,10 @@ func (esh *EventStreamHandler) HandleEventSteam(rw http.ResponseWriter, req *htt
 
 }
 
-// NewEventStreamHandler is the EventStreamHandler factory
-func NewEventStreamHandler() (esh *EventStreamHandler) {
-	// Instantiate a esh
-	esh = &EventStreamHandler{}
+// NewEventStreamHandler is the NotificationHandler factory
+func NewEventStreamHandler() (nh *NotificationHandler) {
+	// Instantiate a nh
+	nh = &NotificationHandler{}
 
 	return
 }

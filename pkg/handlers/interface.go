@@ -33,9 +33,9 @@ type ExperimentAPI interface {
 	ListExperiments(w http.ResponseWriter, r *http.Request)
 }
 
-// NotificationsAPI defines support for notification via server side events
-type NotificationsAPI interface {
-	HandleEventSteam(rw http.ResponseWriter, req *http.Request)
+// NotificationAPI defines support for notification via server side events
+type NotificationAPI interface {
+	HandleEventSteam(w http.ResponseWriter, r *http.Request)
 }
 
 // UserAPI defines the supported user scoped APIs.
