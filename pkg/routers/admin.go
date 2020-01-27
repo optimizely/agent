@@ -18,10 +18,10 @@
 package routers
 
 import (
+	"net/http"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
-
-	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -31,7 +31,9 @@ import (
 func NewAdminRouter(conf config.AdminConfig) http.Handler {
 	r := chi.NewRouter()
 
+	tokenHandler := handlers.NewOAuthHandler(&conf.Auth)
 	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
+
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
@@ -40,5 +42,6 @@ func NewAdminRouter(conf config.AdminConfig) http.Handler {
 	r.Get("/info", optlyAdmin.AppInfo)
 	r.Get("/metrics", optlyAdmin.Metrics)
 
+	r.Get("/oauth/token", tokenHandler.GetAdminAccessToken)
 	return r
 }

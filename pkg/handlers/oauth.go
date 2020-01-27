@@ -18,15 +18,16 @@
 package handlers
 
 import (
-	"crypto/subtle"
 	"errors"
 	"fmt"
-	"github.com/go-chi/render"
-	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/jwt"
-	"github.com/optimizely/agent/pkg/middleware"
 	"net/http"
 	"time"
+
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/jwtauth"
+	"github.com/optimizely/agent/pkg/middleware"
+
+	"github.com/go-chi/render"
 )
 
 type ClientCredentials struct {
@@ -63,15 +64,7 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	return h
 }
 
-func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
-	reqSecret := []byte(reqSecretStr)
-	if len(configSecret) != len(reqSecret) {
-		return false
-	}
-	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
-}
-
-func (h *OAuthHandler) verify(r *http.Request) (*ClientCredentials, int, error) {
+func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredentials, int, error) {
 	queryParams := r.URL.Query()
 	grantType := queryParams.Get("grant_type")
 	if grantType == "" {
@@ -90,29 +83,47 @@ func (h *OAuthHandler) verify(r *http.Request) (*ClientCredentials, int, error) 
 		return nil, http.StatusBadRequest, errors.New("client_secret query parameter required")
 	}
 	clientCreds, ok := h.ClientCredentials[clientID]
-	if !ok || !matchClientSecret(clientSecret, clientCreds.Secret) {
+	if !ok || !jwtauth.MatchClientSecret(clientSecret, clientCreds.Secret) {
 		return nil, http.StatusUnauthorized, errors.New("Invalid client_id or client_secret")
 	}
 	return &clientCreds, http.StatusOK, nil
 }
 
-// GetAccessToken returns a JWT access token for the API service
-func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
+// GetAPIAccessToken returns a JWT access token for the API service
+func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request) {
 
-	clientCreds, httpCode, e := h.verify(r)
+	clientCreds, httpCode, e := h.verifyClientCredentials(r)
 	if e != nil {
 		RenderError(e, httpCode, w, r)
 		return
 	}
 
-	queryParams := r.URL.Query()
-	sdkKey := queryParams.Get("sdk_key")
+	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
 	if sdkKey == "" {
-		RenderError(errors.New("sdk_key query parameter required"), http.StatusBadRequest, w, r)
+		RenderError(errors.New("sdk_key required in the header"), http.StatusBadRequest, w, r)
 		return
 	}
 
-	accessToken, expires, err := jwt.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
+	accessToken, expires, err := jwtauth.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
+	if err != nil {
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	render.JSON(w, r, tokenResponse{accessToken, expires})
+}
+
+// GetAPIAccessToken returns a JWT access token for the API service
+func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Request) {
+
+	clientCreds, httpCode, e := h.verifyClientCredentials(r)
+	if e != nil {
+		RenderError(e, httpCode, w, r)
+		return
+	}
+
+	accessToken, expires, err := jwtauth.BuildAdminAccessToken(clientCreds.TTL, h.hmacSecret)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)
