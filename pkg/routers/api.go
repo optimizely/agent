@@ -29,7 +29,6 @@ import (
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // APIOptions defines the configuration parameters for Router.
@@ -41,7 +40,6 @@ type APIOptions struct {
 	userAPI         handlers.UserAPI
 	metricsRegistry *metrics.Registry
 	oAuthHandler    *handlers.OAuthHandler
-	authConfig      *config.ServiceAuthConfig
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
@@ -54,7 +52,6 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		userAPI:         new(handlers.UserHandler),
 		metricsRegistry: metricsRegistry,
 		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
-		authConfig:      &conf.Auth,
 	}
 
 	return NewAPIRouter(spec)
@@ -113,13 +110,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
 	})
 
-	oAuthMiddleware, err := middleware.OAuthMiddleware(opt.authConfig)
-	if err != nil {
-		log.Debug().Err(err).Msg("API accessToken endpoint disabled")
-	} else {
-		log.Debug().Msg("API accessToken endpoint enabled")
-		r.With(oAuthMiddleware).Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
-	}
+	r.Get("/oauth/v2/api/accessToken", opt.oAuthHandler.GetAccessToken)
 
 	return r
 }

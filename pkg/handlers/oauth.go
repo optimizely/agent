@@ -18,16 +18,26 @@
 package handlers
 
 import (
+	"crypto/subtle"
 	"errors"
+	"fmt"
 	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/jwt"
 	"github.com/optimizely/agent/pkg/middleware"
 	"net/http"
+	"time"
 )
 
+type ClientCredentials struct {
+	ID     string
+	TTL    time.Duration
+	Secret []byte
+}
+
 type OAuthHandler struct {
-	hmacSecret []byte
+	ClientCredentials map[string]ClientCredentials
+	hmacSecret        []byte
 }
 
 type tokenResponse struct {
@@ -36,25 +46,69 @@ type tokenResponse struct {
 }
 
 func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
+
+	clientCredentials := make(map[string]ClientCredentials)
+	for _, clientCreds := range authConfig.Clients {
+		clientCredentials[clientCreds.ID] = ClientCredentials{
+			ID:     clientCreds.ID,
+			Secret: []byte(clientCreds.Secret),
+			TTL:    authConfig.TTL,
+		}
+	}
+
 	h := &OAuthHandler{
-		hmacSecret: []byte(authConfig.HMACSecret),
+		hmacSecret:        []byte(authConfig.HMACSecret),
+		ClientCredentials: clientCredentials,
 	}
 	return h
 }
 
+func matchClientSecret(reqSecretStr string, configSecret []byte) bool {
+	reqSecret := []byte(reqSecretStr)
+	if len(configSecret) != len(reqSecret) {
+		return false
+	}
+	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
+}
+
+func (h *OAuthHandler) verify(r *http.Request) (*ClientCredentials, int, error) {
+	queryParams := r.URL.Query()
+	grantType := queryParams.Get("grant_type")
+	if grantType == "" {
+		return nil, http.StatusBadRequest, errors.New("grant_type query parameter required")
+	}
+	if grantType != "client_credentials" {
+		return nil, http.StatusBadRequest, fmt.Errorf("unsupported grant_type %v", grantType)
+
+	}
+	clientID := queryParams.Get("client_id")
+	if clientID == "" {
+		return nil, http.StatusBadRequest, errors.New("client_id query parameter required")
+	}
+	clientSecret := queryParams.Get("client_secret")
+	if clientSecret == "" {
+		return nil, http.StatusBadRequest, errors.New("client_secret query parameter required")
+	}
+	clientCreds, ok := h.ClientCredentials[clientID]
+	if !ok || !matchClientSecret(clientSecret, clientCreds.Secret) {
+		return nil, http.StatusUnauthorized, errors.New("Invalid client_id or client_secret")
+	}
+	return &clientCreds, http.StatusOK, nil
+}
+
 // GetAccessToken returns a JWT access token for the API service
 func (h *OAuthHandler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
+
+	clientCreds, httpCode, e := h.verify(r)
+	if e != nil {
+		RenderError(e, httpCode, w, r)
+		return
+	}
+
 	queryParams := r.URL.Query()
 	sdkKey := queryParams.Get("sdk_key")
 	if sdkKey == "" {
 		RenderError(errors.New("sdk_key query parameter required"), http.StatusBadRequest, w, r)
-		return
-	}
-
-	clientCreds, err := middleware.GetClientCreds(r)
-	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetClientCreds")
-		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 

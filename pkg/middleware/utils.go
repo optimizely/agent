@@ -89,12 +89,3 @@ func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
 	}
 	return experiment, nil
 }
-
-// GetClientCreds returns OAuth client credentials from the request context
-func GetClientCreds(r *http.Request) (*ClientCredentials, error) {
-	clientCreds, ok := r.Context().Value(oAuthClientCreds).(*ClientCredentials)
-	if !ok {
-		return nil, fmt.Errorf("client credentials not available")
-	}
-	return clientCreds, nil
-}
