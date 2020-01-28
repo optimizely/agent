@@ -103,9 +103,6 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 
 	// Parse the form.
 	_ = r.ParseForm()
-	// "raw" query string option
-	// If provided, send raw JSON lines instead of SSE-compliant strings.
-	raw := len(r.Form["raw"]) > 0
 
 	// Set the headers related to event streaming.
 	w.Header().Set("Content-Type", "text/event-stream")
@@ -128,11 +125,9 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 			id,e := nc.AddHandler(notificationType, func (n interface{}) {
 				sendNotificationToChannel(n, &messageChan, r)
 			})
-			//id, e := optlyClient.DecisionService.OnDecision(func (decision notification.DecisionNotification) {
-			//	sendNotificationToChannel(decision, &messageChan, r)
-			//})
 			if e != nil {
 				RenderError(e, http.StatusUnprocessableEntity, w, r)
+				return
 			}
 			ids = append(ids, id)
 		} else {
@@ -152,6 +147,10 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 			}
 		}
 	}()
+
+	// "raw" query string option
+	// If provided, send raw JSON lines instead of SSE-compliant strings.
+	raw := len(r.Form["raw"]) > 0
 
 	// Listen to connection close and un-register messageChan
 	notify := r.Context().Done()
