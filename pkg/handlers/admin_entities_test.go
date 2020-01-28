@@ -24,14 +24,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/optimizely/agent/config"
 )
+
+var testConfig = config.AgentConfig{
+	Version: "1",
+	Author:  "2",
+	Name:    "3",
+}
 
 func TestHealthHandlerBothServicesStarted(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3")
+	a := NewAdmin(testConfig)
 	a.Health(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
@@ -45,20 +53,43 @@ func TestAppInfoHandler(t *testing.T) {
 	req := httptest.NewRequest("GET", "/info", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3")
+	a := NewAdmin(testConfig)
 	a.AppInfo(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
 
-	expected := string(`{"app_name":"3", "version":"1", "author":"2"}`)
-	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
+	actual := &Info{}
+	err := json.Unmarshal(rec.Body.Bytes(), actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "1", actual.Version)
+	assert.Equal(t, "2", actual.Author)
+	assert.Equal(t, "3", actual.AppName)
+	assert.NotEmpty(t, actual.Uptime)
+}
+
+func TestAppConfigHandler(t *testing.T) {
+
+	req := httptest.NewRequest("GET", "/config", nil)
+	rec := httptest.NewRecorder()
+
+	a := NewAdmin(testConfig)
+	a.AppConfig(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
+
+	actual := &config.AgentConfig{}
+	err := json.Unmarshal(rec.Body.Bytes(), actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, &testConfig, actual)
 }
 
 func TestAppInfoHeaderHandler(t *testing.T) {
 	req := httptest.NewRequest("GET", "/info", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3")
+	a := NewAdmin(testConfig)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	a.AppInfoHeader(handler).ServeHTTP(rec, req)
 
@@ -72,7 +103,7 @@ func TestMetrics(t *testing.T) {
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin("1", "2", "3")
+	a := NewAdmin(testConfig)
 	a.Metrics(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")

@@ -38,27 +38,27 @@ type OptlyCache struct {
 	optlyMap        cmap.ConcurrentMap
 	ctx             context.Context
 	wg              sync.WaitGroup
-	conf            config.OptlyConfig
+	processorConf   config.ProcessorConfig
 	metricsRegistry *MetricsRegistry
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.OptlyConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 	cache := &OptlyCache{
 		ctx:             ctx,
 		wg:              sync.WaitGroup{},
 		loader:          initOptlyClient,
 		optlyMap:        cmap.New(),
-		conf:            conf,
+		processorConf:   conf,
 		metricsRegistry: metricsRegistry,
 	}
 
-	cache.init()
 	return cache
 }
 
-func (c *OptlyCache) init() {
-	for _, sdkKey := range c.conf.SDKKeys {
+// Init takes a slice of sdkKeys to warm the cache upon startup
+func (c *OptlyCache) Init(sdkKeys []string) {
+	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
 		}
@@ -72,7 +72,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.conf.Processor, c.metricsRegistry)
+	oc, err := c.loader(sdkKey, c.processorConf, c.metricsRegistry)
 	if err != nil {
 		return oc, err
 	}

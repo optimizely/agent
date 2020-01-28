@@ -1,5 +1,18 @@
 ## config.yaml provides a default set of configuration options
 
+## service author included in the /info response
+author: "Optimizely Inc."
+## name of the running application included in the /info response
+name: "optimizely"
+## version of the application included in the /info response and startup logs
+## Defaults to the latest git tag `git describe --tags`
+#version: custom-build
+
+## list of SDK keys to be pre-fetched during startup (recommended for production)
+#sdkkeys:
+#    - <sdk-key-1>
+#    - <sdk-key-2>
+
 ##
 ## log: logger configuration
 ##
@@ -27,7 +40,7 @@ server:
 ##
 api:
     ## the maximum number of concurrent requests handled by the api listener
-    maxconns: 100
+#    maxconns: 10000
     ## http listener port
     port: "8080"
 
@@ -35,13 +48,6 @@ api:
 ## admin service configuration
 ##
 admin:
-    ## service author included in the /info response
-    author: "Optimizely Inc."
-    ## name of the running application included in the /info response
-    name: "optimizely"
-#    ## version of the application included in the /info response and startup logs
-#    ## Defaults to the latest git tag `git describe --tags`
-#    version: custom-build
     ## http listener port
     port: "8088"
 
@@ -64,3 +70,14 @@ webhook:
 #            secret: <secret-10000>
 #            ## skipSignatureCheck: override the signature check (not recommended for production)
 #            skipSignatureCheck: true
+
+##
+## event processor configurations
+##
+processor:
+    ## the number of events in a batch
+    batchSize: 10
+    ## the max number of events pending dispatch, setting this too low may result in events being dropped
+    queueSize: 1000
+    ## the maximum time between events being dispatched
+    flushInterval: 30s
