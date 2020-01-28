@@ -114,7 +114,7 @@ func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request)
 	render.JSON(w, r, tokenResponse{accessToken, expires})
 }
 
-// GetAPIAccessToken returns a JWT access token for the API service
+// GetAdminAccessToken returns a JWT access token for the Admin service
 func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	clientCreds, httpCode, e := h.verifyClientCredentials(r)
