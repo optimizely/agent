@@ -38,7 +38,7 @@ type OptlyCache struct {
 	optlyMap        cmap.ConcurrentMap
 	ctx             context.Context
 	wg              sync.WaitGroup
-	conf            config.ProcessorConfig
+	processorConf   config.ProcessorConfig
 	metricsRegistry *MetricsRegistry
 }
 
@@ -49,7 +49,7 @@ func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry 
 		wg:              sync.WaitGroup{},
 		loader:          initOptlyClient,
 		optlyMap:        cmap.New(),
-		conf:            conf,
+		processorConf:   conf,
 		metricsRegistry: metricsRegistry,
 	}
 
@@ -72,7 +72,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.conf, c.metricsRegistry)
+	oc, err := c.loader(sdkKey, c.processorConf, c.metricsRegistry)
 	if err != nil {
 		return oc, err
 	}
