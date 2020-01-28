@@ -86,19 +86,19 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/features", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
+		r.Use(opt.middleware.ClientCtx, opt.oAuthHandler.Middleware)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
 		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
+		r.Use(opt.middleware.ClientCtx, opt.oAuthHandler.Middleware)
 		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
 		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx, opt.oAuthHandler.Middleware)
 
 		r.With(trackEventTimer).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 
@@ -111,7 +111,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	})
 
 	r.Route("/overrides/users/{userID}", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx, opt.oAuthHandler.Middleware)
 
 		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}", opt.userOverrideAPI.SetForcedVariation)
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}", opt.userOverrideAPI.RemoveForcedVariation)

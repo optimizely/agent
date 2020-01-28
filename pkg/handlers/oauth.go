@@ -30,15 +30,19 @@ import (
 	"github.com/go-chi/render"
 )
 
+// ClientCredentials has all info for client credentials
 type ClientCredentials struct {
 	ID     string
 	TTL    time.Duration
 	Secret []byte
 }
 
+// OAuthHandler provides handler for auth
 type OAuthHandler struct {
 	ClientCredentials map[string]ClientCredentials
 	hmacSecret        []byte
+
+	middleware.Auth
 }
 
 type tokenResponse struct {
@@ -57,9 +61,17 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		}
 	}
 
+	var authProvider middleware.Auth
+	if authConfig.HMACSecret == "" {
+		authProvider = middleware.NewAuth(middleware.NoAuth{}, true)
+	} else {
+		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(authConfig.HMACSecret), true)
+	}
+
 	h := &OAuthHandler{
 		hmacSecret:        []byte(authConfig.HMACSecret),
 		ClientCredentials: clientCredentials,
+		Auth:              authProvider,
 	}
 	return h
 }
