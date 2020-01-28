@@ -40,7 +40,7 @@ func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (string, 
 	return tokenString, expires, nil
 }
 
-// BuildAdminAccessToken returns a token for accessing the API service using the argument SDK key and TTL. It also returns the expiration timestamp.
+// BuildAdminAccessToken returns a token for accessing the Admin service using the argument TTL. It also returns the expiration timestamp.
 func BuildAdminAccessToken(ttl time.Duration, key []byte) (string, int64, error) {
 	expires := time.Now().Add(ttl).Unix()
 
