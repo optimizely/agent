@@ -49,7 +49,6 @@ func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeat
 	return features, err
 }
 
-
 // ErrEntityNotFound is returned when no entity exists with a given key
 var ErrEntityNotFound = errors.New("not found")
 
@@ -99,7 +98,7 @@ func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.Opti
 // UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {
-		c.ConfigManager.SyncConfig([]byte{})
+		c.ConfigManager.SyncConfig()
 	}
 }
 
@@ -109,7 +108,7 @@ func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, 
 }
 
 // GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext
-func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]string, err error) {
+func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]interface{}, err error) {
 	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
 }
 
