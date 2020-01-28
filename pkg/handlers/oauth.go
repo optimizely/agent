@@ -125,7 +125,7 @@ func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Reques
 
 	accessToken, expires, err := jwtauth.BuildAdminAccessToken(clientCreds.TTL, h.hmacSecret)
 	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
+		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAdminAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
