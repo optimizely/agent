@@ -27,6 +27,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func assertRoot(t *testing.T, actual *config.AgentConfig) {
+	assert.Equal(t, "0.1.0", actual.Version)
+	assert.Equal(t, "Optimizely Inc.", actual.Author)
+	assert.Equal(t, "optimizely", actual.Name)
+	assert.Equal(t, []string{"ddd", "eee", "fff"}, actual.SDKKeys)
+}
+
 func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
@@ -39,9 +46,6 @@ func assertLog(t *testing.T, actual config.LogConfig) {
 
 func assertAdmin(t *testing.T, actual config.AdminConfig) {
 	assert.Equal(t, "3002", actual.Port)
-	assert.Equal(t, "0.1.0", actual.Version)
-	assert.Equal(t, "Optimizely Inc.", actual.Author)
-	assert.Equal(t, "optimizely", actual.Name)
 }
 
 func assertAPI(t *testing.T, actual config.APIConfig) {
@@ -59,26 +63,27 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 	assert.False(t, actual.Projects[20000].SkipSignatureCheck)
 }
 
-func assertOptly(t *testing.T, actual config.OptlyConfig) {
-	assert.Equal(t, []string{"ddd", "eee", "fff"}, actual.SDKKeys)
-}
-
 func TestViperYaml(t *testing.T) {
 	v := viper.New()
 	v.Set("config.filename", "./testdata/default.yaml")
 
 	actual := loadConfig(v)
 
+	assertRoot(t, actual)
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
 	assertWebhook(t, actual.Webhook)
-	assertOptly(t, actual.Optly)
 }
 
 func TestViperProps(t *testing.T) {
 	v := viper.New()
+
+	v.Set("version", "0.1.0")
+	v.Set("author", "Optimizely Inc.")
+	v.Set("name", "optimizely")
+	v.Set("sdkkeys", []string{"ddd", "eee", "fff"})
 
 	v.Set("server.readtimeout", 5*time.Second)
 	v.Set("server.writetimeout", 10*time.Second)
@@ -87,9 +92,6 @@ func TestViperProps(t *testing.T) {
 	v.Set("log.level", "debug")
 
 	v.Set("admin.port", "3002")
-	v.Set("admin.version", "0.1.0")
-	v.Set("admin.author", "Optimizely Inc.")
-	v.Set("admin.name", "optimizely")
 
 	v.Set("api.maxconns", 100)
 	v.Set("api.port", "3000")
@@ -102,20 +104,23 @@ func TestViperProps(t *testing.T) {
 	v.Set("webhook.projects.20000.sdkkeys", []string{"xxx", "yyy", "zzz"})
 	v.Set("webhook.projects.20000.skipsignaturecheck", false)
 
-	v.Set("optly.sdkkeys", []string{"ddd", "eee", "fff"})
-
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
 
+	assertRoot(t, actual)
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
 	assertWebhook(t, actual.Webhook)
-	assertOptly(t, actual.Optly)
 }
 
 func TestViperEnv(t *testing.T) {
+	_ = os.Setenv("OPTIMIZELY_VERSION", "0.1.0")
+	_ = os.Setenv("OPTIMIZELY_AUTHOR", "Optimizely Inc.")
+	_ = os.Setenv("OPTIMIZELY_NAME", "optimizely")
+	_ = os.Setenv("OPTIMIZELY_SDKKEYS", "ddd,eee,fff")
+
 	_ = os.Setenv("OPTIMIZELY_SERVER_READTIMEOUT", "5s")
 	_ = os.Setenv("OPTIMIZELY_SERVER_WRITETIMEOUT", "10s")
 
@@ -123,9 +128,6 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
 
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
-	_ = os.Setenv("OPTIMIZELY_ADMIN_VERSION", "0.1.0")
-	_ = os.Setenv("OPTIMIZELY_ADMIN_AUTHOR", "Optimizely Inc.")
-	_ = os.Setenv("OPTIMIZELY_ADMIN_NAME", "optimizely")
 
 	_ = os.Setenv("OPTIMIZELY_API_MAXCONNS", "100")
 	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")
@@ -138,16 +140,14 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SDKKEYS", "xxx,yyy,zzz")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
-	_ = os.Setenv("OPTIMIZELY_OPTLY_SDKKEYS", "ddd,eee,fff")
-
 	v := viper.New()
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
 
+	assertRoot(t, actual)
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
-	assertOptly(t, actual.Optly)
 }

@@ -1,3 +1,10 @@
+version: 0.1.0
+author: Optimizely Inc.
+name: optimizely
+sdkkeys:
+  - ddd
+  - eee
+  - fff
 server:
   readTimeout: 5s
   writeTimeout: 10s
@@ -5,17 +12,11 @@ log:
   pretty: true
   level: debug
 admin:
-  enabled: false
-  version: 0.1.0
-  author: Optimizely Inc.
-  name: optimizely
   port: "3002"
 api:
-  enabled: true
   maxconns: 100
   port: "3000"
 webhook:
-  enabled: true
   port: "3001"
   projects:
     10000:
@@ -31,8 +32,3 @@ webhook:
         - yyy
         - zzz
       secret: secret-20000
-optly:
-  sdkkeys:
-    - ddd
-    - eee
-    - fff

@@ -46,7 +46,7 @@ func initConfig(v *viper.Viper) error {
 	// Load defaults from the AgentConfig by loading the marshaled values as yaml
 	// https://github.com/spf13/viper/issues/188
 	defaultConf := config.NewDefaultConfig()
-	defaultConf.Admin.Version = Version
+	defaultConf.Version = Version
 	b, err := yaml.Marshal(defaultConf)
 	if err != nil {
 		return err
@@ -104,7 +104,8 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache(ctx, conf.Optly, sdkMetricsRegistry)
+	optlyCache := optimizely.NewCache(ctx, conf.Processor, sdkMetricsRegistry)
+	optlyCache.Init(conf.SDKKeys)
 
 	// goroutine to check for signals to gracefully shutdown listeners
 	go func() {
@@ -117,10 +118,10 @@ func main() {
 		cancel()
 	}()
 
-	log.Info().Str("version", conf.Admin.Version).Msg("Starting services.")
+	log.Info().Str("version", conf.Version).Msg("Starting services.")
 	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
-	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(conf.Admin)) // Admin should be added last.
+	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

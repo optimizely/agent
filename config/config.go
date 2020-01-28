@@ -25,11 +25,12 @@ import (
 func NewDefaultConfig() *AgentConfig {
 
 	config := AgentConfig{
+		Version: "",
+		Author:  "Optimizely Inc.",
+		Name:    "optimizely",
+
 		Admin: AdminConfig{
-			Version: "",
-			Author:  "Optimizely Inc.",
-			Name:    "optimizely",
-			Port:    "8088",
+			Port: "8088",
 		},
 		API: APIConfig{
 			MaxConns: 0,
@@ -39,12 +40,10 @@ func NewDefaultConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
-		Optly: OptlyConfig{
-			Processor: ProcessorConfig{
-				BatchSize:     10,
-				QueueSize:     1000,
-				FlushInterval: 30 * time.Second,
-			},
+		Processor: ProcessorConfig{
+			BatchSize:     10,
+			QueueSize:     1000,
+			FlushInterval: 30 * time.Second,
 		},
 		Server: ServerConfig{
 			ReadTimeout:  5 * time.Second,
@@ -60,62 +59,59 @@ func NewDefaultConfig() *AgentConfig {
 
 // AgentConfig is the top level configuration struct
 type AgentConfig struct {
-	Admin   AdminConfig   `yaml:"admin"`
-	API     APIConfig     `yaml:"api"`
-	Log     LogConfig     `yaml:"log"`
-	Optly   OptlyConfig   `yaml:"optly"`
-	Server  ServerConfig  `yaml:"server"`
-	Webhook WebhookConfig `yaml:"webhook"`
-}
+	Version string `json:"version"`
+	Author  string `json:"author"`
+	Name    string `json:"name"`
 
-// OptlyConfig holds the set of SDK keys to bootstrap during initialization
-type OptlyConfig struct {
-	Processor ProcessorConfig `yaml:"processor"`
-	SDKKeys   []string        `yaml:"sdkkeys"`
+	SDKKeys []string `yaml:"sdkkeys" json:"sdkkeys"`
+
+	Admin     AdminConfig     `json:"admin"`
+	API       APIConfig       `json:"api"`
+	Log       LogConfig       `json:"log"`
+	Processor ProcessorConfig `json:"processor"`
+	Server    ServerConfig    `json:"server"`
+	Webhook   WebhookConfig   `json:"webhook"`
 }
 
 // ProcessorConfig holds the configuration options for the Optimizely Event Processor.
 type ProcessorConfig struct {
-	BatchSize     int           `yaml:"batchSize" default:"10"`
-	QueueSize     int           `yaml:"queueSize" default:"1000"`
-	FlushInterval time.Duration `yaml:"flushInterval" default:"30s"`
+	BatchSize     int           `json:"batchSize" default:"10"`
+	QueueSize     int           `json:"queueSize" default:"1000"`
+	FlushInterval time.Duration `json:"flushInterval" default:"30s"`
 }
 
 // LogConfig holds the log configuration
 type LogConfig struct {
-	Pretty bool   `yaml:"pretty"`
-	Level  string `yaml:"level"`
+	Pretty bool   `json:"pretty"`
+	Level  string `json:"level"`
 }
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
-	ReadTimeout  time.Duration `yaml:"readtimeout"`
-	WriteTimeout time.Duration `yaml:"writetimeout"`
+	ReadTimeout  time.Duration `json:"readtimeout"`
+	WriteTimeout time.Duration `json:"writetimeout"`
 }
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
-	MaxConns int    `yaml:"maxconns"`
-	Port     string `yaml:"port"`
+	MaxConns int    `json:"maxconns"`
+	Port     string `json:"port"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Version string `yaml:"version"`
-	Author  string `yaml:"author"`
-	Name    string `yaml:"name"`
-	Port    string `yaml:"port"`
+	Port string `json:"port"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
-	Port     string                   `yaml:"port"`
-	Projects map[int64]WebhookProject `mapstructure:"projects"`
+	Port     string                   `json:"port"`
+	Projects map[int64]WebhookProject `json:"projects"`
 }
 
 // WebhookProject holds the configuration for a single Project webhook
 type WebhookProject struct {
-	SDKKeys            []string `yaml:"sdkKeys"`
-	Secret             string   `yaml:"secret"`
-	SkipSignatureCheck bool     `yaml:"skipSignatureCheck" default:"false"`
+	SDKKeys            []string `json:"sdkKeys"`
+	Secret             string   `json:"-"`
+	SkipSignatureCheck bool     `json:"skipSignatureCheck" default:"false"`
 }
