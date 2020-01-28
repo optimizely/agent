@@ -32,7 +32,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r := chi.NewRouter()
 
 	optlyAdmin := handlers.NewAdmin(conf)
-	tokenHandler := handlers.NewOAuthHandler(&conf.Auth)
+	tokenHandler := handlers.NewOAuthHandler(&conf.Admin.Auth)
 
 	r.Use(optlyAdmin.AppInfoHeader)
 	r.Use(render.SetContentType(render.ContentTypeJSON))
