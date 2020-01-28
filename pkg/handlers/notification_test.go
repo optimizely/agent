@@ -33,24 +33,24 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type EventStreamTestSuite struct {
+type NotificationTestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
 	mux *chi.Mux
 }
 
-type EventStreamMW struct {
+type NotificationMW struct {
 	optlyClient *optimizely.OptlyClient
 }
 
-func (o *EventStreamMW) ClientCtx(next http.Handler) http.Handler {
+func (o *NotificationMW) ClientCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, o.optlyClient)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func (o *EventStreamMW) UserCtx(next http.Handler) http.Handler {
+func (o *NotificationMW) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyContext := optimizely.NewContext("testUser", make(map[string]interface{}))
 		ctx := context.WithValue(r.Context(), middleware.OptlyContextKey, optlyContext)
@@ -59,7 +59,7 @@ func (o *EventStreamMW) UserCtx(next http.Handler) http.Handler {
 }
 
 // Setup Mux
-func (suite *EventStreamTestSuite) SetupTest() {
+func (suite *NotificationTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
@@ -69,7 +69,7 @@ func (suite *EventStreamTestSuite) SetupTest() {
 
 	mux := chi.NewMux()
 	eventsAPI := NewEventStreamHandler()
-	EventStreamMW := &EventStreamMW{optlyClient}
+	EventStreamMW := &NotificationMW{optlyClient}
 
 	mux.Use(EventStreamMW.ClientCtx, EventStreamMW.UserCtx)
 	mux.Get("/notifications/event-stream", eventsAPI.HandleEventSteam)
@@ -78,7 +78,7 @@ func (suite *EventStreamTestSuite) SetupTest() {
 	suite.tc = testClient
 }
 
-func (suite *EventStreamTestSuite) TestFeatureTestStream() {
+func (suite *NotificationTestSuite) TestFeatureTestStream() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -96,15 +96,16 @@ func (suite *EventStreamTestSuite) TestFeatureTestStream() {
 	ctx1,cancelFun := context.WithCancel(ctx)
 	// wait 1 second for the request to be serviced and then cancel the request which closes the request
 	// and notifies the handler. This causes the handler to shuts down properly
+	// wait 1 second for the request to be serviced and then cancel the request which closes the request
+	// notifies the handler, and the handler shuts down properly
 	go func() {
 		time.Sleep(1 * time.Second)
 		cancelFun()
 	}()
 
-	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-
 	expected := "data: {\"Type\":\"feature\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"feature\":{\"featureEnabled\":true,\"featureKey\":\"one\",\"source\":\"feature-test\",\"sourceInfo\":{\"experimentKey\":\"1\",\"variationKey\":\"2\"}}}}\n\n"
 
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
@@ -112,7 +113,7 @@ func (suite *EventStreamTestSuite) TestFeatureTestStream() {
 	suite.Equal(expected,response)
 }
 
-func (suite *EventStreamTestSuite) TestActivateExperiment() {
+func (suite *NotificationTestSuite) TestActivateExperiment() {
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
 
@@ -146,7 +147,7 @@ func (suite *EventStreamTestSuite) TestActivateExperiment() {
 	suite.Equal(expected,response)
 }
 
-func (suite *EventStreamTestSuite) TestActivateExperimentRaw() {
+func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
 
@@ -181,21 +182,21 @@ func (suite *EventStreamTestSuite) TestActivateExperimentRaw() {
 	suite.Equal(expected,response)
 }
 
-func (suite *EventStreamTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
+func (suite *NotificationTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
 }
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestEventStreamTestSuite(t *testing.T) {
-	suite.Run(t, new(EventStreamTestSuite))
+	suite.Run(t, new(NotificationTestSuite))
 }
 
 func TestEventStreamMissingOptlyCtx(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
 	// pass 'nil' as the third parameter.
 	req := httptest.NewRequest("GET", "/", nil)
-	mw := new(EventStreamMW)
+	mw := new(NotificationMW)
 	mw.optlyClient = nil
 
 	handler := NewEventStreamHandler()

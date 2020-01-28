@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
 	"net/http"
 )
 
@@ -33,6 +34,47 @@ type MessageChan chan []byte
 // per SDK Key (defined in the header)
 type NotificationHandler struct {
 }
+
+func contains(arr []string, element string) bool {
+	for _, e := range arr {
+		if e == element {
+			return true
+		}
+	}
+
+	return false
+}
+
+func sendNotificationToChannel(n interface{}, messChan *MessageChan, r *http.Request) {
+	if decision, ok := n.(notification.DecisionNotification); ok {
+		jsonEvent, err := json.Marshal(decision)
+		if err != nil {
+			middleware.GetLogger(r).Error().Str("decision", string(decision.Type)).Msg("encoding decision notification to json")
+		} else {
+			*messChan <- jsonEvent
+		}
+	} else if track, ok := n.(notification.TrackNotification); ok {
+		jsonEvent, err := json.Marshal(track)
+		if err != nil {
+			middleware.GetLogger(r).Error().Str("track", string(track.EventKey)).Msg("encoding notification event to json")
+		} else {
+			*messChan <- jsonEvent
+		}
+
+	} else if config, ok := n.(notification.ProjectConfigUpdateNotification); ok {
+		jsonEvent, err := json.Marshal(config)
+		if err != nil {
+			middleware.GetLogger(r).Error().Str("config", string(config.Type)).Msg("encoding config update notification to json")
+		} else {
+			*messChan <- jsonEvent
+		}
+
+	}
+
+}
+
+// types of notifications supported.
+var types = []notification.Type{notification.Decision, notification.Track, notification.ProjectConfigUpdate}
 
 // HandleEventSteam implements the http.Handler interface.
 // This allows us to wrap HTTP handlers (see auth_handler.go)
@@ -59,6 +101,12 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// Parse the form.
+	_ = r.ParseForm()
+	// "raw" query string option
+	// If provided, send raw JSON lines instead of SSE-compliant strings.
+	raw := len(r.Form["raw"]) > 0
+
 	// Set the headers related to event streaming.
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -68,32 +116,42 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 	// Each connection registers its own message channel with the NotificationHandler's connections registry
 	messageChan := make(MessageChan)
 	// Each connection also adds one decision listener
-	id, err2 := optlyClient.DecisionService.OnDecision(func(decision notification.DecisionNotification) {
-		jsonEvent, err := json.Marshal(decision)
-		if err != nil {
-			middleware.GetLogger(r).Error().Str("decision", string(decision.Type)).Msg("encoding decision to json")
-		} else {
-			messageChan <- jsonEvent
-		}
-	})
+	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
+	nc := registry.GetNotificationCenter(sdkKey)
 
-	if err2 != nil {
-		RenderError(err2, http.StatusUnprocessableEntity, w, r)
-		return
+	filters := r.Form["filter"]
+
+	var ids []int
+
+	for _, notificationType := range types {
+		if !contains(filters, string(notificationType)) {
+			id,e := nc.AddHandler(notificationType, func (n interface{}) {
+				sendNotificationToChannel(n, &messageChan, r)
+			})
+			//id, e := optlyClient.DecisionService.OnDecision(func (decision notification.DecisionNotification) {
+			//	sendNotificationToChannel(decision, &messageChan, r)
+			//})
+			if e != nil {
+				RenderError(e, http.StatusUnprocessableEntity, w, r)
+			}
+			ids = append(ids, id)
+		} else {
+			ids = append(ids, 0)
+		}
 	}
 
 	// Remove the decision listener if we exited.
 	defer func() {
-		err := optlyClient.DecisionService.RemoveOnDecision(id)
-		if err != nil {
-			middleware.GetLogger(r).Error().AnErr("removingOnDecision", err)
+		for i, id := range ids {
+			if id == 0 {
+				continue
+			}
+			err := nc.RemoveHandler(id, types[i])
+			if err != nil {
+				middleware.GetLogger(r).Error().AnErr("removing notification", err)
+			}
 		}
 	}()
-
-	// "raw" query string option
-	// If provided, send raw JSON lines instead of SSE-compliant strings.
-	_ = r.ParseForm()
-	raw := len(r.Form["raw"]) > 0
 
 	// Listen to connection close and un-register messageChan
 	notify := r.Context().Done()
@@ -112,17 +170,10 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 			// Flush the data immediately instead of buffering it for later.
 			// The flush will fail if the connection is closed.  That will cause the handler to exit.
 			flusher.Flush()
-			fmt.Println("received message", msg)
-		// Remove the decision listener if the connection is closed and exit
-		case sig := <-notify:
-			err := optlyClient.DecisionService.RemoveOnDecision(id)
-			if err != nil {
-				middleware.GetLogger(r).Error().AnErr("removingOnDecision", err)
-			}
-			fmt.Println("received close on the request.  So, we are shutting down this handler", sig)
+		case _ = <-notify:
+			middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
 			return
 		}
-
 	}
 
 }
