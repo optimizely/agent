@@ -46,31 +46,15 @@ func contains(arr []string, element string) bool {
 }
 
 func sendNotificationToChannel(n interface{}, messChan *MessageChan, r *http.Request) {
-	if decision, ok := n.(notification.DecisionNotification); ok {
-		jsonEvent, err := json.Marshal(decision)
+	switch v := n.(type) {
+	case notification.DecisionNotification, notification.TrackNotification, notification.ProjectConfigUpdateNotification:
+		jsonEvent, err := json.Marshal(v)
 		if err != nil {
-			middleware.GetLogger(r).Error().Str("decision", string(decision.Type)).Msg("encoding decision notification to json")
+			middleware.GetLogger(r).Error().Msg("encoding notification to json")
 		} else {
 			*messChan <- jsonEvent
 		}
-	} else if track, ok := n.(notification.TrackNotification); ok {
-		jsonEvent, err := json.Marshal(track)
-		if err != nil {
-			middleware.GetLogger(r).Error().Str("track", string(track.EventKey)).Msg("encoding notification event to json")
-		} else {
-			*messChan <- jsonEvent
-		}
-
-	} else if config, ok := n.(notification.ProjectConfigUpdateNotification); ok {
-		jsonEvent, err := json.Marshal(config)
-		if err != nil {
-			middleware.GetLogger(r).Error().Str("config", string(config.Type)).Msg("encoding config update notification to json")
-		} else {
-			*messChan <- jsonEvent
-		}
-
 	}
-
 }
 
 // types of notifications supported.
@@ -169,7 +153,7 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 			// Flush the data immediately instead of buffering it for later.
 			// The flush will fail if the connection is closed.  That will cause the handler to exit.
 			flusher.Flush()
-		case _ = <-notify:
+		case <-notify:
 			middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
 			return
 		}
