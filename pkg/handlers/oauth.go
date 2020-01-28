@@ -76,15 +76,15 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	}
 	clientID := queryParams.Get("client_id")
 	if clientID == "" {
-		return nil, http.StatusBadRequest, errors.New("client_id query parameter required")
+		return nil, http.StatusUnauthorized, errors.New("client_id query parameter required")
 	}
 	clientSecret := queryParams.Get("client_secret")
 	if clientSecret == "" {
-		return nil, http.StatusBadRequest, errors.New("client_secret query parameter required")
+		return nil, http.StatusUnauthorized, errors.New("client_secret query parameter required")
 	}
 	clientCreds, ok := h.ClientCredentials[clientID]
 	if !ok || !jwtauth.MatchClientSecret(clientSecret, clientCreds.Secret) {
-		return nil, http.StatusUnauthorized, errors.New("Invalid client_id or client_secret")
+		return nil, http.StatusForbidden, errors.New("Invalid client_id or client_secret")
 	}
 	return &clientCreds, http.StatusOK, nil
 }
