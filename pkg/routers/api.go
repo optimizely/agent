@@ -38,6 +38,7 @@ type APIOptions struct {
 	experimentAPI   handlers.ExperimentAPI
 	featureAPI      handlers.FeatureAPI
 	userAPI         handlers.UserAPI
+	userOverrideAPI handlers.UserOverrideAPI
 	metricsRegistry *metrics.Registry
 	oAuthHandler    *handlers.OAuthHandler
 }
@@ -50,6 +51,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		experimentAPI:   new(handlers.ExperimentHandler),
 		featureAPI:      new(handlers.FeatureHandler),
 		userAPI:         new(handlers.UserHandler),
+		userOverrideAPI: new(handlers.UserOverrideHandler),
 		metricsRegistry: metricsRegistry,
 		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
 	}
@@ -106,8 +108,13 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.With(trackUserFeatureTimer, opt.middleware.FeatureCtx).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
 		r.With(getVariationTimer, opt.middleware.ExperimentCtx).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
 		r.With(activateExperimentTimer, opt.middleware.ExperimentCtx).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
-		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}/variations/{variationKey}", opt.userAPI.SetForcedVariation)
-		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}/variations", opt.userAPI.RemoveForcedVariation)
+	})
+
+	r.Route("/overrides/users/{userID}", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
+
+		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}", opt.userOverrideAPI.SetForcedVariation)
+		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}", opt.userOverrideAPI.RemoveForcedVariation)
 	})
 
 	r.Get("/oauth/token", opt.oAuthHandler.GetAPIAccessToken)

@@ -154,45 +154,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
-  /users/{userId}/experiments/{experimentKey}/variations/{variationKey}:
-    parameters:
-    - $ref: '#/components/parameters/userIdParam'
-    - $ref: '#/components/parameters/experimentKeyParam'
-    - $ref: '#/components/parameters/variationKeyParam'
-    put:
-      summary: Set a forced variation for a user in an experiment
-      operationId: setForcedVariation
-      description: Set forced variation stores the experiment and variation detail to be consumed by future user
-                   based decisions. This override is only stored locally and inmemory for debugging and testing purposes
-                   and should not be used for production overrides.
-      tags:
-        - users
-      responses:
-        '201':
-          description: Forced variation set
-        '204':
-          description: Forced variation was already set
-        '400':
-          description: Invalid user id, experiment key, or variation key
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /users/{userId}/experiments/{experimentKey}/variations:
-    parameters:
-    - $ref: '#/components/parameters/userIdParam'
-    - $ref: '#/components/parameters/experimentKeyParam'
-    delete:
-      summary: Remove any forced variation for a user in an experiment
-      operationId: deleteForcedVariation
-      description: Delete forced variation removes any stored variation override associated with the user and experiment.
-      tags:
-        - users
-      responses:
-        '204':
-          description: Any forced variation was deleted
-        '400':
-          description: Invalid user id or experiment key
-        '403':
-          $ref: '#/components/responses/Forbidden'
   /users/{userId}/features:
     parameters:
       - $ref: '#/components/parameters/userIdParam'
@@ -283,6 +244,42 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           description: Feature does not exist
+  /overrides/users/{userId}/experiments/{experimentKey}:
+    parameters:
+      - $ref: '#/components/parameters/userIdParam'
+      - $ref: '#/components/parameters/experimentKeyParam'
+    put:
+      summary: Set a forced variation for a user in an experiment
+      operationId: setForcedVariation
+      description: Set forced variation stores the experiment and variation detail to be consumed by future user
+        based decisions. This override is only stored locally and inmemory for debugging and testing purposes
+        and should not be used for production overrides.
+      tags:
+        - overrides
+      responses:
+        '201':
+          description: Forced variation set
+        '204':
+          description: Forced variation was already set
+        '400':
+          description: Invalid user id, experiment key, or variation key
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      requestBody:
+        $ref: '#/components/requestBodies/Override'
+    delete:
+      summary: Remove any forced variation for a user in an experiment
+      operationId: deleteForcedVariation
+      description: Delete forced variation removes any stored variation override associated with the user and experiment.
+      tags:
+        - overrides
+      responses:
+        '204':
+          description: Any forced variation was deleted
+        '400':
+          description: Invalid user id or experiment key
+        '403':
+          $ref: '#/components/responses/Forbidden'
 components:
   parameters:
     attributesParam:
@@ -336,6 +333,12 @@ components:
           schema:
             type: object
             additionalProperties: true
+    Override:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Override'
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -396,6 +399,10 @@ components:
       required:
       - id
       - key
+    Override:
+      properties:
+        variationKey:
+          type: string
     Variation:
       properties:
         id:
@@ -435,5 +442,9 @@ tags:
       url: https://docs.developers.optimizely.com/full-stack/docs/welcome
   - name: users
     description: Collection of APIs to make decisions given the context of a specified user.
+    externalDocs:
+      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
+  - name: overrides
+    description: Collection of APIs used to override the default decision logic.
     externalDocs:
       url: https://docs.developers.optimizely.com/full-stack/docs/welcome

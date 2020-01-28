@@ -85,7 +85,6 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 // detail from a UPS or attribute store.
 func (mw *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		userID := chi.URLParam(r, "userID")
 		if userID == "" {
 			RenderError(fmt.Errorf("invalid request, missing userId"), http.StatusBadRequest, w, r)
@@ -93,18 +92,21 @@ func (mw *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 		}
 
 		// Remove userId and copy values into the attributes map
+		logger := GetLogger(r)
 		values := r.URL.Query()
 		attributes := make(map[string]interface{})
+
 		for k, v := range values {
 			// Assuming a single KV pair exists in the query parameters
-			attributes[k] = v[0]
-			GetLogger(r).Debug().Str("attrKey", k).Str("attrVal", v[0]).Msg("User attribute.")
+			val := v[0]
+			attributes[k] = CoerceType(val)
+			logger.Debug().Str("attrKey", k).Str("attrVal", val).Msg("User attribute.")
 		}
 
 		optlyContext := optimizely.NewContext(userID, attributes)
 		ctx := context.WithValue(r.Context(), OptlyContextKey, optlyContext)
 
-		GetLogger(r).Debug().Str("userId", userID).Msg("Adding user context to request.")
+		logger.Debug().Str("userId", userID).Msg("Adding user context to request.")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -178,4 +180,3 @@ func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
 		RenderError(err, statusCode, w, r)
 	})
 }
-

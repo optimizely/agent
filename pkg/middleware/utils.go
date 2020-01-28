@@ -20,6 +20,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/optimizely/agent/pkg/optimizely"
 
@@ -88,4 +89,33 @@ func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
 		return nil, fmt.Errorf("experiment not available")
 	}
 	return experiment, nil
+}
+
+// CoerceType coerces typed value from string
+func CoerceType(s string) interface{} {
+
+	if u, err := strconv.Unquote(s); err == nil {
+		if u != s {
+			return u
+		}
+	}
+
+	if i, err := strconv.ParseInt(s, 10, 0); err == nil {
+		return i
+	}
+
+	if d, err := strconv.ParseFloat(s, 64); err == nil {
+		return d
+	}
+
+	// Not using ParseBool since is support too many variants (e.g. 0, 1, FALSE, TRUE)
+	if s == "false" {
+		return false
+	}
+
+	if s == "true" {
+		return true
+	}
+
+	return s
 }
