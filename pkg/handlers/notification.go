@@ -100,7 +100,8 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 	// Parse out the any filters that were added
 	notificationsToAdd :=  getFilter(filters)
 
-	var ids []struct{int; notification.Type}
+	ids := []struct{int; notification.Type}{}
+	
 	for _, value := range notificationsToAdd {
 		id,e := nc.AddHandler(value, func (n interface{}) {
 			jsonEvent, err := json.Marshal(n)
