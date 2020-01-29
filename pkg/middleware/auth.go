@@ -116,9 +116,17 @@ func (a Auth) Verify(r *http.Request) (*jwt.Token, error) {
 
 }
 
+func (a Auth) enabled() bool {
+	if _, ok := a.Verifier.(NoAuth); ok {
+		return false
+	}
+	return true
+}
+
 // Authorize is middleware for auth
 func (a Auth) Authorize(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
+
 		tk, err := a.Verify(r)
 
 		if err != nil {
@@ -126,33 +134,35 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 			return
 		}
 
-		claims := tk.Claims.(jwt.MapClaims)
+		if a.enabled() {
+			claims := tk.Claims.(jwt.MapClaims)
 
-		for key := range a.checkClaims {
+			for key := range a.checkClaims {
 
-			value, ok := claims[key]
-			if !ok {
-				http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%s key not in claims"}`, key), http.StatusUnauthorized)
-				return
-			}
-
-			switch key {
-			case "exp":
-				if expired := (getNumberFromJSON(value) - time.Now().Unix()) <= 0; expired {
-					http.Error(w, `{"error": "unauthorized", "reason": "token expired"}`, http.StatusUnauthorized)
+				value, ok := claims[key]
+				if !ok {
+					http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%s key not in claims"}`, key), http.StatusUnauthorized)
 					return
 				}
 
-			case "sdk_key":
-				sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
-				if sdkKey, ok := value.(string); !ok || sdkKey != sdkKeyFromHeader {
-					http.Error(w, `{"error": "unauthorized", "reason": "SDK keys not equal"}`, http.StatusUnauthorized)
-					return
-				}
-			case "admin":
-				if adminFlag, ok := value.(bool); !ok || !adminFlag {
-					http.Error(w, `{"error": "unauthorized", "reason": "admin flag not set"}`, http.StatusUnauthorized)
-					return
+				switch key {
+				case "exp":
+					if expired := (getNumberFromJSON(value) - time.Now().Unix()) <= 0; expired {
+						http.Error(w, `{"error": "unauthorized", "reason": "token expired"}`, http.StatusUnauthorized)
+						return
+					}
+
+				case "sdk_key":
+					sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
+					if sdkKey, ok := value.(string); !ok || sdkKey != sdkKeyFromHeader {
+						http.Error(w, `{"error": "unauthorized", "reason": "SDK keys not equal"}`, http.StatusUnauthorized)
+						return
+					}
+				case "admin":
+					if adminFlag, ok := value.(bool); !ok || !adminFlag {
+						http.Error(w, `{"error": "unauthorized", "reason": "admin flag not set"}`, http.StatusUnauthorized)
+						return
+					}
 				}
 			}
 		}
