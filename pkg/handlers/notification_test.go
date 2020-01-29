@@ -23,7 +23,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/registry"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
 
@@ -53,14 +52,6 @@ func (o *NotificationMW) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
-func (o *NotificationMW) UserCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyContext := optimizely.NewContext("testUser", make(map[string]interface{}))
-		ctx := context.WithValue(r.Context(), middleware.OptlyContextKey, optlyContext)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 // Setup Mux
 func (suite *NotificationTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
@@ -74,61 +65,18 @@ func (suite *NotificationTestSuite) SetupTest() {
 	eventsAPI := NewNotificationHandler()
 	EventStreamMW := &NotificationMW{optlyClient}
 
-	mux.Use(EventStreamMW.ClientCtx, EventStreamMW.UserCtx)
+	mux.Use(EventStreamMW.ClientCtx)
 	mux.Get("/notifications/event-stream", eventsAPI.HandleEventSteam)
 
 	suite.mux = mux
 	suite.tc = testClient
 }
 
-func (suite *NotificationTestSuite) TestFeatureTestStream() {
-	feature := entities.Feature{Key: "one"}
-	suite.tc.AddFeatureTest(feature)
-
-	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
-	rec := httptest.NewRecorder()
-
-	expected := "data: {\"Type\":\"feature\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"feature\":{\"featureEnabled\":true,\"featureKey\":\"one\",\"source\":\"feature-test\",\"sourceInfo\":{\"experimentKey\":\"1\",\"variationKey\":\"2\"}}}}\n\n"
-
-	// create a cancelable request context
-	ctx := req.Context()
-	ctx1,_ := context.WithTimeout(ctx, 1 * time.Second)
-
-	startupWg := sync.WaitGroup{}
-
-	startupWg.Add(1)
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-
-	go func() {
-		startupWg.Wait()
-		suite.tc.OptimizelyClient.IsFeatureEnabled("one", entities.UserContext{"testUser", make(map[string]interface{})})
-	}()
-
-
-	go func() {
-		// start the mux
-		startupWg.Done()
-		suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-		wg.Done()
-	}()
-
-	wg.Wait()
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	response := string(rec.Body.Bytes())
-	suite.Equal(expected,response)
-}
-
 func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
-	req := httptest.NewRequest("GET", "/notifications/event-stream?filter=" + string(notification.Track) + "," + string(notification.Decision), nil)
+	req := httptest.NewRequest("GET", "/notifications/event-stream?filter=" + string(notification.Track) + "," + string(notification.ProjectConfigUpdate), nil)
 	rec := httptest.NewRecorder()
 
 	expected := ""
@@ -137,28 +85,11 @@ func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	ctx := req.Context()
 	ctx1,_ := context.WithTimeout(ctx, 1 * time.Second)
 
-	startupWg := sync.WaitGroup{}
-
-	startupWg.Add(1)
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-
 	go func() {
-		startupWg.Wait()
 		suite.tc.OptimizelyClient.IsFeatureEnabled("one", entities.UserContext{"testUser", make(map[string]interface{})})
 	}()
 
-
-	go func() {
-		// start the mux
-		startupWg.Done()
-		suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-		wg.Done()
-	}()
-
-	wg.Wait()
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
 	suite.Equal(http.StatusOK, rec.Code)
 
@@ -167,133 +98,51 @@ func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	suite.Equal(expected,response)
 }
 
-func (suite *NotificationTestSuite) TestTrack() {
-	event := entities.Event{Key: "one"}
-	suite.tc.AddEvent(event)
+func (suite *NotificationTestSuite) TestFilter() {
+	filter := []string{"decision", "track"}
 
-	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
-	rec := httptest.NewRecorder()
+	notifications := getFilter(filter)
 
-	expected := "data: {\"EventKey\":\"one\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"EventTags\":{},\"ConversionEvent\":{\"entity_id\":\"\",\"key\":\"one\",\"Attributes\":[{\"value\":true,\"key\":\"$opt_bot_filtering\",\"type\":\"custom\",\"entity_id\":\"$opt_bot_filtering\"}]}}\n\n"
+	suite.True(len(notifications) == 2)
+	suite.EqualValues(notification.Track, notifications["track"])
+	suite.EqualValues(notification.Decision, notifications["decision"])
 
-	// create a cancelable request context
-	ctx := req.Context()
-	ctx1,_ := context.WithTimeout(ctx, 1 * time.Second)
+	filter = []string{"decision,track", "track"}
 
-	startupWg := sync.WaitGroup{}
+	notifications = getFilter(filter)
 
-	startupWg.Add(1)
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-
-	go func() {
-		startupWg.Wait()
-		suite.tc.OptimizelyClient.Track("one", entities.UserContext{"testUser", make(map[string]interface{})}, make(map[string]interface{}))
-	}()
-
-
-	go func() {
-		// start the mux
-		startupWg.Done()
-		suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-		wg.Done()
-	}()
-
-	wg.Wait()
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	response := string(rec.Body.Bytes())
-	suite.Equal(expected,response)
+	suite.True(len(notifications) == 2)
+	suite.EqualValues(notification.Track, notifications["track"])
+	suite.EqualValues(notification.Decision, notifications["decision"])
 }
 
-func (suite *NotificationTestSuite) TestProjectConfig() {
+func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 	event := entities.Event{Key: "one"}
 	suite.tc.AddEvent(event)
 
 	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
 	rec := httptest.NewRecorder()
 
-	expected := "data: {\"Type\":\"project_config_update\",\"Revision\":\"revision\"}\n\n"
+	expected := `data: {"test":"value"}` + "\n\n" + `data: {"Type":"project_config_update","Revision":"revision"}` + "\n\n"
 
 	// create a cancelable request context
 	ctx := req.Context()
-	ctx1,_ := context.WithTimeout(ctx, 2 * time.Second)
+	ctx1,_ := context.WithTimeout(ctx, 3 * time.Second)
 
-	startupWg := sync.WaitGroup{}
-
-	startupWg.Add(1)
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
+	nc := registry.GetNotificationCenter("")
 
 	go func() {
-		startupWg.Wait()
+		time.Sleep(1 * time.Second)
+		_ = nc.Send(notification.Track, map[string]string{"test": "value"})
 		projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
 			Type:     notification.ProjectConfigUpdate,
 			Revision: suite.tc.ProjectConfig.GetRevision(),
 		}
-		nm := registry.GetNotificationCenter("")
-		time.Sleep(1 * time.Second)
-		_ = nm.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
+		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
 	}()
 
 
-	go func() {
-		// start the mux
-		startupWg.Done()
-		suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-		wg.Done()
-	}()
-
-	wg.Wait()
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	response := string(rec.Body.Bytes())
-	suite.Equal(expected,response)
-}
-
-func (suite *NotificationTestSuite) TestActivateExperiment() {
-	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
-	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
-
-	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
-	rec := httptest.NewRecorder()
-
-	expected := "data: {\"Type\":\"ab-test\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"experimentKey\":\"one\",\"variationKey\":\"variation_a\"}}\n\n"
-
-	// create a cancelable request context
-	ctx := req.Context()
-	ctx1,_ := context.WithTimeout(ctx, 1 * time.Second)
-
-	startupWg := sync.WaitGroup{}
-
-	startupWg.Add(1)
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-
-	go func() {
-		startupWg.Wait()
-		suite.tc.OptimizelyClient.Activate("one", entities.UserContext{"testUser", make(map[string]interface{})})
-	}()
-
-
-	go func() {
-		// start the mux
-		startupWg.Done()
-		suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-		wg.Done()
-	}()
-
-	wg.Wait()
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
 	suite.Equal(http.StatusOK, rec.Code)
 
@@ -309,34 +158,19 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	req := httptest.NewRequest("GET", "/notifications/event-stream?raw=yes", nil)
 	rec := httptest.NewRecorder()
 
-	expected := "{\"Type\":\"ab-test\",\"UserContext\":{\"ID\":\"testUser\",\"Attributes\":{}},\"DecisionInfo\":{\"experimentKey\":\"one\",\"variationKey\":\"variation_a\"}}\n"
+	expected := `{"key":"value"}` + "\n"
 
 	// create a cancelable request context
 	ctx := req.Context()
-	ctx1,_ := context.WithTimeout(ctx, 1 * time.Second)
+	ctx1,_ := context.WithTimeout(ctx, 2 * time.Second)
 
-	startupWg := sync.WaitGroup{}
-
-	startupWg.Add(1)
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-
+	nc := registry.GetNotificationCenter("")
 	go func() {
-		startupWg.Wait()
-		suite.tc.OptimizelyClient.Activate("one", entities.UserContext{"testUser", make(map[string]interface{})})
+		time.Sleep(1 * time.Second)
+		nc.Send(notification.Decision, map[string]string{"key":"value"})
 	}()
 
-
-	go func() {
-		// start the mux
-		startupWg.Done()
-		suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
-		wg.Done()
-	}()
-
-	wg.Wait()
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
 	suite.Equal(http.StatusOK, rec.Code)
 

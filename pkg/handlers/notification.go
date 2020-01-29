@@ -40,7 +40,7 @@ type NotificationHandler struct {
 var types = map[string]notification.Type{ string(notification.Decision) : notification.Decision, string(notification.Track) : notification.Track, string(notification.ProjectConfigUpdate): notification.ProjectConfigUpdate}
 
 func getFilter(filters []string) map[string]notification.Type {
-	var notificationsToAdd map[string]notification.Type
+	notificationsToAdd := map[string]notification.Type{}
 	// Parse out the any filters that were added
 	if len(filters) == 0 {
 		notificationsToAdd = types
