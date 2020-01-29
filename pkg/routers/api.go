@@ -49,9 +49,9 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	var authProvider middleware.Auth
 	if conf.Auth.HMACSecret == "" {
-		authProvider = middleware.NewAuth(middleware.NoAuth{}, true)
+		authProvider = middleware.NewAuth(middleware.NoAuth{})
 	} else {
-		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Auth.HMACSecret), true)
+		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Auth.HMACSecret))
 	}
 
 	spec := &APIOptions{

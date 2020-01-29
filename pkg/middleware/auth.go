@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
@@ -50,7 +49,6 @@ func (NoAuth) CheckToken(string) (*jwt.Token, error) {
 // Auth is the middleware for all REST API's
 type Auth struct {
 	Verifier
-	checkSdkKey bool
 }
 
 // Verifier checks token
@@ -58,7 +56,7 @@ type Verifier interface {
 	CheckToken(string) (*jwt.Token, error)
 }
 
-// JWTVerifier checks token with JWT
+// JWTVerifier checks token with JWT, implements Verifier
 type JWTVerifier struct {
 	secretKey string
 }
@@ -126,16 +124,20 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 		}
 		claims := tk.Claims.(jwt.MapClaims)
 
-		if expired := (getNumberFromJSON(claims["exp"]) - time.Now().Unix()) <= 0; expired {
-			render.JSON(w, r, `{"error": "token expired"}`)
-			return
-		}
+		for key, value := range claims {
+			switch key {
+			case "exp":
+				if expired := (getNumberFromJSON(value) - time.Now().Unix()) <= 0; expired {
+					http.Error(w, `{"error": "unauthorized", "reason": "token expired"}`, http.StatusUnauthorized)
+					return
+				}
 
-		if a.checkSdkKey {
-			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
-			if sdkKey, ok := claims["sdk_key"].(string); !ok || sdkKey != sdkKeyFromHeader {
-				render.JSON(w, r, `{"error": "SDK keys not equal"}`)
-				return
+			case "sdk_key":
+				sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
+				if sdkKey, ok := value.(string); !ok || sdkKey != sdkKeyFromHeader {
+					http.Error(w, `{"error": "unauthorized", "reason": "SDK keys not equal"}`, http.StatusUnauthorized)
+					return
+				}
 			}
 		}
 
@@ -145,6 +147,6 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 }
 
 // NewAuth makes Auth middleware
-func NewAuth(v Verifier, checkSdkKey bool) Auth {
-	return Auth{Verifier: v, checkSdkKey: checkSdkKey}
+func NewAuth(v Verifier) Auth {
+	return Auth{Verifier: v}
 }
