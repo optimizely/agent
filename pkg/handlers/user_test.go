@@ -378,7 +378,7 @@ func (suite *UserTestSuite) TestListFeatures() {
 		Feature{
 			Enabled: true,
 			Key:     "featureC",
-			Variables: map[string]string{
+			Variables: map[string]interface{}{
 				"strvar": "abc_notdef",
 			},
 		},
@@ -423,7 +423,7 @@ func (suite *UserTestSuite) TestTrackFeatures() {
 		Feature{
 			Enabled: true,
 			Key:     "featureC",
-			Variables: map[string]string{
+			Variables: map[string]interface{}{
 				"strvar": "abc_notdef",
 			},
 		},
