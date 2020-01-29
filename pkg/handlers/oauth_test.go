@@ -54,54 +54,100 @@ func (s *OAuthTestSuite) SetupTest() {
 	s.mux = mux
 }
 
-func (s *OAuthTestSuite) TestVerifyClientCredentialsSuccess() {
-	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=optly_user&client_secret=client_seekrit", nil)
-	clientCreds, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(&ClientCredentials{ID: "optly_user", TTL: 30 * time.Minute, Secret: []byte("client_seekrit")}, clientCreds)
-	s.Equal(http.StatusOK, httpCode)
-	s.NoError(err)
-}
-
-func (s *OAuthTestSuite) TestVerifyClientCredentialsMissingGrantType() {
+func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingGrantType() {
 	req := httptest.NewRequest("GET", "/api/token?client_id=optly_user&client_secret=client_seekrit", nil)
-	_, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(http.StatusBadRequest, httpCode)
-	s.Error(err)
+	req.Header.Set(middleware.OptlySDKHeader, "123")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code)
+}
+func (s *OAuthTestSuite) TestGetAdminAccessTokenMissingGrantType() {
+	req := httptest.NewRequest("GET", "/admin/token?client_id=optly_user&client_secret=client_seekrit", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
-func (s *OAuthTestSuite) TestVerifyClientCredentialsUnsupportedGrantType() {
+func (s *OAuthTestSuite) TestGetAPIAccessTokenUnsupportedGrantType() {
 	req := httptest.NewRequest("GET", "/api/token?grant_type=authorizationclient_id=optly_user&client_secret=client_seekrit", nil)
-	_, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(http.StatusBadRequest, httpCode)
-	s.Error(err)
+	req.Header.Set(middleware.OptlySDKHeader, "123")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
-func (s *OAuthTestSuite) TestVerifyClientCredentialsMissingClientId() {
+func (s *OAuthTestSuite) TestGetAdminAccessTokenUnsupportedGrantType() {
+	req := httptest.NewRequest("GET", "/admin/token?grant_type=authorizationclient_id=optly_user&client_secret=client_seekrit", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code)
+}
+
+func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingClientId() {
 	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_secret=client_seekrit", nil)
-	_, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(http.StatusUnauthorized, httpCode)
-	s.Error(err)
+	req.Header.Set(middleware.OptlySDKHeader, "123")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusUnauthorized, rec.Code)
 }
 
-func (s *OAuthTestSuite) TestVerifyClientCredentialsMissingClientSecret() {
+func (s *OAuthTestSuite) TestGetAdminAccessTokenMissingClientId() {
+	req := httptest.NewRequest("GET", "/admin/token?grant_type=client_credentials&client_secret=client_seekrit", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingClientSecret() {
 	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=optly_user", nil)
-	_, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(http.StatusUnauthorized, httpCode)
-	s.Error(err)
+	req.Header.Set(middleware.OptlySDKHeader, "123")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusUnauthorized, rec.Code)
 }
 
-func (s *OAuthTestSuite) TestVerifyClientCredentialsInvalidClientId() {
+func (s *OAuthTestSuite) TestGetAdminAccessTokenMissingClientSecret() {
+	req := httptest.NewRequest("GET", "/admin/token?grant_type=client_credentials&client_id=optly_user", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidClientId() {
 	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=not_an_optly_user&client_secret=client_seekrit", nil)
-	_, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(http.StatusForbidden, httpCode)
-	s.Error(err)
+	req.Header.Set(middleware.OptlySDKHeader, "123")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusForbidden, rec.Code)
 }
 
-func (s *OAuthTestSuite) TestVerifyClientCredentialsInvalidClientSecret() {
+func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientId() {
+	req := httptest.NewRequest("GET", "/admin/token?grant_type=client_credentials&client_id=not_an_optly_user&client_secret=client_seekrit", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusForbidden, rec.Code)
+}
+
+func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidClientSecret() {
 	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=optly_user&client_secret=invalid_seekret", nil)
-	_, httpCode, err := s.handler.verifyClientCredentials(req)
-	s.Equal(http.StatusForbidden, httpCode)
-	s.Error(err)
+	req.Header.Set(middleware.OptlySDKHeader, "123")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusForbidden, rec.Code)
+}
+
+func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientSecret() {
+	req := httptest.NewRequest("GET", "/admin/token?grant_type=client_credentials&client_id=optly_user&client_secret=invalid_seekret", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusForbidden, rec.Code)
+}
+
+func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingSDKKey() {
+	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=optly_user&client_secret=client_seekrit", nil)
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
 func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
@@ -116,23 +162,6 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	s.NoError(err)
 }
 
-func (s *OAuthTestSuite) TestGetAPIAccessTokenForbidden() {
-	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=optly_user&client_secret=blablabla", nil)
-	req.Header.Set(middleware.OptlySDKHeader, "123")
-	rec := httptest.NewRecorder()
-	s.mux.ServeHTTP(rec, req)
-
-	s.Equal(http.StatusForbidden, rec.Code)
-}
-
-func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingSDKKey() {
-	req := httptest.NewRequest("GET", "/api/token?grant_type=client_credentials&client_id=optly_user&client_secret=client_seekrit", nil)
-	rec := httptest.NewRecorder()
-	s.mux.ServeHTTP(rec, req)
-
-	s.Equal(http.StatusBadRequest, rec.Code)
-}
-
 func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 	req := httptest.NewRequest("GET", "/admin/token?grant_type=client_credentials&client_id=optly_user&client_secret=client_seekrit", nil)
 	rec := httptest.NewRecorder()
@@ -142,14 +171,6 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 	var actual tokenResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	s.NoError(err)
-}
-
-func (s *OAuthTestSuite) TestGetAdminAccessTokenForbidden() {
-	req := httptest.NewRequest("GET", "/admin/token?grant_type=client_credentials&client_id=not_an_optly_user&client_secret=client_seekrit", nil)
-	rec := httptest.NewRecorder()
-	s.mux.ServeHTTP(rec, req)
-
-	s.Equal(http.StatusForbidden, rec.Code)
 }
 
 func TestOAuthTestSuite(t *testing.T) {
