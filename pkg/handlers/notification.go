@@ -36,30 +36,29 @@ type MessageChan chan []byte
 type NotificationHandler struct {
 }
 
-func contains(arr []string, element string) bool {
-	for _, e := range arr {
-		if e == element {
-			return true
-		}
-	}
-
-	return false
-}
-
-func sendNotificationToChannel(n interface{}, messChan *MessageChan, r *http.Request) {
-	switch v := n.(type) {
-	case notification.DecisionNotification, notification.TrackNotification, notification.ProjectConfigUpdateNotification:
-		jsonEvent, err := json.Marshal(v)
-		if err != nil {
-			middleware.GetLogger(r).Error().Msg("encoding notification to json")
-		} else {
-			*messChan <- jsonEvent
-		}
-	}
-}
-
 // types of notifications supported.
-var types = []notification.Type{notification.Decision, notification.Track, notification.ProjectConfigUpdate}
+var types = map[string]notification.Type{ string(notification.Decision) : notification.Decision, string(notification.Track) : notification.Track, string(notification.ProjectConfigUpdate): notification.ProjectConfigUpdate}
+
+func getFilter(filters []string) map[string]notification.Type {
+	var notificationsToAdd map[string]notification.Type
+	// Parse out the any filters that were added
+	if len(filters) == 0 {
+		notificationsToAdd = types
+	}
+	// iterate through any filter query parameter included.  There may be more than one
+	for _, filter := range filters {
+		// split it in case it is comma separated list
+		splits := strings.Split(filter,",")
+		for _,split := range splits {
+			// if the string is a valid type
+			if _, ok := types[split]; ok {
+				notificationsToAdd[split] = notification.Type(split)
+			}
+		}
+	}
+
+	return notificationsToAdd
+}
 
 // HandleEventSteam implements the http.Handler interface.
 // This allows us to wrap HTTP handlers (see auth_handler.go)
@@ -80,51 +79,50 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Parse the form.
-	_ = r.ParseForm()
-
 	// Set the headers related to event streaming.
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	// this should be settable via config
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Each connection registers its own message channel with the NotificationHandler's connections registry
 	messageChan := make(MessageChan)
-	// Each connection also adds one decision listener
+	// Each connection also adds listeners
 	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
 	nc := registry.GetNotificationCenter(sdkKey)
 
+	// Parse the form.
+	_ = r.ParseForm()
+
 	filters := r.Form["filter"]
 
-	if len(filters) > 0 {
-		filters = strings.Split(filters[0],",")
-	}
+	// Parse out the any filters that were added
+	notificationsToAdd :=  getFilter(filters)
 
-	var ids []int
-
-	for _, notificationType := range types {
-		if !contains(filters, string(notificationType)) {
-			id,e := nc.AddHandler(notificationType, func (n interface{}) {
-				sendNotificationToChannel(n, &messageChan, r)
-			})
-			if e != nil {
-				RenderError(e, http.StatusUnprocessableEntity, w, r)
-				return
+	var ids []struct{int; notification.Type}
+	for _, value := range notificationsToAdd {
+		id,e := nc.AddHandler(value, func (n interface{}) {
+			jsonEvent, err := json.Marshal(n)
+			if err != nil {
+				middleware.GetLogger(r).Error().Msg("encoding notification to json")
+			} else {
+				messageChan <- jsonEvent
 			}
-			ids = append(ids, id)
-		} else {
-			ids = append(ids, 0)
+		})
+		if e != nil {
+			RenderError(e, http.StatusUnprocessableEntity, w, r)
+			return
 		}
+
+		// do defer outside the loop.
+		ids = append(ids, struct{int;notification.Type}{id, value})
 	}
 
 	// Remove the decision listener if we exited.
 	defer func() {
-		for i, id := range ids {
-			if id == 0 {
-				continue
-			}
-			err := nc.RemoveHandler(id, types[i])
+		for _, id := range ids {
+			err := nc.RemoveHandler(id.int, id.Type)
 			if err != nil {
 				middleware.GetLogger(r).Error().AnErr("removing notification", err)
 			}
