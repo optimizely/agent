@@ -28,6 +28,14 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 )
 
+// Feature Model
+type Feature struct {
+	Key       string                 `json:"key"`
+	Variables map[string]interface{} `json:"variables,omitempty"`
+	ID        int32                  `json:"id,omitempty"`
+	Enabled   bool                   `json:"enabled"`
+}
+
 type eventTags map[string]interface{}
 
 // UserHandler implements the UserAPI interface

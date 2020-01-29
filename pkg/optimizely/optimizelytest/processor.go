@@ -17,7 +17,14 @@
 // Package optimizelytest //
 package optimizelytest
 
-import "github.com/optimizely/go-sdk/pkg/event"
+import (
+	"errors"
+
+	"github.com/optimizely/go-sdk/pkg/event"
+)
+
+// ErrNotImplemented indicates that the error was returned since the functionality was not implemented
+var ErrNotImplemented = errors.New("not implemented")
 
 // TestEventProcessor implements an Optimizely Processor to aid in testing
 type TestEventProcessor struct {
@@ -36,4 +43,14 @@ func (p *TestEventProcessor) GetEvents() []event.UserEvent {
 	copy(c, p.events)
 
 	return c
+}
+
+// OnEventDispatch is a non-op notification action
+func (p *TestEventProcessor) OnEventDispatch(callback func(logEvent event.LogEvent)) (int, error) {
+	return 0, ErrNotImplemented
+}
+
+// RemoveOnEventDispatch is a non-op notification action
+func (p *TestEventProcessor) RemoveOnEventDispatch(id int) error {
+	return ErrNotImplemented
 }
