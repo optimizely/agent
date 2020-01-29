@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -115,12 +116,12 @@ func (a Auth) Verify(r *http.Request) (*jwt.Token, error) {
 
 }
 
-// Middleware for auth
-func (a Auth) Middleware(next http.Handler) http.Handler {
+// Authorize is middleware for auth
+func (a Auth) Authorize(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		tk, err := a.Verify(r)
 		if err != nil {
-			http.Error(w, `{"error": "unauthorized"}`, http.StatusUnauthorized)
+			http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%v"}`, err), http.StatusUnauthorized)
 			return
 		}
 		claims := tk.Claims.(jwt.MapClaims)

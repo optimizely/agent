@@ -41,8 +41,6 @@ type ClientCredentials struct {
 type OAuthHandler struct {
 	ClientCredentials map[string]ClientCredentials
 	hmacSecret        []byte
-
-	middleware.Auth
 }
 
 type tokenResponse struct {
@@ -50,6 +48,7 @@ type tokenResponse struct {
 	Expires     int64  `json:"expires"`
 }
 
+// NewOAuthHandler creates new handler for auth
 func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 
 	clientCredentials := make(map[string]ClientCredentials)
@@ -61,17 +60,9 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		}
 	}
 
-	var authProvider middleware.Auth
-	if authConfig.HMACSecret == "" {
-		authProvider = middleware.NewAuth(middleware.NoAuth{}, true)
-	} else {
-		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(authConfig.HMACSecret), true)
-	}
-
 	h := &OAuthHandler{
 		hmacSecret:        []byte(authConfig.HMACSecret),
 		ClientCredentials: clientCredentials,
-		Auth:              authProvider,
 	}
 	return h
 }
@@ -96,7 +87,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	}
 	clientCreds, ok := h.ClientCredentials[clientID]
 	if !ok || !jwtauth.MatchClientSecret(clientSecret, clientCreds.Secret) {
-		return nil, http.StatusForbidden, errors.New("Invalid client_id or client_secret")
+		return nil, http.StatusForbidden, errors.New("invalid client_id or client_secret")
 	}
 	return &clientCreds, http.StatusOK, nil
 }
