@@ -49,6 +49,8 @@ func (NoAuth) CheckToken(string) (*jwt.Token, error) {
 // Auth is the middleware for all REST API's
 type Auth struct {
 	Verifier
+
+	checkClaims map[string]struct{}
 }
 
 // Verifier checks token
@@ -118,13 +120,22 @@ func (a Auth) Verify(r *http.Request) (*jwt.Token, error) {
 func (a Auth) Authorize(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		tk, err := a.Verify(r)
+
 		if err != nil {
 			http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%v"}`, err), http.StatusUnauthorized)
 			return
 		}
+
 		claims := tk.Claims.(jwt.MapClaims)
 
-		for key, value := range claims {
+		for key := range a.checkClaims {
+
+			value, ok := claims[key]
+			if !ok {
+				http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%s key not in claims"}`, key), http.StatusUnauthorized)
+				return
+			}
+
 			switch key {
 			case "exp":
 				if expired := (getNumberFromJSON(value) - time.Now().Unix()) <= 0; expired {
@@ -138,6 +149,11 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 					http.Error(w, `{"error": "unauthorized", "reason": "SDK keys not equal"}`, http.StatusUnauthorized)
 					return
 				}
+			case "admin":
+				if adminFlag, ok := value.(bool); !ok || !adminFlag {
+					http.Error(w, `{"error": "unauthorized", "reason": "admin flag not set"}`, http.StatusUnauthorized)
+					return
+				}
 			}
 		}
 
@@ -147,6 +163,6 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 }
 
 // NewAuth makes Auth middleware
-func NewAuth(v Verifier) Auth {
-	return Auth{Verifier: v}
+func NewAuth(v Verifier, checkClaims map[string]struct{}) Auth {
+	return Auth{Verifier: v, checkClaims: checkClaims}
 }

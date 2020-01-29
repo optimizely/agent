@@ -46,8 +46,9 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, e
 	expires = time.Now().Add(ttl).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": "Optimizely",
-		"exp": expires,
+		"iss":   "Optimizely",
+		"exp":   expires,
+		"admin": true,
 	})
 	tokenString, err = token.SignedString(key)
 	if err != nil {

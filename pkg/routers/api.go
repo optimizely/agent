@@ -48,10 +48,11 @@ type APIOptions struct {
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	var authProvider middleware.Auth
+	checkClaims := map[string]struct{}{"exp": {}, "sdk_key": {}}
 	if conf.Auth.HMACSecret == "" {
-		authProvider = middleware.NewAuth(middleware.NoAuth{})
+		authProvider = middleware.NewAuth(middleware.NoAuth{}, checkClaims)
 	} else {
-		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Auth.HMACSecret))
+		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Auth.HMACSecret), checkClaims)
 	}
 
 	spec := &APIOptions{
