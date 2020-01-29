@@ -24,6 +24,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
 	"net/http"
+	"strings"
 )
 
 // A MessageChan is a channel of bytes
@@ -72,16 +73,10 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	optlyClient, err := middleware.GetOptlyClient(r)
+	_, err := middleware.GetOptlyClient(r)
 
 	if err != nil {
 		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	if optlyClient == nil {
-		e := fmt.Errorf("optlyContext not available")
-		RenderError(e, http.StatusUnprocessableEntity, w, r)
 		return
 	}
 
@@ -101,6 +96,10 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 	nc := registry.GetNotificationCenter(sdkKey)
 
 	filters := r.Form["filter"]
+
+	if len(filters) > 0 {
+		filters = strings.Split(filters[0],",")
+	}
 
 	var ids []int
 
@@ -161,8 +160,8 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 
 }
 
-// NewEventStreamHandler is the NotificationHandler factory
-func NewEventStreamHandler() (nh *NotificationHandler) {
+// NewNotificationHandler is the NotificationHandler factory
+func NewNotificationHandler() (nh *NotificationHandler) {
 	// Instantiate a nh
 	nh = &NotificationHandler{}
 

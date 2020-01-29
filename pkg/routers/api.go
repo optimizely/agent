@@ -51,7 +51,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		experimentAPI:    new(handlers.ExperimentHandler),
 		featureAPI:       new(handlers.FeatureHandler),
 		userAPI:          new(handlers.UserHandler),
-		notificationsAPI: handlers.NewEventStreamHandler(),
+		notificationsAPI: handlers.NewNotificationHandler(),
 		userOverrideAPI:  new(handlers.UserOverrideHandler),
 		metricsRegistry:  metricsRegistry,
 	}
