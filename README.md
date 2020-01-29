@@ -73,14 +73,18 @@ Below is a comprehensive list of available configuration properties.
 |Property Name|Env Variable|Description|
 |---|---|---|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
+|author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
+|name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
+|version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
+|sdkkeys|OPTIMIZELY_SDK_KEYS|List of SDK keys used to initialize on startup|
+|processor.batchSize|OPTIMIZELY_PROCESSOR_BATCHSIZE|The number of events in a batch. Default: 10|
+|processor.queueSize|OPTIMIZELY_PROCESSOR_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
+|processor.flushInterval|OPTIMIZELY_PROCESSOR_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
-|admin.author|OPTIMIZELY_ADMIN_AUTHOR|Agent version. Default: Optimizely Inc.|
-|admin.name|OPTIMIZELY_ADMIN_NAME|Agent name. Default: optimizely|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
-|admin.version|OPTIMIZELY_ADMIN_VERSION|Agent version. Default: `git describe --tags`|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
@@ -154,7 +158,7 @@ This endpoint can used when placing Agent behind a load balancer to indicate whe
 
 ### Metrics
 
-The Metrics endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
+The `/metrics` endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
 
 Example Request:
 ```bash

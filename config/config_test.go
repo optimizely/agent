@@ -26,6 +26,10 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	conf := NewDefaultConfig()
 
+	assert.Equal(t, "", conf.Version)
+	assert.Equal(t, "Optimizely Inc.", conf.Author)
+	assert.Equal(t, "optimizely", conf.Name)
+
 	assert.Equal(t, 5*time.Second, conf.Server.ReadTimeout)
 	assert.Equal(t, 10*time.Second, conf.Server.WriteTimeout)
 
@@ -33,13 +37,14 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "info", conf.Log.Level)
 
 	assert.Equal(t, "8088", conf.Admin.Port)
-	assert.Equal(t, "", conf.Admin.Version)
-	assert.Equal(t, "Optimizely Inc.", conf.Admin.Author)
-	assert.Equal(t, "optimizely", conf.Admin.Name)
 
 	assert.Equal(t, 0, conf.API.MaxConns)
 	assert.Equal(t, "8080", conf.API.Port)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)
+
+	assert.Equal(t, 10, conf.Processor.BatchSize)
+	assert.Equal(t, 1000, conf.Processor.QueueSize)
+	assert.Equal(t, 30*time.Second, conf.Processor.FlushInterval)
 }

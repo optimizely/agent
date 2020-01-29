@@ -28,14 +28,15 @@ import (
 )
 
 // NewAdminRouter returns HTTP admin router
-func NewAdminRouter(conf config.AdminConfig) http.Handler {
+func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r := chi.NewRouter()
 
-	optlyAdmin := handlers.NewAdmin(conf.Version, conf.Author, conf.Name)
+	optlyAdmin := handlers.NewAdmin(conf)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
+	r.Get("/config", optlyAdmin.AppConfig)
 	r.Get("/health", optlyAdmin.Health)
 	r.Get("/info", optlyAdmin.AppInfo)
 	r.Get("/metrics", optlyAdmin.Metrics)

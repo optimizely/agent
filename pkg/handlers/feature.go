@@ -25,14 +25,6 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 )
 
-// Feature Model
-type Feature struct {
-	Key       string            `json:"key"`
-	Variables map[string]string `json:"variables,omitempty"`
-	ID        int32             `json:"id,omitempty"`
-	Enabled   bool              `json:"enabled"`
-}
-
 // FeatureHandler implements the FeatureAPI interface
 type FeatureHandler struct{}
 
