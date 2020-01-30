@@ -45,7 +45,12 @@ type OAuthHandler struct {
 
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
 	Expires     int64  `json:"expires"`
+}
+
+func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessToken string, expires int64) {
+	render.JSON(w, r, tokenResponse{accessToken, "bearer", expires})
 }
 
 // NewOAuthHandler creates new handler for auth
@@ -114,7 +119,7 @@ func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	render.JSON(w, r, tokenResponse{accessToken, expires})
+	renderAccessTokenResponse(w, r, accessToken, expires)
 }
 
 // GetAdminAccessToken returns a JWT access token for the Admin service
@@ -133,5 +138,5 @@ func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	render.JSON(w, r, tokenResponse{accessToken, expires})
+	renderAccessTokenResponse(w, r, accessToken, expires)
 }

@@ -160,6 +160,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	var actual tokenResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	s.NoError(err)
+	s.Equal("bearer", actual.TokenType)
 }
 
 func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
@@ -171,6 +172,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 	var actual tokenResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	s.NoError(err)
+	s.Equal("bearer", actual.TokenType)
 }
 
 func TestOAuthTestSuite(t *testing.T) {
