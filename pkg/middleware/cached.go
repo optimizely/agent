@@ -143,7 +143,7 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 			return
 		case errors.Is(err, optimizely.ErrEntityNotFound):
 			statusCode = http.StatusNotFound
-			return
+			next.ServeHTTP(w, r)
 		default:
 			statusCode = http.StatusInternalServerError
 		}

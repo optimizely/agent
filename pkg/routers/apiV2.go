@@ -77,7 +77,7 @@ func (d DefaultHandlers) Decide(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d DefaultHandlers) DecideAll(w http.ResponseWriter, r *http.Request) {
-	handlers.Decide(w, r)
+	handlers.DecideAll(w, r)
 }
 
 func (d DefaultHandlers) TrackEvent(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +137,7 @@ func NewAPIV2Router(opt *API2Options) *chi.Mux {
 	r.Route("/decide", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(decideTimer).Get("/", opt.handlers.DecideAll)
-		r.With(decideAllTimer, opt.middleware.FeatureCtx, opt.middleware.ExperimentCtx).Post("/{decisionKey}", opt.handlers.Decide)
+		r.With(decideAllTimer, middleware.DecisionCtx).Post("/{decisionKey}", opt.handlers.Decide)
 	})
 
 	r.With(trackTimer, opt.middleware.ClientCtx).Post("/track/{eventKey}", handlers.TrackEvent)

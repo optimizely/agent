@@ -24,6 +24,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 var errNullOptimizelyConfig = errors.New("optimizely config is null")
@@ -33,6 +34,14 @@ type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
 	ForcedVariations *decision.MapExperimentOverridesStore
+}
+
+// Decision Model
+type Decision struct {
+	Key       string                 `json:"key"`
+	Variables map[string]interface{} `json:"variables,omitempty"`
+	//ID        string             `json:"id,omitempty"`
+	Enabled bool `json:"enabled"`
 }
 
 // ListFeatures returns all available features
@@ -175,4 +184,33 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error 
 	}
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
 	return nil
+}
+
+func (c *OptlyClient) GetFeatureDecision(feature *optimizelyconfig.OptimizelyFeature, uc entities.UserContext) (*Decision, error) {
+	enabled, variables, err := c.GetAllFeatureVariables(feature.Key, uc)
+	if err != nil {
+		return &Decision{}, err
+	}
+
+	decision := &Decision{
+		Key:       feature.Key,
+		Variables: variables,
+		Enabled:   enabled,
+	}
+
+	return decision, nil
+}
+
+func (c *OptlyClient) GetExperimentDecision(experiment *optimizelyconfig.OptimizelyExperiment, uc entities.UserContext) (*Decision, error) {
+	variation, err := c.Activate(experiment.Key, uc)
+	if err != nil {
+		return &Decision{}, err
+	}
+
+	decision := &Decision{
+		Key:     variation,
+		Enabled: true,
+	}
+
+	return decision, nil
 }

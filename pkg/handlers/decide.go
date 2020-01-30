@@ -20,147 +20,72 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/go-chi/render"
+	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/pkg/errors"
+
 	"github.com/optimizely/agent/pkg/middleware"
+	//"github.com/optimizely/agent/pkg/optimizely"
 )
 
-// Decision Model
-type Decision struct {
-	Key       string            `json:"key"`
-	Variables map[string]string `json:"variables,omitempty"`
-	ID        int32             `json:"id,omitempty"`
-	Enabled   bool              `json:"enabled"`
-}
-
-// GetFeature - Return the feature. Note: no impressions recorded for associated feature tests.
-func GetFeatureDecision(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-	feature, err := middleware.GetFeature(r)
-	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-	renderFeature(w, r, feature.Key, optlyClient, optlyContext)
-}
-
-// TrackFeature - Return the feature and record impression if applicable.
-// Tracking impressions is only supported for "Feature Tests" as part of the SDK contract.
-func TrackFeature(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	feature, err := middleware.GetFeature(r)
-	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling GetFeature")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	// HACK - Triggers an impression event when applicable. This is not
-	// ideal since we're making TWO decisions now. OASIS-5549
-	enabled, softErr := optlyClient.IsFeatureEnabled(feature.Key, *optlyContext.UserContext)
-	middleware.GetLogger(r).Info().Str("featureKey", feature.Key).Bool("enabled", enabled).Msg("Calling IsFeatureEnabled")
-
-	if softErr != nil {
-		// Swallowing the error to allow the response to be made and not break downstream consumers.
-		middleware.GetLogger(r).Error().Err(softErr).Str("featureKey", feature.Key).Msg("Calling IsFeatureEnabled")
-	}
-
-	renderFeature(w, r, feature.Key, optlyClient, optlyContext)
-}
-
-// GetVariation - Return the variation that a user is bucketed into
-func GetVariation(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	experiment, err := middleware.GetExperiment(r)
-	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetExperiment")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	renderVariation(w, r, experiment.Key, false, optlyClient, optlyContext)
+// DecisionBody
+type DecisionContext struct {
+	userId         string
+	userAttributes map[string]interface{}
 }
 
 func Decide(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
+	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
+	var body DecisionContext
+	err = ParseRequestBody(r, &body)
+	if err != nil {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	uc := entities.UserContext{
+		ID:         body.userId,
+		Attributes: body.userAttributes,
+	}
+
+	logger.Info().Msg("attempting to activate")
+
 	if feature, err := middleware.GetFeature(r); err == nil {
-		logger.Debug().Msg("decide on feature")
-		renderFeature(w, r, feature.Key, optlyClient, optlyContext)
+		decision, err := optlyClient.GetFeatureDecision(feature, uc)
+		if err != nil {
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+
+		render.JSON(w, r, decision)
 		return
 	}
 
 	if experiment, err := middleware.GetExperiment(r); err == nil {
-		logger.Debug().Msg("decide on experiment")
-		renderVariation(w, r, experiment.Key, true, optlyClient, optlyContext) // true to send impression
+		decision, err := optlyClient.GetExperimentDecision(experiment, uc)
+		if err != nil {
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+
+		render.JSON(w, r, decision)
 		return
 	}
+
+	RenderError(errors.New("entity does not exist"), http.StatusInternalServerError, w, r)
 }
 
-// ActivateExperiment - Return the variatoin that a user is bucketed into and track an impression event
-func ActivateExperiment(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	experiment, err := middleware.GetExperiment(r)
-	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Msg("Calling middleware GetExperiment")
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	renderVariation(w, r, experiment.Key, true, optlyClient, optlyContext) // true to send impression
-}
-
-// ListFeatures - List all feature decisions for a user
-// Note: no impressions recorded for associated feature tests.
-func ListFeatureDecisions(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	renderFeatures(w, r, optlyClient, optlyContext)
-}
-
-// TrackFeatures - List all feature decisions for a user. Impression events are recorded for all applicable feature tests.
-func TrackFeatures(w http.ResponseWriter, r *http.Request) {
-	optlyClient, optlyContext, err := parseContext(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	// HACK - Triggers impression events when applicable. This is not
-	// ideal since we're making TWO decisions for each feature now. OASIS-5549
-	enabledFeatures, softErr := optlyClient.GetEnabledFeatures(*optlyContext.UserContext)
-	middleware.GetLogger(r).Info().Strs("enabledFeatures", enabledFeatures).Msg("Calling GetEnabledFeatures")
-	if softErr != nil {
-		// Swallowing the error to allow the response to be made and not break downstream consumers.
-		middleware.GetLogger(r).Error().Err(softErr).Msg("Calling GetEnabledFeatures")
-	}
-
-	renderFeatures(w, r, optlyClient, optlyContext)
+func DecideAll(w http.ResponseWriter, r *http.Request) {
+	//optlyClient, err := middleware.GetOptlyClient(r)
+	//logger := middleware.GetLogger(r)
+	//if err != nil {
+	//	RenderError(err, http.StatusInternalServerError, w, r)
+	//	return
+	//}
 }

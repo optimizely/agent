@@ -30,7 +30,6 @@ import (
 
 type trackBody struct {
 	userID         string
-	test           string
 	userAttributes map[string]interface{}
 	eventTags      map[string]interface{}
 }
