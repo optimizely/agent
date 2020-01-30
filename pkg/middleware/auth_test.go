@@ -62,7 +62,7 @@ func (suite *AuthTestSuite) TestNoAuthCheckToken() {
 
 	auth := NewAuth(NoAuth{}, map[string]struct{}{})
 	token, err := auth.CheckToken("")
-	suite.Equal(nil, token)
+	suite.Nil(token)
 	suite.NoError(err)
 }
 
