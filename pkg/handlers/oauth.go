@@ -46,10 +46,11 @@ type OAuthHandler struct {
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
-	Expires     int64  `json:"expires"`
+	ExpiresIn   int64  `json:"expires_in"`
 }
 
 func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessToken string, expires int64) {
+	// TODO: expires_in should be in seconds, per https://tools.ietf.org/html/rfc6749#section-5.1
 	render.JSON(w, r, tokenResponse{accessToken, "bearer", expires})
 }
 
