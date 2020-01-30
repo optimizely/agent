@@ -87,6 +87,12 @@ func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
 	renderPathParams(w, r)
 }
 
+type MockNotificationsAPI struct{}
+
+func (m *MockNotificationsAPI) HandleEventSteam(rw http.ResponseWriter, req *http.Request) {
+	renderPathParams(rw, req)
+}
+
 type MockUserAPI struct{}
 
 func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {
@@ -154,13 +160,14 @@ func (suite *RouterTestSuite) SetupTest() {
 	suite.tc = testClient
 
 	opts := &APIOptions{
-		maxConns:        1,
-		experimentAPI:   new(MockExperimentAPI),
-		featureAPI:      new(MockFeatureAPI),
-		userAPI:         new(MockUserAPI),
-		userOverrideAPI: new(MockUserOverrideAPI),
-		middleware:      new(MockOptlyMiddleware),
-		metricsRegistry: metricsRegistry,
+		maxConns:         1,
+		experimentAPI:    new(MockExperimentAPI),
+		featureAPI:       new(MockFeatureAPI),
+		userAPI:          new(MockUserAPI),
+		notificationsAPI: new(MockNotificationsAPI),
+		userOverrideAPI:  new(MockUserOverrideAPI),
+		middleware:       new(MockOptlyMiddleware),
+		metricsRegistry:  metricsRegistry,
 	}
 
 	suite.mux = NewAPIRouter(opts)

@@ -39,7 +39,7 @@ type ErrorResponse struct {
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.
 func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 	optlyClient, ok := r.Context().Value(OptlyClientKey).(*optimizely.OptlyClient)
-	if !ok {
+	if !ok || optlyClient == nil {
 		return nil, fmt.Errorf("optlyClient not available")
 	}
 

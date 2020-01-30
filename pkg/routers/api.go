@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"github.com/go-chi/render"
 	"net/http"
 
 	"github.com/optimizely/agent/config"
@@ -28,33 +29,39 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
 )
 
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns        int
-	middleware      middleware.OptlyMiddleware
-	experimentAPI   handlers.ExperimentAPI
-	featureAPI      handlers.FeatureAPI
-	userAPI         handlers.UserAPI
-	userOverrideAPI handlers.UserOverrideAPI
-	metricsRegistry *metrics.Registry
+	maxConns         int
+	middleware       middleware.OptlyMiddleware
+	experimentAPI    handlers.ExperimentAPI
+	featureAPI       handlers.FeatureAPI
+	userAPI          handlers.UserAPI
+	notificationsAPI handlers.NotificationAPI
+	userOverrideAPI  handlers.UserOverrideAPI
+	metricsRegistry  *metrics.Registry
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIOptions{
-		maxConns:        conf.MaxConns,
-		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		experimentAPI:   new(handlers.ExperimentHandler),
-		featureAPI:      new(handlers.FeatureHandler),
-		userAPI:         new(handlers.UserHandler),
-		userOverrideAPI: new(handlers.UserOverrideHandler),
-		metricsRegistry: metricsRegistry,
+		maxConns:         conf.MaxConns,
+		middleware:       &middleware.CachedOptlyMiddleware{Cache: optlyCache},
+		experimentAPI:    new(handlers.ExperimentHandler),
+		featureAPI:       new(handlers.FeatureHandler),
+		userAPI:          new(handlers.UserHandler),
+		notificationsAPI: handlers.NewNotificationHandler(),
+		userOverrideAPI:  new(handlers.UserOverrideHandler),
+		metricsRegistry:  metricsRegistry,
 	}
 
 	return NewAPIRouter(spec)
+}
+
+func setMiddleWareTime(r chi.Router) {
+	r.Use(middleware.SetTime)
+	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
@@ -80,22 +87,28 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime)
-	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
+	r.Route("/notifications/event-stream", func(r chi.Router) {
+		r.Use(opt.middleware.ClientCtx)
+		r.Get("/", opt.notificationsAPI.HandleEventSteam)
+	})
 
 	r.Route("/features", func(r chi.Router) {
+		setMiddleWareTime(r)
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
 		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
+		setMiddleWareTime(r)
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
 		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
+		setMiddleWareTime(r)
+
 		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
 		r.With(trackEventTimer).Post("/events/{eventKey}", opt.userAPI.TrackEvent)

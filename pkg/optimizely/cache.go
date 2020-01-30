@@ -114,7 +114,7 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 		event.WithEventDispatcherMetrics(metricsRegistry))
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
-	optimizelyFactory := &client.OptimizelyFactory{}
+	optimizelyFactory := &client.OptimizelyFactory{SDKKey:sdkKey}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
