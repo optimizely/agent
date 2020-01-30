@@ -32,7 +32,7 @@ import (
 )
 
 // APIOptions defines the configuration parameters for Router.
-type APIOptions struct {
+type API2Options struct {
 	maxConns        int
 	middleware      middleware.OptlyMiddleware
 	handlers        APIHandlers
@@ -57,19 +57,19 @@ type APIHandlers interface {
 type DefaultHandlers struct{}
 
 func (d DefaultHandlers) ListExperiments(w http.ResponseWriter, r *http.Request) {
-	handlers.ExperimentHandler{}.ListExperiments(w, r)
+	handlers.ListExperiments(w, r)
 }
 
 func (d DefaultHandlers) GetExperiment(w http.ResponseWriter, r *http.Request) {
-	handlers.ExperimentHandler{}.GetExperiment(w, r)
+	handlers.GetExperiment(w, r)
 }
 
 func (d DefaultHandlers) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	handlers.FeatureHandler{}.ListFeatures(w, r)
+	handlers.ListFeatures(w, r)
 }
 
 func (d DefaultHandlers) GetFeature(w http.ResponseWriter, r *http.Request) {
-	handlers.FeatureHandler{}.GetFeature(w, r)
+	handlers.GetFeature(w, r)
 }
 
 func (d DefaultHandlers) Decide(w http.ResponseWriter, r *http.Request) {
@@ -89,19 +89,19 @@ func (d DefaultHandlers) Override(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
-	spec := &APIOptions{
+func NewDefaultAPIV2Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+	spec := &API2Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(DefaultHandlers),
 		metricsRegistry: metricsRegistry,
 	}
 
-	return NewAPIRouter(spec)
+	return NewAPIV2Router(spec)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIRouter(opt *APIOptions) *chi.Mux {
+func NewAPIV2Router(opt *API2Options) *chi.Mux {
 	r := chi.NewRouter()
 
 	listFeaturesTimer := middleware.Metricize("list-features", opt.metricsRegistry)
@@ -137,7 +137,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r.Route("/decide", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(decideTimer).Get("/", opt.handlers.DecideAll)
-		r.With(decideAllTimer, opt.middleware.ExperimentCtx).Get("/{decisionKey}", opt.handlers.Decide)
+		r.With(decideAllTimer, opt.middleware.FeatureCtx, opt.middleware.ExperimentCtx).Post("/{decisionKey}", opt.handlers.Decide)
 	})
 
 	r.With(trackTimer, opt.middleware.ClientCtx).Post("/track/{eventKey}", handlers.TrackEvent)

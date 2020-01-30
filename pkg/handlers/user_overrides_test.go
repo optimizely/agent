@@ -69,7 +69,7 @@ func (suite *UserOverridesTestSuite) TestSetForcedVariation() {
 	suite.tc.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
 	featureExp := suite.tc.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 
-	override := &Override{VariationKey: "variation_enabled"}
+	override := &UserOverrideBody{VariationKey: "variation_enabled"}
 	body, err := json.Marshal(override)
 	suite.NoError(err)
 

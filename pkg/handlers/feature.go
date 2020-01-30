@@ -28,6 +28,18 @@ import (
 // FeatureHandler implements the FeatureAPI interface
 type FeatureHandler struct{}
 
+var featureHandler = &FeatureHandler{}
+
+// ListFeatures - List all experiments
+func ListFeatures(w http.ResponseWriter, r *http.Request) {
+	featureHandler.ListFeatures(w, r)
+}
+
+// GetFeature - Get requested experiment
+func GetFeature(w http.ResponseWriter, r *http.Request) {
+	featureHandler.GetFeature(w, r)
+}
+
 // ListFeatures - List all features
 func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)

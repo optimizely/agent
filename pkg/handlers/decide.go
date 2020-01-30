@@ -32,7 +32,7 @@ type Decision struct {
 }
 
 // GetFeature - Return the feature. Note: no impressions recorded for associated feature tests.
-func GetFeature(w http.ResponseWriter, r *http.Request) {
+func GetFeatureDecision(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
@@ -96,17 +96,20 @@ func GetVariation(w http.ResponseWriter, r *http.Request) {
 
 func Decide(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
+	logger := middleware.GetLogger(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
 	if feature, err := middleware.GetFeature(r); err == nil {
+		logger.Debug().Msg("decide on feature")
 		renderFeature(w, r, feature.Key, optlyClient, optlyContext)
 		return
 	}
 
 	if experiment, err := middleware.GetExperiment(r); err == nil {
+		logger.Debug().Msg("decide on experiment")
 		renderVariation(w, r, experiment.Key, true, optlyClient, optlyContext) // true to send impression
 		return
 	}
@@ -132,7 +135,7 @@ func ActivateExperiment(w http.ResponseWriter, r *http.Request) {
 
 // ListFeatures - List all feature decisions for a user
 // Note: no impressions recorded for associated feature tests.
-func ListFeatures(w http.ResponseWriter, r *http.Request) {
+func ListFeatureDecisions(w http.ResponseWriter, r *http.Request) {
 	optlyClient, optlyContext, err := parseContext(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)

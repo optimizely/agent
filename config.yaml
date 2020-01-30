@@ -19,7 +19,7 @@ name: "optimizely"
 log:
     ## log level used to filter logs of lesser severity (from highest to lowest):
     ## panic, fatal, error, warn, info, debug, trace
-    level: info
+    level: debug
     ## enable pretty colorized console logging. setting to false will output
     ## structured JSON logs. Recommended false in production.
     pretty: true
