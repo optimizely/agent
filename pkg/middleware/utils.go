@@ -114,5 +114,9 @@ func CoerceType(s string) interface{} {
 		return true
 	}
 
+	if s == "" {
+		return nil
+	}
+
 	return s
 }

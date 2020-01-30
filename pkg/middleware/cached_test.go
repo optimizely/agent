@@ -119,6 +119,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 		"int":          int64(100),
 		"float":        1.00,
 		"quotedString": "true",
+		"nil":          nil,
 	}
 	expected := optimizely.NewContext("test", attributes)
 
@@ -126,7 +127,7 @@ func (suite *OptlyMiddlewareTestSuite) TestGetUserContext() {
 	handler := AssertOptlyContextHandler(suite, expected)
 	mux.With(suite.mw.UserCtx).Get("/{userID}", handler)
 
-	req := httptest.NewRequest("GET", `/test?bool=true&str=yes&int=100&float=1.0&quotedString="true"`, nil)
+	req := httptest.NewRequest("GET", `/test?bool=true&str=yes&int=100&float=1.0&quotedString="true"&nil=`, nil)
 	rec := httptest.NewRecorder()
 
 	mux.ServeHTTP(rec, req)
