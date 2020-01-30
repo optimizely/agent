@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/rs/zerolog/log"
 )
 
 func getNumberFromJSON(val interface{}) int64 {
@@ -81,7 +80,6 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 		return []byte(c.secretKey), nil
 	})
 	if err != nil {
-		log.Print("rejected, token", token, err)
 		return nil, err
 	}
 
@@ -92,8 +90,7 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 	return tk, nil
 }
 
-// Verify gets string token from the requst and validates it
-func (a Auth) Verify(r *http.Request) (*jwt.Token, error) {
+func (a Auth) verify(r *http.Request) (*jwt.Token, error) {
 
 	var token string
 
@@ -127,7 +124,7 @@ func (a Auth) enabled() bool {
 func (a Auth) Authorize(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 
-		tk, err := a.Verify(r)
+		tk, err := a.verify(r)
 
 		if err != nil {
 			http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%v"}`, err), http.StatusUnauthorized)
