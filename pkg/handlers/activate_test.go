@@ -11,7 +11,7 @@ import (
 )
 
 func TestGetUserContext(t *testing.T) {
-	dc := DecisionContext{
+	dc := ActivateBody{
 		UserID: "test name",
 		UserAttributes: map[string]interface{}{
 			"str":    "val",

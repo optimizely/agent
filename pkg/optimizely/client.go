@@ -186,7 +186,9 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error 
 	return nil
 }
 
-func (c *OptlyClient) GetFeatureDecision(feature *optimizelyconfig.OptimizelyFeature, uc entities.UserContext) (*Decision, error) {
+// ActivateFeature activates a feature for a given user by getting the feature enabled status and all
+// associated variables
+func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeature, uc entities.UserContext) (*Decision, error) {
 	enabled, variables, err := c.GetAllFeatureVariables(feature.Key, uc)
 	if err != nil {
 		return &Decision{}, err
@@ -201,7 +203,8 @@ func (c *OptlyClient) GetFeatureDecision(feature *optimizelyconfig.OptimizelyFea
 	return decision, nil
 }
 
-func (c *OptlyClient) GetExperimentDecision(experiment *optimizelyconfig.OptimizelyExperiment, uc entities.UserContext) (*Decision, error) {
+// ActivateExperiment activates an experiment
+func (c *OptlyClient) ActivateExperiment(experiment *optimizelyconfig.OptimizelyExperiment, uc entities.UserContext) (*Decision, error) {
 	variation, err := c.Activate(experiment.Key, uc)
 	if err != nil {
 		return &Decision{}, err

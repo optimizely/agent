@@ -29,13 +29,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DecisionBody
-type DecisionContext struct {
+// ActivateBody
+type ActivateBody struct {
 	UserID         string                 `json:"userId"`
 	UserAttributes map[string]interface{} `json:"userAttributes"`
 }
 
-func Decide(w http.ResponseWriter, r *http.Request) {
+func Activate(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
 	if err != nil {
@@ -51,7 +51,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 
 	if feature, err := middleware.GetFeature(r); err == nil {
 		logger.Debug().Str("featureKey", feature.Key).Msg("deciding on feature")
-		decision, err := optlyClient.GetFeatureDecision(feature, uc)
+		decision, err := optlyClient.ActivateFeature(feature, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
@@ -63,7 +63,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 
 	if experiment, err := middleware.GetExperiment(r); err == nil {
 		logger.Debug().Str("experimentKey", experiment.Key).Msg("deciding on experiment")
-		decision, err := optlyClient.GetExperimentDecision(experiment, uc)
+		decision, err := optlyClient.ActivateExperiment(experiment, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
@@ -76,8 +76,8 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	RenderError(errors.New("entity does not exist"), http.StatusInternalServerError, w, r)
 }
 
-// DecideAll currently only support listing all feature decisions.
-func DecideAll(w http.ResponseWriter, r *http.Request) {
+// ActivateAll currently only support listing all feature decisions.
+func ActivateAll(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
 	if err != nil {
@@ -96,7 +96,7 @@ func DecideAll(w http.ResponseWriter, r *http.Request) {
 
 	logger.Debug().Msg("iterate over all experiment decisions")
 	for _, e := range oConf.ExperimentsMap {
-		d, err := optlyClient.GetExperimentDecision(&e, uc)
+		d, err := optlyClient.ActivateExperiment(&e, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
@@ -111,7 +111,7 @@ func DecideAll(w http.ResponseWriter, r *http.Request) {
 
 	logger.Debug().Msg("iterate over all feature decisions")
 	for _, f := range oConf.FeaturesMap {
-		d, err := optlyClient.GetFeatureDecision(&f, uc)
+		d, err := optlyClient.ActivateFeature(&f, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
@@ -128,7 +128,7 @@ func DecideAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserContext(r *http.Request) (entities.UserContext, error) {
-	var body DecisionContext
+	var body ActivateBody
 	err := ParseRequestBody(r, &body)
 	if err != nil {
 		return entities.UserContext{}, err

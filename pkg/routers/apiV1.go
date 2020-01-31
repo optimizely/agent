@@ -73,11 +73,11 @@ func (d DefaultHandlers) GetFeature(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d DefaultHandlers) Decide(w http.ResponseWriter, r *http.Request) {
-	handlers.Decide(w, r)
+	handlers.Activate(w, r)
 }
 
 func (d DefaultHandlers) DecideAll(w http.ResponseWriter, r *http.Request) {
-	handlers.DecideAll(w, r)
+	handlers.ActivateAll(w, r)
 }
 
 func (d DefaultHandlers) TrackEvent(w http.ResponseWriter, r *http.Request) {
@@ -134,10 +134,10 @@ func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.handlers.GetExperiment)
 	})
 
-	r.Route("/v1/decide", func(r chi.Router) {
+	r.Route("/v1/activate", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(decideTimer).Post("/", opt.handlers.DecideAll)
-		r.With(decideAllTimer, middleware.DecisionCtx).Post("/{decisionKey}", opt.handlers.Decide)
+		r.With(decideAllTimer, middleware.ActivationCtx).Post("/{decisionKey}", opt.handlers.Decide)
 	})
 
 	r.With(trackTimer, opt.middleware.ClientCtx).Post("/v1/track/{eventKey}", handlers.TrackEvent)
