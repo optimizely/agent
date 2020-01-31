@@ -104,14 +104,14 @@ type ServerConfig struct {
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
-	Auth     ServiceAuthConfig `json:"auth"`
+	Auth     ServiceAuthConfig `json:"-"`
 	MaxConns int               `json:"maxconns"`
 	Port     string            `json:"port"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Auth ServiceAuthConfig `json:"auth"`
+	Auth ServiceAuthConfig `json:"-"`
 	Port string            `json:"port"`
 }
 
@@ -136,7 +136,7 @@ type OAuthClientCredentials struct {
 
 // ServiceAuthConfig holds the authentication configuration for a particular service
 type ServiceAuthConfig struct {
-	Clients    []OAuthClientCredentials `yaml:"clients"`
-	HMACSecret string                   `yaml:"hmacSecret"`
-	TTL        time.Duration            `yaml:"ttl"`
+	Clients    []OAuthClientCredentials `yaml:"clients json:"-"`
+	HMACSecret string                   `yaml:"hmacSecret" json:"-"`
+	TTL        time.Duration            `yaml:"ttl" json:"-"`
 }
