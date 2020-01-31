@@ -64,6 +64,7 @@ func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessTok
 func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 
 	clientCredentials := make(map[string]ClientCredentials)
+	// TODO: need to validate all client IDs are unique
 	for _, clientCreds := range authConfig.Clients {
 		clientCredentials[clientCreds.ID] = ClientCredentials{
 			ID:     clientCreds.ID,
@@ -102,6 +103,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 		return nil, http.StatusUnauthorized, errors.New("client_secret query parameter required")
 	}
 	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
+	// TODO: hash client secret and match secret hash
 	if !ok || !jwtauth.MatchClientSecret(reqBody.ClientSecret, clientCreds.Secret) {
 		return nil, http.StatusForbidden, errors.New("invalid client_id or client_secret")
 	}
