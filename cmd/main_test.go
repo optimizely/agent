@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -48,9 +48,27 @@ func assertAdmin(t *testing.T, actual config.AdminConfig) {
 	assert.Equal(t, "3002", actual.Port)
 }
 
+func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
+	assert.Equal(t, 30*time.Minute, actual.TTL)
+	assert.Equal(t, "efgh", actual.HMACSecret)
+	assert.Equal(t, config.OAuthClientCredentials{
+		ID:     "clientid2",
+		Secret: "clientsecret2",
+	}, actual.Clients[0])
+}
+
 func assertAPI(t *testing.T, actual config.APIConfig) {
 	assert.Equal(t, 100, actual.MaxConns)
 	assert.Equal(t, "3000", actual.Port)
+}
+
+func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
+	assert.Equal(t, 30*time.Minute, actual.TTL)
+	assert.Equal(t, "abcd", actual.HMACSecret)
+	assert.Equal(t, config.OAuthClientCredentials{
+		ID:     "clientid1",
+		Secret: "clientsecret1",
+	}, actual.Clients[0])
 }
 
 func assertWebhook(t *testing.T, actual config.WebhookConfig) {
@@ -73,7 +91,9 @@ func TestViperYaml(t *testing.T) {
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
+	assertAdminAuth(t, actual.Admin.Auth)
 	assertAPI(t, actual.API)
+	assertAPIAuth(t, actual.API.Auth)
 	assertWebhook(t, actual.Webhook)
 }
 
@@ -92,9 +112,25 @@ func TestViperProps(t *testing.T) {
 	v.Set("log.level", "debug")
 
 	v.Set("admin.port", "3002")
+	v.Set("admin.auth.ttl", "30m")
+	v.Set("admin.auth.hmacsecret", "efgh")
+	v.Set("admin.auth.clients", []map[string]string{
+		{
+			"id":     "clientid2",
+			"secret": "clientsecret2",
+		},
+	})
 
 	v.Set("api.maxconns", 100)
 	v.Set("api.port", "3000")
+	v.Set("api.auth.ttl", "30m")
+	v.Set("api.auth.hmacsecret", "abcd")
+	v.Set("api.auth.clients", []map[string]string{
+		{
+			"id":     "clientid1",
+			"secret": "clientsecret1",
+		},
+	})
 
 	v.Set("webhook.port", "3001")
 	v.Set("webhook.projects.10000.secret", "secret-10000")
@@ -111,7 +147,9 @@ func TestViperProps(t *testing.T) {
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
+	assertAdminAuth(t, actual.Admin.Auth)
 	assertAPI(t, actual.API)
+	assertAPIAuth(t, actual.API.Auth)
 	assertWebhook(t, actual.Webhook)
 }
 

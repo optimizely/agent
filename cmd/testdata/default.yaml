@@ -13,9 +13,21 @@ log:
   level: debug
 admin:
   port: "3002"
+  auth:
+    ttl: 30m
+    hmacSecret: "efgh"
+    clients:
+      id: clientid2
+      secret: clientsecret2
 api:
   maxconns: 100
   port: "3000"
+  auth:
+    ttl: 30m
+    hmacSecret: "abcd"
+    clients:
+      id: clientid1
+      secret: clientsecret1
 webhook:
   port: "3001"
   projects:

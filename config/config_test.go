@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -37,9 +37,15 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "info", conf.Log.Level)
 
 	assert.Equal(t, "8088", conf.Admin.Port)
+	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.Admin.Auth.Clients)
+	assert.Equal(t, "", conf.Admin.Auth.HMACSecret)
+	assert.Equal(t, time.Duration(0), conf.Admin.Auth.TTL)
 
 	assert.Equal(t, 0, conf.API.MaxConns)
 	assert.Equal(t, "8080", conf.API.Port)
+	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
+	assert.Equal(t, "", conf.API.Auth.HMACSecret)
+	assert.Equal(t, time.Duration(0), conf.API.Auth.TTL)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)

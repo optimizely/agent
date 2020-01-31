@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -30,9 +30,19 @@ func NewDefaultConfig() *AgentConfig {
 		Name:    "optimizely",
 
 		Admin: AdminConfig{
+			Auth: ServiceAuthConfig{
+				Clients:    make([]OAuthClientCredentials, 0),
+				HMACSecret: "",
+				TTL:        0,
+			},
 			Port: "8088",
 		},
 		API: APIConfig{
+			Auth: ServiceAuthConfig{
+				Clients:    make([]OAuthClientCredentials, 0),
+				HMACSecret: "",
+				TTL:        0,
+			},
 			MaxConns: 0,
 			Port:     "8080",
 		},
@@ -94,13 +104,15 @@ type ServerConfig struct {
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
-	MaxConns int    `json:"maxconns"`
-	Port     string `json:"port"`
+	Auth     ServiceAuthConfig `json:"-"`
+	MaxConns int               `json:"maxconns"`
+	Port     string            `json:"port"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Port string `json:"port"`
+	Auth ServiceAuthConfig `json:"-"`
+	Port string            `json:"port"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
@@ -114,4 +126,17 @@ type WebhookProject struct {
 	SDKKeys            []string `json:"sdkKeys"`
 	Secret             string   `json:"-"`
 	SkipSignatureCheck bool     `json:"skipSignatureCheck" default:"false"`
+}
+
+// OAuthClientCredentials are used for issuing access tokens
+type OAuthClientCredentials struct {
+	ID     string `yaml:"id"`
+	Secret string `yaml:"secret"`
+}
+
+// ServiceAuthConfig holds the authentication configuration for a particular service
+type ServiceAuthConfig struct {
+	Clients    []OAuthClientCredentials `yaml:"clients" json:"-"`
+	HMACSecret string                   `yaml:"hmacSecret" json:"-"`
+	TTL        time.Duration            `yaml:"ttl" json:"-"`
 }
