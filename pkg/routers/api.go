@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -40,21 +40,10 @@ type APIOptions struct {
 	userAPI         handlers.UserAPI
 	userOverrideAPI handlers.UserOverrideAPI
 	metricsRegistry *metrics.Registry
-	oAuthHandler    *handlers.OAuthHandler
-	oAuthMiddleware middleware.Auth
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
-
-	var authProvider middleware.Auth
-	checkClaims := map[string]struct{}{"exp": {}, "sdk_key": {}}
-	if conf.Auth.HMACSecret == "" {
-		authProvider = middleware.NewAuth(middleware.NoAuth{}, checkClaims)
-	} else {
-		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Auth.HMACSecret), checkClaims)
-	}
-
 	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
@@ -63,8 +52,6 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		userAPI:         new(handlers.UserHandler),
 		userOverrideAPI: new(handlers.UserOverrideHandler),
 		metricsRegistry: metricsRegistry,
-		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
-		oAuthMiddleware: authProvider,
 	}
 
 	return NewAPIRouter(spec)
@@ -97,19 +84,19 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/features", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.oAuthMiddleware.Authorize)
+		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
 		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
 	})
 
 	r.Route("/experiments", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.oAuthMiddleware.Authorize)
+		r.Use(opt.middleware.ClientCtx)
 		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
 		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
 	})
 
 	r.Route("/users/{userID}", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx, opt.oAuthMiddleware.Authorize)
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
 		r.With(trackEventTimer).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
 
@@ -122,13 +109,11 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	})
 
 	r.Route("/overrides/users/{userID}", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx, opt.oAuthMiddleware.Authorize)
+		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx)
 
 		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}", opt.userOverrideAPI.SetForcedVariation)
 		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}", opt.userOverrideAPI.RemoveForcedVariation)
 	})
-
-	r.Post("/oauth/token", opt.oAuthHandler.GetAPIAccessToken)
 
 	return r
 }

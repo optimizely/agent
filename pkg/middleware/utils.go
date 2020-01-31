@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -35,9 +35,6 @@ import (
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
-
-// Type for strings used as context keys by middlewares
-type contextKey string
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.
 func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
