@@ -103,6 +103,7 @@ func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request)
 
 	clientCreds, httpCode, e := h.verifyClientCredentials(r)
 	if e != nil {
+		// TODO: set correct error property in response body as described here: https://tools.ietf.org/html/rfc6749#section-5.2
 		RenderError(e, httpCode, w, r)
 		return
 	}
