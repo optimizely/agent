@@ -31,8 +31,8 @@ import (
 
 // DecisionBody
 type DecisionContext struct {
-	userId         string
-	userAttributes map[string]interface{}
+	UserID         string                 `json:"userId"`
+	UserAttributes map[string]interface{} `json:"userAttributes"`
 }
 
 func Decide(w http.ResponseWriter, r *http.Request) {
@@ -134,5 +134,5 @@ func getUserContext(r *http.Request) (entities.UserContext, error) {
 		return entities.UserContext{}, err
 	}
 
-	return entities.UserContext{ID: body.userId, Attributes: body.userAttributes}, nil
+	return entities.UserContext{ID: body.UserID, Attributes: body.UserAttributes}, nil
 }

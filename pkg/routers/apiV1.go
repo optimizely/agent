@@ -32,7 +32,7 @@ import (
 )
 
 // APIOptions defines the configuration parameters for Router.
-type API2Options struct {
+type APIV1Options struct {
 	maxConns        int
 	middleware      middleware.OptlyMiddleware
 	handlers        APIHandlers
@@ -90,7 +90,7 @@ func (d DefaultHandlers) Override(w http.ResponseWriter, r *http.Request) {
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIV2Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
-	spec := &API2Options{
+	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(DefaultHandlers),
@@ -101,7 +101,7 @@ func NewDefaultAPIV2Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIV1Router(opt *API2Options) *chi.Mux {
+func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 	r := chi.NewRouter()
 
 	listFeaturesTimer := middleware.Metricize("list-features", opt.metricsRegistry)
@@ -122,26 +122,26 @@ func NewAPIV1Router(opt *API2Options) *chi.Mux {
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.Route("/features", func(r chi.Router) {
+	r.Route("/v1/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listFeaturesTimer).Get("/", opt.handlers.ListFeatures)
 		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.handlers.GetFeature)
 	})
 
-	r.Route("/experiments", func(r chi.Router) {
+	r.Route("/v1/experiments", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(listExperimentsTimer).Get("/", opt.handlers.ListExperiments)
 		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.handlers.GetExperiment)
 	})
 
-	r.Route("/decide", func(r chi.Router) {
+	r.Route("/v1/decide", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
 		r.With(decideTimer).Post("/", opt.handlers.DecideAll)
 		r.With(decideAllTimer, middleware.DecisionCtx).Post("/{decisionKey}", opt.handlers.Decide)
 	})
 
-	r.With(trackTimer, opt.middleware.ClientCtx).Post("/track/{eventKey}", handlers.TrackEvent)
-	r.With(overrideTimer, opt.middleware.ClientCtx).Post("/override/{decisionKey}", handlers.Override)
+	r.With(trackTimer, opt.middleware.ClientCtx).Post("/v1/track/{eventKey}", handlers.TrackEvent)
+	r.With(overrideTimer, opt.middleware.ClientCtx).Post("/v1/override/{decisionKey}", handlers.Override)
 
 	return r
 }

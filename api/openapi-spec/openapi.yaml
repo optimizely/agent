@@ -10,7 +10,7 @@ info:
 security:
   - SdkKeyAuth: []
 paths:
-  /experiments:
+  /v1/experiments:
     get:
       summary: Return all experiments
       operationId: listExperiments
@@ -28,7 +28,7 @@ paths:
                   $ref: '#/components/schemas/Experiment'
         '403':
           $ref: '#/components/responses/Forbidden'
-  /experiments/{experimentKey}:
+  /v1/experiments/{experimentKey}:
     parameters:
       - $ref: '#/components/parameters/experimentKeyParam'
     get:
@@ -48,7 +48,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
-  /features:
+  /v1/features:
     get:
       summary: Return all features
       operationId: listFeatures
@@ -67,7 +67,7 @@ paths:
                   $ref: '#/components/schemas/Feature'
         '403':
           $ref: '#/components/responses/Forbidden'
-  /features/{featureKey}:
+  /v1/features/{featureKey}:
     parameters:
       - $ref: '#/components/parameters/featureKeyParam'
     get:
@@ -87,7 +87,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
-  /revision:
+  /v1/revision:
     get:
       summary: Return the SDK revision
       operationId: getRevision
@@ -101,7 +101,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Revision'
-  /track/{eventKey}:
+  /v1/track/{eventKey}:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
     post:
@@ -110,7 +110,7 @@ paths:
       description: Track sends event and user details to Optimizely’s analytics backend for the analysis of
         a feature test or a/b test.
       tags:
-        - decision
+        - track
       responses:
         '204':
           description: No content, user not included in the experiment
@@ -120,7 +120,7 @@ paths:
           description: Event does not exist
       requestBody:
         $ref: '#/components/requestBodies/TrackContext'
-  /decide:
+  /v1/decide:
     parameters:
       - $ref: '#/components/parameters/trackParam'
       - $ref: '#/components/parameters/filterParam'
@@ -146,7 +146,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
       requestBody:
         $ref: '#/components/requestBodies/DecisionContext'
-  /decide/{decisionKey}:
+  /v1/decide/{decisionKey}:
     parameters:
       - $ref: '#/components/parameters/decisionKeyParam'
       - $ref: '#/components/parameters/trackParam'
@@ -174,7 +174,7 @@ paths:
           description: Feature does not exist
       requestBody:
         $ref: '#/components/requestBodies/DecisionContext'
-  /override/{decisionKey}:
+  /v1/override/{decisionKey}:
     parameters:
       - $ref: '#/components/parameters/decisionKeyParam'
       - $ref: '#/components/parameters/variationKeyParam'
@@ -296,7 +296,6 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Variation'
-      # Both properties are required
       required:
         - id
         - key
@@ -314,14 +313,13 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Experiment'
-      # Both properties are required
       required:
         - id
         - key
     Decision:
       properties:
-        id:
-          type: integer
+#        id:
+#          type: integer
         key:
           type: string
         enabled:
@@ -330,9 +328,8 @@ components:
           type: object
           additionalProperties:
             type: string
-      # Both properties are required
       required:
-        - id
+#        - id
         - key
     DecisionContext:
       properties:
@@ -365,7 +362,6 @@ components:
           type: string
         key:
           type: string
-      # Both properties are required
       required:
         - id
         - key
@@ -388,11 +384,15 @@ components:
       name: X-Optimizely-SDK-Key
       type: apiKey
 tags:
+  - name: config
+    description: Collection of APIs to describe the active Optimizely Configuration.
+    externalDocs:
+      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
   - name: decision
     description: Collection of APIs to make experiment, rollout and feature flagging decisions.
     externalDocs:
       url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: config
-    description: Collection of APIs to describe the active Optimizely Configuration.
+  - name: track
+    description: Collection of APIs to track conversions.
     externalDocs:
       url: https://docs.developers.optimizely.com/full-stack/docs/welcome

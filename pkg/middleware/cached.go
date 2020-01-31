@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/agent/pkg/optimizely"
 )
@@ -120,16 +119,14 @@ func (mw *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
 func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyClient, err := GetOptlyClient(r)
-		logger := GetLogger(r)
 		if err != nil {
 			RenderError(fmt.Errorf("optlyClient not available in FeatureCtx"), http.StatusInternalServerError, w, r)
 			return
 		}
 
-		featureKey := getDecisionKey(r, "featureKey")
+		featureKey := chi.URLParam(r, "featureKey")
 		if featureKey == "" {
-			log.Debug().Msg("no featureKey provided")
-			next.ServeHTTP(w, r)
+			RenderError(fmt.Errorf("invalid request, missing featureKey in FeatureCtx"), http.StatusBadRequest, w, r)
 			return
 		}
 
@@ -137,17 +134,16 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 		var statusCode int
 		switch {
 		case err == nil:
-			logger.Debug().Str("featureKey", featureKey).Msg("Added feature to request context in FeatureCtx")
+			GetLogger(r).Debug().Str("featureKey", featureKey).Msg("Added feature to request context in FeatureCtx")
 			ctx := context.WithValue(r.Context(), OptlyFeatureKey, &feature)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		case errors.Is(err, optimizely.ErrEntityNotFound):
 			statusCode = http.StatusNotFound
-			next.ServeHTTP(w, r)
 		default:
 			statusCode = http.StatusInternalServerError
 		}
-		logger.Debug().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
+		GetLogger(r).Debug().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
 		RenderError(err, statusCode, w, r)
 	})
 }
@@ -158,45 +154,31 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		optlyClient, err := GetOptlyClient(r)
-		logger := GetLogger(r)
 		if err != nil {
 			RenderError(fmt.Errorf("optlyClient not available in ExperimentCtx"), http.StatusInternalServerError, w, r)
 			return
 		}
 
-		experimentKey := getDecisionKey(r, "experimentKey")
+		experimentKey := chi.URLParam(r, "experimentKey")
 		if experimentKey == "" {
-			log.Debug().Msg("no experimentKey provided")
 			RenderError(fmt.Errorf("invalid request, missing experimentKey in ExperimentCtx"), http.StatusBadRequest, w, r)
 			return
 		}
 
-		logger.Debug().Msg("looking for experiment")
 		experiment, err := optlyClient.GetExperiment(experimentKey)
 		var statusCode int
 		switch {
 		case err == nil:
-			logger.Debug().Str("experimentKey", experimentKey).Msg("Added experiment to request context in ExperimentCtx")
+			GetLogger(r).Debug().Str("experimentKey", experimentKey).Msg("Added experiment to request context in ExperimentCtx")
 			ctx := context.WithValue(r.Context(), OptlyExperimentKey, &experiment)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		case errors.Is(err, optimizely.ErrEntityNotFound):
-			//statusCode = http.StatusNotFound
-			next.ServeHTTP(w, r)
-			return
+			statusCode = http.StatusNotFound
 		default:
 			statusCode = http.StatusInternalServerError
 		}
-		logger.Debug().Err(err).Str("experimentKey", experimentKey).Msg("Calling GetExperiment in ExperimentCtx")
+		GetLogger(r).Debug().Err(err).Str("experimentKey", experimentKey).Msg("Calling GetExperiment in ExperimentCtx")
 		RenderError(err, statusCode, w, r)
 	})
-}
-
-func getDecisionKey(r *http.Request, key string) string {
-	decisionKey := chi.URLParam(r, "decisionKey")
-	if decisionKey != "" {
-		return decisionKey
-	}
-
-	return chi.URLParam(r, key)
 }
