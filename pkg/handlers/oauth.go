@@ -43,6 +43,12 @@ type OAuthHandler struct {
 	hmacSecret        []byte
 }
 
+type tokenRequest struct {
+	GrantType    string `json:"grant_type"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+}
+
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
@@ -74,25 +80,29 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 }
 
 func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredentials, int, error) {
-	queryParams := r.URL.Query()
-	grantType := queryParams.Get("grant_type")
-	if grantType == "" {
+	var reqBody tokenRequest
+	err := ParseRequestBody(r, &reqBody)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if reqBody.GrantType == "" {
 		return nil, http.StatusBadRequest, errors.New("grant_type query parameter required")
 	}
-	if grantType != "client_credentials" {
-		return nil, http.StatusBadRequest, fmt.Errorf("unsupported grant_type %v", grantType)
+	if reqBody.GrantType != "client_credentials" {
+		return nil, http.StatusBadRequest, fmt.Errorf("unsupported grant_type %v", reqBody.GrantType)
 
 	}
-	clientID := queryParams.Get("client_id")
-	if clientID == "" {
+
+	if reqBody.ClientID == "" {
 		return nil, http.StatusUnauthorized, errors.New("client_id query parameter required")
 	}
-	clientSecret := queryParams.Get("client_secret")
-	if clientSecret == "" {
+
+	if reqBody.ClientSecret == "" {
 		return nil, http.StatusUnauthorized, errors.New("client_secret query parameter required")
 	}
-	clientCreds, ok := h.ClientCredentials[clientID]
-	if !ok || !jwtauth.MatchClientSecret(clientSecret, clientCreds.Secret) {
+	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
+	if !ok || !jwtauth.MatchClientSecret(reqBody.ClientSecret, clientCreds.Secret) {
 		return nil, http.StatusForbidden, errors.New("invalid client_id or client_secret")
 	}
 	return &clientCreds, http.StatusOK, nil

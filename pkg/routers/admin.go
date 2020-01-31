@@ -50,7 +50,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.With(authProvider.Authorize).Get("/health", optlyAdmin.Health)
 	r.With(authProvider.Authorize).Get("/info", optlyAdmin.AppInfo)
 	r.With(authProvider.Authorize).Get("/metrics", optlyAdmin.Metrics)
-	r.Get("/oauth/token", tokenHandler.GetAdminAccessToken)
+	r.Post("/oauth/token", tokenHandler.GetAdminAccessToken)
 
 	return r
 }
