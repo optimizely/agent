@@ -20,12 +20,13 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/go-chi/render"
-	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/pkg/errors"
-
 	"github.com/optimizely/agent/pkg/middleware"
-	//"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely"
+
+	"github.com/optimizely/go-sdk/pkg/entities"
+
+	"github.com/go-chi/render"
+	"github.com/pkg/errors"
 )
 
 // DecisionBody
@@ -42,21 +43,14 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body DecisionContext
-	err = ParseRequestBody(r, &body)
+	uc, err := getUserContext(r)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
 	}
 
-	uc := entities.UserContext{
-		ID:         body.userId,
-		Attributes: body.userAttributes,
-	}
-
-	logger.Info().Msg("attempting to activate")
-
 	if feature, err := middleware.GetFeature(r); err == nil {
+		logger.Debug().Str("featureKey", feature.Key).Msg("deciding on feature")
 		decision, err := optlyClient.GetFeatureDecision(feature, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
@@ -68,6 +62,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if experiment, err := middleware.GetExperiment(r); err == nil {
+		logger.Debug().Str("experimentKey", experiment.Key).Msg("deciding on experiment")
 		decision, err := optlyClient.GetExperimentDecision(experiment, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
@@ -81,11 +76,63 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	RenderError(errors.New("entity does not exist"), http.StatusInternalServerError, w, r)
 }
 
+// DecideAll currently only support listing all feature decisions.
 func DecideAll(w http.ResponseWriter, r *http.Request) {
-	//optlyClient, err := middleware.GetOptlyClient(r)
-	//logger := middleware.GetLogger(r)
-	//if err != nil {
-	//	RenderError(err, http.StatusInternalServerError, w, r)
-	//	return
-	//}
+	optlyClient, err := middleware.GetOptlyClient(r)
+	logger := middleware.GetLogger(r)
+	if err != nil {
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	uc, err := getUserContext(r)
+	if err != nil {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	var decisions []*optimizely.Decision
+	oConf := optlyClient.GetOptimizelyConfig()
+
+	logger.Debug().Msg("iterate over all experiment decisions")
+	for _, e := range oConf.ExperimentsMap {
+		d, err := optlyClient.GetExperimentDecision(&e, uc)
+		if err != nil {
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+
+		if !d.Enabled {
+			continue
+		}
+
+		decisions = append(decisions, d)
+	}
+
+	logger.Debug().Msg("iterate over all feature decisions")
+	for _, f := range oConf.FeaturesMap {
+		d, err := optlyClient.GetFeatureDecision(&f, uc)
+		if err != nil {
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+
+		if !d.Enabled {
+			continue
+		}
+
+		decisions = append(decisions, d)
+	}
+
+	render.JSON(w, r, decisions)
+}
+
+func getUserContext(r *http.Request) (entities.UserContext, error) {
+	var body DecisionContext
+	err := ParseRequestBody(r, &body)
+	if err != nil {
+		return entities.UserContext{}, err
+	}
+
+	return entities.UserContext{ID: body.userId, Attributes: body.userAttributes}, nil
 }

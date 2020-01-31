@@ -97,11 +97,11 @@ func NewDefaultAPIV2Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		metricsRegistry: metricsRegistry,
 	}
 
-	return NewAPIV2Router(spec)
+	return NewAPIV1Router(spec)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIV2Router(opt *API2Options) *chi.Mux {
+func NewAPIV1Router(opt *API2Options) *chi.Mux {
 	r := chi.NewRouter()
 
 	listFeaturesTimer := middleware.Metricize("list-features", opt.metricsRegistry)
@@ -136,7 +136,7 @@ func NewAPIV2Router(opt *API2Options) *chi.Mux {
 
 	r.Route("/decide", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(decideTimer).Get("/", opt.handlers.DecideAll)
+		r.With(decideTimer).Post("/", opt.handlers.DecideAll)
 		r.With(decideAllTimer, middleware.DecisionCtx).Post("/{decisionKey}", opt.handlers.Decide)
 	})
 

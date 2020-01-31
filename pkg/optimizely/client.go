@@ -209,7 +209,7 @@ func (c *OptlyClient) GetExperimentDecision(experiment *optimizelyconfig.Optimiz
 
 	decision := &Decision{
 		Key:     variation,
-		Enabled: true,
+		Enabled: variation != "",
 	}
 
 	return decision, nil
