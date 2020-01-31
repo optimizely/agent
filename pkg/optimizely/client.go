@@ -40,8 +40,7 @@ type OptlyClient struct {
 type Decision struct {
 	Key       string                 `json:"key"`
 	Variables map[string]interface{} `json:"variables,omitempty"`
-	//ID        string             `json:"id,omitempty"`
-	Enabled bool `json:"enabled"`
+	Enabled   bool                   `json:"enabled"`
 }
 
 // ListFeatures returns all available features
@@ -194,13 +193,13 @@ func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeatur
 		return &Decision{}, err
 	}
 
-	decision := &Decision{
+	dec := &Decision{
 		Key:       feature.Key,
 		Variables: variables,
 		Enabled:   enabled,
 	}
 
-	return decision, nil
+	return dec, nil
 }
 
 // ActivateExperiment activates an experiment
@@ -210,10 +209,10 @@ func (c *OptlyClient) ActivateExperiment(experiment *optimizelyconfig.Optimizely
 		return &Decision{}, err
 	}
 
-	decision := &Decision{
+	dec := &Decision{
 		Key:     variation,
 		Enabled: variation != "",
 	}
 
-	return decision, nil
+	return dec, nil
 }
