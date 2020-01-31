@@ -46,11 +46,23 @@ func assertLog(t *testing.T, actual config.LogConfig) {
 
 func assertAdmin(t *testing.T, actual config.AdminConfig) {
 	assert.Equal(t, "3002", actual.Port)
+	assert.Equal(t, 30*time.Minute, actual.Auth.TTL)
+	assert.Equal(t, "efgh", actual.Auth.HMACSecret)
+	assert.Equal(t, config.OAuthClientCredentials{
+		ID:     "clientid2",
+		Secret: "clientsecret2",
+	}, actual.Auth.Clients[0])
 }
 
 func assertAPI(t *testing.T, actual config.APIConfig) {
 	assert.Equal(t, 100, actual.MaxConns)
 	assert.Equal(t, "3000", actual.Port)
+	assert.Equal(t, 30*time.Minute, actual.Auth.TTL)
+	assert.Equal(t, "abcd", actual.Auth.HMACSecret)
+	assert.Equal(t, config.OAuthClientCredentials{
+		ID:     "clientid1",
+		Secret: "clientsecret1",
+	}, actual.Auth.Clients[0])
 }
 
 func assertWebhook(t *testing.T, actual config.WebhookConfig) {
