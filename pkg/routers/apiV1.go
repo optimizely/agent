@@ -31,76 +31,77 @@ import (
 	"github.com/go-chi/render"
 )
 
-// APIOptions defines the configuration parameters for Router.
+// APIV1Options defines the configuration parameters for Router.
 type APIV1Options struct {
 	maxConns        int
 	middleware      middleware.OptlyMiddleware
-	handlers        APIHandlers
+	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
 }
 
-type APIHandlers interface {
-	ListExperiments(w http.ResponseWriter, r *http.Request)
-	GetExperiment(w http.ResponseWriter, r *http.Request)
+// Define an interface to fasciliate testing
+type apiHandlers interface {
+	listExperiments(w http.ResponseWriter, r *http.Request)
+	getExperiment(w http.ResponseWriter, r *http.Request)
 
-	ListFeatures(w http.ResponseWriter, r *http.Request)
-	GetFeature(w http.ResponseWriter, r *http.Request)
+	listFeatures(w http.ResponseWriter, r *http.Request)
+	getFeature(w http.ResponseWriter, r *http.Request)
 
-	Decide(w http.ResponseWriter, r *http.Request)
-	DecideAll(w http.ResponseWriter, r *http.Request)
+	decide(w http.ResponseWriter, r *http.Request)
+	decideAll(w http.ResponseWriter, r *http.Request)
 
-	TrackEvent(w http.ResponseWriter, r *http.Request)
+	trackEvent(w http.ResponseWriter, r *http.Request)
 
-	Override(w http.ResponseWriter, r *http.Request)
+	override(w http.ResponseWriter, r *http.Request)
 }
 
-type DefaultHandlers struct{}
+type defaultHandlers struct{}
 
-func (d DefaultHandlers) ListExperiments(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) listExperiments(w http.ResponseWriter, r *http.Request) {
 	handlers.ListExperiments(w, r)
 }
 
-func (d DefaultHandlers) GetExperiment(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) getExperiment(w http.ResponseWriter, r *http.Request) {
 	handlers.GetExperiment(w, r)
 }
 
-func (d DefaultHandlers) ListFeatures(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) listFeatures(w http.ResponseWriter, r *http.Request) {
 	handlers.ListFeatures(w, r)
 }
 
-func (d DefaultHandlers) GetFeature(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) getFeature(w http.ResponseWriter, r *http.Request) {
 	handlers.GetFeature(w, r)
 }
 
-func (d DefaultHandlers) Decide(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) decide(w http.ResponseWriter, r *http.Request) {
 	handlers.Activate(w, r)
 }
 
-func (d DefaultHandlers) DecideAll(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) decideAll(w http.ResponseWriter, r *http.Request) {
 	handlers.ActivateAll(w, r)
 }
 
-func (d DefaultHandlers) TrackEvent(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) trackEvent(w http.ResponseWriter, r *http.Request) {
 	handlers.TrackEvent(w, r)
 }
 
-func (d DefaultHandlers) Override(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
-// NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIV2Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+// NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
+func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		handlers:        new(DefaultHandlers),
+		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
 	}
 
 	return NewAPIV1Router(spec)
 }
 
-// NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
+// NewAPIV1Router returns HTTP API router backed by an optimizely.Cache implementation
 func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -124,20 +125,20 @@ func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 
 	r.Route("/v1/features", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(listFeaturesTimer).Get("/", opt.handlers.ListFeatures)
-		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.handlers.GetFeature)
+		r.With(listFeaturesTimer).Get("/", opt.handlers.listFeatures)
+		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.handlers.getFeature)
 	})
 
 	r.Route("/v1/experiments", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(listExperimentsTimer).Get("/", opt.handlers.ListExperiments)
-		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.handlers.GetExperiment)
+		r.With(listExperimentsTimer).Get("/", opt.handlers.listExperiments)
+		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.handlers.getExperiment)
 	})
 
 	r.Route("/v1/activate", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(decideTimer).Post("/", opt.handlers.DecideAll)
-		r.With(decideAllTimer, middleware.ActivationCtx).Post("/{decisionKey}", opt.handlers.Decide)
+		r.With(decideTimer).Post("/", opt.handlers.decideAll)
+		r.With(decideAllTimer, middleware.ActivationCtx).Post("/{decisionKey}", opt.handlers.decide)
 	})
 
 	r.With(trackTimer, opt.middleware.ClientCtx).Post("/v1/track/{eventKey}", handlers.TrackEvent)

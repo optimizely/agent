@@ -29,12 +29,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ActivateBody
+// ActivateBody defines the request body for an activation
 type ActivateBody struct {
 	UserID         string                 `json:"userId"`
 	UserAttributes map[string]interface{} `json:"userAttributes"`
 }
 
+// Activate makes an activation call for either an experiment or a feature.
 func Activate(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
@@ -76,7 +77,8 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	RenderError(errors.New("entity does not exist"), http.StatusInternalServerError, w, r)
 }
 
-// ActivateAll currently only support listing all feature decisions.
+// ActivateAll iterates through all experiments and decisions activating each and returning only
+// the enabled decisions.
 func ActivateAll(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
@@ -91,11 +93,12 @@ func ActivateAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var decisions []*optimizely.Decision
 	oConf := optlyClient.GetOptimizelyConfig()
+	decisions := make([]*optimizely.Decision, 0, len(oConf.ExperimentsMap)+len(oConf.FeaturesMap))
 
 	logger.Debug().Msg("iterate over all experiment decisions")
 	for _, e := range oConf.ExperimentsMap {
+		e := e
 		d, err := optlyClient.ActivateExperiment(&e, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
@@ -111,6 +114,7 @@ func ActivateAll(w http.ResponseWriter, r *http.Request) {
 
 	logger.Debug().Msg("iterate over all feature decisions")
 	for _, f := range oConf.FeaturesMap {
+		f := f
 		d, err := optlyClient.ActivateFeature(&f, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
