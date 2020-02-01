@@ -27,7 +27,9 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
+	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/metrics"
+	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	"github.com/stretchr/testify/assert"
@@ -168,6 +170,8 @@ func (suite *RouterTestSuite) SetupTest() {
 		userOverrideAPI:  new(MockUserOverrideAPI),
 		middleware:       new(MockOptlyMiddleware),
 		metricsRegistry:  metricsRegistry,
+		oAuthHandler:     &handlers.OAuthHandler{},
+		oAuthMiddleware:  middleware.Auth{Verifier: middleware.NoAuth{}},
 	}
 
 	suite.mux = NewAPIRouter(opts)

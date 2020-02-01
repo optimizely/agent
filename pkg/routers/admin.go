@@ -20,6 +20,7 @@ package routers
 import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
+	"github.com/optimizely/agent/pkg/middleware"
 
 	"net/http"
 
@@ -31,15 +32,25 @@ import (
 func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r := chi.NewRouter()
 
+	var authProvider middleware.Auth
+	checkClaims := map[string]struct{}{"exp": {}, "admin": {}}
+	if conf.Admin.Auth.HMACSecret == "" {
+		authProvider = middleware.NewAuth(middleware.NoAuth{}, checkClaims)
+	} else {
+		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Admin.Auth.HMACSecret), checkClaims)
+	}
+
 	optlyAdmin := handlers.NewAdmin(conf)
+	tokenHandler := handlers.NewOAuthHandler(&conf.Admin.Auth)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.Get("/config", optlyAdmin.AppConfig)
-	r.Get("/health", optlyAdmin.Health)
-	r.Get("/info", optlyAdmin.AppInfo)
-	r.Get("/metrics", optlyAdmin.Metrics)
+	r.With(authProvider.Authorize).Get("/config", optlyAdmin.AppConfig)
+	r.With(authProvider.Authorize).Get("/health", optlyAdmin.Health)
+	r.With(authProvider.Authorize).Get("/info", optlyAdmin.AppInfo)
+	r.With(authProvider.Authorize).Get("/metrics", optlyAdmin.Metrics)
 
+	r.Post("/oauth/token", tokenHandler.GetAdminAccessToken)
 	return r
 }
