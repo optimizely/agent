@@ -32,13 +32,7 @@ import (
 func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r := chi.NewRouter()
 
-	var authProvider middleware.Auth
-	checkClaims := map[string]struct{}{"exp": {}, "admin": {}}
-	if conf.Admin.Auth.HMACSecret == "" {
-		authProvider = middleware.NewAuth(middleware.NoAuth{}, checkClaims)
-	} else {
-		authProvider = middleware.NewAuth(middleware.NewJWTVerifier(conf.Admin.Auth.HMACSecret), checkClaims)
-	}
+	authProvider := middleware.NewAuth(&conf.Admin.Auth)
 
 	optlyAdmin := handlers.NewAdmin(conf)
 	tokenHandler := handlers.NewOAuthHandler(&conf.Admin.Auth)
@@ -46,10 +40,10 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.With(authProvider.Authorize).Get("/config", optlyAdmin.AppConfig)
-	r.With(authProvider.Authorize).Get("/health", optlyAdmin.Health)
-	r.With(authProvider.Authorize).Get("/info", optlyAdmin.AppInfo)
-	r.With(authProvider.Authorize).Get("/metrics", optlyAdmin.Metrics)
+	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
+	r.With(authProvider.AuthorizeAdmin).Get("/health", optlyAdmin.Health)
+	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
+	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
 
 	r.Post("/oauth/token", tokenHandler.GetAdminAccessToken)
 	return r

@@ -18,6 +18,7 @@
 package middleware
 
 import (
+	"github.com/optimizely/agent/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,6 +31,7 @@ type OptlyClaims struct {
 	ExpiresAt int64  `json:"exp,omitempty"`
 	Issuer    string `json:"iss,omitempty"`
 	SdkKey    string `json:"sdk_key,omitempty"`
+	Admin     bool   `json:"admin,omitempty"`
 }
 
 func (c OptlyClaims) Valid() error {
@@ -38,29 +40,40 @@ func (c OptlyClaims) Valid() error {
 
 type AuthTestSuite struct {
 	suite.Suite
-	validToken   *jwt.Token
-	expiredToken *jwt.Token
-	handler      http.HandlerFunc
-	signature    string
+	validAPIToken   *jwt.Token
+	validAdminToken *jwt.Token
+	expiredToken    *jwt.Token
+	handler         http.HandlerFunc
+	signature       string
+	authConfig      *config.ServiceAuthConfig
 }
 
 func (suite *AuthTestSuite) SetupTest() {
 	suite.signature = "test"
 	claims := OptlyClaims{ExpiresAt: 12313123123213, SdkKey: "SDK_KEY", Issuer: "iss"} // exp = March 9, 2360
-	suite.validToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validToken.Raw, _ = suite.validToken.SignedString([]byte(suite.signature))
+	suite.validAPIToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	suite.validAPIToken.Raw, _ = suite.validAPIToken.SignedString([]byte(suite.signature))
+
+	claims = OptlyClaims{ExpiresAt: 12313123123213, Admin: true, Issuer: "iss"} // exp = March 9, 2360
+	suite.validAdminToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	suite.validAdminToken.Raw, _ = suite.validAdminToken.SignedString([]byte(suite.signature))
 
 	claims = OptlyClaims{ExpiresAt: 0, SdkKey: "SDK_KEY", Issuer: "iss"}
 	suite.expiredToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	suite.expiredToken.Raw, _ = suite.expiredToken.SignedString([]byte(suite.signature))
 
 	suite.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	suite.authConfig = &config.ServiceAuthConfig{
+		Clients:    make([]config.OAuthClientCredentials, 0),
+		HMACSecret: suite.signature,
+		TTL:        0,
+	}
 
 }
 
 func (suite *AuthTestSuite) TestNoAuthCheckToken() {
 
-	auth := NewAuth(NoAuth{}, map[string]struct{}{})
+	auth := NewAuth(&config.ServiceAuthConfig{})
 	token, err := auth.CheckToken("")
 	suite.Nil(token)
 	suite.NoError(err)
@@ -68,25 +81,25 @@ func (suite *AuthTestSuite) TestNoAuthCheckToken() {
 
 func (suite *AuthTestSuite) TestNoAuthAuthorize() {
 
-	auth := NewAuth(NoAuth{}, map[string]struct{}{})
+	auth := NewAuth(&config.ServiceAuthConfig{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/some_url", nil)
 
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
 func (suite *AuthTestSuite) TestAuthValidCheckToken() {
 
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{})
-	token, err := auth.CheckToken(suite.validToken.Raw)
-	suite.Equal(suite.validToken.Raw, token.Raw)
+	auth := NewAuth(suite.authConfig)
+	token, err := auth.CheckToken(suite.validAPIToken.Raw)
+	suite.Equal(suite.validAPIToken.Raw, token.Raw)
 	suite.NoError(err)
 }
 
 func (suite *AuthTestSuite) TestAuthInvalidCheckToken() {
 
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{})
+	auth := NewAuth(suite.authConfig)
 	token, err := auth.CheckToken("adasdsada.sfsdfs.adas")
 	suite.Nil(token)
 	suite.Error(err)
@@ -94,68 +107,81 @@ func (suite *AuthTestSuite) TestAuthInvalidCheckToken() {
 
 func (suite *AuthTestSuite) TestAuthAuthorizeEmptyToken() {
 
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{})
+	auth := NewAuth(suite.authConfig)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/some_url", nil)
 
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
+	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
 	suite.Equal(http.StatusUnauthorized, rec.Code)
 }
 
-func (suite *AuthTestSuite) TestAuthAuthorizeToken() {
+func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenInvalidClaims() {
 
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{})
+	auth := NewAuth(suite.authConfig)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/some_url", nil)
-	req.Header.Add("Auth", suite.validToken.Raw)
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
+	req.Header.Add("Authorization", "Bearer "+suite.validAdminToken.Raw)
 
-	suite.Equal(http.StatusOK, rec.Code)
-}
-
-func (suite *AuthTestSuite) TestAuthAuthorizeTokenAuthorization() {
-
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{})
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/some_url", nil)
-	req.Header.Add("Authorization", "Bearer "+suite.validToken.Raw)
-
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusOK, rec.Code)
-}
-
-func (suite *AuthTestSuite) TestAuthAuthorizeTokenInvalidClaims() {
-
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{"sdk_key": {}})
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/some_url", nil)
-	req.Header.Add("Authorization", "Bearer "+suite.validToken.Raw)
-
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
 	suite.Equal(http.StatusUnauthorized, rec.Code)
 }
 
-func (suite *AuthTestSuite) TestAuthAuthorizeTokenAuthorizationValidClaims() {
+func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenInvalidClaims() {
 
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{"sdk_key": {}, "exp": {}})
+	auth := NewAuth(suite.authConfig)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/some_url", nil)
-	req.Header.Add("Authorization", "Bearer "+suite.validToken.Raw)
+	req.Header.Add("Authorization", "Bearer "+suite.validAPIToken.Raw)
+
+	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaims() {
+
+	auth := NewAuth(suite.authConfig)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.validAPIToken.Raw)
 	req.Header.Add(OptlySDKHeader, "SDK_KEY")
 
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-func (suite *AuthTestSuite) TestAuthAuthorizeTokenAuthorizationValidClaimsExpiredToken() {
+func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenAuthorizationValidClaims() {
 
-	auth := NewAuth(NewJWTVerifier(suite.signature), map[string]struct{}{"exp": {}})
+	auth := NewAuth(suite.authConfig)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.validAdminToken.Raw)
+	req.Header.Add(OptlySDKHeader, "SDK_KEY")
+
+	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+}
+
+func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaimsExpiredToken() {
+
+	auth := NewAuth(suite.authConfig)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/some_url", nil)
 	req.Header.Add("Authorization", "Bearer "+suite.expiredToken.Raw)
 	req.Header.Add(OptlySDKHeader, "SDK_KEY")
 
-	auth.Authorize(suite.handler).ServeHTTP(rec, req)
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenAuthorizationValidClaimsExpiredToken() {
+
+	auth := NewAuth(suite.authConfig)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.expiredToken.Raw)
+	req.Header.Add(OptlySDKHeader, "SDK_KEY")
+
+	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
 	suite.Equal(http.StatusUnauthorized, rec.Code)
 }
 

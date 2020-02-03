@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/optimizely/agent/config"
+
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -48,8 +50,6 @@ func (NoAuth) CheckToken(string) (*jwt.Token, error) {
 // Auth is the middleware for all REST API's
 type Auth struct {
 	Verifier
-
-	checkClaims map[string]struct{}
 }
 
 // Verifier checks token
@@ -120,8 +120,37 @@ func (a Auth) enabled() bool {
 	return true
 }
 
-// Authorize is middleware for auth
-func (a Auth) Authorize(next http.Handler) http.Handler {
+// AuthorizeAdmin is middleware for admin auth
+func (a Auth) AuthorizeAdmin(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+
+		tk, err := a.verify(r)
+
+		if err != nil {
+			RenderError(err, http.StatusUnauthorized, w, r)
+			return
+		}
+
+		if a.enabled() {
+			claims := tk.Claims.(jwt.MapClaims)
+
+			if expired := (getNumberFromJSON(claims["exp"]) - time.Now().Unix()) <= 0; expired {
+				RenderError(errors.New("token expired"), http.StatusUnauthorized, w, r)
+				return
+			}
+			if adminFlag, ok := claims["admin"].(bool); !ok || !adminFlag {
+				RenderError(errors.New("admin flag not set"), http.StatusUnauthorized, w, r)
+				return
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
+}
+
+// AuthorizeAPI is middleware for auth api
+func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 
 		tk, err := a.verify(r)
@@ -133,34 +162,14 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 
 		if a.enabled() {
 			claims := tk.Claims.(jwt.MapClaims)
-
-			for key := range a.checkClaims {
-
-				value, ok := claims[key]
-				if !ok {
-					http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%s key not in claims"}`, key), http.StatusUnauthorized)
-					return
-				}
-
-				switch key {
-				case "exp":
-					if expired := (getNumberFromJSON(value) - time.Now().Unix()) <= 0; expired {
-						http.Error(w, `{"error": "unauthorized", "reason": "token expired"}`, http.StatusUnauthorized)
-						return
-					}
-
-				case "sdk_key":
-					sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
-					if sdkKey, ok := value.(string); !ok || sdkKey != sdkKeyFromHeader {
-						http.Error(w, `{"error": "unauthorized", "reason": "SDK keys not equal"}`, http.StatusUnauthorized)
-						return
-					}
-				case "admin":
-					if adminFlag, ok := value.(bool); !ok || !adminFlag {
-						http.Error(w, `{"error": "unauthorized", "reason": "admin flag not set"}`, http.StatusUnauthorized)
-						return
-					}
-				}
+			if expired := (getNumberFromJSON(claims["exp"]) - time.Now().Unix()) <= 0; expired {
+				RenderError(errors.New("token expired"), http.StatusUnauthorized, w, r)
+				return
+			}
+			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
+			if sdkKey, ok := claims["sdk_key"].(string); !ok || sdkKey != sdkKeyFromHeader {
+				RenderError(errors.New("SDK keys not equal"), http.StatusUnauthorized, w, r)
+				return
 			}
 		}
 
@@ -170,6 +179,12 @@ func (a Auth) Authorize(next http.Handler) http.Handler {
 }
 
 // NewAuth makes Auth middleware
-func NewAuth(v Verifier, checkClaims map[string]struct{}) Auth {
-	return Auth{Verifier: v, checkClaims: checkClaims}
+func NewAuth(authConfig *config.ServiceAuthConfig) Auth {
+
+	if authConfig.HMACSecret == "" {
+		return Auth{Verifier: NoAuth{}}
+	}
+
+	return Auth{Verifier: NewJWTVerifier(authConfig.HMACSecret)}
+
 }
