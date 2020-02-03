@@ -19,13 +19,21 @@ package optimizely
 
 import (
 	"context"
+	"strings"
 	"sync"
 
+	"github.com/optimizely/go-sdk/pkg/utils"
+	"github.com/spf13/viper"
+
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/integrations"
+
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -58,6 +66,10 @@ func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry 
 
 // Init takes a slice of sdkKeys to warm the cache upon startup
 func (c *OptlyCache) Init(sdkKeys []string) {
+	viper.SetEnvPrefix("optimizely")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
+
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
@@ -114,12 +126,26 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 		event.WithEventDispatcherMetrics(metricsRegistry))
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
-	optimizelyFactory := &client.OptimizelyFactory{SDKKey:sdkKey}
+	optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
 		client.WithEventProcessor(ep),
 	)
+
+	nc := registry.GetNotificationCenter(sdkKey)
+	requestor := utils.NewHTTPRequester() // TODO have a global requestor
+
+	url := viper.GetString("slack.url")
+	if url != "" {
+		log.Info().Msg("adding slack integration")
+		dl := integrations.NewTemplateListener(requestor, "./templates/slack_decision_body.tmpl", url)
+
+		_, lErr := nc.AddHandler(notification.Decision, dl.Listen)
+		if lErr != nil {
+			log.Error().Err(lErr).Msg("errror adding listener")
+		}
+	}
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
