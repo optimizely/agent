@@ -41,14 +41,11 @@ type APIV1Options struct {
 
 // Define an interface to fasciliate testing
 type apiHandlers interface {
-	listExperiments(w http.ResponseWriter, r *http.Request)
-	getExperiment(w http.ResponseWriter, r *http.Request)
+	describe(w http.ResponseWriter, r *http.Request)
+	describeAll(w http.ResponseWriter, r *http.Request)
 
-	listFeatures(w http.ResponseWriter, r *http.Request)
-	getFeature(w http.ResponseWriter, r *http.Request)
-
-	decide(w http.ResponseWriter, r *http.Request)
-	decideAll(w http.ResponseWriter, r *http.Request)
+	activate(w http.ResponseWriter, r *http.Request)
+	activateAll(w http.ResponseWriter, r *http.Request)
 
 	trackEvent(w http.ResponseWriter, r *http.Request)
 
@@ -57,27 +54,19 @@ type apiHandlers interface {
 
 type defaultHandlers struct{}
 
-func (d defaultHandlers) listExperiments(w http.ResponseWriter, r *http.Request) {
-	handlers.ListExperiments(w, r)
-}
-
-func (d defaultHandlers) getExperiment(w http.ResponseWriter, r *http.Request) {
-	handlers.GetExperiment(w, r)
-}
-
-func (d defaultHandlers) listFeatures(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) describe(w http.ResponseWriter, r *http.Request) {
 	handlers.ListFeatures(w, r)
 }
 
-func (d defaultHandlers) getFeature(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) describeAll(w http.ResponseWriter, r *http.Request) {
 	handlers.GetFeature(w, r)
 }
 
-func (d defaultHandlers) decide(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) activate(w http.ResponseWriter, r *http.Request) {
 	handlers.Activate(w, r)
 }
 
-func (d defaultHandlers) decideAll(w http.ResponseWriter, r *http.Request) {
+func (d defaultHandlers) activateAll(w http.ResponseWriter, r *http.Request) {
 	handlers.ActivateAll(w, r)
 }
 
@@ -105,13 +94,10 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 	r := chi.NewRouter()
 
-	listFeaturesTimer := middleware.Metricize("list-features", opt.metricsRegistry)
-	getFeatureTimer := middleware.Metricize("get-feature", opt.metricsRegistry)
-	listExperimentsTimer := middleware.Metricize("list-experiments", opt.metricsRegistry)
-	getExperimentTimer := middleware.Metricize("get-experiment", opt.metricsRegistry)
-
-	decideTimer := middleware.Metricize("decide", opt.metricsRegistry)
-	decideAllTimer := middleware.Metricize("decide-all", opt.metricsRegistry)
+	describeTimer := middleware.Metricize("describe", opt.metricsRegistry)
+	describeAllTimer := middleware.Metricize("get-experiment", opt.metricsRegistry)
+	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
+	activateAllTimer := middleware.Metricize("activate-all", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("set-override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 
@@ -123,22 +109,16 @@ func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.Route("/v1/features", func(r chi.Router) {
+	r.Route("/v1/describe", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(listFeaturesTimer).Get("/", opt.handlers.listFeatures)
-		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.handlers.getFeature)
-	})
-
-	r.Route("/v1/experiments", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
-		r.With(listExperimentsTimer).Get("/", opt.handlers.listExperiments)
-		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.handlers.getExperiment)
+		r.With(describeAllTimer).Get("/", opt.handlers.describeAll)
+		r.With(describeTimer, opt.middleware.ExperimentCtx).Get("/{activationKey}", opt.handlers.describeAll)
 	})
 
 	r.Route("/v1/activate", func(r chi.Router) {
 		r.Use(opt.middleware.ClientCtx)
-		r.With(decideTimer).Post("/", opt.handlers.decideAll)
-		r.With(decideAllTimer, middleware.ActivationCtx).Post("/{decisionKey}", opt.handlers.decide)
+		r.With(activateAllTimer).Post("/", opt.handlers.activateAll)
+		r.With(activateTimer, middleware.ActivationCtx).Post("/{decisionKey}", opt.handlers.activate)
 	})
 
 	r.With(trackTimer, opt.middleware.ClientCtx).Post("/v1/track/{eventKey}", handlers.TrackEvent)

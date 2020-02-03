@@ -10,72 +10,34 @@ info:
 security:
   - SdkKeyAuth: []
 paths:
-  /v1/experiments:
+  /v1/describe:
     get:
-      summary: Return all experiments
-      operationId: listExperiments
-      description: List experiments returns all available experiment definitions for this environment.
+      summary: Return all features and experiments as a map
+      operationId: describeAll
+      description: Return all available experiment and features definitions for this environment.
       tags:
-        - config
+        - describe
       responses:
         '200':
           description: Valid response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Experiment'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /v1/experiments/{experimentKey}:
-    parameters:
-      - $ref: '#/components/parameters/experimentKeyParam'
-    get:
-      summary: Return variation for a given user and experiment
-      operationId: getExperiment
-      description: Get experiment returns the corresponding experiment definition for the given experiment key.
-      tags:
-        - config
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Experiment'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Experiment does not exist
-  /v1/features:
-    get:
-      summary: Return all features
-      operationId: listFeatures
-      description: List features returns all available features definitions for this environment.
-      tags:
-        - config
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                description: List of features
+                description: Optimizely Configuration
                 type: array
                 items:
                   $ref: '#/components/schemas/Feature'
         '403':
           $ref: '#/components/responses/Forbidden'
-  /v1/features/{featureKey}:
+  /v1/describe/{decisionKey}:
     parameters:
-      - $ref: '#/components/parameters/featureKeyParam'
+      - $ref: '#/components/parameters/decisionKeyParam'
     get:
-      summary: Return the feature
-      operationId: getFeature
-      description: Get feature returns the corresponding feature definition for the given feature key.
+      summary: Describes the experiment or feature corresponding to this key.
+      operationId: describe
+      description: Get feature decribes feature definition for the given feature key.
       tags:
-        - config
+        - describe
       responses:
         '200':
           description: Valid response
@@ -87,20 +49,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           description: Experiment does not exist
-  /v1/revision:
-    get:
-      summary: Return the SDK revision
-      operationId: getRevision
-      description: Get revision returns the revision for this environment.
-      tags:
-        - config
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Revision'
   /v1/track/{eventKey}:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
@@ -120,19 +68,19 @@ paths:
           description: Event does not exist
       requestBody:
         $ref: '#/components/requestBodies/TrackContext'
-  /v1/decide:
+  /v1/activate:
     parameters:
       - $ref: '#/components/parameters/trackParam'
       - $ref: '#/components/parameters/filterParam'
     post:
       summary: Determine the state of ALL features and experiments for the given user.
-      operationId: decide
+      operationId: activateAll
       description: Decide iterates over all features and experiments and returns the decision
         for the given user. All features are included regardless of whether the feature is enabled.
         An impression event will sent to the Optimizely analytics backend for any decision made for
         and experiment or feature test.
       tags:
-        - decision
+        - activate
       responses:
         '200':
           description: Valid response
@@ -146,19 +94,19 @@ paths:
           $ref: '#/components/responses/Forbidden'
       requestBody:
         $ref: '#/components/requestBodies/DecisionContext'
-  /v1/decide/{decisionKey}:
+  /v1/activate/{decisionKey}:
     parameters:
       - $ref: '#/components/parameters/decisionKeyParam'
       - $ref: '#/components/parameters/trackParam'
       - $ref: '#/components/parameters/filterParam'
     post:
       summary: Decide on feature or experiment state for a given user and return associated variable values
-      operationId: decideForEntity
+      operationId: activate
       description: Determine the feature flag or experiment decisions for the supplied user context. If the decision was made
         as part of an experiment or feature test or an ab experiment, then this API will send an impression event to
         Optimizely tracking servers.
       tags:
-        - decision
+        - activate
       responses:
         '200':
           description: Valid response
@@ -185,7 +133,7 @@ paths:
         based decisions. This override is only stored locally and inmemory for debugging and testing purposes
         and should not be used for production overrides.
       tags:
-        - decision
+        - override
       responses:
         '201':
           description: Forced variation set
@@ -384,11 +332,11 @@ components:
       name: X-Optimizely-SDK-Key
       type: apiKey
 tags:
-  - name: config
+  - name: describe
     description: Collection of APIs to describe the active Optimizely Configuration.
     externalDocs:
       url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: decision
+  - name: activate
     description: Collection of APIs to make experiment, rollout and feature flagging decisions.
     externalDocs:
       url: https://docs.developers.optimizely.com/full-stack/docs/welcome
