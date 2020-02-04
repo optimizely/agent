@@ -41,33 +41,20 @@ type APIV1Options struct {
 
 // Define an interface to fasciliate testing
 type apiHandlers interface {
-	describe(w http.ResponseWriter, r *http.Request)
-	describeAll(w http.ResponseWriter, r *http.Request)
-
+	config(w http.ResponseWriter, r *http.Request)
 	activate(w http.ResponseWriter, r *http.Request)
-	activateAll(w http.ResponseWriter, r *http.Request)
-
 	trackEvent(w http.ResponseWriter, r *http.Request)
-
 	override(w http.ResponseWriter, r *http.Request)
 }
 
 type defaultHandlers struct{}
 
-func (d defaultHandlers) describe(w http.ResponseWriter, r *http.Request) {
-	handlers.Describe(w, r)
-}
-
-func (d defaultHandlers) describeAll(w http.ResponseWriter, r *http.Request) {
-	handlers.DescribeAll(w, r)
+func (d defaultHandlers) config(w http.ResponseWriter, r *http.Request) {
+	handlers.OptimizelyConfig(w, r)
 }
 
 func (d defaultHandlers) activate(w http.ResponseWriter, r *http.Request) {
 	handlers.Activate(w, r)
-}
-
-func (d defaultHandlers) activateAll(w http.ResponseWriter, r *http.Request) {
-	handlers.ActivateFromQuery(w, r)
 }
 
 func (d defaultHandlers) trackEvent(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +81,7 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 	r := chi.NewRouter()
 
-	describeTimer := middleware.Metricize("describe", opt.metricsRegistry)
+	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
@@ -104,23 +91,13 @@ func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime)
+	r.Use(middleware.SetTime, opt.middleware.ClientCtx)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.Route("/v1/config", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
-		r.With(describeTimer).Get("/", opt.handlers.describeAll)
-		//r.With(describeTimer, middleware.ActivationCtx).Get("/{activationKey}", opt.handlers.describe)
-	})
-
-	r.Route("/v1/activate", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx)
-		r.With(activateTimer, opt.middleware.FeatureCtx, opt.middleware.ExperimentCtx).Post("/", opt.handlers.activateAll)
-		//r.With(activateTimer, middleware.ActivationCtx).Post("/{activationKey}", opt.handlers.activate)
-	})
-
-	r.With(trackTimer, opt.middleware.ClientCtx).Post("/v1/track", handlers.TrackEvent)
-	r.With(overrideTimer, opt.middleware.ClientCtx).Post("/v1/override", handlers.Override)
+	r.With(getConfigTimer).Get("/v1/config", opt.handlers.config)
+	r.With(activateTimer).Post("/v1/activate", opt.handlers.activate)
+	r.With(trackTimer).Post("/v1/track", opt.handlers.trackEvent)
+	r.With(overrideTimer).Post("/v1/override", opt.handlers.override)
 
 	return r
 }

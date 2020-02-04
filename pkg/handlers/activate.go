@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -27,7 +27,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/entities"
 
 	"github.com/go-chi/render"
-	"github.com/pkg/errors"
 )
 
 // ActivateBody defines the request body for an activation
@@ -36,51 +35,8 @@ type ActivateBody struct {
 	UserAttributes map[string]interface{} `json:"userAttributes"`
 }
 
-// Activate makes an activation call for either an experiment or a feature.
+// Activate makes feature and experiment decisions for the selected query parameters.
 func Activate(w http.ResponseWriter, r *http.Request) {
-	optlyClient, err := middleware.GetOptlyClient(r)
-	logger := middleware.GetLogger(r)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	uc, err := getUserContext(r)
-	if err != nil {
-		RenderError(err, http.StatusBadRequest, w, r)
-		return
-	}
-
-	if feature, err := middleware.GetFeature(r); err == nil {
-		logger.Debug().Str("featureKey", feature.Key).Msg("deciding on feature")
-		decision, err := optlyClient.ActivateFeature(feature, uc)
-		if err != nil {
-			RenderError(err, http.StatusInternalServerError, w, r)
-			return
-		}
-
-		render.JSON(w, r, decision)
-		return
-	}
-
-	if experiment, err := middleware.GetExperiment(r); err == nil {
-		logger.Debug().Str("experimentKey", experiment.Key).Msg("deciding on experiment")
-		decision, err := optlyClient.ActivateExperiment(experiment, uc)
-		if err != nil {
-			RenderError(err, http.StatusInternalServerError, w, r)
-			return
-		}
-
-		render.JSON(w, r, decision)
-		return
-	}
-
-	RenderError(errors.New("entity does not exist"), http.StatusInternalServerError, w, r)
-}
-
-// ActivateAll iterates through all experiments and decisions activating each and returning only
-// the enabled decisions.
-func ActivateFromQuery(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
 	if err != nil {
@@ -117,6 +73,7 @@ func ActivateFromQuery(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// TODO implement enabled filtering
 		//if !d.Enabled {
 		//	continue
 		//}
@@ -143,6 +100,7 @@ func ActivateFromQuery(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// TODO implement enabled filtering
 		//if !d.Enabled {
 		//	continue
 		//}

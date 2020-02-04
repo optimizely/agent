@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -26,8 +25,8 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 )
 
-// DescribeAll returns the entire OptimizelyConfig object
-func DescribeAll(w http.ResponseWriter, r *http.Request) {
+// OptimizelyConfig returns the entire OptimizelyConfig object directly from the SDK
+func OptimizelyConfig(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
@@ -36,23 +35,4 @@ func DescribeAll(w http.ResponseWriter, r *http.Request) {
 
 	conf := optlyClient.GetOptimizelyConfig()
 	render.JSON(w, r, conf)
-}
-
-// Describe returns the associated Experiment or Feature definition.
-func Describe(w http.ResponseWriter, r *http.Request) {
-	logger := middleware.GetLogger(r)
-
-	if feature, err := middleware.GetFeature(r); err == nil {
-		logger.Debug().Str("featureKey", feature.Key).Msg("deciding on feature")
-		render.JSON(w, r, feature)
-		return
-	}
-
-	if experiment, err := middleware.GetExperiment(r); err == nil {
-		logger.Debug().Str("experimentKey", experiment.Key).Msg("deciding on experiment")
-		render.JSON(w, r, experiment)
-		return
-	}
-
-	RenderError(errors.New("entity does not exist"), http.StatusInternalServerError, w, r)
 }
