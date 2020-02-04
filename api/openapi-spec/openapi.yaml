@@ -114,13 +114,17 @@ components:
       name: experimentKey
       description: Key for the Optimizely Experiment
       schema:
-        type: string
+        type: array
+        items:
+          type: string
     featureKeyParam:
       in: query
       name: featureKey
       description: Key for the Optimizely Feature
       schema:
-        type: string
+        type: array
+        items:
+          type: string
     typeParam:
       in: query
       name: type
