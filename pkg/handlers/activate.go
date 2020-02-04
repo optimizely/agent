@@ -74,10 +74,6 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// TODO implement enabled filtering
-		//if !d.Enabled {
-		//	continue
-		//}
-
 		decisions = append(decisions, d)
 	}
 
@@ -101,10 +97,6 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// TODO implement enabled filtering
-		//if !d.Enabled {
-		//	continue
-		//}
-
 		decisions = append(decisions, d)
 	}
 

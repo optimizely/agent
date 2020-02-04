@@ -38,8 +38,8 @@ s.headers.update({'X-Optimizely-SDK-Key': '<<YOUR-SDK-KEY>>'})
 
 Future examples will assume this session is being maintained.
 
-### Describe environment
-The `/describe` endpoint returns a manifest of the current working environment.
+### Get current environment configuration
+The `/config` endpoint returns a manifest of the current working environment.
 
 ```python
 resp = s.get('http://localhost:8080/v1/config')

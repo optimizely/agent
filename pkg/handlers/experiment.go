@@ -41,18 +41,6 @@ type Variation struct {
 // ExperimentHandler implements the ExperimentAPI interface
 type ExperimentHandler struct{}
 
-var experimentHandler = &ExperimentHandler{}
-
-// ListExperiments - List all experiments
-func ListExperiments(w http.ResponseWriter, r *http.Request) {
-	experimentHandler.ListExperiments(w, r)
-}
-
-// GetExperiment - Get requested experiment
-func GetExperiment(w http.ResponseWriter, r *http.Request) {
-	experimentHandler.GetExperiment(w, r)
-}
-
 // ListExperiments - List all experiments
 func (h *ExperimentHandler) ListExperiments(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)

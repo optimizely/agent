@@ -26,8 +26,9 @@ import (
 
 // OverrideBody defines the request body for an override
 type OverrideBody struct {
-	UserID       string `json:"userId"`
-	VariationKey string `json:"variationKey"`
+	UserID        string `json:"userId"`
+	ExperimentKey string `json:"experimentKey"`
+	VariationKey  string `json:"variationKey"`
 }
 
 // Override is used to set forced variations for a given experiment or feature test

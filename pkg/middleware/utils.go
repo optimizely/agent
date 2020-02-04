@@ -73,7 +73,7 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 // GetFeature returns an OptimizelyFeature from the request context
 func GetFeature(r *http.Request) (*config.OptimizelyFeature, error) {
 	feature, ok := r.Context().Value(OptlyFeatureKey).(*config.OptimizelyFeature)
-	if !ok || feature == nil {
+	if !ok {
 		return nil, fmt.Errorf("feature not available")
 	}
 	return feature, nil
@@ -82,7 +82,7 @@ func GetFeature(r *http.Request) (*config.OptimizelyFeature, error) {
 // GetExperiment returns an OptimizelyExperiment from the request context
 func GetExperiment(r *http.Request) (*config.OptimizelyExperiment, error) {
 	experiment, ok := r.Context().Value(OptlyExperimentKey).(*config.OptimizelyExperiment)
-	if !ok || experiment == nil {
+	if !ok {
 		return nil, fmt.Errorf("experiment not available")
 	}
 	return experiment, nil
