@@ -35,7 +35,7 @@ type trackBody struct {
 
 // TrackEvent - track a given event for the current user
 func TrackEvent(w http.ResponseWriter, r *http.Request) {
-	optlyClient, _, err := parseContext(r)
+	optlyClient, err := middleware.GetOptlyClient(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
