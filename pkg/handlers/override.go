@@ -18,7 +18,7 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -46,29 +46,10 @@ func Override(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var experimentKey string
-	// If the override key belonged to a feature attempt to map to an experiment
-	if feature, ctxErr := middleware.GetFeature(r); ctxErr == nil {
-		logger.Debug().Str("featureKey", feature.Key).Msg("deciding on feature")
-
-		// determine the experiment key given the feature and variation key
-		// this is likely wrong
-		for ek, e := range feature.ExperimentsMap {
-			if _, ok := e.VariationsMap[body.VariationKey]; ok {
-				experimentKey = ek
-				logger.Debug().Str("featureKey", feature.Key).Str("experimentKey", experimentKey).Msg("found override experiment key for feature")
-				break
-			}
-		}
-
-		RenderError(fmt.Errorf("cannot map feature key: %s to an experiment", feature.Key), http.StatusBadRequest, w, r)
+	experimentKey := body.ExperimentKey
+	if experimentKey == "" {
+		RenderError(errors.New("experimentKey cannot be empty"), http.StatusBadRequest, w, r)
 		return
-
-	}
-
-	// If experiment key was used then
-	if experiment, ctxErr := middleware.GetExperiment(r); ctxErr == nil {
-		experimentKey = experiment.Key
 	}
 
 	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
