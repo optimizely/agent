@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -79,7 +80,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 
 // ActivateAll iterates through all experiments and decisions activating each and returning only
 // the enabled decisions.
-func ActivateAll(w http.ResponseWriter, r *http.Request) {
+func ActivateFromQuery(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
 	logger := middleware.GetLogger(r)
 	if err != nil {
@@ -93,37 +94,58 @@ func ActivateAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	query := r.URL.Query()
 	oConf := optlyClient.GetOptimizelyConfig()
 	decisions := make([]*optimizely.Decision, 0, len(oConf.ExperimentsMap)+len(oConf.FeaturesMap))
 
+	experimentKeys := make([]string, 0, len(oConf.ExperimentsMap))
+	if experimentKey, ok := query["experimentKey"]; ok {
+		experimentKeys = append(experimentKeys, experimentKey...)
+	}
+
 	logger.Debug().Msg("iterate over all experiment decisions")
-	for _, e := range oConf.ExperimentsMap {
-		e := e
+	for _, key := range experimentKeys {
+		e, ok := oConf.ExperimentsMap[key]
+		if !ok {
+			RenderError(fmt.Errorf("experimentKey not-found"), http.StatusNotFound, w, r)
+			return
+		}
+
 		d, err := optlyClient.ActivateExperiment(&e, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
 		}
 
-		if !d.Enabled {
-			continue
-		}
+		//if !d.Enabled {
+		//	continue
+		//}
 
 		decisions = append(decisions, d)
 	}
 
+	featureKeys := make([]string, 0, len(oConf.FeaturesMap))
+	if featureKey, ok := query["featureKey"]; ok {
+		featureKeys = append(featureKeys, featureKey...)
+	}
+
 	logger.Debug().Msg("iterate over all feature decisions")
-	for _, f := range oConf.FeaturesMap {
-		f := f
+	for _, key := range featureKeys {
+		f, ok := oConf.FeaturesMap[key]
+		if !ok {
+			RenderError(fmt.Errorf("featureKey not-found"), http.StatusNotFound, w, r)
+			return
+		}
+
 		d, err := optlyClient.ActivateFeature(&f, uc)
 		if err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 			return
 		}
 
-		if !d.Enabled {
-			continue
-		}
+		//if !d.Enabled {
+		//	continue
+		//}
 
 		decisions = append(decisions, d)
 	}

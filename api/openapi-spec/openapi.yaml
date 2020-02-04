@@ -10,13 +10,11 @@ info:
 security:
   - SdkKeyAuth: []
 paths:
-  /v1/describe:
+  /v1/config:
     get:
-      summary: Return all features and experiments as a map
-      operationId: describeAll
+      summary: Return the Optimizely Config for the given environment
+      operationId: getConfig
       description: Return all available experiment and features definitions for this environment.
-      tags:
-        - describe
       responses:
         '200':
           description: Valid response
@@ -24,41 +22,16 @@ paths:
             application/json:
               schema:
                 description: Optimizely Configuration
-                type: array
-                items:
-                  $ref: '#/components/schemas/Feature'
+                $ref: '#/components/schemas/OptimizelyConfig'
         '403':
           $ref: '#/components/responses/Forbidden'
-  /v1/describe/{decisionKey}:
-    parameters:
-      - $ref: '#/components/parameters/decisionKeyParam'
-    get:
-      summary: Describes the experiment or feature corresponding to this key.
-      operationId: describe
-      description: Get feature decribes feature definition for the given feature key.
-      tags:
-        - describe
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Feature'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Experiment does not exist
-  /v1/track/{eventKey}:
+  /v1/track:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
     post:
       summary: Track event for the given user.
       operationId: trackEvent
-      description: Track sends event and user details to Optimizely’s analytics backend for the analysis of
-        a feature test or a/b test.
-      tags:
-        - track
+      description: Track sends event and user details to Optimizely’s analytics backend for the analysis of a feature test or experiment.
       responses:
         '204':
           description: No content, user not included in the experiment
@@ -70,17 +43,18 @@ paths:
         $ref: '#/components/requestBodies/TrackContext'
   /v1/activate:
     parameters:
-      - $ref: '#/components/parameters/trackParam'
-      - $ref: '#/components/parameters/filterParam'
+      - $ref: '#/components/parameters/featureKeyParam'
+      - $ref: '#/components/parameters/experimentKeyParam'
+      - $ref: '#/components/parameters/disableTrackingParam'
+      - $ref: '#/components/parameters/typeParam'
+      - $ref: '#/components/parameters/enabledParam'
     post:
-      summary: Determine the state of ALL features and experiments for the given user.
-      operationId: activateAll
-      description: Decide iterates over all features and experiments and returns the decision
-        for the given user. All features are included regardless of whether the feature is enabled.
-        An impression event will sent to the Optimizely analytics backend for any decision made for
-        and experiment or feature test.
-      tags:
-        - activate
+      summary: Activate selected features and experiments for the given user.
+      operationId: activate
+      description: Activate iterates over all corresponding features
+        and experiments and returns the decision for the given user.
+        An impression event will sent to the Optimizely analytics backend
+        for any decision made for and experiment or feature test.
       responses:
         '200':
           description: Valid response
@@ -93,47 +67,14 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
-        $ref: '#/components/requestBodies/DecisionContext'
-  /v1/activate/{decisionKey}:
-    parameters:
-      - $ref: '#/components/parameters/decisionKeyParam'
-      - $ref: '#/components/parameters/trackParam'
-      - $ref: '#/components/parameters/filterParam'
-    post:
-      summary: Decide on feature or experiment state for a given user and return associated variable values
-      operationId: activate
-      description: Determine the feature flag or experiment decisions for the supplied user context. If the decision was made
-        as part of an experiment or feature test or an ab experiment, then this API will send an impression event to
-        Optimizely tracking servers.
-      tags:
-        - activate
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Decision'
-        '204':
-          description: No content, user not included in the experiment
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Feature does not exist
-      requestBody:
-        $ref: '#/components/requestBodies/DecisionContext'
-  /v1/override/{decisionKey}:
-    parameters:
-      - $ref: '#/components/parameters/decisionKeyParam'
-      - $ref: '#/components/parameters/variationKeyParam'
+        $ref: '#/components/requestBodies/ActivateContext'
+  /v1/override:
     put:
       summary: Override an experiment decision for a user
       operationId: override
-      description: Override a experiment or feature test decision used in future user
-        based decisions. This override is only stored locally and inmemory for debugging and testing purposes
-        and should not be used for production overrides.
-      tags:
-        - override
+      description: Override a experiment or feature test decision used in future user based decisions. This override is only stored locally
+        in memory for debugging and testing purposes and should not be used
+        for production overrides.
       responses:
         '201':
           description: Forced variation set
@@ -147,37 +88,42 @@ paths:
         $ref: '#/components/requestBodies/OverrideContext'
 components:
   parameters:
-    trackParam:
+    disableTrackingParam:
       in: query
-      name: track
+      name: disableTracking
       required: false
-      description: Setting track to false will disable impression tracking for ab experiments or feature tests.
+      description: Setting to true will disable impression tracking for ab experiments and feature tests.
+      schema:
+        type: boolean
+    enabledParam:
+      in: query
+      name: enabled
+      required: false
+      description: Filter the activation response to return only enabled descisions.
       schema:
         type: boolean
     eventKeyParam:
-      in: path
+      in: query
       name: eventKey
       required: true
       description: Key of the event we're tracking
       schema:
         type: string
     experimentKeyParam:
-      in: path
+      in: query
       name: experimentKey
-      required: true
-      description: Key of the experiment we're fetching
+      description: Key for the Optimizely Experiment
       schema:
         type: string
     featureKeyParam:
-      in: path
+      in: query
       name: featureKey
-      required: true
-      description: Key of the feature we're fetching
+      description: Key for the Optimizely Feature
       schema:
         type: string
-    filterParam:
+    typeParam:
       in: query
-      name: filter
+      name: type
       required: false
       description: Limit the decisions to either experiment or features
       schema:
@@ -185,43 +131,25 @@ components:
         enum:
           - features
           - experiments
-    decisionKeyParam:
-      in: path
-      name: decisionKey
-      required: true
-      description: Decision key can be either a featureKey or experimentKey we're deciding on. If the key is shared by both experiment and feature, the decision for the feature will be made.
-      schema:
-        type: string
-    variationKeyParam:
-      name: variationKey
-      in: path
-      required: true
-      description: Key of the variation we're overriding
-      schema:
-        type: string
   requestBodies:
-    DecisionContext:
+    ActivateContext:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DecisionContext'
+            $ref: '#/components/schemas/ActivateContext'
     OverrideContext:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/OverrideContext'
-            type: object
-            additionalProperties: true
     TrackContext:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
-            type: object
-            additionalProperties: true
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -266,10 +194,19 @@ components:
         - key
     Decision:
       properties:
-#        id:
-#          type: integer
-        key:
+        #        id:
+        #          type: integer
+        featureKey:
           type: string
+        experimentKey:
+          type: string
+        variationKey:
+          type: string
+        type:
+          type: string
+          enum:
+            - feature
+            - experiment
         enabled:
           type: boolean
         variables:
@@ -277,31 +214,56 @@ components:
           additionalProperties:
             type: string
       required:
-#        - id
+        #        - id
         - key
-    DecisionContext:
+    ActivateContext:
       properties:
         userId:
           type: string
         userAttributes:
           type: object
           additionalProperties: true
-    OverrideContext:
+    DescribeContext:
       properties:
-        userId:
-          type: string
-    Revision:
+        experimentKey:
+          type: array
+          items:
+            type: string
+        featureKey:
+          type: array
+          items:
+            type: string
+    OverrideContext:
+      type: array
+      items:
+        type: object
+        properties:
+          userId:
+            type: string
+          experimentKey:
+            type: string
+          variationKey:
+            type: string
+    OptimizelyConfig:
       properties:
         revision:
           type: string
+        experimentMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Experiment'
+        featureMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Feature'
     TrackContext:
       properties:
+        eventTags:
+          type: object
+          additionalProperties: true
         userId:
           type: string
         userAttributes:
-          type: object
-          additionalProperties: true
-        eventTags:
           type: object
           additionalProperties: true
     Variation:
@@ -331,16 +293,3 @@ components:
       in: header
       name: X-Optimizely-SDK-Key
       type: apiKey
-tags:
-  - name: describe
-    description: Collection of APIs to describe the active Optimizely Configuration.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: activate
-    description: Collection of APIs to make experiment, rollout and feature flagging decisions.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome
-  - name: track
-    description: Collection of APIs to track conversions.
-    externalDocs:
-      url: https://docs.developers.optimizely.com/full-stack/docs/welcome

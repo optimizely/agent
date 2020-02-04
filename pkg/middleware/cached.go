@@ -124,9 +124,10 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		featureKey := chi.URLParam(r, "featureKey")
+		featureKey := getValue(r, "featureKey")
 		if featureKey == "" {
-			RenderError(fmt.Errorf("invalid request, missing featureKey in FeatureCtx"), http.StatusBadRequest, w, r)
+			//RenderError(fmt.Errorf("invalid request, missing featureKey in FeatureCtx"), http.StatusBadRequest, w, r)
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -159,9 +160,11 @@ func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		experimentKey := chi.URLParam(r, "experimentKey")
+		experimentKey := getValue(r, "experimentKey")
 		if experimentKey == "" {
-			RenderError(fmt.Errorf("invalid request, missing experimentKey in ExperimentCtx"), http.StatusBadRequest, w, r)
+
+			//RenderError(fmt.Errorf("invalid request, missing experimentKey in ExperimentCtx"), http.StatusBadRequest, w, r)
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -181,4 +184,13 @@ func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
 		GetLogger(r).Debug().Err(err).Str("experimentKey", experimentKey).Msg("Calling GetExperiment in ExperimentCtx")
 		RenderError(err, statusCode, w, r)
 	})
+}
+
+func getValue(r *http.Request, key string) string {
+	urlParam := chi.URLParam(r, key)
+	if urlParam != "" {
+		return urlParam
+	}
+
+	return r.URL.Query().Get(key)
 }

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/optimizely/go-sdk/pkg/entities"
 
@@ -49,7 +48,7 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventKey := chi.URLParam(r, "eventKey")
+	eventKey := r.URL.Query().Get("eventKey")
 	if eventKey == "" {
 		err = fmt.Errorf("missing required path parameter: eventKey")
 		RenderError(err, http.StatusBadRequest, w, r)
