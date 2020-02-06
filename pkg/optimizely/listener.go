@@ -1,8 +1,7 @@
-package integrations
+package optimizely
 
 import (
 	"bytes"
-	"io"
 	"text/template"
 
 	"github.com/optimizely/go-sdk/pkg/utils"
@@ -29,7 +28,7 @@ func NewTemplateListener(requester *utils.HTTPRequester, filename string, url st
 
 }
 
-func (l *TemplateListener) parse(message interface{}) (io.Reader, error) {
+func (l *TemplateListener) parse(message *Message) (*bytes.Buffer, error) {
 	buf := new(bytes.Buffer)
 	err := l.tpl.Execute(buf, message)
 	if err != nil {
@@ -40,13 +39,19 @@ func (l *TemplateListener) parse(message interface{}) (io.Reader, error) {
 }
 
 func (l *TemplateListener) Listen(message interface{}) {
-	body, err := l.parse(message)
+	body, err := l.parse(&Message{Message: message, Env: Env})
 	if err != nil {
 		log.Error().Err(err).Msg("error parsing request")
 	}
 
-	_, _, _, err = l.requester.Do(l.url, "POST", body, l.headers)
+	//log.Debug().Msg(body.String())
+	log.Warn().Msg("triggering POST")
+	res, _, code, err := l.requester.Do(l.url, "POST", body, l.headers)
+
+	log.Warn().Bytes("res", res).Int("code", code).Msg("listener response")
 	if err != nil {
 		log.Error().Err(err).Msg("error submitting request")
 	}
+
+	log.Warn().Bytes("res", res).Int("code", code).Msg("listener response")
 }

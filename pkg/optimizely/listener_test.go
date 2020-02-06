@@ -1,4 +1,4 @@
-package integrations
+package optimizely
 
 import (
 	"bytes"
@@ -31,4 +31,8 @@ func TestTemplate(t *testing.T) {
 	actual, err2 := ioutil.ReadAll(buf)
 	assert.NoError(t, err2)
 	assert.Equal(t, expected, bytes.NewBuffer(actual).String())
+}
+
+func TestPagerDuty(t *testing.T) {
+
 }

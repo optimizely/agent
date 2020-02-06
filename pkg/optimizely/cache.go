@@ -19,21 +19,14 @@ package optimizely
 
 import (
 	"context"
-	"strings"
 	"sync"
-
-	"github.com/optimizely/go-sdk/pkg/utils"
-	"github.com/spf13/viper"
-
-	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/integrations"
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
+
+	"github.com/optimizely/agent/config"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -66,10 +59,6 @@ func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry 
 
 // Init takes a slice of sdkKeys to warm the cache upon startup
 func (c *OptlyCache) Init(sdkKeys []string) {
-	viper.SetEnvPrefix("optimizely")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
@@ -114,8 +103,9 @@ func (c *OptlyCache) Wait() {
 }
 
 func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
-	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
-	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey)
+	logger := log.With().Str("sdkKey", sdkKey).Logger()
+	logger.Info().Msg("Loading Optimizely instance")
+	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey, sdkconfig.WithDatafileURLTemplate("https://cdn-dev.optimizely.com/datafiles/%s.json"))
 	if _, err := configManager.GetConfig(); err != nil {
 		return &OptlyClient{}, err
 	}
@@ -132,20 +122,29 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 		client.WithExperimentOverrides(forcedVariations),
 		client.WithEventProcessor(ep),
 	)
-
-	nc := registry.GetNotificationCenter(sdkKey)
-	requestor := utils.NewHTTPRequester() // TODO have a global requestor
-
-	url := viper.GetString("slack.url")
-	if url != "" {
-		log.Info().Msg("adding slack integration")
-		dl := integrations.NewTemplateListener(requestor, "./templates/slack_decision_body.tmpl", url)
-
-		_, lErr := nc.AddHandler(notification.Decision, dl.Listen)
-		if lErr != nil {
-			log.Error().Err(lErr).Msg("errror adding listener")
-		}
+	if err != nil {
+		return &OptlyClient{}, err
 	}
+
+	pc, err := configManager.GetConfig()
+	if err != nil {
+		return &OptlyClient{}, err
+	}
+
+	integrations := pc.GetEnabledIntegrations()
+	logger.Debug().Strs("integrations", integrations).Msg("adding integrations")
+
+	for _, name := range integrations {
+		err := AddIntegration(sdkKey, name)
+		if err != nil {
+			logger.Warn().Err(err).Str("integration", name).Msg("failed to add integration")
+		} else {
+			logger.Warn().Err(err).Str("integration", name).Msg("successfully added integration")
+		}
+
+	}
+
+	LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }

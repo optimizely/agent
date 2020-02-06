@@ -83,6 +83,14 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/optimizely/go-sdk v1.0.1-0.20200128173910-895dbc7355a5 h1:bpmrGA36u0sjfYgl0mWjmBxQXdEqq853sWjeExFjJvM=
 github.com/optimizely/go-sdk v1.0.1-0.20200128173910-895dbc7355a5/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
+github.com/optimizely/go-sdk v1.0.1-0.20200204180855-1ee0cd9a2713 h1:pn3Mkg9XknqaeNDDh0sTaeTOjm+WSkr7tNnhCSXpqMY=
+github.com/optimizely/go-sdk v1.0.1-0.20200204180855-1ee0cd9a2713/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
+github.com/optimizely/go-sdk v1.0.1-0.20200204234756-07dec9ec03f0 h1:7Et3m9/B6lKezKzSDjdvjt5rQ+evhxYowY7IMSHAGO8=
+github.com/optimizely/go-sdk v1.0.1-0.20200204234756-07dec9ec03f0/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
+github.com/optimizely/go-sdk v1.0.1-0.20200205214256-43cd4b7fdd4b h1:UHYdXCo8dHdKzPFRsyCRAL6LrFCzzTnxg9moWt5jT4g=
+github.com/optimizely/go-sdk v1.0.1-0.20200205214256-43cd4b7fdd4b/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
+github.com/optimizely/go-sdk v1.0.1-0.20200205220037-8b422bfd1bb9 h1:FwwKceHPtmK+SUXVmNX/qgjqiW9kY0UAlbiGmAnhr54=
+github.com/optimizely/go-sdk v1.0.1-0.20200205220037-8b422bfd1bb9/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6 h1:lNCW6THrCKBiJBpz8kbVGjC7MgdCGKwuvBgc7LoD6sw=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6/go.mod h1:Lu3tH6HLW3feq74c2GC+jIMS/K2CFcDWnWD9XkenwhI=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=

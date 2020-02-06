@@ -65,6 +65,10 @@ func (c *TestProjectConfig) GetAnonymizeIP() bool {
 	return c.AnonymizeIP
 }
 
+func (c *TestProjectConfig) GetEnabledIntegrations() []string {
+	return make([]string, 0, 0)
+}
+
 // GetAttributeID returns attributeID
 func (c *TestProjectConfig) GetAttributeID(key string) string {
 	return c.AttributeKeyToIDMap[key]

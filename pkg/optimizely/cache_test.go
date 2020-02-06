@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
@@ -99,4 +101,10 @@ func mockLoader(sdkKey string, conf config.ProcessorConfig, metricsRegistry *Met
 	tc.ProjectConfig.ProjectID = sdkKey
 
 	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations}, nil
+}
+
+func TestInit(t *testing.T) {
+	_, err := initOptlyClient("9NqC3eGAPcL7dxMyTsuApW", config.ProcessorConfig{}, &MetricsRegistry{})
+	assert.NoError(t, err)
+
 }

@@ -18,6 +18,7 @@
 package optimizely
 
 import (
+	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -36,6 +37,14 @@ func init() {
 	SetLogger(&log.Logger)
 }
 
+var LogManager = notification.NewAtomicManager()
+
+type LogNotification struct {
+	Level   string
+	Message string
+	Fields  map[string]interface{}
+}
+
 // SetLogger explicitly overwrites the zerolog used by the SDK with the provided zerolog logger.
 func SetLogger(logger *zerolog.Logger) {
 	logConsumer := &LogConsumer{
@@ -47,11 +56,21 @@ func SetLogger(logger *zerolog.Logger) {
 
 // LogConsumer is an implementation of the OptimizelyLogConsumer that wraps a zerolog logger
 type LogConsumer struct {
-	logger *zerolog.Logger
+	logger  *zerolog.Logger
+	manager notification.Manager
 }
 
 // Log logs the message if it's log level is higher than or equal to the logger's set level
 func (l *LogConsumer) Log(level logging.LogLevel, message string, fields map[string]interface{}) {
+	// intercept levels > something. trigger another webhook
+	if level > logging.LogLevelInfo {
+		LogManager.Send(&LogNotification{
+			Level:   level.String(),
+			Message: message,
+			Fields:  fields,
+		})
+	}
+
 	l.logger.WithLevel(levelMap[level]).Fields(fields).Msg(message)
 }
 
