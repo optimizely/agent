@@ -15,14 +15,27 @@ type TemplateListener struct {
 	url       string
 }
 
-func NewTemplateListener(requester *utils.HTTPRequester, filename string, url string) *TemplateListener {
+func NewTemplateListener(requester *utils.HTTPRequester, filename string, url string, overrideHeaders map[string]string) *TemplateListener {
 	tpl, err := template.ParseFiles(filename)
 	if err != nil {
 		log.Error().Err(err).Msg("error loading template")
 		return &TemplateListener{}
 	}
 
-	headers := []utils.Header{{"Content-Type", "application/json"}, {"Accept", "application/json"}}
+	defaultHeaders := map[string]string{
+		"Content-Type": "application/json",
+		"Accept":       "application/json",
+	}
+
+	for k, v := range overrideHeaders {
+		defaultHeaders[k] = v
+	}
+
+	headers := make([]utils.Header, 0, len(defaultHeaders)+len(overrideHeaders))
+	for k, v := range defaultHeaders {
+		log.Debug().Str("HeaderName", k).Str("HeaderValue", v).Msg("append header")
+		headers = append(headers, utils.Header{Name: k, Value: v})
+	}
 
 	return &TemplateListener{tpl: tpl, requester: requester, url: url, headers: headers}
 
@@ -45,11 +58,11 @@ func (l *TemplateListener) Listen(message interface{}) {
 		log.Info().Err(err).Msg("error parsing request")
 	}
 
-	//log.Debug().Msg(body.String())
-	log.Warn().Msg("triggering POST")
-	res, _, code, err := l.requester.Do(l.url, "POST", body, l.headers)
+	log.Debug().Msg(body.String())
+	log.Debug().Msg("triggering listener")
 
-	log.Warn().Bytes("res", res).Int("code", code).Msg("listener response")
+	res, _, code, err := l.requester.Do(l.url, "POST", body, l.headers)
+	log.Debug().Bytes("res", res).Int("code", code).Msg("listener response")
 	if err != nil {
 		log.Info().Err(err).Msg("error submitting request")
 	}

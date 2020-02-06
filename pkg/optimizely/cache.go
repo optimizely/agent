@@ -145,9 +145,12 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 
 	}
 
-	//LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
+	LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
 
-	optimizelyClient.Activate("backend_service", entities.UserContext{ID: "test", Attributes: map[string]interface{}{}})
+	uc := entities.UserContext{ID: "mike@optimizely.com", Attributes: map[string]interface{}{}}
+
+	optimizelyClient.Activate("backend_service", uc)
+	optimizelyClient.Track("checkout_completed", uc, map[string]interface{}{})
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }

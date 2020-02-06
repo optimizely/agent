@@ -41,12 +41,21 @@ type Integration struct {
 	notType notification.Type
 	tplPath string
 	urlConf string
+	headers map[string]string
 }
 
-var requestor = utils.NewHTTPRequester() // TODO have a global requestor
+var requestor = utils.NewHTTPRequester(utils.Headers()) // TODO have a global requestor
 
 var defaultIntegrations = map[string][]Integration{
-	"slack-1": {
+	"amplitude": {
+		{
+			class:   NOTIFICATION,
+			notType: notification.Track,
+			tplPath: "./templates/track/amplitude_body.tmpl",
+			urlConf: "amplitude.url",
+		},
+	},
+	"slack": {
 		{
 			class:   NOTIFICATION,
 			notType: notification.Decision,
@@ -66,9 +75,13 @@ var defaultIntegrations = map[string][]Integration{
 			notType: notification.Decision,
 			tplPath: "./templates/decision/sqs_body.tmpl",
 			urlConf: "aws.sqs.url",
+			headers: map[string]string{
+				"Content-Type": "application/x-www-form-urlencoded",
+				"Accept":       "application/x-www-form-urlencoded",
+			},
 		},
 	},
-	"pagerduty-1": {
+	"pagerduty": {
 		{
 			class:   LOG,
 			tplPath: "./templates/log/pd_body.tmpl",
@@ -104,7 +117,7 @@ func addIntegration(sdkKey string, in Integration) error {
 		return errors.New("must specify template file")
 	}
 
-	dl := NewTemplateListener(requestor, filename, url)
+	dl := NewTemplateListener(requestor, filename, url, in.headers)
 
 	if in.class == LOG {
 		id, err := LogManager.Add(dl.Listen)

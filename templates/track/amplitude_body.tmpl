@@ -1,0 +1,12 @@
+{
+    "api_key": "{{ .Env.OPTIMIZELY_AMPLITUDE_API_KEY }}",
+    "events": [
+        {
+            "user_id": "{{ .Message.UserContext.ID }}",
+            "event_type": "{{ .Message.EventKey }}",
+            "user_properties": {
+                "Cohort": "Test A"
+            }
+        }
+    ]
+}
