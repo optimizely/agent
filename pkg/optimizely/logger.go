@@ -63,15 +63,15 @@ type LogConsumer struct {
 // Log logs the message if it's log level is higher than or equal to the logger's set level
 func (l *LogConsumer) Log(level logging.LogLevel, message string, fields map[string]interface{}) {
 	// intercept levels > something. trigger another webhook
-	if level > logging.LogLevelInfo {
-		LogManager.Send(&LogNotification{
-			Level:   level.String(),
-			Message: message,
-			Fields:  fields,
-		})
-	}
-
 	l.logger.WithLevel(levelMap[level]).Fields(fields).Msg(message)
+
+	//if level > logging.LogLevelInfo {
+	//	LogManager.Send(&LogNotification{
+	//		Level:   level.String(),
+	//		Message: message,
+	//		Fields:  fields,
+	//	})
+	//}
 }
 
 // SetLogLevel changes the log level to the given level

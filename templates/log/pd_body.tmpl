@@ -1,8 +1,8 @@
 {
     "payload": {
-        "summary": "Example alert from Optimizely Agent",
+        "summary": "{{ .Message.Message }}",
         "source": "{{ .Env.Hostname }}",
-        "severity": "{{ .Message.Level }}",
+        "severity": "warning",
         "component": "Optimizely Agent",
         "class": "deploy"
     },

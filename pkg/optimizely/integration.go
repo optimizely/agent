@@ -68,7 +68,7 @@ var defaultIntegrations = map[string][]Integration{
 			urlConf: "aws.sqs.url",
 		},
 	},
-	"pagerduty": {
+	"pagerduty-1": {
 		{
 			class:   LOG,
 			tplPath: "./templates/log/pd_body.tmpl",

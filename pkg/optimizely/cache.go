@@ -24,6 +24,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
 
 	"github.com/optimizely/agent/config"
@@ -137,14 +138,16 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 	for _, name := range integrations {
 		err := AddIntegration(sdkKey, name)
 		if err != nil {
-			logger.Warn().Err(err).Str("integration", name).Msg("failed to add integration")
+			logger.Info().Err(err).Str("integration", name).Msg("failed to add integration")
 		} else {
-			logger.Warn().Err(err).Str("integration", name).Msg("successfully added integration")
+			logger.Info().Err(err).Str("integration", name).Msg("successfully added integration")
 		}
 
 	}
 
-	LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
+	//LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
+
+	optimizelyClient.Activate("backend_service", entities.UserContext{ID: "test", Attributes: map[string]interface{}{}})
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }

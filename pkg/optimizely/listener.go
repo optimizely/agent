@@ -38,10 +38,11 @@ func (l *TemplateListener) parse(message *Message) (*bytes.Buffer, error) {
 	return buf, err
 }
 
+// Be careful to not create an infinite loop :)
 func (l *TemplateListener) Listen(message interface{}) {
 	body, err := l.parse(&Message{Message: message, Env: Env})
 	if err != nil {
-		log.Error().Err(err).Msg("error parsing request")
+		log.Info().Err(err).Msg("error parsing request")
 	}
 
 	//log.Debug().Msg(body.String())
@@ -50,8 +51,6 @@ func (l *TemplateListener) Listen(message interface{}) {
 
 	log.Warn().Bytes("res", res).Int("code", code).Msg("listener response")
 	if err != nil {
-		log.Error().Err(err).Msg("error submitting request")
+		log.Info().Err(err).Msg("error submitting request")
 	}
-
-	log.Warn().Bytes("res", res).Int("code", code).Msg("listener response")
 }
