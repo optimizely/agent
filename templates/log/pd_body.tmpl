@@ -1,0 +1,22 @@
+{
+    "payload": {
+        "summary": "Example alert from Optimizely Agent",
+        "source": "{{ .Env.Hostname }}",
+        "severity": "{{ .Message.Level }}",
+        "component": "Optimizely Agent",
+        "class": "deploy"
+    },
+    "images": [{
+        "src": "https://www.pagerduty.com/wp-content/uploads/2016/05/pagerduty-logo-green.png",
+        "href": "https://example.com/",
+        "alt": "Example text"
+    }],
+    "links": [{
+        "href": "https://example.com/",
+        "text": "Link text"
+    }],
+    "event_action": "trigger",
+    "client": "Optimizely Agent",
+    "client_url": "https://monitoring.example.com",
+    "routing_key": "{{ .Env.OPTIMIZELY_PD_INTEGRATION_KEY }}"
+}
