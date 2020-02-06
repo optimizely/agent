@@ -31,6 +31,9 @@ all: test lint build ## runs the test, lint and build targets
 $(TARGET): check-go
 	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
 
+api-client:
+	./scripts/generate_api_client.sh
+
 build: $(TARGET) check-go ## builds and installs binary in bin/
 	@true
 

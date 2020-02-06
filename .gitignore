@@ -7,6 +7,8 @@ bin/
 # Generators created from OpenAPI spec
 generated/
 
+optimizely_rest_api/
+
 # Test binary, built with `go test -c`
 *.test
 
