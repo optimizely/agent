@@ -140,6 +140,11 @@ func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
 			return
 		case errors.Is(err, optimizely.ErrEntityNotFound):
 			statusCode = http.StatusNotFound
+			optimizely.LogManager.Send(optimizely.LogNotification{
+				Level:   "warn",
+				Message: fmt.Sprintf(`feature not found: '%s'`, featureKey),
+				Fields:  map[string]interface{}{},
+			})
 		default:
 			statusCode = http.StatusInternalServerError
 		}

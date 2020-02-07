@@ -24,7 +24,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
 
 	"github.com/optimizely/agent/config"
@@ -145,12 +144,12 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 
 	}
 
-	LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
+	//LogManager.Send(LogNotification{Level: "warn", Message: "test message"})
 
-	uc := entities.UserContext{ID: "mike@optimizely.com", Attributes: map[string]interface{}{}}
-
-	optimizelyClient.Activate("backend_service", uc)
-	optimizelyClient.Track("checkout_completed", uc, map[string]interface{}{})
+	//uc := entities.UserContext{ID: "mike@optimizely.com", Attributes: map[string]interface{}{}}
+	//
+	//optimizelyClient.Activate("backend_service", uc)
+	//optimizelyClient.Track("checkout_completed", uc, map[string]interface{}{})
 
 	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
