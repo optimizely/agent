@@ -19,6 +19,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"github.com/optimizely/agent/config"
@@ -53,6 +54,24 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 	return Server{srv: srv, logger: logger}, nil
 }
 
+// NewTLSServer initializes new TLS service.
+// Configuration is pulled from viper configuration.
+func NewTLSServer(name, port string, handler http.Handler, conf config.ServerConfig) (server Server, err error) {
+
+	server, err = NewServer(name, port, handler, conf)
+	if err != nil {
+		return server, err
+	}
+	var cfg *tls.Config
+
+	cfg, err = makeTLSConfig(conf)
+	if err != nil {
+		return Server{}, err
+	}
+	server.srv.TLSConfig = cfg
+	return server, nil
+}
+
 // ListenAndServe starts the server
 func (s Server) ListenAndServe() error {
 	s.logger.Info().Msg("Starting server.")
@@ -60,6 +79,19 @@ func (s Server) ListenAndServe() error {
 
 	if !errors.Is(err, http.ErrServerClosed) {
 		s.logger.Error().Err(err).Msg("Server failed.")
+		return err
+	}
+
+	return nil
+}
+
+// ListenAndServeTLS starts the TLS server
+func (s Server) ListenAndServeTLS() error {
+	s.logger.Info().Msg("Starting TLS server.")
+	err := s.srv.ListenAndServeTLS("", "")
+
+	if !errors.Is(err, http.ErrServerClosed) {
+		s.logger.Error().Err(err).Msg("TLS Server failed.")
 		return err
 	}
 
@@ -74,4 +106,27 @@ func (s Server) Shutdown() {
 	if err := s.srv.Shutdown(ctx); err != nil {
 		s.logger.Error().Err(err).Msg("Failed shutdown.")
 	}
+}
+
+func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(conf.CertFile, conf.KeyFile)
+	if err != nil {
+		return nil, err
+	}
+	return &tls.Config{
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+		MinVersion: tls.VersionTLS12,
+		CurvePreferences: []tls.CurveID{
+			tls.CurveP256,
+			tls.X25519,
+			tls.CurveP384,
+		},
+		Certificates: []tls.Certificate{cert},
+	}, nil
 }
