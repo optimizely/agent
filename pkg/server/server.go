@@ -50,14 +50,15 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		ReadTimeout:  conf.ReadTimeout,
 		WriteTimeout: conf.WriteTimeout,
 	}
+
 	if conf.KeyFile != "" && conf.CertFile != "" {
 		cfg, err := makeTLSConfig(conf)
 		if err != nil {
 			return Server{}, err
 		}
 		srv.TLSConfig = cfg
-
 	}
+
 	return Server{srv: srv, logger: logger}, nil
 }
 
