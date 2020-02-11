@@ -79,35 +79,6 @@ func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
 	wg.Wait()
 }
 
-// GoListenAndServeTLS constructs a NewServer and adds it to the Group.
-func (g *Group) GoListenAndServeTLS(name, port string, handler http.Handler) {
-	server, err := NewTLSServer(name, port, handler, g.conf)
-	if err != nil {
-		log.Info().Err(err).Msg("Not starting server")
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	g.eg.Go(func() error {
-		wg.Done()
-		defer g.stop()
-		return server.ListenAndServeTLS()
-
-	})
-
-	// Shutdown on signal
-	wg.Add(1)
-	g.eg.Go(func() error {
-		wg.Done()
-		<-g.ctx.Done()
-		server.Shutdown()
-		return g.ctx.Err()
-	})
-
-	wg.Wait()
-}
-
 // Wait waits for all servers to complete before returning
 func (g *Group) Wait() error {
 	return g.eg.Wait()

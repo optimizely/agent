@@ -119,16 +119,9 @@ func main() {
 	}()
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
-
-	if conf.Server.KeyFile != "" && conf.Server.CertFile != "" {
-		sg.GoListenAndServeTLS("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
-		sg.GoListenAndServeTLS("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
-		sg.GoListenAndServeTLS("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
-	} else {
-		sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
-		sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
-		sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
-	}
+	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

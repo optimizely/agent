@@ -50,48 +50,30 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		ReadTimeout:  conf.ReadTimeout,
 		WriteTimeout: conf.WriteTimeout,
 	}
+	if conf.KeyFile != "" && conf.CertFile != "" {
+		cfg, err := makeTLSConfig(conf)
+		if err != nil {
+			return Server{}, err
+		}
+		srv.TLSConfig = cfg
 
+	}
 	return Server{srv: srv, logger: logger}, nil
 }
 
-// NewTLSServer initializes new TLS service.
-// Configuration is pulled from viper configuration.
-func NewTLSServer(name, port string, handler http.Handler, conf config.ServerConfig) (server Server, err error) {
-
-	server, err = NewServer(name, port, handler, conf)
-	if err != nil {
-		return server, err
-	}
-	var cfg *tls.Config
-
-	cfg, err = makeTLSConfig(conf)
-	if err != nil {
-		return Server{}, err
-	}
-	server.srv.TLSConfig = cfg
-	return server, nil
-}
-
 // ListenAndServe starts the server
-func (s Server) ListenAndServe() error {
-	s.logger.Info().Msg("Starting server.")
-	err := s.srv.ListenAndServe()
+func (s Server) ListenAndServe() (err error) {
+
+	if s.srv.TLSConfig != nil {
+		s.logger.Info().Msg("Starting TLS server.")
+		err = s.srv.ListenAndServe()
+	} else {
+		s.logger.Info().Msg("Starting server.")
+		err = s.srv.ListenAndServe()
+	}
 
 	if !errors.Is(err, http.ErrServerClosed) {
 		s.logger.Error().Err(err).Msg("Server failed.")
-		return err
-	}
-
-	return nil
-}
-
-// ListenAndServeTLS starts the TLS server
-func (s Server) ListenAndServeTLS() error {
-	s.logger.Info().Msg("Starting TLS server.")
-	err := s.srv.ListenAndServeTLS("", "")
-
-	if !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Error().Err(err).Msg("TLS Server failed.")
 		return err
 	}
 
