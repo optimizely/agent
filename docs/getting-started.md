@@ -60,9 +60,9 @@ print(resp.json())
 ```
 
 ### Activate Feature
-The `/users/:userId/features/:key` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user. In this case we'll provide a `userId` via a path parameter. The `userId` will be used to determine how the feature feature will be returned, if at all. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature availble to a large audience.
+The `/users/:userId/features/:key` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user. In this case we'll provide a `userId` via a path parameter. The `userId` will be used to determine how the feature feature will be returned, if at all. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature available to a large audience.
 
-From an API standpoint the presence of a Feature Test or Rollout is abstrated away from the response and only the resulting variation or enabled feature is returned.
+From an API standpoint the presence of a Feature Test or Rollout is abstracted away from the response and only the resulting variation or enabled feature is returned.
 
 ```python
 user_id = 'test-user'

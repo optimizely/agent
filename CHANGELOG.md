@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Adds user centric API routes
 - Introduces spf13/viper based configuration
 - Adds OptlyContext middleware
-- Adds webhoook support for multiple concurrent SDK keys
+- Adds webhook support for multiple concurrent SDK keys
 
 ## [0.2.0] - October 3rd, 2019
 - Adds Optimizely webhook support
