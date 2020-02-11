@@ -12,11 +12,37 @@ branches:
   # https://docs.travis-ci.com/user/customizing-the-build/#safelisting-or-blocklisting-branches
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
+stages:
+  - 'Lint markdown files'
+  - 'Test'
+  - 'Build'
+
+
 jobs:
 
   include:
 
-    - stage: test
+    - stage: 'Lint markdown files'
+      os: linux
+      language: generic
+      install: gem install awesome_bot
+      before_script: skip
+      script:
+        - find . -type f -name '*.md' -exec awesome_bot {} \;
+
+    - stage: 'Lint markdown files'
+      os: linux
+      language: generic
+      before_install: skip
+      install:
+        - npm i -g markdown-spellcheck
+      before_script:
+        - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/master/.spelling
+      script:
+        - mdspell -a -n -r --en-us '**/*.md'
+      after_success: skip
+
+    - stage: Test
       name: lint
       os: linux
       dist: xenial
@@ -24,7 +50,7 @@ jobs:
         - make -e install lint
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
 
-    - stage: test
+    - stage: Test
       name: unit
       os: linux
       dist: xenial
@@ -34,7 +60,7 @@ jobs:
         # Replace with coveralls if/when the repo is made public
         - bash <(curl -s https://codecov.io/bash)
 
-    - stage: test
+    - stage: Test
       name: srcclr
       os: linux
       dist: xenial
@@ -43,7 +69,7 @@ jobs:
       script:
         - scripts/run_srcclr.sh
 
-    - stage: test
+    - stage: Test
       name: windows build.ps1 test
       os: windows
       language: shell
@@ -55,7 +81,7 @@ jobs:
       after_success:
         - ( [ ${TRAVIS_EVENT_TYPE} = "push" ] && [ ! -z ${TRAVIS_TAG} ] ) && scripts/upload_artifacts.sh
 
-    - stage: build
+    - stage: Build
       if: type = push AND tag IS present
       name: linux
       os: linux
