@@ -46,6 +46,11 @@ func Override(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if body.UserID == "" {
+		RenderError(errors.New("userId cannot be empty"), http.StatusBadRequest, w, r)
+		return
+	}
+
 	experimentKey := body.ExperimentKey
 	if experimentKey == "" {
 		RenderError(errors.New("experimentKey cannot be empty"), http.StatusBadRequest, w, r)

@@ -109,11 +109,29 @@ func (suite *OverrideTestSuite) TestSetForcedVariation() {
 	suite.Equal("variation_enabled", actual)
 }
 
-func (suite *OverrideTestSuite) TestSetForcedVariationEmptyExperimentKey() {
-	req := httptest.NewRequest("POST", "/override", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+func (suite *OverrideTestSuite) TestSetForcedVariationInvalidPayload() {
+	invalid := []OverrideBody{
+		{
+			UserID:        "",
+			ExperimentKey: "valid",
+			VariationKey:  "variation_enabled",
+		},
+		{
+			UserID:        "valid",
+			ExperimentKey: "",
+			VariationKey:  "variation_enabled",
+		},
+	}
+
+	for _, payload := range invalid {
+		body, err := json.Marshal(payload)
+		suite.NoError(err)
+
+		req := httptest.NewRequest("POST", "/override", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusBadRequest, rec.Code)
+	}
 }
 
 func (suite *OverrideTestSuite) TestRemoveForcedVariation() {
