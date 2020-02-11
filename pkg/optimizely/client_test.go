@@ -241,6 +241,66 @@ func (suite *ClientTestSuite) TestRemoveForcedVariationABTest() {
 	suite.Equal("var_2", variation)
 }
 
+func (suite *ClientTestSuite) TestActivateFeature() {
+	var1 := entities.Variable{Key: "var1", DefaultValue: "val1"}
+	var2 := entities.Variable{Key: "var2", DefaultValue: "val2"}
+	advancedFeature := entities.Feature{
+		Key: "advanced",
+		VariableMap: map[string]entities.Variable{
+			"var1": var1,
+			"var2": var2,
+		},
+	}
+
+	suite.testClient.AddFeatureTest(advancedFeature)
+	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig().FeaturesMap["advanced"]
+
+	expected := &Decision{
+		FeatureKey: "advanced",
+		Type:       "feature",
+		Variables: map[string]interface{}{
+			"var1": "val1",
+			"var2": "val2",
+		},
+		Enabled: true,
+	}
+
+	// Response should be the same regardless of the flag
+	for _, flag := range []bool{true, false} {
+		actual, err := suite.optlyClient.ActivateFeature(&feature, entities.UserContext{ID: "testUser"}, flag)
+		suite.NoError(err)
+		suite.Equal(expected, actual)
+	}
+
+	// Only one event should have been triggered
+	suite.Equal(1, len(suite.testClient.GetProcessedEvents()))
+}
+
+func (suite *ClientTestSuite) TestActivateExperiment() {
+	testExperimentKey := "testExperiment1"
+	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
+	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
+	experiment := suite.testClient.OptimizelyClient.GetOptimizelyConfig().ExperimentsMap["testExperiment1"]
+
+	expected := &Decision{
+		ExperimentKey: "testExperiment1",
+		VariationKey:  "variationA",
+		Type:          "experiment",
+		Variables:     map[string]interface{}{},
+		Enabled:       true,
+	}
+
+	// Response should be the same regardless of the flag
+	for _, flag := range []bool{true, false} {
+		actual, err := suite.optlyClient.ActivateExperiment(&experiment, entities.UserContext{ID: "testUser"}, flag)
+		suite.NoError(err)
+		suite.Equal(expected, actual)
+	}
+
+	// Only one event should have been triggered
+	suite.Equal(1, len(suite.testClient.GetProcessedEvents()))
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestClientTestSuite(t *testing.T) {
