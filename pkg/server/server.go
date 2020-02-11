@@ -67,7 +67,7 @@ func (s Server) ListenAndServe() (err error) {
 
 	if s.srv.TLSConfig != nil {
 		s.logger.Info().Msg("Starting TLS server.")
-		err = s.srv.ListenAndServe()
+		err = s.srv.ListenAndServeTLS("", "")
 	} else {
 		s.logger.Info().Msg("Starting server.")
 		err = s.srv.ListenAndServe()
