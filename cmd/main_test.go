@@ -165,6 +165,8 @@ func TestViperEnv(t *testing.T) {
 
 	_ = os.Setenv("OPTIMIZELY_SERVER_READTIMEOUT", "5s")
 	_ = os.Setenv("OPTIMIZELY_SERVER_WRITETIMEOUT", "10s")
+	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
+	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
