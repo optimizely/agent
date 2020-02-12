@@ -8,6 +8,8 @@ sdkkeys:
 server:
   readTimeout: 5s
   writeTimeout: 10s
+  keyfile: "keyfile"
+  certfile: "certfile"
 log:
   pretty: true
   level: debug

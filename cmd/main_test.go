@@ -37,6 +37,8 @@ func assertRoot(t *testing.T, actual *config.AgentConfig) {
 func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
+	assert.Equal(t, "keyfile", actual.KeyFile)
+	assert.Equal(t, "certfile", actual.CertFile)
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -107,6 +109,8 @@ func TestViperProps(t *testing.T) {
 
 	v.Set("server.readtimeout", 5*time.Second)
 	v.Set("server.writetimeout", 10*time.Second)
+	v.Set("server.certfile", "certfile")
+	v.Set("server.keyfile", "keyfile")
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
@@ -161,6 +165,8 @@ func TestViperEnv(t *testing.T) {
 
 	_ = os.Setenv("OPTIMIZELY_SERVER_READTIMEOUT", "5s")
 	_ = os.Setenv("OPTIMIZELY_SERVER_WRITETIMEOUT", "10s")
+	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
+	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
