@@ -82,8 +82,8 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		featureSet[key] = struct{}{}
 	}
 
-	logger.Debug().Msg("iterate over all experiment decisions")
 	for key := range experimentSet {
+		logger.Debug().Str("experimentKey", key).Msg("fetching experiment decision")
 		e, ok := oConf.ExperimentsMap[key]
 		if !ok {
 			RenderError(fmt.Errorf("experimentKey not-found"), http.StatusNotFound, w, r)
@@ -96,12 +96,11 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO implement enabled filtering
 		decisions = append(decisions, d)
 	}
 
-	logger.Debug().Msg("iterate over all feature decisions")
 	for key := range featureSet {
+		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		f, ok := oConf.FeaturesMap[key]
 		if !ok {
 			RenderError(fmt.Errorf("featureKey not-found"), http.StatusNotFound, w, r)
@@ -114,11 +113,34 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO implement enabled filtering
 		decisions = append(decisions, d)
 	}
 
+	decisions = filterDecisions(r, decisions)
 	render.JSON(w, r, decisions)
+}
+
+func filterDecisions(r *http.Request, decisions []*optimizely.Decision) []*optimizely.Decision {
+	enabledFilter := r.URL.Query().Get("enabled")
+	if enabledFilter == "" {
+		return decisions
+	}
+
+	filtered := make([]*optimizely.Decision, 0, len(decisions))
+
+	for _, decision := range decisions {
+		if enabledFilter == "true" && !decision.Enabled {
+			continue
+		}
+
+		if enabledFilter == "false" && decision.Enabled {
+			continue
+		}
+
+		filtered = append(filtered, decision)
+	}
+
+	return filtered
 }
 
 func getUserContext(r *http.Request) (entities.UserContext, error) {

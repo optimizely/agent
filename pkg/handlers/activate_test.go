@@ -213,55 +213,7 @@ func (suite *ActivateTestSuite) TestActivateExperiment() {
 	suite.Equal(expected, actual[0])
 }
 
-func (suite *ActivateTestSuite) TestListFeatures() {
-	// 100% enabled rollout
-	feature := entities.Feature{Key: "featureA"}
-	suite.tc.AddFeatureRollout(feature)
-
-	// 100% disabled rollout
-	featureB := entities.Feature{Key: "featureB"}
-	suite.tc.AddDisabledFeatureRollout(featureB)
-
-	// Feature test 100% enabled variation 100% with variation variable value
-	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
-	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
-	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
-
-	req := httptest.NewRequest("POST", "/activate?type=feature&disableTracking=true", suite.body)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	var actual []optimizely.Decision
-	err := json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	suite.ElementsMatch([]optimizely.Decision{
-		{
-			Enabled:    true,
-			FeatureKey: "featureA",
-			Type:       "feature",
-		},
-		{
-			Enabled:    false,
-			FeatureKey: "featureB",
-			Type:       "feature",
-		},
-		{
-			Enabled:    true,
-			FeatureKey: "featureC",
-			Type:       "feature",
-			Variables: map[string]interface{}{
-				"strvar": "abc_notdef",
-			},
-		},
-	}, actual)
-
-	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
-}
-func (suite *ActivateTestSuite) TestTrackFeatures() {
+func (suite *ActivateTestSuite) TestActivateFeatures() {
 	// 100% enabled rollout
 	feature := entities.Feature{Key: "featureA"}
 	suite.tc.AddFeatureRollout(feature)
@@ -275,18 +227,7 @@ func (suite *ActivateTestSuite) TestTrackFeatures() {
 	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
 	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
 
-	req := httptest.NewRequest("POST", "/activate?type=feature", suite.body)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	var actual []optimizely.Decision
-	err := json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	suite.ElementsMatch([]optimizely.Decision{
+	expected := []optimizely.Decision{
 		{
 			Enabled:    true,
 			FeatureKey: "featureA",
@@ -305,9 +246,144 @@ func (suite *ActivateTestSuite) TestTrackFeatures() {
 				"strvar": "abc_notdef",
 			},
 		},
-	}, actual)
+	}
 
+	// Toggle between tracking and no tracking.
+	for _, flag := range []string{"true", "false"} {
+		req := httptest.NewRequest("POST", "/activate?type=feature&disableTracking="+flag, suite.body)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+
+		suite.Equal(http.StatusOK, rec.Code)
+
+		// Unmarshal response
+		var actual []optimizely.Decision
+		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+		suite.NoError(err)
+
+		suite.ElementsMatch(expected, actual)
+	}
+
+	// 2 for the 2 feature tests
 	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
+}
+
+func (suite *ActivateTestSuite) TestActivateExperiments() {
+	testVariationA := suite.tc.ProjectConfig.CreateVariation("variation_a")
+	suite.tc.AddExperiment("one", []entities.Variation{testVariationA})
+
+	testVariationB := suite.tc.ProjectConfig.CreateVariation("variation_b")
+	suite.tc.AddExperiment("two", []entities.Variation{testVariationB})
+
+	testVariationC := suite.tc.ProjectConfig.CreateVariation("variation_c")
+	suite.tc.AddExperiment("three", []entities.Variation{testVariationC})
+
+	expected := []optimizely.Decision{
+		{
+			ExperimentKey: "one",
+			VariationKey:  testVariationA.Key,
+			Type:          "experiment",
+			Enabled:       true,
+		},
+		{
+			ExperimentKey: "two",
+			VariationKey:  testVariationB.Key,
+			Type:          "experiment",
+			Enabled:       true,
+		},
+		{
+			ExperimentKey: "three",
+			VariationKey:  testVariationC.Key,
+			Type:          "experiment",
+			Enabled:       true,
+		},
+	}
+
+	// Toggle between tracking and no tracking.
+	for _, flag := range []string{"true", "false"} {
+		req := httptest.NewRequest("POST", "/activate?type=experiment&disableTracking="+flag, suite.body)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+
+		suite.Equal(http.StatusOK, rec.Code)
+
+		// Unmarshal response
+		var actual []optimizely.Decision
+		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+		suite.NoError(err)
+
+		suite.ElementsMatch(expected, actual)
+	}
+
+	suite.Equal(3, len(suite.tc.GetProcessedEvents()))
+}
+
+func (suite *ActivateTestSuite) TestEnabledFilter() {
+	// 100% enabled rollout
+	feature := entities.Feature{Key: "featureA"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// 100% disabled rollout
+	featureB := entities.Feature{Key: "featureB"}
+	suite.tc.AddDisabledFeatureRollout(featureB)
+
+	// Feature test 100% enabled variation 100% with variation variable value
+	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+
+	expected := []optimizely.Decision{
+		{
+			Enabled:    true,
+			FeatureKey: "featureA",
+			Type:       "feature",
+		},
+		{
+			Enabled:    true,
+			FeatureKey: "featureC",
+			Type:       "feature",
+			Variables: map[string]interface{}{
+				"strvar": "abc_notdef",
+			},
+		},
+		{
+			Enabled:    false,
+			FeatureKey: "featureB",
+			Type:       "feature",
+		},
+	}
+
+	scenarios := []struct {
+		param    string
+		expected []optimizely.Decision
+	}{
+		{
+			"",
+			expected,
+		},
+		{
+			"&enabled=true",
+			expected[0:2],
+		},
+		{
+			"&enabled=false",
+			expected[2:],
+		},
+	}
+
+	for _, scenario := range scenarios {
+		req := httptest.NewRequest("POST", "/activate?type=feature"+scenario.param, suite.body)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+
+		suite.Equal(http.StatusOK, rec.Code)
+
+		// Unmarshal response
+		var actual []optimizely.Decision
+		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+		suite.NoError(err)
+		suite.ElementsMatch(scenario.expected, actual)
+	}
 }
 
 func (suite *ActivateTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {

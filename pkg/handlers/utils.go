@@ -35,6 +35,7 @@ type ErrorResponse struct {
 
 // RenderError sets the request status and renders the error message.
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	middleware.GetLogger(r).Info().Err(err).Int("status", status).Msg("render error")
 	render.Status(r, status)
 	render.JSON(w, r, ErrorResponse{Error: err.Error()})
 }
