@@ -24,6 +24,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 var errNullOptimizelyConfig = errors.New("optimizely config is null")
@@ -33,6 +34,16 @@ type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
 	ForcedVariations *decision.MapExperimentOverridesStore
+}
+
+// Decision Model
+type Decision struct {
+	ExperimentKey string                 `json:"experimentKey"`
+	FeatureKey    string                 `json:"featureKey"`
+	VariationKey  string                 `json:"variationKey"`
+	Type          string                 `json:"type"`
+	Variables     map[string]interface{} `json:"variables,omitempty"`
+	Enabled       bool                   `json:"enabled"`
 }
 
 // ListFeatures returns all available features
@@ -175,4 +186,57 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error 
 	}
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
 	return nil
+}
+
+// ActivateFeature activates a feature for a given user by getting the feature enabled status and all
+// associated variables
+func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeature, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+	enabled, variables, err := c.GetAllFeatureVariables(feature.Key, uc)
+	if err != nil {
+		return &Decision{}, err
+	}
+
+	// HACK - Triggers impression events when applicable. This is not
+	// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
+	if !disableTracking {
+		_, tErr := c.IsFeatureEnabled(feature.Key, uc)
+		if tErr != nil {
+			return &Decision{}, tErr
+		}
+	}
+
+	// TODO add experiment and variation keys where applicable
+	dec := &Decision{
+		FeatureKey: feature.Key,
+		Variables:  variables,
+		Enabled:    enabled,
+		Type:       "feature",
+	}
+
+	return dec, nil
+}
+
+// ActivateExperiment activates an experiment
+func (c *OptlyClient) ActivateExperiment(experiment *optimizelyconfig.OptimizelyExperiment, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+	var variation string
+	var err error
+
+	if disableTracking {
+		variation, err = c.GetVariation(experiment.Key, uc)
+	} else {
+		variation, err = c.Activate(experiment.Key, uc)
+	}
+	if err != nil {
+		return &Decision{}, err
+	}
+
+	dec := &Decision{
+		ExperimentKey: experiment.Key,
+		VariationKey:  variation,
+		Enabled:       variation != "",
+		Type:          "experiment",
+		Variables:     map[string]interface{}{},
+	}
+
+	return dec, nil
 }
