@@ -62,14 +62,41 @@ func TestFailedStartService(t *testing.T) {
 	ns.ListenAndServe()
 }
 
+func TestFailedTSLStartService(t *testing.T) {
+	cfg := config.ServerConfig{
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 8 * time.Second,
+		CertFile:     "testdata/example-cert.pem",
+		KeyFile:      "testdata/example-key.pem1",
+	}
+	ns, err := NewServer("test", "9", handler, cfg)
+	assert.Error(t, err)
+	assert.Equal(t, ns, Server{})
+}
+
 func TestServerConfigs(t *testing.T) {
-	conf := config.ServerConfig{
+	cfg := config.ServerConfig{
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 8 * time.Second,
 	}
-	ns, err := NewServer("test", "1000", handler, conf)
+	ns, err := NewServer("test", "1000", handler, cfg)
 	assert.NoError(t, err)
 
-	assert.Equal(t, conf.ReadTimeout, ns.srv.ReadTimeout)
-	assert.Equal(t, conf.WriteTimeout, ns.srv.WriteTimeout)
+	assert.Equal(t, cfg.ReadTimeout, ns.srv.ReadTimeout)
+	assert.Equal(t, cfg.WriteTimeout, ns.srv.WriteTimeout)
+}
+
+func TestTSLServerConfigs(t *testing.T) {
+	cfg := config.ServerConfig{
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 8 * time.Second,
+		CertFile:     "testdata/example-cert.pem",
+		KeyFile:      "testdata/example-key.pem",
+	}
+	ns, err := NewServer("test", "1000", handler, cfg)
+	assert.NoError(t, err)
+
+	assert.Equal(t, cfg.ReadTimeout, ns.srv.ReadTimeout)
+	assert.Equal(t, cfg.WriteTimeout, ns.srv.WriteTimeout)
+	assert.NotNil(t, ns.srv.TLSConfig)
 }
