@@ -136,5 +136,16 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	})
 
 	r.Post("/oauth/token", opt.oAuthHandler.GetAPIAccessToken)
+
+	// Kind of a hack to support concurrent APIs without a larger refactor.
+	spec := &ClientOptions{
+		maxConns:        opt.maxConns,
+		middleware:      opt.middleware,
+		handlers:        new(defaultHandlers),
+		metricsRegistry: opt.metricsRegistry,
+	}
+
+	r.Group(func(r chi.Router) { WithClientRouter(spec, r) })
+
 	return r
 }

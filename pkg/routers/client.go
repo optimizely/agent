@@ -80,7 +80,13 @@ func NewDefaultClientRouter(optlyCache optimizely.Cache, conf config.ClientConfi
 // NewClientRouter returns HTTP Client router backed by an optimizely.Cache implementation
 func NewClientRouter(opt *ClientOptions) *chi.Mux {
 	r := chi.NewRouter()
+	WithClientRouter(opt, r)
+	return r
+}
 
+// WithClientRouter appends routes and middleware to the given router.
+// See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
+func WithClientRouter(opt *ClientOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
@@ -98,6 +104,4 @@ func NewClientRouter(opt *ClientOptions) *chi.Mux {
 	r.With(activateTimer).Post("/v1/activate", opt.handlers.activate)
 	r.With(trackTimer).Post("/v1/track", opt.handlers.trackEvent)
 	r.With(overrideTimer).Post("/v1/override", opt.handlers.override)
-
-	return r
 }

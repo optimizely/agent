@@ -119,7 +119,7 @@ func main() {
 	}()
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
-	sg.GoListenAndServe("client", conf.Client.Port, routers.NewDefaultClientRouter(optlyCache, conf.Client, agentMetricsRegistry))
+	sg.GoListenAndServe("client", conf.Client.Port, routers.NewDefaultAPIRouter(optlyCache, conf.Client, agentMetricsRegistry))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
 	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
 
