@@ -56,10 +56,11 @@ func NewDefaultConfig() *AgentConfig {
 			FlushInterval: 30 * time.Second,
 		},
 		Server: ServerConfig{
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			CertFile:     "",
-			KeyFile:      "",
+			ReadTimeout:     5 * time.Second,
+			WriteTimeout:    10 * time.Second,
+			CertFile:        "",
+			KeyFile:         "",
+			DisabledCiphers: make([]uint16, 0),
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
@@ -100,10 +101,11 @@ type LogConfig struct {
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
-	ReadTimeout  time.Duration `json:"readtimeout"`
-	WriteTimeout time.Duration `json:"writetimeout"`
-	CertFile     string        `json:"certfile"`
-	KeyFile      string        `json:"keyfile"`
+	ReadTimeout     time.Duration `json:"readtimeout"`
+	WriteTimeout    time.Duration `json:"writetimeout"`
+	CertFile        string        `json:"certfile"`
+	KeyFile         string        `json:"keyfile"`
+	DisabledCiphers []uint16      `json:"disabledciphers"`
 }
 
 // APIConfig holds the REST API configuration
