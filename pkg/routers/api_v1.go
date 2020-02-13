@@ -31,8 +31,8 @@ import (
 	"github.com/go-chi/render"
 )
 
-// ClientOptions defines the configuration parameters for Router.
-type ClientOptions struct {
+// APIV1Options defines the configuration parameters for Router.
+type APIV1Options struct {
 	maxConns        int
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
@@ -65,28 +65,28 @@ func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
-// NewDefaultClientRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultClientRouter(optlyCache optimizely.Cache, conf config.ClientConfig, metricsRegistry *metrics.Registry) http.Handler {
-	spec := &ClientOptions{
+// NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
+func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
 	}
 
-	return NewClientRouter(spec)
+	return NewAPIV1Router(spec)
 }
 
-// NewClientRouter returns HTTP Client router backed by an optimizely.Cache implementation
-func NewClientRouter(opt *ClientOptions) *chi.Mux {
+// NewAPIV1Router returns HTTP API router backed by an optimizely.Cache implementation
+func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 	r := chi.NewRouter()
-	WithClientRouter(opt, r)
+	WithAPIV1Router(opt, r)
 	return r
 }
 
-// WithClientRouter appends routes and middleware to the given router.
+// WithAPIV1Router appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
-func WithClientRouter(opt *ClientOptions, r chi.Router) {
+func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)

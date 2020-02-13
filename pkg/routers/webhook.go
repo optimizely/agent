@@ -27,7 +27,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 )
 
-// NewWebhookRouter returns HTTP Client router
+// NewWebhookRouter returns HTTP API router
 func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
 	r := chi.NewRouter()
 

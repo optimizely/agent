@@ -25,7 +25,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// BuildAPIAccessToken returns a token for accessing the Client service using the argument SDK key and TTL. It also returns the expiration timestamp.
+// BuildAPIAccessToken returns a token for accessing the API service using the argument SDK key and TTL. It also returns the expiration timestamp.
 func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (tokenString string, expires int64, err error) {
 	expires = time.Now().Add(ttl).Unix()
 
@@ -36,7 +36,7 @@ func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (tokenStr
 	})
 	tokenString, err = token.SignedString(key)
 	if err != nil {
-		return "", 0, fmt.Errorf("error building Client access token: %w", err)
+		return "", 0, fmt.Errorf("error building API access token: %w", err)
 	}
 	return tokenString, expires, nil
 }

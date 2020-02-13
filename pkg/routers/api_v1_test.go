@@ -57,27 +57,27 @@ func (m MockHandlers) override(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(methodHeaderKey, "override")
 }
 
-type ClientTestSuite struct {
+type APIV1TestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
 	mux *chi.Mux
 }
 
-func (suite *ClientTestSuite) SetupTest() {
+func (suite *APIV1TestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
-	opts := &ClientOptions{
+	opts := &APIV1Options{
 		maxConns:        1,
 		middleware:      &MockOptlyMiddleware{},
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 	}
 
-	suite.mux = NewClientRouter(opts)
+	suite.mux = NewAPIV1Router(opts)
 }
 
-func (suite *ClientTestSuite) TestRouter() {
+func (suite *APIV1TestSuite) TestOverride() {
 
 	routes := []struct {
 		method string
@@ -101,10 +101,10 @@ func (suite *ClientTestSuite) TestRouter() {
 }
 
 func TestAPIV1TestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
+	suite.Run(t, new(APIV1TestSuite))
 }
 
 func TestNewDefaultClientRouter(t *testing.T) {
-	client := NewDefaultClientRouter(MockCache{}, config.ClientConfig{}, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
 	assert.NotNil(t, client)
 }
