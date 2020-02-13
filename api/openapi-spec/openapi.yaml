@@ -6,7 +6,7 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  version: 0.2.0
+  version: 0.12.0
 security:
   - SdkKeyAuth: []
 paths:
@@ -34,7 +34,7 @@ paths:
       description: Track sends event and user details to Optimizely’s analytics backend for the analysis of a feature test or experiment.
       responses:
         '204':
-          description: No content, user not included in the experiment
+          description: No content, event received
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -69,7 +69,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/ActivateContext'
   /v1/override:
-    put:
+    post:
       summary: Override an experiment decision for a user
       operationId: override
       description: Override a experiment or feature test decision used in future user based decisions. This override is only stored locally
