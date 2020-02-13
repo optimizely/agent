@@ -110,7 +110,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	return &clientCreds, http.StatusOK, nil
 }
 
-// GetAPIAccessToken returns a JWT access token for the API service
+// GetAPIAccessToken returns a JWT access token for the Client service
 func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	clientCreds, httpCode, e := h.verifyClientCredentials(r)

@@ -47,7 +47,7 @@ func (NoAuth) CheckToken(string) (*jwt.Token, error) {
 	return nil, nil
 }
 
-// Auth is the middleware for all REST API's
+// Auth is the middleware for all REST Client's
 type Auth struct {
 	Verifier
 }

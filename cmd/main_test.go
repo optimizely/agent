@@ -59,12 +59,12 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	}, actual.Clients[0])
 }
 
-func assertAPI(t *testing.T, actual config.APIConfig) {
+func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, 100, actual.MaxConns)
 	assert.Equal(t, "3000", actual.Port)
 }
 
-func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
+func assertClientAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, 30*time.Minute, actual.TTL)
 	assert.Equal(t, "abcd", actual.HMACSecret)
 	assert.Equal(t, config.OAuthClientCredentials{
@@ -94,8 +94,8 @@ func TestViperYaml(t *testing.T) {
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
-	assertAPI(t, actual.API)
-	assertAPIAuth(t, actual.API.Auth)
+	assertClient(t, actual.Client)
+	assertClientAuth(t, actual.Client.Auth)
 	assertWebhook(t, actual.Webhook)
 }
 
@@ -125,11 +125,11 @@ func TestViperProps(t *testing.T) {
 		},
 	})
 
-	v.Set("api.maxconns", 100)
-	v.Set("api.port", "3000")
-	v.Set("api.auth.ttl", "30m")
-	v.Set("api.auth.hmacsecret", "abcd")
-	v.Set("api.auth.clients", []map[string]string{
+	v.Set("client.maxconns", 100)
+	v.Set("client.port", "3000")
+	v.Set("client.auth.ttl", "30m")
+	v.Set("client.auth.hmacsecret", "abcd")
+	v.Set("client.auth.clients", []map[string]string{
 		{
 			"id":     "clientid1",
 			"secret": "clientsecret1",
@@ -152,8 +152,8 @@ func TestViperProps(t *testing.T) {
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
-	assertAPI(t, actual.API)
-	assertAPIAuth(t, actual.API.Auth)
+	assertClient(t, actual.Client)
+	assertClientAuth(t, actual.Client.Auth)
 	assertWebhook(t, actual.Webhook)
 }
 
@@ -173,8 +173,8 @@ func TestViperEnv(t *testing.T) {
 
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
 
-	_ = os.Setenv("OPTIMIZELY_API_MAXCONNS", "100")
-	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_MAXCONNS", "100")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_PORT", "3000")
 
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PORT", "3001")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SECRET", "secret-10000")
@@ -192,6 +192,6 @@ func TestViperEnv(t *testing.T) {
 	assertServer(t, actual.Server)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
-	assertAPI(t, actual.API)
+	assertClient(t, actual.Client)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
 }

@@ -23,12 +23,21 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
 const methodHeaderKey = "X-Method-Header"
+
+type MockCache struct{}
+
+func (m MockCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
+	panic("implement me")
+}
 
 type MockHandlers struct{}
 
@@ -48,27 +57,27 @@ func (m MockHandlers) override(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(methodHeaderKey, "override")
 }
 
-type APIV1TestSuite struct {
+type ClientTestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
 	mux *chi.Mux
 }
 
-func (suite *APIV1TestSuite) SetupTest() {
+func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
-	opts := &APIV1Options{
+	opts := &ClientOptions{
 		maxConns:        1,
 		middleware:      &MockOptlyMiddleware{},
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 	}
 
-	suite.mux = NewAPIV1Router(opts)
+	suite.mux = NewClientRouter(opts)
 }
 
-func (suite *APIV1TestSuite) TestOverride() {
+func (suite *ClientTestSuite) TestRouter() {
 
 	routes := []struct {
 		method string
@@ -92,5 +101,10 @@ func (suite *APIV1TestSuite) TestOverride() {
 }
 
 func TestAPIV1TestSuite(t *testing.T) {
-	suite.Run(t, new(APIV1TestSuite))
+	suite.Run(t, new(ClientTestSuite))
+}
+
+func TestNewDefaultClientRouter(t *testing.T) {
+	client := NewDefaultClientRouter(MockCache{}, config.ClientConfig{}, metricsRegistry)
+	assert.NotNil(t, client)
 }

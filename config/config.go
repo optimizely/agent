@@ -37,7 +37,7 @@ func NewDefaultConfig() *AgentConfig {
 			},
 			Port: "8088",
 		},
-		API: APIConfig{
+		Client: ClientConfig{
 			Auth: ServiceAuthConfig{
 				Clients:    make([]OAuthClientCredentials, 0),
 				HMACSecret: "",
@@ -78,7 +78,7 @@ type AgentConfig struct {
 	SDKKeys []string `yaml:"sdkkeys" json:"sdkkeys"`
 
 	Admin     AdminConfig     `json:"admin"`
-	API       APIConfig       `json:"api"`
+	Client    ClientConfig    `json:"client"`
 	Log       LogConfig       `json:"log"`
 	Processor ProcessorConfig `json:"processor"`
 	Server    ServerConfig    `json:"server"`
@@ -106,8 +106,8 @@ type ServerConfig struct {
 	KeyFile      string        `json:"keyfile"`
 }
 
-// APIConfig holds the REST API configuration
-type APIConfig struct {
+// ClientConfig holds the REST Client configuration
+type ClientConfig struct {
 	Auth     ServiceAuthConfig `json:"-"`
 	MaxConns int               `json:"maxconns"`
 	Port     string            `json:"port"`

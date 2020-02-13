@@ -31,8 +31,8 @@ import (
 	"github.com/go-chi/render"
 )
 
-// APIV1Options defines the configuration parameters for Router.
-type APIV1Options struct {
+// ClientOptions defines the configuration parameters for Router.
+type ClientOptions struct {
 	maxConns        int
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
@@ -65,20 +65,20 @@ func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
-// NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
-	spec := &APIV1Options{
+// NewDefaultClientRouter creates a new router with the default backing optimizely.Cache
+func NewDefaultClientRouter(optlyCache optimizely.Cache, conf config.ClientConfig, metricsRegistry *metrics.Registry) http.Handler {
+	spec := &ClientOptions{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
 	}
 
-	return NewAPIV1Router(spec)
+	return NewClientRouter(spec)
 }
 
-// NewAPIV1Router returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
+// NewClientRouter returns HTTP Client router backed by an optimizely.Cache implementation
+func NewClientRouter(opt *ClientOptions) *chi.Mux {
 	r := chi.NewRouter()
 
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)

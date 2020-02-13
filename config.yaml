@@ -38,7 +38,7 @@ server:
 ##
 ## api service configuration
 ##
-api:
+client:
     ## the maximum number of concurrent requests handled by the api listener
 #    maxconns: 10000
     ## http listener port

@@ -43,11 +43,11 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "", conf.Admin.Auth.HMACSecret)
 	assert.Equal(t, time.Duration(0), conf.Admin.Auth.TTL)
 
-	assert.Equal(t, 0, conf.API.MaxConns)
-	assert.Equal(t, "8080", conf.API.Port)
-	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
-	assert.Equal(t, "", conf.API.Auth.HMACSecret)
-	assert.Equal(t, time.Duration(0), conf.API.Auth.TTL)
+	assert.Equal(t, 0, conf.Client.MaxConns)
+	assert.Equal(t, "8080", conf.Client.Port)
+	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.Client.Auth.Clients)
+	assert.Equal(t, "", conf.Client.Auth.HMACSecret)
+	assert.Equal(t, time.Duration(0), conf.Client.Auth.TTL)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)

@@ -46,7 +46,7 @@ type APIOptions struct {
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.ClientConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
 
@@ -71,7 +71,7 @@ func setMiddleWareTime(r chi.Router) {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 }
 
-// NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
+// NewAPIRouter returns HTTP Client router backed by an optimizely.Cache implementation
 func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
 

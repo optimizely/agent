@@ -21,7 +21,7 @@ admin:
     clients:
       id: clientid2
       secret: clientsecret2
-api:
+client:
   maxconns: 100
   port: "3000"
   auth:
