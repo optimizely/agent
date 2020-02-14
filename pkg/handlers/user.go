@@ -205,7 +205,7 @@ func parseContext(r *http.Request) (*optimizely.OptlyClient, *optimizely.OptlyCo
 func getModelOfFeatureDecision(featureKey string, optlyClient *optimizely.OptlyClient, optlyContext *optimizely.OptlyContext) (*Feature, error) {
 	enabled, variables, err := optlyClient.GetFeatureWithContext(featureKey, optlyContext)
 
-	// For backwards compatibilty all variables need to be retutned as a string
+	// For backwards compatibility all variables need to be returned as a string
 	strVars := make(map[string]interface{}, len(variables))
 	for k, v := range variables {
 		strVars[k] = fmt.Sprintf("%v", v)
