@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - February 14th, 2020
+- Add support for typed user attributes
+- Add event-stream API for notifications
+- Add basic client credentials grant flow
+- Add native TLS support via configuration
+- Refactor to a POST based action API
+
 ## [0.11.0] - January 17th, 2020
 - Bump to 1.0.0-rc1@d1b332c of the Optimizely go-sdk
 - Improve build tooling
