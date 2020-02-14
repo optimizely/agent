@@ -1,8 +1,12 @@
 #!/usr/bin/python
+# example: python basic.py <SDK-Key>
 
 import json
 import requests
 import sys
+
+if len(sys.argv) < 2:
+    sys.exit('Requires one argument: <SDK-Key>')
 
 sdk_key = sys.argv[1]
 

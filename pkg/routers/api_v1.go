@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -39,7 +39,7 @@ type APIV1Options struct {
 	metricsRegistry *metrics.Registry
 }
 
-// Define an interface to fasciliate testing
+// Define an interface to facilitate testing
 type apiHandlers interface {
 	config(w http.ResponseWriter, r *http.Request)
 	activate(w http.ResponseWriter, r *http.Request)
@@ -100,8 +100,10 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	r.Use(middleware.SetTime, opt.middleware.ClientCtx)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	r.With(getConfigTimer).Get("/v1/config", opt.handlers.config)
-	r.With(activateTimer).Post("/v1/activate", opt.handlers.activate)
-	r.With(trackTimer).Post("/v1/track", opt.handlers.trackEvent)
-	r.With(overrideTimer).Post("/v1/override", opt.handlers.override)
+	r.Route("/v1", func(r chi.Router) {
+		r.With(getConfigTimer).Get("/config", opt.handlers.config)
+		r.With(activateTimer).Post("/activate", opt.handlers.activate)
+		r.With(trackTimer).Post("/track", opt.handlers.trackEvent)
+		r.With(overrideTimer).Post("/override", opt.handlers.override)
+	})
 }

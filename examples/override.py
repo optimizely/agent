@@ -1,8 +1,12 @@
 #!/usr/bin/python
+# example: python override.py <SDK-Key> <Experiment-Key> <Variation-Key>
 
 import json
 import requests
 import sys
+
+if len(sys.argv) < 4:
+    sys.exit('Requires three arguments: <SDK-Key> <Experiment-Key> <Variation-Key>')
 
 sdk_key = sys.argv[1]
 exp_key = sys.argv[2]

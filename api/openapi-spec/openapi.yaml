@@ -53,7 +53,7 @@ paths:
       operationId: activate
       description: Activate iterates over all corresponding features
         and experiments and returns the decision for the given user.
-        An impression event will sent to the Optimizely analytics backend
+        Optionally an impression event will sent to the Optimizely analytics backend
         for any decision made for and experiment or feature test.
       responses:
         '200':

@@ -4,6 +4,9 @@ import json
 import requests
 import sys
 
+if len(sys.argv) < 3:
+    sys.exit('Requires two arguments: <SDK-Key> <Event-Key>')
+
 sdk_key = sys.argv[1]
 event_key = sys.argv[2]
 
