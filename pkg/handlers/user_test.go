@@ -143,7 +143,17 @@ func (suite *UserTestSuite) TestGetFeatureWithFeatureTest() {
 }
 
 func (suite *UserTestSuite) TestTrackFeatureWithFeatureRollout() {
-	feature := entities.Feature{Key: "one"}
+
+	strvar := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	intvar := entities.Variable{DefaultValue: "123", ID: "124", Key: "intvar", Type: "integer"}
+	doublevar := entities.Variable{DefaultValue: "123.99", ID: "125", Key: "doublevar", Type: "double"}
+	boolvar := entities.Variable{DefaultValue: "true", ID: "126", Key: "boolvar", Type: "boolean"}
+	feature := entities.Feature{Key: "one", VariableMap: map[string]entities.Variable{
+		"strvar":    strvar,
+		"intvar":    intvar,
+		"doublevar": doublevar,
+		"boolvar":   boolvar,
+	}}
 	suite.tc.AddFeatureRollout(feature)
 
 	req := httptest.NewRequest("POST", "/features/one", nil)
@@ -160,6 +170,12 @@ func (suite *UserTestSuite) TestTrackFeatureWithFeatureRollout() {
 	expected := Feature{
 		Key:     "one",
 		Enabled: true,
+		Variables: map[string]interface{}{
+			"strvar":    "default",
+			"intvar":    "123",
+			"doublevar": "123.99",
+			"boolvar":   "true",
+		},
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
