@@ -14,7 +14,6 @@ s = requests.Session()
 s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 
 resp = s.get('http://localhost:8080/v1/config')
-print(resp)
 env = resp.json()
 
 payload = { "userId": "test-user" }
