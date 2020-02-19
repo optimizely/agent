@@ -96,15 +96,18 @@ func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	defaultCiphers := []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	}
+	ciphers := blacklistCiphers(conf.DisabledCiphers, defaultCiphers)
+
 	return &tls.Config{
 		PreferServerCipherSuites: true,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		},
-		MinVersion: tls.VersionTLS12,
+		CipherSuites:             ciphers,
+		MinVersion:               tls.VersionTLS12,
 		CurvePreferences: []tls.CurveID{
 			tls.CurveP256,
 			tls.X25519,
@@ -112,4 +115,25 @@ func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {
 		},
 		Certificates: []tls.Certificate{cert},
 	}, nil
+}
+
+func blacklistCiphers(blacklist, defaultCiphers []uint16) []uint16 {
+
+	modifiedCiphers := []uint16{}
+	cipherInBlacklist := func(a []uint16, x uint16) bool {
+		for _, n := range a {
+			if x == n {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, cipher := range defaultCiphers {
+		if !cipherInBlacklist(blacklist, cipher) {
+			modifiedCiphers = append(modifiedCiphers, cipher)
+		}
+	}
+
+	return modifiedCiphers
 }

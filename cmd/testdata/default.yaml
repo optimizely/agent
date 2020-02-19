@@ -10,6 +10,9 @@ server:
   writeTimeout: 10s
   keyfile: "keyfile"
   certfile: "certfile"
+  disabledciphers:
+    - 0xc00a
+    - 0xc011
 log:
   pretty: true
   level: debug
