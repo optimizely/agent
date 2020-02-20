@@ -60,7 +60,7 @@ func NewDefaultConfig() *AgentConfig {
 			WriteTimeout:    10 * time.Second,
 			CertFile:        "",
 			KeyFile:         "",
-			DisabledCiphers: make([]uint16, 0),
+			DisabledCiphers: make([]string, 0),
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
@@ -105,7 +105,7 @@ type ServerConfig struct {
 	WriteTimeout    time.Duration `json:"writetimeout"`
 	CertFile        string        `json:"certfile"`
 	KeyFile         string        `json:"keyfile"`
-	DisabledCiphers []uint16      `json:"disabledciphers"`
+	DisabledCiphers []string      `json:"disabledciphers"`
 }
 
 // APIConfig holds the REST API configuration

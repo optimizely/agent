@@ -39,7 +39,7 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
 	assert.Equal(t, "keyfile", actual.KeyFile)
 	assert.Equal(t, "certfile", actual.CertFile)
-	assert.Equal(t, []uint16{0xc00a, 0xc011}, actual.DisabledCiphers)
+	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -112,7 +112,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.writetimeout", 10*time.Second)
 	v.Set("server.certfile", "certfile")
 	v.Set("server.keyfile", "keyfile")
-	v.Set("server.disabledciphers", "0xc00a,0xc011")
+	v.Set("server.disabledciphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
@@ -169,7 +169,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_SERVER_WRITETIMEOUT", "10s")
 	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
-	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "0xc00a,0xc011")
+	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
