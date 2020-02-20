@@ -49,6 +49,8 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
 	assert.Equal(t, "", conf.API.Auth.HMACSecret)
 	assert.Equal(t, time.Duration(0), conf.API.Auth.TTL)
+	assert.Equal(t, false, conf.API.EnableOverrides)
+	assert.Equal(t, false, conf.API.EnableNotifications)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)

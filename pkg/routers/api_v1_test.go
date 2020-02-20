@@ -72,6 +72,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		middleware:      &MockOptlyMiddleware{},
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
+		enableOverrides: true,
 	}
 
 	suite.mux = NewAPIV1Router(opts)
@@ -98,6 +99,34 @@ func (suite *APIV1TestSuite) TestOverride() {
 		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
 	}
+}
+
+func (suite *APIV1TestSuite) TestDisabledOverride() {
+
+	route := struct {
+		method string
+		path   string
+	}{"POST", "override"}
+
+	opts := &APIV1Options{
+		maxConns:        1,
+		middleware:      &MockOptlyMiddleware{},
+		handlers:        MockHandlers{},
+		metricsRegistry: metricsRegistry,
+		enableOverrides: false,
+	}
+
+	mux := NewAPIV1Router(opts)
+
+	req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusForbidden, rec.Code)
+
+	// Unmarshal response
+	response := string(rec.Body.Bytes())
+	suite.Equal("Overrides not enabled\n", response)
+
 }
 
 func TestAPIV1TestSuite(t *testing.T) {
