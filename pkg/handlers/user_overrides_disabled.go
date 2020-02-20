@@ -21,16 +21,16 @@ import (
 	"net/http"
 )
 
-// DisableUserOverrideHandler implements the disabled overrides
-type DisableUserOverrideHandler struct{}
+// DisabledUserOverrideHandler implements the disabled overrides
+type DisabledUserOverrideHandler struct{}
 
 // SetForcedVariation - set a forced variation
-func (h *DisableUserOverrideHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
+func (h *DisabledUserOverrideHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Overrides not enabled", http.StatusForbidden)
 
 }
 
 // RemoveForcedVariation - Remove a forced variation
-func (h *DisableUserOverrideHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
+func (h *DisabledUserOverrideHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Overrides not enabled", http.StatusForbidden)
 }

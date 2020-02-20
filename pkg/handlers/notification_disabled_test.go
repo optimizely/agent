@@ -35,7 +35,7 @@ type NotificationDisabledTestSuite struct {
 func (suite *NotificationDisabledTestSuite) SetupTest() {
 
 	mux := chi.NewMux()
-	eventsAPI := NewDisableNotificationHandler()
+	eventsAPI := NewDisabledNotificationHandler()
 
 	mux.Get("/notifications/event-stream", eventsAPI.HandleEventSteam)
 

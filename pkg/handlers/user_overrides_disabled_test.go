@@ -37,7 +37,7 @@ type UserOverridesDisabledTestSuite struct {
 func (suite *UserOverridesDisabledTestSuite) SetupTest() {
 
 	mux := chi.NewMux()
-	userAPI := new(DisableUserOverrideHandler)
+	userAPI := new(DisabledUserOverrideHandler)
 
 	mux.Put("/experiments/{experimentKey}", userAPI.SetForcedVariation)
 	mux.Delete("/experiments/{experimentKey}", userAPI.RemoveForcedVariation)

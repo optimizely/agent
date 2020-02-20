@@ -21,17 +21,17 @@ import (
 	"net/http"
 )
 
-// DisableNotificationHandler for disabled notifications
-type DisableNotificationHandler struct {
+// DisabledNotificationHandler for disabled notifications
+type DisabledNotificationHandler struct {
 }
 
 // HandleEventSteam implements the http.Handler interface. Returns forbidden status
-func (nh *DisableNotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.Request) {
+func (nh *DisabledNotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Streaming not enabled", http.StatusForbidden)
 }
 
-// NewDisableNotificationHandler is the DisableNotificationHandler factory
-func NewDisableNotificationHandler() (nh *DisableNotificationHandler) {
-	return &DisableNotificationHandler{}
+// NewDisabledNotificationHandler is the DisableNotificationHandler factory
+func NewDisabledNotificationHandler() (nh *DisabledNotificationHandler) {
+	return &DisabledNotificationHandler{}
 
 }

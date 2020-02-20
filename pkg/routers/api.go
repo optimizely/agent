@@ -52,13 +52,13 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 	authProvider := middleware.NewAuth(&conf.Auth)
 
 	var notificationsAPI handlers.NotificationAPI
-	notificationsAPI = handlers.NewDisableNotificationHandler()
+	notificationsAPI = handlers.NewDisabledNotificationHandler()
 	if conf.EnableNotifications {
 		notificationsAPI = handlers.NewNotificationHandler()
 	}
 
 	var userOverrideAPI handlers.UserOverrideAPI
-	userOverrideAPI = new(handlers.DisableUserOverrideHandler)
+	userOverrideAPI = new(handlers.DisabledUserOverrideHandler)
 	if conf.EnableOverrides {
 		userOverrideAPI = new(handlers.UserOverrideHandler)
 	}
