@@ -34,7 +34,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 10*time.Second, conf.Server.WriteTimeout)
 	assert.Equal(t, "", conf.Server.KeyFile)
 	assert.Equal(t, "", conf.Server.CertFile)
-	assert.Equal(t, []uint16{}, conf.Server.DisabledCiphers)
+	assert.Equal(t, []string{}, conf.Server.DisabledCiphers)
 
 	assert.False(t, conf.Log.Pretty)
 	assert.Equal(t, "info", conf.Log.Level)

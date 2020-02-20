@@ -11,8 +11,8 @@ server:
   keyfile: "keyfile"
   certfile: "certfile"
   disabledciphers:
-    - 0xc00a
-    - 0xc011
+    - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+    - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
 log:
   pretty: true
   level: debug
