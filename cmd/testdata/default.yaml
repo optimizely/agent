@@ -1,7 +1,7 @@
 version: 0.1.0
 author: Optimizely Inc.
 name: optimizely
-sdkkeys:
+sdkKeys:
   - ddd
   - eee
   - fff
@@ -10,7 +10,7 @@ server:
   writeTimeout: 10s
   keyfile: "keyfile"
   certfile: "certfile"
-  disabledciphers:
+  disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
 log:
@@ -25,10 +25,10 @@ admin:
       id: clientid2
       secret: clientsecret2
 api:
-  maxconns: 100
+  maxConns: 100
   port: "3000"
-  enablenotifications: true
-  enableoverrides: true
+  enableNotifications: true
+  enableOverrides: true
   auth:
     ttl: 30m
     hmacSecret: "abcd"
