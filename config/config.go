@@ -78,7 +78,7 @@ type AgentConfig struct {
 	Author  string `json:"author"`
 	Name    string `json:"name"`
 
-	SDKKeys []string `yaml:"sdkkeys" json:"sdkkeys"`
+	SDKKeys []string `yaml:"sdkKeys" json:"sdkKeys"`
 
 	Admin     AdminConfig     `json:"admin"`
 	API       APIConfig       `json:"api"`
@@ -103,20 +103,20 @@ type LogConfig struct {
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
-	ReadTimeout     time.Duration `json:"readtimeout"`
-	WriteTimeout    time.Duration `json:"writetimeout"`
+	ReadTimeout     time.Duration `json:"readTimeout"`
+	WriteTimeout    time.Duration `json:"writeTimeout"`
 	CertFile        string        `json:"certfile"`
 	KeyFile         string        `json:"keyfile"`
-	DisabledCiphers []string      `json:"disabledciphers"`
+	DisabledCiphers []string      `json:"disabledCiphers"`
 }
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
 	Auth                ServiceAuthConfig `json:"-"`
-	MaxConns            int               `json:"maxconns"`
+	MaxConns            int               `json:"maxConns"`
 	Port                string            `json:"port"`
-	EnableNotifications bool              `json:"enablenotifications"`
-	EnableOverrides     bool              `json:"enableoverrides"`
+	EnableNotifications bool              `json:"enableNotifications"`
+	EnableOverrides     bool              `json:"enableOverrides"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
