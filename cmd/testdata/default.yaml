@@ -24,6 +24,8 @@ admin:
 api:
   maxconns: 100
   port: "3000"
+  enablenotifications: true
+  enableoverrides: true
   auth:
     ttl: 30m
     hmacSecret: "abcd"

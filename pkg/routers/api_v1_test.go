@@ -72,6 +72,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		middleware:      &MockOptlyMiddleware{},
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
+		enableOverrides: true,
 	}
 
 	suite.mux = NewAPIV1Router(opts)

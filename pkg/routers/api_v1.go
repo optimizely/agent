@@ -34,6 +34,7 @@ import (
 // APIV1Options defines the configuration parameters for Router.
 type APIV1Options struct {
 	maxConns        int
+	enableOverrides bool
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
@@ -100,10 +101,18 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	r.Use(middleware.SetTime, opt.middleware.ClientCtx)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
+	overrideHandler := func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Overrides not enabled", http.StatusForbidden)
+	}
+
+	if opt.enableOverrides {
+		overrideHandler = opt.handlers.override
+	}
+
 	r.Route("/v1", func(r chi.Router) {
 		r.With(getConfigTimer).Get("/config", opt.handlers.config)
 		r.With(activateTimer).Post("/activate", opt.handlers.activate)
 		r.With(trackTimer).Post("/track", opt.handlers.trackEvent)
-		r.With(overrideTimer).Post("/override", opt.handlers.override)
+		r.With(overrideTimer).Post("/override", overrideHandler)
 	})
 }

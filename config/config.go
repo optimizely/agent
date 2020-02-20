@@ -43,8 +43,10 @@ func NewDefaultConfig() *AgentConfig {
 				HMACSecret: "",
 				TTL:        0,
 			},
-			MaxConns: 0,
-			Port:     "8080",
+			MaxConns:            0,
+			Port:                "8080",
+			EnableNotifications: false,
+			EnableOverrides:     false,
 		},
 		Log: LogConfig{
 			Pretty: false,
@@ -108,9 +110,11 @@ type ServerConfig struct {
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
-	Auth     ServiceAuthConfig `json:"-"`
-	MaxConns int               `json:"maxconns"`
-	Port     string            `json:"port"`
+	Auth                ServiceAuthConfig `json:"-"`
+	MaxConns            int               `json:"maxconns"`
+	Port                string            `json:"port"`
+	EnableNotifications bool              `json:"enablenotifications"`
+	EnableOverrides     bool              `json:"enableoverrides"`
 }
 
 // AdminConfig holds the configuration for the admin web interface

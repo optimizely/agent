@@ -34,6 +34,7 @@ import (
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
 	maxConns         int
+	enableOverrides  bool
 	middleware       middleware.OptlyMiddleware
 	experimentAPI    handlers.ExperimentAPI
 	featureAPI       handlers.FeatureAPI
@@ -50,17 +51,30 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	authProvider := middleware.NewAuth(&conf.Auth)
 
+	var notificationsAPI handlers.NotificationAPI
+	notificationsAPI = handlers.NewDisableNotificationHandler()
+	if conf.EnableNotifications {
+		notificationsAPI = handlers.NewNotificationHandler()
+	}
+
+	var userOverrideAPI handlers.UserOverrideAPI
+	userOverrideAPI = new(handlers.DisableUserOverrideHandler)
+	if conf.EnableOverrides {
+		userOverrideAPI = new(handlers.UserOverrideHandler)
+	}
+
 	spec := &APIOptions{
 		maxConns:         conf.MaxConns,
 		middleware:       &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		experimentAPI:    new(handlers.ExperimentHandler),
 		featureAPI:       new(handlers.FeatureHandler),
 		userAPI:          new(handlers.UserHandler),
-		notificationsAPI: handlers.NewNotificationHandler(),
-		userOverrideAPI:  new(handlers.UserOverrideHandler),
+		notificationsAPI: notificationsAPI,
+		userOverrideAPI:  userOverrideAPI,
 		metricsRegistry:  metricsRegistry,
 		oAuthHandler:     handlers.NewOAuthHandler(&conf.Auth),
 		oAuthMiddleware:  authProvider,
+		enableOverrides:  conf.EnableOverrides,
 	}
 
 	return NewAPIRouter(spec)
@@ -140,6 +154,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	// Kind of a hack to support concurrent APIs without a larger refactor.
 	spec := &APIV1Options{
 		maxConns:        opt.maxConns,
+		enableOverrides: opt.enableOverrides,
 		middleware:      opt.middleware,
 		handlers:        new(defaultHandlers),
 		metricsRegistry: opt.metricsRegistry,
