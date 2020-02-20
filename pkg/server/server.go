@@ -127,9 +127,7 @@ func blacklistCiphers(blacklist []string) []uint16 {
 	ciphers := makeDefaultCiphers()
 
 	for _, disabledCipher := range blacklist {
-		if _, ok := ciphers[disabledCipher]; ok {
-			delete(ciphers, disabledCipher)
-		}
+		delete(ciphers, disabledCipher)
 	}
 
 	modifiedCiphers := []uint16{}
