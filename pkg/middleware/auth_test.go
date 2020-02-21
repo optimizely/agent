@@ -112,7 +112,7 @@ func (suite *AuthTestSuite) TestAuthAuthorizeEmptyToken() {
 	req := httptest.NewRequest("GET", "/some_url", nil)
 
 	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
+	suite.Equal(http.StatusForbidden, rec.Code)
 }
 
 func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenInvalidClaims() {
@@ -123,7 +123,7 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenInvalidClaims() {
 	req.Header.Add("Authorization", "Bearer "+suite.validAdminToken.Raw)
 
 	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
+	suite.Equal(http.StatusForbidden, rec.Code)
 }
 
 func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenInvalidClaims() {
@@ -134,7 +134,7 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenInvalidClaims() {
 	req.Header.Add("Authorization", "Bearer "+suite.validAPIToken.Raw)
 
 	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
+	suite.Equal(http.StatusForbidden, rec.Code)
 }
 
 func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaims() {
@@ -170,7 +170,7 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaimsExp
 	req.Header.Add(OptlySDKHeader, "SDK_KEY")
 
 	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
+	suite.Equal(http.StatusForbidden, rec.Code)
 }
 
 func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenAuthorizationValidClaimsExpiredToken() {
@@ -182,7 +182,7 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenAuthorizationValidClaimsE
 	req.Header.Add(OptlySDKHeader, "SDK_KEY")
 
 	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
+	suite.Equal(http.StatusForbidden, rec.Code)
 }
 
 func TestAuth(t *testing.T) {

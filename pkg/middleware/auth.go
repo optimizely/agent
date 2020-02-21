@@ -19,7 +19,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -127,7 +126,8 @@ func (a Auth) AuthorizeAdmin(next http.Handler) http.Handler {
 		tk, err := a.verify(r)
 
 		if err != nil {
-			RenderError(err, http.StatusUnauthorized, w, r)
+			GetLogger(r).Debug().Err(err).Msg("error returned from verify")
+			http.Error(w, "", http.StatusForbidden)
 			return
 		}
 
@@ -135,11 +135,13 @@ func (a Auth) AuthorizeAdmin(next http.Handler) http.Handler {
 			claims := tk.Claims.(jwt.MapClaims)
 
 			if expired := (getNumberFromJSON(claims["exp"]) - time.Now().Unix()) <= 0; expired {
-				RenderError(errors.New("token expired"), http.StatusUnauthorized, w, r)
+				GetLogger(r).Debug().Msg("token expired")
+				http.Error(w, "", http.StatusForbidden)
 				return
 			}
 			if adminFlag, ok := claims["admin"].(bool); !ok || !adminFlag {
-				RenderError(errors.New("admin flag not set"), http.StatusUnauthorized, w, r)
+				GetLogger(r).Debug().Msg("admin flag not set")
+				http.Error(w, "", http.StatusForbidden)
 				return
 			}
 		}
@@ -156,19 +158,22 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 		tk, err := a.verify(r)
 
 		if err != nil {
-			http.Error(w, fmt.Sprintf(`{"error": "unauthorized, "reason": "%v"}`, err), http.StatusUnauthorized)
+			GetLogger(r).Debug().Err(err).Msg("error returned from verify")
+			http.Error(w, "", http.StatusForbidden)
 			return
 		}
 
 		if a.enabled() {
 			claims := tk.Claims.(jwt.MapClaims)
 			if expired := (getNumberFromJSON(claims["exp"]) - time.Now().Unix()) <= 0; expired {
-				RenderError(errors.New("token expired"), http.StatusUnauthorized, w, r)
+				GetLogger(r).Debug().Msg("token expired")
+				http.Error(w, "", http.StatusForbidden)
 				return
 			}
 			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
 			if sdkKey, ok := claims["sdk_key"].(string); !ok || sdkKey != sdkKeyFromHeader {
-				RenderError(errors.New("SDK keys not equal"), http.StatusUnauthorized, w, r)
+				GetLogger(r).Debug().Msg("SDK keys not equal")
+				http.Error(w, "", http.StatusForbidden)
 				return
 			}
 		}
