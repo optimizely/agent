@@ -9,10 +9,8 @@ Optimizely Full Stack is A/B testing and feature flag management for product dev
 Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the [documentation](https://docs.developers.optimizely.com/rollouts/docs).
 
 ## Getting Started
-To get started with Optimizely Agent, follow the [getting started guide](./docs/getting-started.md).
-
-## Examples
-Example Python usage can be seen in our [examples folder](./examples).
+To get started with Optimizely Agent, follow the [getting started guide](./docs/getting-started.md) and view example
+usage in our [examples folder](./examples).
 
 ## Prerequisites
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
