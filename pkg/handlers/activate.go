@@ -69,6 +69,9 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			for key := range oConf.FeaturesMap {
 				featureSet[key] = struct{}{}
 			}
+		default:
+			RenderError(fmt.Errorf(`type "%s" not supported`, filterType), http.StatusBadRequest, w, r)
+			return
 		}
 	}
 
