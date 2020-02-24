@@ -133,8 +133,8 @@ components:
       schema:
         type: string
         enum:
-          - features
-          - experiments
+          - feature
+          - experiment
   requestBodies:
     ActivateContext:
       required: true
