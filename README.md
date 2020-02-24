@@ -11,6 +11,9 @@ Optimizely Rollouts is free feature flags for development teams. Easily roll out
 ## Getting Started
 To get started with Optimizely Agent, follow the [getting started guide](./docs/getting-started.md).
 
+## Examples
+Example Python usage can be seen in our [examples folder](./examples).
+
 ## Prerequisites
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
