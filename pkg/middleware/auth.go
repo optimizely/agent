@@ -27,6 +27,7 @@ import (
 	"github.com/optimizely/agent/config"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/lestrrat-go/jwx/jwk"
 )
 
 func getNumberFromJSON(val interface{}) int64 {
@@ -78,6 +79,52 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 			return nil, errors.New("unexpected signing method")
 		}
 		return []byte(c.secretKey), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !tk.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	return tk, nil
+}
+
+// JWTVerifierURL checks token with JWT against JWKS, implements Verifier
+type JWTVerifierURL struct {
+	jwksURL string
+
+	parser *jwt.Parser
+}
+
+// NewJWTVerifierURL creates JWTVerifierURL with JWKS URL
+func NewJWTVerifierURL(jwksURL string) JWTVerifierURL {
+	return JWTVerifierURL{jwksURL: jwksURL, parser: new(jwt.Parser)}
+}
+
+// CheckToken checks the token, validates against JWKS and returns it if it's valid
+func (c JWTVerifierURL) CheckToken(token string) (*jwt.Token, error) {
+	if token == "" {
+		return nil, errors.New("invalid token")
+	}
+
+	tk, err := c.parser.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		set, err := jwk.FetchHTTP(c.jwksURL)
+		if err != nil {
+			return nil, err
+		}
+
+		keyID, ok := token.Header["kid"].(string)
+		if !ok {
+			return nil, errors.New("expecting JWT header to have string kid")
+		}
+
+		if key := set.LookupKeyID(keyID); len(key) == 1 {
+			return key[0].Materialize()
+		}
+
+		return nil, fmt.Errorf("unable to find key %q", keyID)
 	})
 	if err != nil {
 		return nil, err
