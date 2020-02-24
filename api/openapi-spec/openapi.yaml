@@ -35,6 +35,8 @@ paths:
       responses:
         '204':
           description: No content, event received
+        '400':
+          description: Missing required parameters
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
