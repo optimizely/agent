@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/optimizely/go-sdk/pkg/config"
+
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 
@@ -28,6 +30,8 @@ import (
 
 	"github.com/go-chi/render"
 )
+
+type keyMap map[string]string
 
 // ActivateBody defines the request body for an activation
 type ActivateBody struct {
@@ -55,64 +59,41 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	decisions := make([]*optimizely.Decision, 0, len(oConf.ExperimentsMap)+len(oConf.FeaturesMap))
 	disableTracking := query.Get("disableTracking") == "true"
 
-	experimentSet := make(map[string]struct{})
-	featureSet := make(map[string]struct{})
+	km := make(keyMap)
+	err = parseTypeParameter(query["type"], oConf, km)
+	if err != nil {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
 
-	// Add filters for type
-	for _, filterType := range query["type"] {
-		switch filterType {
+	err = parseExperimentKeys(query["experimentKey"], oConf, km)
+	if err != nil {
+		RenderError(err, http.StatusNotFound, w, r)
+		return
+	}
+
+	err = parseFeatureKeys(query["featureKey"], oConf, km)
+	if err != nil {
+		RenderError(err, http.StatusNotFound, w, r)
+		return
+	}
+
+	for key, value := range km {
+		var d *optimizely.Decision
+
+		switch value {
 		case "experiment":
-			for key := range oConf.ExperimentsMap {
-				experimentSet[key] = struct{}{}
-			}
+			logger.Debug().Str("experimentKey", key).Msg("fetching experiment decision")
+			d, err = optlyClient.ActivateExperiment(key, uc, disableTracking)
 		case "feature":
-			for key := range oConf.FeaturesMap {
-				featureSet[key] = struct{}{}
-			}
+			logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
+			d, err = optlyClient.ActivateFeature(key, uc, disableTracking)
 		default:
-			RenderError(fmt.Errorf(`type "%s" not supported`, filterType), http.StatusBadRequest, w, r)
-			return
-		}
-	}
-
-	// Add explicit experiments
-	for _, key := range query["experimentKey"] {
-		experimentSet[key] = struct{}{}
-	}
-
-	// Add explicit features
-	for _, key := range query["featureKey"] {
-		featureSet[key] = struct{}{}
-	}
-
-	for key := range experimentSet {
-		logger.Debug().Str("experimentKey", key).Msg("fetching experiment decision")
-		e, ok := oConf.ExperimentsMap[key]
-		if !ok {
-			RenderError(fmt.Errorf("experimentKey not-found"), http.StatusNotFound, w, r)
-			return
+			err = fmt.Errorf(`type "%s" not supported`, value)
 		}
 
-		d, err := optlyClient.ActivateExperiment(&e, uc, disableTracking)
 		if err != nil {
-			RenderError(err, http.StatusInternalServerError, w, r)
-			return
-		}
-
-		decisions = append(decisions, d)
-	}
-
-	for key := range featureSet {
-		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
-		f, ok := oConf.FeaturesMap[key]
-		if !ok {
-			RenderError(fmt.Errorf("featureKey not-found"), http.StatusNotFound, w, r)
-			return
-		}
-
-		d, err := optlyClient.ActivateFeature(&f, uc, disableTracking)
-		if err != nil {
-			RenderError(err, http.StatusInternalServerError, w, r)
+			RenderError(err, http.StatusBadRequest, w, r)
 			return
 		}
 
@@ -121,6 +102,51 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 
 	decisions = filterDecisions(r, decisions)
 	render.JSON(w, r, decisions)
+}
+
+func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, km keyMap) error {
+	for _, key := range keys {
+		_, ok := oConf.ExperimentsMap[key]
+		if !ok {
+			return fmt.Errorf("experimentKey not-found")
+		}
+
+		km[key] = "experiment"
+	}
+
+	return nil
+}
+
+func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, km keyMap) error {
+	for _, key := range keys {
+		_, ok := oConf.FeaturesMap[key]
+		if !ok {
+			return fmt.Errorf("featureKey not-found")
+		}
+
+		km[key] = "feature"
+	}
+
+	return nil
+}
+
+func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, km keyMap) error {
+	for _, filterType := range types {
+		switch filterType {
+		case "experiment":
+			for key := range oConf.ExperimentsMap {
+				km[key] = "experiment"
+			}
+		case "feature":
+			for key := range oConf.FeaturesMap {
+				km[key] = "feature"
+			}
+		default:
+			return fmt.Errorf(`type "%s" not supported`, filterType)
+		}
+	}
+
+	return nil
 }
 
 func filterDecisions(r *http.Request, decisions []*optimizely.Decision) []*optimizely.Decision {

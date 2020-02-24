@@ -267,7 +267,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 
 	// Response should be the same regardless of the flag
 	for _, flag := range []bool{true, false} {
-		actual, err := suite.optlyClient.ActivateFeature(&feature, entities.UserContext{ID: "testUser"}, flag)
+		actual, err := suite.optlyClient.ActivateFeature(feature.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
 		suite.Equal(expected, actual)
 	}
@@ -292,7 +292,7 @@ func (suite *ClientTestSuite) TestActivateExperiment() {
 
 	// Response should be the same regardless of the flag
 	for _, flag := range []bool{true, false} {
-		actual, err := suite.optlyClient.ActivateExperiment(&experiment, entities.UserContext{ID: "testUser"}, flag)
+		actual, err := suite.optlyClient.ActivateExperiment(experiment.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
 		suite.Equal(expected, actual)
 	}
