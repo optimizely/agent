@@ -1,44 +1,35 @@
 [![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent)
 [![codecov](https://codecov.io/gh/optimizely/agent/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/agent)
 # Optimizely Agent
-Optimizely Agent is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
+Optimizely Agent is a service which exposes the functionality of the Full Stack and Rollouts SDKs as
 a highly available and distributed web application.
 
-## Package Structure
-Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
+Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the [documentation](https://docs.developers.optimizely.com/full-stack/docs).
 
-* **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
-* **bin** - Compiled application binaries.
-* **cmd** - Main applications for this project.
-* **config** - Application configuration.
-* **docs** - User documentation files.
-* **pkg** - Library code that can be used by other applications.
-* **scripts** - Scripts to perform various build, install, analysis, etc operations.
+Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the [documentation](https://docs.developers.optimizely.com/rollouts/docs).
 
-## Make targets
-The following `make` targets can be used to build and run the application:
-* **build** - builds optimizely and installs binary in bin/optimizely
-* **clean** - runs `go clean` and removes the bin/ dir
-* **cover** - runs test suite with coverage profiling
-* **cover-html** - generates test coverage html report
-* **install** - installs all dev and ci dependencies, but does not install golang
-* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
-* **run** - builds and executes the optimizely binary
-* **test** - recursively tests all .go files
+## Getting Started
+To get started with Optimizely Agent, follow the [getting started guide](./docs/getting-started.md) and view example
+usage in our [examples folder](./examples).
 
 ## Prerequisites
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
-## Running Optimizely from source
+## Running from source
 Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
 
-## Running Optimizely via Docker
-Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
+## Running via Docker
+If you have Docker installed, Optimizely Agent can be started as a container. First pull the Docker image with:
+```bash
+docker pull optimizely/agent
+```
+
+Then run the docker container with:
 ```bash
 docker run -d --name optimizely-agent \
          -p 8080:8080 \
@@ -47,6 +38,7 @@ docker run -d --name optimizely-agent \
          --env OPTIMIZELY_LOG_PRETTY=true \
          optimizely/agent:latest
 ```
+
 The above command also shows how environment variables can be passed in to alter the configuration without having to
 create a config.yaml file. See the [configuration](#configuration-options) for more options.
 
@@ -92,12 +84,12 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
-## Full Stack API
+## API
 
-The core Full Stack API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
+The core API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
 The full API specification is defined in an OpenAPI 3.0 (aka Swagger) [spec](./api/openapi-spec/openapi.yaml).
 
-Each request made into the Full Stack API must include a `X-Optimizely-SDK-Key` in the request header to
+Each request made into the API must include a `X-Optimizely-SDK-Key` in the request header to
 identify the context the request should be evaluated. The SDK key maps to a unique Optimizely Project and
 [Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
 Environments to be serviced by a single Agent.
@@ -194,6 +186,28 @@ Custom metrics are also provided for the individual service endpoints and follow
 "timers.<metric-name>.responseTimeHist.p95": 0,
 "timers.<metric-name>.responseTimeHist.p99": 0,
 ```
+
+## Package Structure
+Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
+
+* **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
+* **bin** - Compiled application binaries.
+* **cmd** - Main applications for this project.
+* **config** - Application configuration.
+* **docs** - User documentation files.
+* **pkg** - Library code that can be used by other applications.
+* **scripts** - Scripts to perform various build, install, analysis, etc operations.
+
+## Make targets
+The following `make` targets can be used to build and run the application:
+* **build** - builds optimizely and installs binary in bin/optimizely
+* **clean** - runs `go clean` and removes the bin/ dir
+* **cover** - runs test suite with coverage profiling
+* **cover-html** - generates test coverage html report
+* **install** - installs all dev and ci dependencies, but does not install golang
+* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
+* **run** - builds and executes the optimizely binary
+* **test** - recursively tests all .go files
 
 ## Credits
 
