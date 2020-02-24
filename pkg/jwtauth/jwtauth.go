@@ -26,8 +26,8 @@ import (
 )
 
 // BuildAPIAccessToken returns a token for accessing the API service using the argument SDK key and TTL. It also returns the expiration timestamp.
-func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (tokenString string, expires int64, err error) {
-	expires = time.Now().Add(ttl).Unix()
+func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (tokenString string, err error) {
+	expires := time.Now().Add(ttl).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss":     "Optimizely",
@@ -36,14 +36,14 @@ func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (tokenStr
 	})
 	tokenString, err = token.SignedString(key)
 	if err != nil {
-		return "", 0, fmt.Errorf("error building API access token: %w", err)
+		return "", fmt.Errorf("error building API access token: %w", err)
 	}
-	return tokenString, expires, nil
+	return tokenString, nil
 }
 
 // BuildAdminAccessToken returns a token for accessing the Admin service using the argument TTL. It also returns the expiration timestamp.
-func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, expires int64, err error) {
-	expires = time.Now().Add(ttl).Unix()
+func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, err error) {
+	expires := time.Now().Add(ttl).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss":   "Optimizely",
@@ -52,9 +52,9 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, e
 	})
 	tokenString, err = token.SignedString(key)
 	if err != nil {
-		return "", 0, fmt.Errorf("error building Admin access token: %w", err)
+		return "", fmt.Errorf("error building Admin access token: %w", err)
 	}
-	return tokenString, expires, nil
+	return tokenString, nil
 }
 
 // MatchClientSecret compares secret keys

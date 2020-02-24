@@ -50,8 +50,8 @@ func (s *OAuthTestSuite) SetupTest() {
 	s.handler = NewOAuthHandler(&config)
 
 	mux := chi.NewMux()
-	mux.Post("/api/token", s.handler.GetAPIAccessToken)
-	mux.Post("/admin/token", s.handler.GetAdminAccessToken)
+	mux.Post("/api/token", s.handler.CreateAPIAccessToken)
+	mux.Post("/admin/token", s.handler.CreateAdminAccessToken)
 	s.mux = mux
 }
 

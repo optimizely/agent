@@ -31,10 +31,8 @@ type JWTAuthTestSuite struct{
 func (s *JWTAuthTestSuite) TestBuildAPIAccessTokenSuccess() {
 	tokenTtl := 10 * time.Minute
 	secretKey := []byte("seekrit")
-	tokenString, expiresIn, err := BuildAPIAccessToken("123", tokenTtl, secretKey)
+	tokenString, err := BuildAPIAccessToken("123", tokenTtl, secretKey)
 	s.NoError(err)
-	expectedExpiresIn := time.Now().Add(tokenTtl).Unix()
-	s.GreaterOrEqual(expectedExpiresIn, expiresIn)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
 		return secretKey, nil
 	})
@@ -45,16 +43,15 @@ func (s *JWTAuthTestSuite) TestBuildAPIAccessTokenSuccess() {
 	s.Equal("123", claims["sdk_key"])
 	claimsExpFloat, ok := claims["exp"].(float64)
 	s.True(ok)
-	s.Equal(expiresIn, int64(claimsExpFloat))
+	expectedExpiresIn := time.Now().Add(tokenTtl).Unix()
+	s.Equal(expectedExpiresIn, int64(claimsExpFloat))
 }
 
 func (s *JWTAuthTestSuite) TestBuildAdminAccessTokenSuccess() {
 	tokenTtl := 10 * time.Minute
 	secretKey := []byte("seekrit")
-	tokenString, expiresIn, err := BuildAdminAccessToken(tokenTtl, secretKey)
+	tokenString, err := BuildAdminAccessToken(tokenTtl, secretKey)
 	s.NoError(err)
-	expectedExpiresIn := time.Now().Add(tokenTtl).Unix()
-	s.GreaterOrEqual(expectedExpiresIn, expiresIn)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
 		return secretKey, nil
 	})
@@ -65,7 +62,8 @@ func (s *JWTAuthTestSuite) TestBuildAdminAccessTokenSuccess() {
 	s.Equal(true, claims["admin"])
 	claimsExpFloat, ok := claims["exp"].(float64)
 	s.True(ok)
-	s.Equal(expiresIn, int64(claimsExpFloat))
+	expectedExpiresIn := time.Now().Add(tokenTtl).Unix()
+	s.Equal(expectedExpiresIn, int64(claimsExpFloat))
 }
 
 func TestJWTAuthTestSuite(t *testing.T) {

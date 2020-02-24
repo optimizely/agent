@@ -50,14 +50,9 @@ type tokenRequest struct {
 }
 
 type tokenResponse struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	ExpiresIn   int64  `json:"expires_in"`
-}
-
-func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessToken string, expires int64) {
-	// TODO: expires_in should be in seconds, per https://tools.ietf.org/html/rfc6749#section-5.1
-	render.JSON(w, r, tokenResponse{accessToken, "bearer", expires})
+	AccessToken string  `json:"access_token"`
+	TokenType   string  `json:"token_type"`
+	ExpiresIn   float64 `json:"expires_in"`
 }
 
 // NewOAuthHandler creates new handler for auth
@@ -110,8 +105,8 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	return &clientCreds, http.StatusOK, nil
 }
 
-// GetAPIAccessToken returns a JWT access token for the API service
-func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+// CreateAPIAccessToken returns a JWT access token for the API service
+func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	clientCreds, httpCode, e := h.verifyClientCredentials(r)
 	if e != nil {
@@ -126,18 +121,22 @@ func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	accessToken, expires, err := jwtauth.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
+	accessToken, err := jwtauth.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	renderAccessTokenResponse(w, r, accessToken, expires)
+	render.JSON(w, r, tokenResponse{
+		accessToken,
+		"bearer",
+		clientCreds.TTL.Seconds(),
+	})
 }
 
-// GetAdminAccessToken returns a JWT access token for the Admin service
-func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Request) {
+// CreateAdminAccessToken returns a JWT access token for the Admin service
+func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	clientCreds, httpCode, e := h.verifyClientCredentials(r)
 	if e != nil {
@@ -145,12 +144,16 @@ func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	accessToken, expires, err := jwtauth.BuildAdminAccessToken(clientCreds.TTL, h.hmacSecret)
+	accessToken, err := jwtauth.BuildAdminAccessToken(clientCreds.TTL, h.hmacSecret)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAdminAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	renderAccessTokenResponse(w, r, accessToken, expires)
+	render.JSON(w, r, tokenResponse{
+		accessToken,
+		"bearer",
+		clientCreds.TTL.Seconds(),
+	})
 }
