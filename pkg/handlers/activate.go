@@ -59,26 +59,26 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	decisions := make([]*optimizely.Decision, 0, len(oConf.ExperimentsMap)+len(oConf.FeaturesMap))
 	disableTracking := query.Get("disableTracking") == "true"
 
-	km := make(keyMap)
-	err = parseTypeParameter(query["type"], oConf, km)
+	kmap := make(keyMap)
+	err = parseTypeParameter(query["type"], oConf, kmap)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
 	}
 
-	err = parseExperimentKeys(query["experimentKey"], oConf, km)
+	err = parseExperimentKeys(query["experimentKey"], oConf, kmap)
 	if err != nil {
 		RenderError(err, http.StatusNotFound, w, r)
 		return
 	}
 
-	err = parseFeatureKeys(query["featureKey"], oConf, km)
+	err = parseFeatureKeys(query["featureKey"], oConf, kmap)
 	if err != nil {
 		RenderError(err, http.StatusNotFound, w, r)
 		return
 	}
 
-	for key, value := range km {
+	for key, value := range kmap {
 		var d *optimizely.Decision
 
 		switch value {
@@ -104,42 +104,42 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, decisions)
 }
 
-func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, km keyMap) error {
+func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
 	for _, key := range keys {
 		_, ok := oConf.ExperimentsMap[key]
 		if !ok {
 			return fmt.Errorf("experimentKey not-found")
 		}
 
-		km[key] = "experiment"
+		kmap[key] = "experiment"
 	}
 
 	return nil
 }
 
-func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, km keyMap) error {
+func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
 	for _, key := range keys {
 		_, ok := oConf.FeaturesMap[key]
 		if !ok {
 			return fmt.Errorf("featureKey not-found")
 		}
 
-		km[key] = "feature"
+		kmap[key] = "feature"
 	}
 
 	return nil
 }
 
-func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, km keyMap) error {
+func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
 	for _, filterType := range types {
 		switch filterType {
 		case "experiment":
 			for key := range oConf.ExperimentsMap {
-				km[key] = "experiment"
+				kmap[key] = "experiment"
 			}
 		case "feature":
 			for key := range oConf.FeaturesMap {
-				km[key] = "feature"
+				kmap[key] = "feature"
 			}
 		default:
 			return fmt.Errorf(`type "%s" not supported`, filterType)
