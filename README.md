@@ -8,27 +8,8 @@ Optimizely Full Stack is A/B testing and feature flag management for product dev
 
 Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the [documentation](https://docs.developers.optimizely.com/rollouts/docs).
 
-## Package Structure
-Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
-
-* **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
-* **bin** - Compiled application binaries.
-* **cmd** - Main applications for this project.
-* **config** - Application configuration.
-* **docs** - User documentation files.
-* **pkg** - Library code that can be used by other applications.
-* **scripts** - Scripts to perform various build, install, analysis, etc operations.
-
-## Make targets
-The following `make` targets can be used to build and run the application:
-* **build** - builds optimizely and installs binary in bin/optimizely
-* **clean** - runs `go clean` and removes the bin/ dir
-* **cover** - runs test suite with coverage profiling
-* **cover-html** - generates test coverage html report
-* **install** - installs all dev and ci dependencies, but does not install golang
-* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
-* **run** - builds and executes the optimizely binary
-* **test** - recursively tests all .go files
+## Getting Started
+To get started with Optimizely Agent, follow the [getting started guide](./docs/getting-started.md).
 
 ## Prerequisites
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
@@ -42,7 +23,12 @@ make run
 This will start the Optimizely Agent with the default configuration in the foreground.
 
 ## Running via Docker
-Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
+If you have Docker installed, Optimizely Agent can be started as a container. First pull the Docker image with:
+```bash
+docker pull optimizely/agent
+```
+
+Then run the docker container with:
 ```bash
 docker run -d --name optimizely-agent \
          -p 8080:8080 \
@@ -51,6 +37,7 @@ docker run -d --name optimizely-agent \
          --env OPTIMIZELY_LOG_PRETTY=true \
          optimizely/agent:latest
 ```
+
 The above command also shows how environment variables can be passed in to alter the configuration without having to
 create a config.yaml file. See the [configuration](#configuration-options) for more options.
 
@@ -198,6 +185,28 @@ Custom metrics are also provided for the individual service endpoints and follow
 "timers.<metric-name>.responseTimeHist.p95": 0,
 "timers.<metric-name>.responseTimeHist.p99": 0,
 ```
+
+## Package Structure
+Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
+
+* **api** - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
+* **bin** - Compiled application binaries.
+* **cmd** - Main applications for this project.
+* **config** - Application configuration.
+* **docs** - User documentation files.
+* **pkg** - Library code that can be used by other applications.
+* **scripts** - Scripts to perform various build, install, analysis, etc operations.
+
+## Make targets
+The following `make` targets can be used to build and run the application:
+* **build** - builds optimizely and installs binary in bin/optimizely
+* **clean** - runs `go clean` and removes the bin/ dir
+* **cover** - runs test suite with coverage profiling
+* **cover-html** - generates test coverage html report
+* **install** - installs all dev and ci dependencies, but does not install golang
+* **lint** - runs `golangci-lint` linters defined in `.golangci.yml` file
+* **run** - builds and executes the optimizely binary
+* **test** - recursively tests all .go files
 
 ## Credits
 
