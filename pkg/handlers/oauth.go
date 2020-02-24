@@ -108,10 +108,10 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 // CreateAPIAccessToken returns a JWT access token for the API service
 func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
 
-	clientCreds, httpCode, e := h.verifyClientCredentials(r)
-	if e != nil {
+	clientCreds, httpCode, err := h.verifyClientCredentials(r)
+	if err != nil {
 		// TODO: set correct error property in response body as described here: https://tools.ietf.org/html/rfc6749#section-5.2
-		RenderError(e, httpCode, w, r)
+		RenderError(err, httpCode, w, r)
 		return
 	}
 
@@ -138,9 +138,9 @@ func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Reque
 // CreateAdminAccessToken returns a JWT access token for the Admin service
 func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Request) {
 
-	clientCreds, httpCode, e := h.verifyClientCredentials(r)
-	if e != nil {
-		RenderError(e, httpCode, w, r)
+	clientCreds, httpCode, err := h.verifyClientCredentials(r)
+	if err != nil {
+		RenderError(err, httpCode, w, r)
 		return
 	}
 
