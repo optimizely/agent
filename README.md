@@ -1,8 +1,12 @@
 [![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent)
 [![codecov](https://codecov.io/gh/optimizely/agent/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/agent)
 # Optimizely Agent
-Optimizely Agent is the Optimizely Full Stack Service which exposes the functionality of a Full Stack SDK as
+Optimizely Agent is a service which exposes the functionality of the Full Stack and Rollouts SDKs as
 a highly available and distributed web application.
+
+Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the [documentation](https://docs.developers.optimizely.com/full-stack/docs).
+
+Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the [documentation](https://docs.developers.optimizely.com/rollouts/docs).
 
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
@@ -30,14 +34,14 @@ The following `make` targets can be used to build and run the application:
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
-## Running Optimizely from source
+## Running from source
 Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
 
-## Running Optimizely via Docker
+## Running via Docker
 Alternatively, if you have Docker installed, Optimizely Agent can be started as a container:
 ```bash
 docker run -d --name optimizely-agent \
@@ -92,12 +96,12 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
-## Full Stack API
+## API
 
-The core Full Stack API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
+The core API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
 The full API specification is defined in an OpenAPI 3.0 (aka Swagger) [spec](./api/openapi-spec/openapi.yaml).
 
-Each request made into the Full Stack API must include a `X-Optimizely-SDK-Key` in the request header to
+Each request made into the API must include a `X-Optimizely-SDK-Key` in the request header to
 identify the context the request should be evaluated. The SDK key maps to a unique Optimizely Project and
 [Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
 Environments to be serviced by a single Agent.
