@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"github.com/optimizely/agent/pkg/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -78,6 +79,11 @@ func (suite *APIV1TestSuite) SetupTest() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: true,
+		oAuthHandler: handlers.NewOAuthHandler(&config.ServiceAuthConfig{
+			Clients:    []config.OAuthClientCredentials{},
+			HMACSecret: "",
+			TTL:        0,
+		}),
 		oAuthMiddleware: middleware.Auth{Verifier: middleware.NoAuth{}},
 	}
 
@@ -94,7 +100,6 @@ func (suite *APIV1TestSuite) TestOverride() {
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
-		{"POST", "oauth/token"},
 	}
 
 	for _, route := range routes {
@@ -121,6 +126,11 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: false,
+		oAuthHandler: handlers.NewOAuthHandler(&config.ServiceAuthConfig{
+			Clients:    []config.OAuthClientCredentials{},
+			HMACSecret: "",
+			TTL:        0,
+		}),
 		oAuthMiddleware: middleware.Auth{Verifier: middleware.NoAuth{}},
 	}
 

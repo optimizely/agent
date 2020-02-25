@@ -156,8 +156,9 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		maxConns:        opt.maxConns,
 		enableOverrides: opt.enableOverrides,
 		middleware:      opt.middleware,
-		handlers:        newDefaultHandlers(opt.oAuthHandler),
+		handlers:        new(defaultHandlers),
 		metricsRegistry: opt.metricsRegistry,
+		oAuthHandler:    opt.oAuthHandler,
 		oAuthMiddleware: opt.oAuthMiddleware,
 	}
 

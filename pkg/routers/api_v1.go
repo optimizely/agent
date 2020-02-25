@@ -38,6 +38,7 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
+	oAuthHandler    *handlers.OAuthHandler
 	oAuthMiddleware middleware.Auth
 }
 
@@ -47,16 +48,9 @@ type apiHandlers interface {
 	activate(w http.ResponseWriter, r *http.Request)
 	trackEvent(w http.ResponseWriter, r *http.Request)
 	override(w http.ResponseWriter, r *http.Request)
-	createAccessToken(w http.ResponseWriter, r *http.Request)
 }
 
-type defaultHandlers struct {
-	oAuthHandler *handlers.OAuthHandler
-}
-
-func newDefaultHandlers(oAuthHandler *handlers.OAuthHandler) *defaultHandlers {
-	return &defaultHandlers{oAuthHandler}
-}
+type defaultHandlers struct{}
 
 func (d defaultHandlers) config(w http.ResponseWriter, r *http.Request) {
 	handlers.OptimizelyConfig(w, r)
@@ -74,17 +68,14 @@ func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
-func (d defaultHandlers) createAccessToken(w http.ResponseWriter, r *http.Request) {
-	d.oAuthHandler.CreateAPIAccessToken(w, r)
-}
-
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		handlers:        newDefaultHandlers(handlers.NewOAuthHandler(&conf.Auth)),
+		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
+		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
 		oAuthMiddleware: middleware.NewAuth(&conf.Auth),
 	}
 
@@ -128,6 +119,6 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(activateTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/activate", opt.handlers.activate)
 		r.With(trackTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/track", opt.handlers.trackEvent)
 		r.With(overrideTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/override", overrideHandler)
-		r.With(createAccesstokenTimer).Post("/oauth/token", opt.handlers.createAccessToken)
+		r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
 	})
 }
