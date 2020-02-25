@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,6 +50,20 @@ func (suite *TrackTestSuite) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
+type ErrorConfigManager struct{}
+
+func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
+	return nil, fmt.Errorf("config error")
+}
+
+func (e ErrorConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) SyncConfig() {
+	panic("implement me")
+}
+
 type MockConfigManager struct {
 	config config.ProjectConfig
 }
@@ -70,7 +85,7 @@ func (suite *TrackTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
-		ConfigManager:    MockConfigManager{config:testClient.ProjectConfig},
+		ConfigManager:    MockConfigManager{config: testClient.ProjectConfig},
 		ForcedVariations: testClient.ForcedVariations,
 	}
 
@@ -151,20 +166,24 @@ func (suite *TrackTestSuite) TestTrackEventWithInvalidTags() {
 	suite.assertError(rec, "error parsing request body", http.StatusBadRequest)
 }
 
-func (suite *TrackTestSuite) TestTrackEventError() {
-	req := httptest.NewRequest("POST", "/track?eventKey=invalid", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
+func (suite *TrackTestSuite) TestTrackEventParamError() {
+	scenarios := []struct {
+		param   string
+		code    int
+		message string
+	}{
+		{"?eventKey=invalid", http.StatusNotFound, "Event with key invalid not found"},
+		{"?eventKey=", http.StatusBadRequest, "missing required path parameter: eventKey"},
+		{"", http.StatusBadRequest, "missing required path parameter: eventKey"},
+	}
 
-	suite.Equal(http.StatusNotFound, rec.Code)
-}
+	for _, scenario := range scenarios {
+		req := httptest.NewRequest("POST", "/track"+scenario.param, nil)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
 
-func (suite *TrackTestSuite) TestTrackEventEmptyKey() {
-	req := httptest.NewRequest("POST", "/track", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
+		suite.assertError(rec, scenario.message, scenario.code)
+	}
 }
 
 func (suite *TrackTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
@@ -182,4 +201,29 @@ func TestTrackMissingOptlyCtx(t *testing.T) {
 	rec := httptest.NewRecorder()
 	http.HandlerFunc(TrackEvent).ServeHTTP(rec, req)
 	assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
+}
+
+func TestTrackErrorConfigManager(t *testing.T) {
+	testClient := optimizelytest.NewClient()
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    ErrorConfigManager{},
+		ForcedVariations: testClient.ForcedVariations,
+	}
+
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	mux := chi.NewMux()
+	mux.With(mw).Post("/track", TrackEvent)
+
+	req := httptest.NewRequest("POST", "/track?eventKey=something", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	assertError(t, rec, "config error", http.StatusInternalServerError)
 }
