@@ -120,7 +120,6 @@ func (suite *APIV1TestSuite) TestOverride() {
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
 		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
 	}
-
 }
 
 func (suite *APIV1TestSuite) TestDisabledOverride() {
