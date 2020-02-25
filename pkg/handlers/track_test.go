@@ -27,8 +27,10 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -51,6 +53,14 @@ func (suite *TrackTestSuite) ClientCtx(next http.Handler) http.Handler {
 }
 
 type ErrorConfigManager struct{}
+
+func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
+	panic("implement me")
+}
 
 func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
 	return nil, fmt.Errorf("config error")
@@ -222,6 +232,42 @@ func TestTrackErrorConfigManager(t *testing.T) {
 	mux.With(mw).Post("/track", TrackEvent)
 
 	req := httptest.NewRequest("POST", "/track?eventKey=something", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	assertError(t, rec, "config error", http.StatusInternalServerError)
+}
+
+func TestTrackErrorClient(t *testing.T) {
+	// Construct an OptimizelyClient with an erroring config manager
+	factory := client.OptimizelyFactory{}
+	oClient, _ := factory.Client(
+		client.WithConfigManager(ErrorConfigManager{}),
+	)
+
+	// Construct a valid config manager as part of the OptlyClient wrapper
+	testConfig := optimizelytest.NewConfig()
+	eventKey := "test-event"
+	event := entities.Event{Key: eventKey}
+	testConfig.AddEvent(event)
+
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: oClient,
+		ConfigManager:    MockConfigManager{config: testConfig},
+		ForcedVariations: nil,
+	}
+
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	mux := chi.NewMux()
+	mux.With(mw).Post("/track", TrackEvent)
+
+	req := httptest.NewRequest("POST", "/track?eventKey=test-event", nil)
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 
