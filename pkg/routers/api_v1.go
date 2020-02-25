@@ -38,6 +38,7 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
+	oAuthMiddleware middleware.Auth
 }
 
 // Define an interface to facilitate testing
@@ -84,6 +85,7 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        newDefaultHandlers(handlers.NewOAuthHandler(&conf.Auth)),
 		metricsRegistry: metricsRegistry,
+		oAuthMiddleware: middleware.NewAuth(&conf.Auth),
 	}
 
 	return NewAPIV1Router(spec)
@@ -122,10 +124,10 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	}
 
 	r.Route("/v1", func(r chi.Router) {
-		r.With(getConfigTimer).Get("/config", opt.handlers.config)
-		r.With(activateTimer).Post("/activate", opt.handlers.activate)
-		r.With(trackTimer).Post("/track", opt.handlers.trackEvent)
-		r.With(overrideTimer).Post("/override", overrideHandler)
+		r.With(getConfigTimer, opt.oAuthMiddleware.AuthorizeAPI).Get("/config", opt.handlers.config)
+		r.With(activateTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/activate", opt.handlers.activate)
+		r.With(trackTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/track", opt.handlers.trackEvent)
+		r.With(overrideTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/override", overrideHandler)
 		r.With(createAccesstokenTimer).Post("/oauth/token", opt.handlers.createAccessToken)
 	})
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
@@ -77,6 +78,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: true,
+		oAuthMiddleware: middleware.Auth{Verifier: middleware.NoAuth{}},
 	}
 
 	suite.mux = NewAPIV1Router(opts)
@@ -119,6 +121,7 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: false,
+		oAuthMiddleware: middleware.Auth{Verifier: middleware.NoAuth{}},
 	}
 
 	mux := NewAPIV1Router(opts)
