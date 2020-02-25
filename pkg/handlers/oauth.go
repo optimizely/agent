@@ -18,8 +18,6 @@
 package handlers
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -55,9 +53,12 @@ type tokenResponse struct {
 	ExpiresIn   int64  `json:"expires_in"`
 }
 
-func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessToken string, expires int64) {
-	// TODO: expires_in should be in seconds, per https://tools.ietf.org/html/rfc6749#section-5.1
-	render.JSON(w, r, tokenResponse{accessToken, "bearer", expires})
+func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessToken string, ttl time.Duration) {
+	render.JSON(w, r, tokenResponse{
+		accessToken,
+		"bearer",
+		int64(ttl.Seconds()),
+	})
 }
 
 // NewOAuthHandler creates new handler for auth
@@ -80,6 +81,16 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	return h
 }
 
+// ClientCredentialsError is the response body returned when the provided client credentials are invalid
+type ClientCredentialsError struct {
+	ErrorCode        string `json:"error"`
+	ErrorDescription string `json:"error_description,omitempty"`
+}
+
+func (err *ClientCredentialsError) Error() string {
+	return err.ErrorCode
+}
+
 func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredentials, int, error) {
 	var reqBody tokenRequest
 	err := ParseRequestBody(r, &reqBody)
@@ -88,69 +99,90 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	}
 
 	if reqBody.GrantType == "" {
-		return nil, http.StatusBadRequest, errors.New("grant_type query parameter required")
+		return nil, http.StatusBadRequest, &ClientCredentialsError{
+			ErrorCode:        "invalid_request",
+			ErrorDescription: "grant_type missing from request body",
+		}
 	}
 	if reqBody.GrantType != "client_credentials" {
-		return nil, http.StatusBadRequest, fmt.Errorf("unsupported grant_type %v", reqBody.GrantType)
-
+		return nil, http.StatusBadRequest, &ClientCredentialsError{
+			ErrorCode: "unsupported_grant_type",
+		}
 	}
 
 	if reqBody.ClientID == "" {
-		return nil, http.StatusUnauthorized, errors.New("client_id query parameter required")
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
+			ErrorCode:        "invalid_client",
+			ErrorDescription: "client_id missing from request body",
+		}
 	}
 
 	if reqBody.ClientSecret == "" {
-		return nil, http.StatusUnauthorized, errors.New("client_secret query parameter required")
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
+			ErrorCode:        "invalid_client",
+			ErrorDescription: "client_secret missing from request body",
+		}
 	}
 	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
 	// TODO: hash client secret and match secret hash
-	if !ok || !jwtauth.MatchClientSecret(reqBody.ClientSecret, clientCreds.Secret) {
-		return nil, http.StatusForbidden, errors.New("invalid client_id or client_secret")
+	if !ok || !jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.Secret) {
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
+			ErrorCode:        "invalid_client",
+			ErrorDescription: "invalid client_id or client_secret",
+		}
 	}
 	return &clientCreds, http.StatusOK, nil
 }
 
-// GetAPIAccessToken returns a JWT access token for the API service
-func (h *OAuthHandler) GetAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+func renderClientCredentialsError(err error, status int, w http.ResponseWriter, r *http.Request) {
+	middleware.GetLogger(r).Debug().Err(err).Int("status", status).Msg("render client credentials error")
+	render.Status(r, status)
+	render.JSON(w, r, err)
+}
 
-	clientCreds, httpCode, e := h.verifyClientCredentials(r)
-	if e != nil {
-		// TODO: set correct error property in response body as described here: https://tools.ietf.org/html/rfc6749#section-5.2
-		RenderError(e, httpCode, w, r)
+// CreateAPIAccessToken returns a JWT access token for the API service
+func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+
+	clientCreds, httpCode, err := h.verifyClientCredentials(r)
+	if err != nil {
+		renderClientCredentialsError(err, httpCode, w, r)
 		return
 	}
 
 	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
 	if sdkKey == "" {
-		RenderError(errors.New("sdk_key required in the header"), http.StatusBadRequest, w, r)
+		renderClientCredentialsError(&ClientCredentialsError{
+			ErrorCode:        "invalid_request",
+			ErrorDescription: "X-Optimizely-Sdk-Key header required",
+		}, http.StatusBadRequest, w, r)
 		return
 	}
 
-	accessToken, expires, err := jwtauth.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
+	accessToken, err := jwtauth.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	renderAccessTokenResponse(w, r, accessToken, expires)
+	renderAccessTokenResponse(w, r, accessToken, clientCreds.TTL)
 }
 
-// GetAdminAccessToken returns a JWT access token for the Admin service
-func (h *OAuthHandler) GetAdminAccessToken(w http.ResponseWriter, r *http.Request) {
+// CreateAdminAccessToken returns a JWT access token for the Admin service
+func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Request) {
 
-	clientCreds, httpCode, e := h.verifyClientCredentials(r)
-	if e != nil {
-		RenderError(e, httpCode, w, r)
+	clientCreds, httpCode, err := h.verifyClientCredentials(r)
+	if err != nil {
+		renderClientCredentialsError(err, httpCode, w, r)
 		return
 	}
 
-	accessToken, expires, err := jwtauth.BuildAdminAccessToken(clientCreds.TTL, h.hmacSecret)
+	accessToken, err := jwtauth.BuildAdminAccessToken(clientCreds.TTL, h.hmacSecret)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAdminAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	renderAccessTokenResponse(w, r, accessToken, expires)
+	renderAccessTokenResponse(w, r, accessToken, clientCreds.TTL)
 }
