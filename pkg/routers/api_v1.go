@@ -38,7 +38,6 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
-	oAuthHandler    *handlers.OAuthHandler
 }
 
 // Define an interface to facilitate testing
@@ -47,9 +46,16 @@ type apiHandlers interface {
 	activate(w http.ResponseWriter, r *http.Request)
 	trackEvent(w http.ResponseWriter, r *http.Request)
 	override(w http.ResponseWriter, r *http.Request)
+	createAccessToken(w http.ResponseWriter, r *http.Request)
 }
 
-type defaultHandlers struct{}
+type defaultHandlers struct {
+	oAuthHandler *handlers.OAuthHandler
+}
+
+func newDefaultHandlers(oAuthHandler *handlers.OAuthHandler) *defaultHandlers {
+	return &defaultHandlers{oAuthHandler}
+}
 
 func (d defaultHandlers) config(w http.ResponseWriter, r *http.Request) {
 	handlers.OptimizelyConfig(w, r)
@@ -67,14 +73,17 @@ func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
+func (d defaultHandlers) createAccessToken(w http.ResponseWriter, r *http.Request) {
+	d.oAuthHandler.CreateAPIAccessToken(w, r)
+}
+
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		handlers:        new(defaultHandlers),
+		handlers:        newDefaultHandlers(handlers.NewOAuthHandler(&conf.Auth)),
 		metricsRegistry: metricsRegistry,
-		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
 	}
 
 	return NewAPIV1Router(spec)
@@ -117,6 +126,6 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(activateTimer).Post("/activate", opt.handlers.activate)
 		r.With(trackTimer).Post("/track", opt.handlers.trackEvent)
 		r.With(overrideTimer).Post("/override", overrideHandler)
-		r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
+		r.With(createAccesstokenTimer).Post("/oauth/token", opt.handlers.createAccessToken)
 	})
 }

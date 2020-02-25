@@ -18,7 +18,6 @@
 package routers
 
 import (
-	"github.com/optimizely/agent/pkg/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,6 +57,10 @@ func (m MockHandlers) override(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(methodHeaderKey, "override")
 }
 
+func (m MockHandlers) createAccessToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add(methodHeaderKey, "oauth/token")
+}
+
 type APIV1TestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
@@ -74,11 +77,6 @@ func (suite *APIV1TestSuite) SetupTest() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: true,
-		oAuthHandler: handlers.NewOAuthHandler(&config.ServiceAuthConfig{
-			Clients:    []config.OAuthClientCredentials{},
-			HMACSecret: "",
-			TTL:        0,
-		}),
 	}
 
 	suite.mux = NewAPIV1Router(opts)
@@ -94,6 +92,7 @@ func (suite *APIV1TestSuite) TestOverride() {
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
+		{"POST", "oauth/token"},
 	}
 
 	for _, route := range routes {
@@ -120,11 +119,6 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: false,
-		oAuthHandler: handlers.NewOAuthHandler(&config.ServiceAuthConfig{
-			Clients:    []config.OAuthClientCredentials{},
-			HMACSecret: "",
-			TTL:        0,
-		}),
 	}
 
 	mux := NewAPIV1Router(opts)
