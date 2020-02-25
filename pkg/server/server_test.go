@@ -104,17 +104,24 @@ func TestTSLServerConfigs(t *testing.T) {
 
 func TestBlacklistCiphers(t *testing.T) {
 
+	defaultCiphers := []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	}
+
 	blacklist := []string{
 		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
 		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
 	}
 
-	ciphers := blacklistCiphers(blacklist)
+	ciphers := blacklistCiphers(blacklist, defaultCiphers)
 
 	expectedCiphers := []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 	}
 	assert.Equal(t, expectedCiphers, ciphers)
 
