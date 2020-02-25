@@ -101,7 +101,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	if reqBody.GrantType == "" {
 		return nil, http.StatusBadRequest, &ClientCredentialsError{
 			ErrorCode:        "invalid_request",
-			ErrorDescription: "grant_type query parameter required",
+			ErrorDescription: "grant_type missing from request body",
 		}
 	}
 	if reqBody.GrantType != "client_credentials" {
@@ -113,14 +113,14 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	if reqBody.ClientID == "" {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
-			ErrorDescription: "client_id query parameter required",
+			ErrorDescription: "client_id missing from request body",
 		}
 	}
 
 	if reqBody.ClientSecret == "" {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
-			ErrorDescription: "client_secret query parameter required",
+			ErrorDescription: "client_secret missing from request body",
 		}
 	}
 	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
