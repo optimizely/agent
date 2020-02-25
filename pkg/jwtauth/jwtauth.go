@@ -57,8 +57,8 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, e
 	return tokenString, nil
 }
 
-// MatchClientSecret compares secret keys
-func MatchClientSecret(reqSecretStr string, configSecret []byte) bool {
+// ValidateClientSecret compares secret keys
+func ValidateClientSecret(reqSecretStr string, configSecret []byte) bool {
 	reqSecret := []byte(reqSecretStr)
 	if len(configSecret) != len(reqSecret) {
 		return false
