@@ -48,9 +48,17 @@ type tokenRequest struct {
 }
 
 type tokenResponse struct {
-	AccessToken string  `json:"access_token"`
-	TokenType   string  `json:"token_type"`
-	ExpiresIn   float64 `json:"expires_in"`
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int64  `json:"expires_in"`
+}
+
+func renderAccessTokenResponse(w http.ResponseWriter, r *http.Request, accessToken string, ttl time.Duration) {
+	render.JSON(w, r, tokenResponse{
+		accessToken,
+		"bearer",
+		int64(ttl.Seconds()),
+	})
 }
 
 // NewOAuthHandler creates new handler for auth
@@ -156,11 +164,7 @@ func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.JSON(w, r, tokenResponse{
-		accessToken,
-		"bearer",
-		clientCreds.TTL.Seconds(),
-	})
+	renderAccessTokenResponse(w, r, accessToken, clientCreds.TTL)
 }
 
 // CreateAdminAccessToken returns a JWT access token for the Admin service
@@ -179,9 +183,5 @@ func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	render.JSON(w, r, tokenResponse{
-		accessToken,
-		"bearer",
-		clientCreds.TTL.Seconds(),
-	})
+	renderAccessTokenResponse(w, r, accessToken, clientCreds.TTL)
 }
