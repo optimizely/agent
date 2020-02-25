@@ -73,12 +73,12 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	return h
 }
 
-type clientCredentialsError struct {
+type ClientCredentialsError struct {
 	ErrorCode        string `json:"error"`
 	ErrorDescription string `json:"error_description,omitempty"`
 }
 
-func (err *clientCredentialsError) Error() string {
+func (err *ClientCredentialsError) Error() string {
 	return err.ErrorCode
 }
 
@@ -90,26 +90,26 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	}
 
 	if reqBody.GrantType == "" {
-		return nil, http.StatusBadRequest, &clientCredentialsError{
+		return nil, http.StatusBadRequest, &ClientCredentialsError{
 			ErrorCode:        "invalid_request",
 			ErrorDescription: "grant_type query parameter required",
 		}
 	}
 	if reqBody.GrantType != "client_credentials" {
-		return nil, http.StatusBadRequest, &clientCredentialsError{
+		return nil, http.StatusBadRequest, &ClientCredentialsError{
 			ErrorCode: "unsupported_grant_type",
 		}
 	}
 
 	if reqBody.ClientID == "" {
-		return nil, http.StatusUnauthorized, &clientCredentialsError{
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
 			ErrorDescription: "client_id query parameter required",
 		}
 	}
 
 	if reqBody.ClientSecret == "" {
-		return nil, http.StatusUnauthorized, &clientCredentialsError{
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
 			ErrorDescription: "client_secret query parameter required",
 		}
@@ -117,7 +117,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
 	// TODO: hash client secret and match secret hash
 	if !ok || !jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.Secret) {
-		return nil, http.StatusUnauthorized, &clientCredentialsError{
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
 			ErrorDescription: "invalid client_id or client_secret",
 		}
@@ -126,7 +126,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 }
 
 func renderClientCredentialsError(err error, status int, w http.ResponseWriter, r *http.Request) {
-	middleware.GetLogger(r).Debug().Err(err).Int("status", status).Msg("render error")
+	middleware.GetLogger(r).Debug().Err(err).Int("status", status).Msg("render client credentials error")
 	render.Status(r, status)
 	render.JSON(w, r, err)
 }
@@ -142,7 +142,7 @@ func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Reque
 
 	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
 	if sdkKey == "" {
-		renderClientCredentialsError(&clientCredentialsError{
+		renderClientCredentialsError(&ClientCredentialsError{
 			ErrorCode:        "invalid_request",
 			ErrorDescription: "X-Optimizely-Sdk-Key header required",
 		}, http.StatusBadRequest, w, r)
