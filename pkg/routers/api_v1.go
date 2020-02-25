@@ -38,6 +38,7 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
+	oAuthHandler    *handlers.OAuthHandler
 }
 
 // Define an interface to facilitate testing
@@ -73,6 +74,7 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
+		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
 	}
 
 	return NewAPIV1Router(spec)
@@ -92,6 +94,7 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
+	createAccesstokenTimer := middleware.Metricize("create-access-token", opt.metricsRegistry)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -114,5 +117,6 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(activateTimer).Post("/activate", opt.handlers.activate)
 		r.With(trackTimer).Post("/track", opt.handlers.trackEvent)
 		r.With(overrideTimer).Post("/override", overrideHandler)
+		r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
 	})
 }

@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"github.com/optimizely/agent/pkg/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -73,6 +74,11 @@ func (suite *APIV1TestSuite) SetupTest() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: true,
+		oAuthHandler: handlers.NewOAuthHandler(&config.ServiceAuthConfig{
+			Clients:    []config.OAuthClientCredentials{},
+			HMACSecret: "",
+			TTL:        0,
+		}),
 	}
 
 	suite.mux = NewAPIV1Router(opts)
@@ -114,6 +120,11 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: false,
+		oAuthHandler: handlers.NewOAuthHandler(&config.ServiceAuthConfig{
+			Clients:    []config.OAuthClientCredentials{},
+			HMACSecret: "",
+			TTL:        0,
+		}),
 	}
 
 	mux := NewAPIV1Router(opts)

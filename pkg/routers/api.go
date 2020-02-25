@@ -158,6 +158,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		middleware:      opt.middleware,
 		handlers:        new(defaultHandlers),
 		metricsRegistry: opt.metricsRegistry,
+		oAuthHandler:    opt.oAuthHandler,
 	}
 
 	r.Group(func(r chi.Router) { WithAPIV1Router(spec, r) })
