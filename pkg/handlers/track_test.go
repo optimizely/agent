@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 
@@ -48,12 +49,28 @@ func (suite *TrackTestSuite) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
+type MockConfigManager struct {
+	config config.ProjectConfig
+}
+
+func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
+	return m.config, nil
+}
+
+func (m MockConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	panic("implement me")
+}
+
+func (m MockConfigManager) SyncConfig() {
+	panic("implement me")
+}
+
 // Setup Mux
 func (suite *TrackTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
-		ConfigManager:    nil,
+		ConfigManager:    MockConfigManager{config:testClient.ProjectConfig},
 		ForcedVariations: testClient.ForcedVariations,
 	}
 
@@ -139,7 +156,7 @@ func (suite *TrackTestSuite) TestTrackEventError() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.Equal(http.StatusNoContent, rec.Code) // TODO Should this 404?
+	suite.Equal(http.StatusNotFound, rec.Code)
 }
 
 func (suite *TrackTestSuite) TestTrackEventEmptyKey() {

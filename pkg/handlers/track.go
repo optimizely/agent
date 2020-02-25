@@ -60,13 +60,23 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		Attributes: body.UserAttributes,
 	}
 
-	err = optlyClient.Track(eventKey, uc, body.EventTags)
-
+	pc, err := optlyClient.ConfigManager.GetConfig()
 	if err != nil {
-		middleware.GetLogger(r).Error().Err(err).Str("eventKey", eventKey).Msg("error tracking event")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	if _, err = pc.GetEventByKey(eventKey); err != nil {
 		RenderError(err, http.StatusNotFound, w, r)
 		return
 	}
+
+	err = optlyClient.Track(eventKey, uc, body.EventTags)
+	if err != nil {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
 	middleware.GetLogger(r).Debug().Str("eventKey", eventKey).Msg("tracking event")
 	render.NoContent(w, r)
 }

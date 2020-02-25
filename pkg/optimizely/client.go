@@ -32,7 +32,7 @@ var errNullOptimizelyConfig = errors.New("optimizely config is null")
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
-	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
+	ConfigManager    SyncedConfigManager
 	ForcedVariations *decision.MapExperimentOverridesStore
 }
 
