@@ -190,8 +190,8 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error 
 
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
-func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeature, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	enabled, variables, err := c.GetAllFeatureVariables(feature.Key, uc)
+func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+	enabled, variables, err := c.GetAllFeatureVariables(key, uc)
 	if err != nil {
 		return &Decision{}, err
 	}
@@ -199,7 +199,7 @@ func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeatur
 	// HACK - Triggers impression events when applicable. This is not
 	// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
 	if !disableTracking {
-		_, tErr := c.IsFeatureEnabled(feature.Key, uc)
+		_, tErr := c.IsFeatureEnabled(key, uc)
 		if tErr != nil {
 			return &Decision{}, tErr
 		}
@@ -207,7 +207,7 @@ func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeatur
 
 	// TODO add experiment and variation keys where applicable
 	dec := &Decision{
-		FeatureKey: feature.Key,
+		FeatureKey: key,
 		Variables:  variables,
 		Enabled:    enabled,
 		Type:       "feature",
@@ -217,21 +217,21 @@ func (c *OptlyClient) ActivateFeature(feature *optimizelyconfig.OptimizelyFeatur
 }
 
 // ActivateExperiment activates an experiment
-func (c *OptlyClient) ActivateExperiment(experiment *optimizelyconfig.OptimizelyExperiment, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+func (c *OptlyClient) ActivateExperiment(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
 	var variation string
 	var err error
 
 	if disableTracking {
-		variation, err = c.GetVariation(experiment.Key, uc)
+		variation, err = c.GetVariation(key, uc)
 	} else {
-		variation, err = c.Activate(experiment.Key, uc)
+		variation, err = c.Activate(key, uc)
 	}
 	if err != nil {
 		return &Decision{}, err
 	}
 
 	dec := &Decision{
-		ExperimentKey: experiment.Key,
+		ExperimentKey: key,
 		VariationKey:  variation,
 		Enabled:       variation != "",
 		Type:          "experiment",

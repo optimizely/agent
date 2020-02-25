@@ -66,6 +66,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Decision'
+        '400':
+          description: Bad request, invalid parameters
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
