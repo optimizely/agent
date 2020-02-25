@@ -38,8 +38,8 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
-	oAuthHandler    *handlers.OAuthHandler
-	oAuthMiddleware middleware.Auth
+	oAuthHandler    apiOAuthHandler
+	oAuthMiddleware apiOAuthMiddleware
 }
 
 // Define an interface to facilitate testing
@@ -66,6 +66,14 @@ func (d defaultHandlers) trackEvent(w http.ResponseWriter, r *http.Request) {
 
 func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
+}
+
+type apiOAuthHandler interface {
+	CreateAPIAccessToken(w http.ResponseWriter, r *http.Request)
+}
+
+type apiOAuthMiddleware interface {
+	AuthorizeAPI(next http.Handler) http.Handler
 }
 
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
