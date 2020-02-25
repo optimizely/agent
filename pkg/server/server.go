@@ -97,7 +97,14 @@ func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {
 		return nil, err
 	}
 
-	ciphers := blacklistCiphers(conf.DisabledCiphers)
+	defaultCiphers := []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	}
+
+	ciphers := blacklistCiphers(conf.DisabledCiphers, defaultCiphers)
 
 	return &tls.Config{
 		PreferServerCipherSuites: true,
@@ -112,7 +119,7 @@ func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {
 	}, nil
 }
 
-func makeDefaultCiphers() map[string]uint16 {
+func makeDefaultCiphersMap() map[string]uint16 {
 
 	return map[string]uint16{
 		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384": tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -122,18 +129,22 @@ func makeDefaultCiphers() map[string]uint16 {
 	}
 }
 
-func blacklistCiphers(blacklist []string) []uint16 {
+func blacklistCiphers(blacklist []string, defaultCiphers []uint16) []uint16 {
 
-	ciphers := makeDefaultCiphers()
-
-	for _, disabledCipher := range blacklist {
-		delete(ciphers, disabledCipher)
-	}
-
+	defaultCiphersMap := makeDefaultCiphersMap()
+	blacklistCiphersMap := map[uint16]struct{}{}
 	modifiedCiphers := []uint16{}
 
-	for _, goodCipher := range ciphers {
-		modifiedCiphers = append(modifiedCiphers, goodCipher)
+	for _, disabledCipher := range blacklist {
+		if v, ok := defaultCiphersMap[disabledCipher]; ok {
+			blacklistCiphersMap[v] = struct{}{}
+		}
+	}
+
+	for _, cipher := range defaultCiphers {
+		if _, ok := blacklistCiphersMap[cipher]; !ok {
+			modifiedCiphers = append(modifiedCiphers, cipher)
+		}
 	}
 
 	return modifiedCiphers
