@@ -29,7 +29,7 @@ LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION} -X github.com/optimizely/
 all: test lint build ## runs the test, lint and build targets
 
 $(TARGET): check-go
-	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
+	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/optimizely/main.go
 
 build: $(TARGET) check-go ## builds and installs binary in bin/
 	@true
@@ -62,6 +62,15 @@ test: check-go ## recursively tests all .go files
 	$(GOTEST) ./...
 
 include scripts/Makefile.ci
+
+# Credentials helper
+CREDS_HELPER_TARGET := "credentials_helper"
+
+$(CREDS_HELPER_TARGET): check-go
+	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(CREDS_HELPER_TARGET) cmd/credentials_helper/main.go
+
+credentials_helper: $(CREDS_HELPER_TARGET) ## builds and executes the TARGET binary
+	$(GOBIN)/$(CREDS_HELPER_TARGET)
 
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
