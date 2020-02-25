@@ -81,6 +81,7 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	return h
 }
 
+// ClientCredentialsError is the response body returned when the provided client credentials are invalid
 type ClientCredentialsError struct {
 	ErrorCode        string `json:"error"`
 	ErrorDescription string `json:"error_description,omitempty"`
