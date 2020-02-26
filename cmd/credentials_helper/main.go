@@ -16,8 +16,36 @@
 
 package main
 
-import "fmt"
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
+	"golang.org/x/crypto/bcrypt"
+	"strings"
+)
+
+var secretVersion int = 1
+var bcryptWorkFactor int = 12
 
 func main() {
-	fmt.Println("Hello credentials helper")
+	randBytes := make([]byte, 32)
+	_, err := rand.Read(randBytes)
+	if err != nil {
+		fmt.Println("error returned from rand.Read:", err)
+		return
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(randBytes)
+	stripped := strings.TrimSuffix(encoded, "=")
+	secretStr := fmt.Sprintf("%v:%v", secretVersion, stripped)
+
+	hashBytes, err := bcrypt.GenerateFromPassword(randBytes, 12)
+	if err != nil {
+		fmt.Println("error returned from bcrypt.GenerateFromPassword:", err)
+		return
+	}
+	hashStr := base64.StdEncoding.EncodeToString(hashBytes)
+
+	fmt.Printf("Client Secret: %v\n", secretStr)
+	fmt.Printf("Client Secret's hash: %v\n", hashStr)
 }
