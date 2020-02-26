@@ -34,14 +34,16 @@ type OAuthTestSuite struct {
 	suite.Suite
 	handler *OAuthHandler
 	mux     *chi.Mux
+	secret  string
 }
 
 func (s *OAuthTestSuite) SetupTest() {
+	s.secret = "RW+Uo/7z4ag9hAb10w8LIZFRFaSwS4nt1/l+uVgChIQ="
 	config := config.ServiceAuthConfig{
 		Clients: []config.OAuthClientCredentials{
 			{
 				ID:     "optly_user",
-				Secret: "client_seekrit",
+				Secret: "JDJhJDEyJDNDOG12LmNCNzlHaHhGcEJtLzZZQk9VLnRneEpGTTlnTXozb2kyNS9ERzhJTDZOZkpGa0ND",
 			},
 		},
 		HMACSecret: "hmac_seekrit",
@@ -58,7 +60,7 @@ func (s *OAuthTestSuite) SetupTest() {
 func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingGrantType() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"client_id":     "optly",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
 	req.Header.Set(middleware.OptlySDKHeader, "123")
@@ -70,7 +72,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingGrantType() {
 func (s *OAuthTestSuite) TestGetAdminAccessTokenMissingGrantType() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"client_id":     "optly",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	req.Header.Set(middleware.OptlySDKHeader, "123")
@@ -83,7 +85,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenUnsupportedGrantType() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "authorization",
 		"client_id":     "optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
 	req.Header.Set(middleware.OptlySDKHeader, "123")
@@ -96,7 +98,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenUnsupportedGrantType() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "authorization",
 		"client_id":     "optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
@@ -107,7 +109,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenUnsupportedGrantType() {
 func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingClientId() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
 	req.Header.Set(middleware.OptlySDKHeader, "123")
@@ -119,7 +121,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingClientId() {
 func (s *OAuthTestSuite) TestGetAdminAccessTokenMissingClientId() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
@@ -154,7 +156,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidClientId() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
 		"client_id":     "not_an_optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
 	req.Header.Set(middleware.OptlySDKHeader, "123")
@@ -167,7 +169,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientId() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
 		"client_id":     "not_an_optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
@@ -204,7 +206,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingSDKKey() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
 		"client_id":     "optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
@@ -216,7 +218,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
 		"client_id":     "optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
 	req.Header.Set(middleware.OptlySDKHeader, "123")
@@ -236,7 +238,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
 		"client_id":     "optly_user",
-		"client_secret": "client_seekrit",
+		"client_secret": s.secret,
 	})
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
