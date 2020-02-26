@@ -63,14 +63,17 @@ test: check-go ## recursively tests all .go files
 
 include scripts/Makefile.ci
 
-# Credentials helper
-CREDS_HELPER_TARGET := "credentials_helper"
+# Generate secret helper
+GEN_SECRET_TARGET := "generate_secret"
 
-$(CREDS_HELPER_TARGET): check-go
-	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(CREDS_HELPER_TARGET) cmd/credentials_helper/main.go
+$(GEN_SECRET_TARGET): check-go
+	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(GEN_SECRET_TARGET) cmd/generate_secret/main.go
 
-credentials_helper: $(CREDS_HELPER_TARGET) ## builds and executes the TARGET binary
-	$(GOBIN)/$(CREDS_HELPER_TARGET)
+build_generate_secret: $(GEN_SECRET_TARGET)
+	@true
+
+run_generate_secret: $(GEN_SECRET_TARGET) ## builds and executes the TARGET binary
+	$(GOBIN)/$(GEN_SECRET_TARGET)
 
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

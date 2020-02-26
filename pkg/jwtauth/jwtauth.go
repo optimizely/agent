@@ -88,7 +88,7 @@ func GenerateClientSecretAndHash() (string, string, error) {
 	}
 	secretStr := base64.StdEncoding.EncodeToString(secretBytes)
 
-	hashBytes, err := bcrypt.GenerateFromPassword(secretBytes, 12)
+	hashBytes, err := bcrypt.GenerateFromPassword(secretBytes, bcryptWorkFactor)
 	if err != nil {
 		return "", "", fmt.Errorf("error returned from bcrypt.GenerateFromPassword: %v", err)
 	}
