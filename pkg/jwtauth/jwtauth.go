@@ -19,7 +19,6 @@ package jwtauth
 
 import (
 	"crypto/rand"
-	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
@@ -60,26 +59,25 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, e
 	return tokenString, nil
 }
 
-// ValidateClientSecret compares secret keys
-func ValidateClientSecret(reqSecretStr string, configSecret []byte) bool {
-	reqSecret := []byte(reqSecretStr)
-	if len(configSecret) != len(reqSecret) {
-		return false
-	}
-	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
-}
-
 var secretBytesLen int = 32
-
-var secretVersion int = 1
 
 var bcryptWorkFactor int = 12
 
+// ValidateClientSecret returns true if the hash of the secret provided in config matches
+// the secret provided in the request. Returns an error if the req secret fails base64
+// decoding.
+func ValidateClientSecret(reqSecret string, configSecretHash []byte) (bool, error) {
+	secretBytes, err := base64.StdEncoding.DecodeString(reqSecret)
+	if err != nil {
+		return false, fmt.Errorf("error decoding string: %v", err)
+	}
+	return bcrypt.CompareHashAndPassword(configSecretHash, secretBytes) == nil, nil
+}
+
 // GenerateClientSecretAndHash returns a random secret and its hash, for use with
 // Agent's authN/authZ workflow.
-// - The first return value is the secret, composed of a version number, separator,
-//   and 32 random bytes, base64-encoded.
-// - The second return value is the bcrypt hash of the random bytes from the secret.
+// - The first return value is the secret - 32 random bytes, base64-encoded.
+// - The second return value is the bcrypt hash of the secret.
 // - The hash should be included in Agent's auth configuration as the client_secret value.
 // - The secret should be sent in the request to the token issuer endpoint.
 func GenerateClientSecretAndHash() (string, string, error) {
@@ -88,9 +86,7 @@ func GenerateClientSecretAndHash() (string, string, error) {
 	if err != nil {
 		return "", "", fmt.Errorf("error returned from rand.Read: %v", err)
 	}
-
-	encoded := base64.StdEncoding.EncodeToString(secretBytes)
-	secretStr := fmt.Sprintf("%v:%v", secretVersion, encoded)
+	secretStr := base64.StdEncoding.EncodeToString(secretBytes)
 
 	hashBytes, err := bcrypt.GenerateFromPassword(secretBytes, 12)
 	if err != nil {

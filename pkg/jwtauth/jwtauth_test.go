@@ -18,6 +18,7 @@
 package jwtauth
 
 import (
+	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -64,6 +65,29 @@ func (s *JWTAuthTestSuite) TestBuildAdminAccessTokenSuccess() {
 	s.True(ok)
 	expectedExpiresIn := time.Now().Add(tokenTtl).Unix()
 	s.Equal(expectedExpiresIn, int64(claimsExpFloat))
+}
+
+func (s *JWTAuthTestSuite) TestGenerateSecret() {
+	secret, hash, err := GenerateClientSecretAndHash()
+	s.NoError(err)
+	s.NotEmpty(secret)
+	s.NotEmpty(hash)
+	hashBytes, err := base64.StdEncoding.DecodeString(hash)
+	s.NoError(err)
+	s.NotEmpty(hashBytes)
+}
+
+func (s *JWTAuthTestSuite) TestVerifySecretSuccess() {
+	secret, hash, _ := GenerateClientSecretAndHash()
+	hashBytes, _ := base64.StdEncoding.DecodeString(hash)
+	s.True(ValidateClientSecret(secret, hashBytes))
+}
+
+func (s *JWTAuthTestSuite) TestVerifySecretFail() {
+	secret, hash, _ := GenerateClientSecretAndHash()
+	hashBytes, _ := base64.StdEncoding.DecodeString(hash)
+	invalidSecret := secret + "invalid"
+	s.False(ValidateClientSecret(invalidSecret, hashBytes))
 }
 
 func TestJWTAuthTestSuite(t *testing.T) {
