@@ -36,6 +36,8 @@ s = requests.Session()
 s.headers.update({'X-Optimizely-SDK-Key': '<<YOUR-SDK-KEY>>'})
 ```
 
+To get your SDK key, navigate to the project settings of your Optimizely account.
+
 Future examples will assume this session is being maintained.
 
 ### Get current environment configuration

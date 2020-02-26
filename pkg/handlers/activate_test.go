@@ -403,6 +403,20 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 	}
 }
 
+func (suite *ActivateTestSuite) TestInvalidFilter() {
+	req := httptest.NewRequest("POST", "/activate?type=invalid", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusBadRequest, rec.Code)
+
+	// Unmarshal response
+	var actual ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+	suite.Equal(`type "invalid" not supported`, actual.Error)
+}
+
 func (suite *ActivateTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
 	assertError(suite.T(), rec, msg, code)
 }

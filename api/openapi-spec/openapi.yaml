@@ -35,6 +35,8 @@ paths:
       responses:
         '204':
           description: No content, event received
+        '400':
+          description: Missing required parameters
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -64,6 +66,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Decision'
+        '400':
+          description: Bad request, invalid parameters
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
@@ -133,8 +137,8 @@ components:
       schema:
         type: string
         enum:
-          - features
-          - experiments
+          - feature
+          - experiment
   requestBodies:
     ActivateContext:
       required: true

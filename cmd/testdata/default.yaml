@@ -8,22 +8,27 @@ sdkKeys:
 server:
   readTimeout: 5s
   writeTimeout: 10s
-  keyfile: "keyfile"
-  certfile: "certfile"
+  keyFile: "keyfile"
+  certFile: "certfile"
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
 log:
   pretty: true
   level: debug
+client:
+  pollingInterval: 10s
+  batchSize: 1
+  queueSize: 10
+  flushInterval: 1m
 admin:
   port: "3002"
   auth:
     ttl: 30m
     hmacSecret: "efgh"
     clients:
-      id: clientid2
-      secret: clientsecret2
+      - id: clientid2
+        secret: clientsecret2
 api:
   maxConns: 100
   port: "3000"
@@ -33,8 +38,8 @@ api:
     ttl: 30m
     hmacSecret: "abcd"
     clients:
-      id: clientid1
-      secret: clientsecret1
+      - id: clientid1
+        secret: clientsecret1
 webhook:
   port: "3001"
   projects:

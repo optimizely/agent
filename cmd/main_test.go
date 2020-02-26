@@ -42,6 +42,13 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
 }
 
+func assertClient(t *testing.T, actual config.ClientConfig) {
+	assert.Equal(t, 10*time.Second, actual.PollingInterval)
+	assert.Equal(t, 1, actual.BatchSize)
+	assert.Equal(t, 10, actual.QueueSize)
+	assert.Equal(t, 1*time.Minute, actual.FlushInterval)
+}
+
 func assertLog(t *testing.T, actual config.LogConfig) {
 	assert.True(t, actual.Pretty)
 	assert.Equal(t, "debug", actual.Level)
@@ -90,10 +97,14 @@ func TestViperYaml(t *testing.T) {
 	v := viper.New()
 	v.Set("config.filename", "./testdata/default.yaml")
 
+	err := initConfig(v)
+	assert.NoError(t, err)
+
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server)
+	assertClient(t, actual.Client)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -110,18 +121,23 @@ func TestViperProps(t *testing.T) {
 	v.Set("name", "optimizely")
 	v.Set("sdkkeys", []string{"ddd", "eee", "fff"})
 
-	v.Set("server.readtimeout", 5*time.Second)
-	v.Set("server.writetimeout", 10*time.Second)
-	v.Set("server.certfile", "certfile")
-	v.Set("server.keyfile", "keyfile")
-	v.Set("server.disabledciphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+	v.Set("server.readTimeout", 5*time.Second)
+	v.Set("server.writeTimeout", 10*time.Second)
+	v.Set("server.certFile", "certfile")
+	v.Set("server.keyFile", "keyfile")
+	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+
+	v.Set("client.pollingInterval", 10*time.Second)
+	v.Set("client.batchSize", 1)
+	v.Set("client.queueSize", 10)
+	v.Set("client.flushInterval", 1*time.Minute)
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
 
 	v.Set("admin.port", "3002")
 	v.Set("admin.auth.ttl", "30m")
-	v.Set("admin.auth.hmacsecret", "efgh")
+	v.Set("admin.auth.hmacSecret", "efgh")
 	v.Set("admin.auth.clients", []map[string]string{
 		{
 			"id":     "clientid2",
@@ -129,12 +145,12 @@ func TestViperProps(t *testing.T) {
 		},
 	})
 
-	v.Set("api.maxconns", 100)
-	v.Set("api.enablenotifications", true)
-	v.Set("api.enableoverrides", true)
+	v.Set("api.maxConns", 100)
+	v.Set("api.enableNotifications", true)
+	v.Set("api.enableOverrides", true)
 	v.Set("api.port", "3000")
 	v.Set("api.auth.ttl", "30m")
-	v.Set("api.auth.hmacsecret", "abcd")
+	v.Set("api.auth.hmacSecret", "abcd")
 	v.Set("api.auth.clients", []map[string]string{
 		{
 			"id":     "clientid1",
@@ -144,17 +160,18 @@ func TestViperProps(t *testing.T) {
 
 	v.Set("webhook.port", "3001")
 	v.Set("webhook.projects.10000.secret", "secret-10000")
-	v.Set("webhook.projects.10000.sdkkeys", []string{"aaa", "bbb", "ccc"})
-	v.Set("webhook.projects.10000.skipsignaturecheck", true)
+	v.Set("webhook.projects.10000.sdkKeys", []string{"aaa", "bbb", "ccc"})
+	v.Set("webhook.projects.10000.skipSignatureCheck", true)
 	v.Set("webhook.projects.20000.secret", "secret-20000")
-	v.Set("webhook.projects.20000.sdkkeys", []string{"xxx", "yyy", "zzz"})
-	v.Set("webhook.projects.20000.skipsignaturecheck", false)
+	v.Set("webhook.projects.20000.sdkKeys", []string{"xxx", "yyy", "zzz"})
+	v.Set("webhook.projects.20000.skipSignatureCheck", false)
 
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server)
+	assertClient(t, actual.Client)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -174,6 +191,11 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+
+	_ = os.Setenv("OPTIMIZELY_CLIENT_POLLINGINTERVAL", "10s")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_BATCHSIZE", "1")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_QUEUESIZE", "10")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_FLUSHINTERVAL", "1m")
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
@@ -199,6 +221,7 @@ func TestViperEnv(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server)
+	assertClient(t, actual.Client)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)

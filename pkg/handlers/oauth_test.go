@@ -50,8 +50,8 @@ func (s *OAuthTestSuite) SetupTest() {
 	s.handler = NewOAuthHandler(&config)
 
 	mux := chi.NewMux()
-	mux.Post("/api/token", s.handler.GetAPIAccessToken)
-	mux.Post("/admin/token", s.handler.GetAdminAccessToken)
+	mux.Post("/api/token", s.handler.CreateAPIAccessToken)
+	mux.Post("/admin/token", s.handler.CreateAdminAccessToken)
 	s.mux = mux
 }
 
@@ -160,7 +160,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidClientId() {
 	req.Header.Set(middleware.OptlySDKHeader, "123")
 	rec := httptest.NewRecorder()
 	s.mux.ServeHTTP(rec, req)
-	s.Equal(http.StatusForbidden, rec.Code)
+	s.Equal(http.StatusUnauthorized, rec.Code)
 }
 
 func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientId() {
@@ -172,7 +172,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientId() {
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
 	s.mux.ServeHTTP(rec, req)
-	s.Equal(http.StatusForbidden, rec.Code)
+	s.Equal(http.StatusUnauthorized, rec.Code)
 }
 
 func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidClientSecret() {
@@ -185,7 +185,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidClientSecret() {
 	req.Header.Set(middleware.OptlySDKHeader, "123")
 	rec := httptest.NewRecorder()
 	s.mux.ServeHTTP(rec, req)
-	s.Equal(http.StatusForbidden, rec.Code)
+	s.Equal(http.StatusUnauthorized, rec.Code)
 }
 
 func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientSecret() {
@@ -197,7 +197,7 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenInvalidClientSecret() {
 	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
 	rec := httptest.NewRecorder()
 	s.mux.ServeHTTP(rec, req)
-	s.Equal(http.StatusForbidden, rec.Code)
+	s.Equal(http.StatusUnauthorized, rec.Code)
 }
 
 func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingSDKKey() {

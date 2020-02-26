@@ -34,22 +34,22 @@ import (
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader          func(string, config.ProcessorConfig, *MetricsRegistry) (*OptlyClient, error)
+	loader          func(string, config.ClientConfig, *MetricsRegistry) (*OptlyClient, error)
 	optlyMap        cmap.ConcurrentMap
 	ctx             context.Context
 	wg              sync.WaitGroup
-	processorConf   config.ProcessorConfig
+	clientConf      config.ClientConfig
 	metricsRegistry *MetricsRegistry
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 	cache := &OptlyCache{
 		ctx:             ctx,
 		wg:              sync.WaitGroup{},
 		loader:          initOptlyClient,
 		optlyMap:        cmap.New(),
-		processorConf:   conf,
+		clientConf:      conf,
 		metricsRegistry: metricsRegistry,
 	}
 
@@ -72,7 +72,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.processorConf, c.metricsRegistry)
+	oc, err := c.loader(sdkKey, c.clientConf, c.metricsRegistry)
 	if err != nil {
 		return oc, err
 	}
@@ -101,9 +101,9 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
-func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
+func initOptlyClient(sdkKey string, conf config.ClientConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
 	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
-	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey)
+	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey, sdkconfig.WithPollingInterval(conf.PollingInterval))
 	if _, err := configManager.GetConfig(); err != nil {
 		return &OptlyClient{}, err
 	}
@@ -114,7 +114,7 @@ func initOptlyClient(sdkKey string, conf config.ProcessorConfig, metricsRegistry
 		event.WithEventDispatcherMetrics(metricsRegistry))
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
-	optimizelyFactory := &client.OptimizelyFactory{SDKKey:sdkKey}
+	optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 	optimizelyClient, err := optimizelyFactory.Client(
 		client.WithConfigManager(configManager),
 		client.WithExperimentOverrides(forcedVariations),
