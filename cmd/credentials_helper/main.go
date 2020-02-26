@@ -17,35 +17,16 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
-	"strings"
+	"github.com/optimizely/agent/pkg/jwtauth"
 )
 
-var secretVersion int = 1
-var bcryptWorkFactor int = 12
-
 func main() {
-	randBytes := make([]byte, 32)
-	_, err := rand.Read(randBytes)
+	secretStr, hashStr, err := jwtauth.GenerateClientSecretAndHash()
 	if err != nil {
-		fmt.Println("error returned from rand.Read:", err)
-		return
+		fmt.Printf("error: %v\n", err)
+	} else {
+		fmt.Printf("Client Secret: %v\n", secretStr)
+		fmt.Printf("Client Secret's hash: %v\n", hashStr)
 	}
-
-	encoded := base64.StdEncoding.EncodeToString(randBytes)
-	stripped := strings.TrimSuffix(encoded, "=")
-	secretStr := fmt.Sprintf("%v:%v", secretVersion, stripped)
-
-	hashBytes, err := bcrypt.GenerateFromPassword(randBytes, 12)
-	if err != nil {
-		fmt.Println("error returned from bcrypt.GenerateFromPassword:", err)
-		return
-	}
-	hashStr := base64.StdEncoding.EncodeToString(hashBytes)
-
-	fmt.Printf("Client Secret: %v\n", secretStr)
-	fmt.Printf("Client Secret's hash: %v\n", hashStr)
 }

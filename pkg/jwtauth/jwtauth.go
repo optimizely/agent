@@ -14,12 +14,15 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package jwtauth contains JWT-related helpers
+// Package jwtauth contains JWT and authentication-related helpers
 package jwtauth
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
+	"encoding/base64"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -64,4 +67,36 @@ func ValidateClientSecret(reqSecretStr string, configSecret []byte) bool {
 		return false
 	}
 	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
+}
+
+var secretBytesLen int = 32
+
+var secretVersion int = 1
+
+var bcryptWorkFactor int = 12
+
+// GenerateClientSecretAndHash returns a random secret and its hash, for use with
+// Agent's authN/authZ workflow.
+// - The first return value is the secret, composed of a version number, separator,
+//   and 32 random bytes, base64-encoded.
+// - The second return value is the bcrypt hash of the random bytes from the secret.
+// - The hash should be included in Agent's auth configuration as the client_secret value.
+// - The secret should be sent in the request to the token issuer endpoint.
+func GenerateClientSecretAndHash() (string, string, error) {
+	secretBytes := make([]byte, secretBytesLen)
+	_, err := rand.Read(secretBytes)
+	if err != nil {
+		return "", "", fmt.Errorf("error returned from rand.Read: %v", err)
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(secretBytes)
+	secretStr := fmt.Sprintf("%v:%v", secretVersion, encoded)
+
+	hashBytes, err := bcrypt.GenerateFromPassword(secretBytes, 12)
+	if err != nil {
+		return "", "", fmt.Errorf("error returned from bcrypt.GenerateFromPassword: %v", err)
+	}
+	hashStr := base64.StdEncoding.EncodeToString(hashBytes)
+
+	return secretStr, hashStr, nil
 }
