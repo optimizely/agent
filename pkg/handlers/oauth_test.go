@@ -42,8 +42,8 @@ func (s *OAuthTestSuite) SetupTest() {
 	config := config.ServiceAuthConfig{
 		Clients: []config.OAuthClientCredentials{
 			{
-				ID:     "optly_user",
-				Secret: "JDJhJDEyJDNDOG12LmNCNzlHaHhGcEJtLzZZQk9VLnRneEpGTTlnTXozb2kyNS9ERzhJTDZOZkpGa0ND",
+				ID:         "optly_user",
+				SecretHash: "JDJhJDEyJDNDOG12LmNCNzlHaHhGcEJtLzZZQk9VLnRneEpGTTlnTXozb2kyNS9ERzhJTDZOZkpGa0ND",
 			},
 		},
 		HMACSecret: "hmac_seekrit",

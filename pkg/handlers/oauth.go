@@ -70,7 +70,7 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	// TODO: need to validate all client IDs are unique
 	for _, clientCreds := range authConfig.Clients {
 		// TODO: too much knowledge of how secrets work. This should not be in a handler function.
-		secretBytes, err := base64.StdEncoding.DecodeString(clientCreds.Secret)
+		secretBytes, err := base64.StdEncoding.DecodeString(clientCreds.SecretHash)
 		if err != nil {
 			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v)", clientCreds.ID)
 			continue

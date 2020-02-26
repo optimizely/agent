@@ -43,7 +43,6 @@ api:
 #    maxconns: 10000
     ## http listener port
     port: "8080"
-    ## TODO: add auth example
 
 ##
 ## admin service configuration
@@ -51,7 +50,6 @@ api:
 admin:
     ## http listener port
     port: "8088"
-    ## TODO: add auth example
 
 ##
 ## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will

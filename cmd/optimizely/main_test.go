@@ -55,8 +55,8 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, 30*time.Minute, actual.TTL)
 	assert.Equal(t, "efgh", actual.HMACSecret)
 	assert.Equal(t, config.OAuthClientCredentials{
-		ID:     "clientid2",
-		Secret: "clientsecret2",
+		ID:         "clientid2",
+		SecretHash: "clientsecret2",
 	}, actual.Clients[0])
 }
 
@@ -71,8 +71,8 @@ func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, 30*time.Minute, actual.TTL)
 	assert.Equal(t, "abcd", actual.HMACSecret)
 	assert.Equal(t, config.OAuthClientCredentials{
-		ID:     "clientid1",
-		Secret: "clientsecret1",
+		ID:         "clientid1",
+		SecretHash: "clientsecret1",
 	}, actual.Clients[0])
 }
 

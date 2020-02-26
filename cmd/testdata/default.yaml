@@ -23,7 +23,7 @@ admin:
     hmacSecret: "efgh"
     clients:
       - id: clientid2
-        secret: clientsecret2
+        secret_hash: clientsecret2
 api:
   maxConns: 100
   port: "3000"
@@ -34,7 +34,7 @@ api:
     hmacSecret: "abcd"
     clients:
       - id: clientid1
-        secret: clientsecret1
+        secret_hash: clientsecret1
 webhook:
   port: "3001"
   projects:
