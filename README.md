@@ -68,17 +68,18 @@ Below is a comprehensive list of available configuration properties.
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
-|sdkkeys|OPTIMIZELY_SDK_KEYS|List of SDK keys used to initialize on startup|
-|processor.batchSize|OPTIMIZELY_PROCESSOR_BATCHSIZE|The number of events in a batch. Default: 10|
-|processor.queueSize|OPTIMIZELY_PROCESSOR_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
-|processor.flushInterval|OPTIMIZELY_PROCESSOR_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
+|sdkKeys|OPTIMIZELY_SDK_KEYS|List of SDK keys used to initialize on startup|
+|client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
+|client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
+|client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
+|client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
-|server.readtimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
-|server.writetimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
+|server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
-|api.maxconns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|

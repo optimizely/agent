@@ -30,19 +30,27 @@ log:
 server:
     ## the maximum duration for reading the entire request, including the body.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    readtimeout: 5s
+    readTimeout: 5s
     ## the maximum duration before timing out writes of the response.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    writetimeout: 10s
+    writeTimeout: 10s
+    ## the location of the TLS key file
+#    keyFile: <key-file>
+    ## the location of the TLS certificate file
+#    certFile: <cert-file>
 
 ##
 ## api service configuration
 ##
 api:
     ## the maximum number of concurrent requests handled by the api listener
-#    maxconns: 10000
+#    maxConns: 10000
     ## http listener port
     port: "8080"
+    ## set to true to enable subscribing to notifications via an SSE event-stream
+    enableNotifications: false
+    ## set to true to be able to override experiment bucketing. (recommended false in production)
+    enableOverrides: false
 
 ##
 ## admin service configuration
@@ -72,9 +80,11 @@ webhook:
 #            skipSignatureCheck: true
 
 ##
-## event processor configurations
+## optimizely client configurations (options passed to the underlying go-sdk)
 ##
-processor:
+client:
+    ## the time between successive polls for updated project configuration
+    pollingInterval: 1m
     ## the number of events in a batch
     batchSize: 10
     ## the max number of events pending dispatch, setting this too low may result in events being dropped
