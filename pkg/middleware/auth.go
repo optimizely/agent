@@ -110,7 +110,7 @@ func (c JWTVerifierURL) CheckToken(token string) (*jwt.Token, error) {
 	}
 
 	tk, err := c.parser.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		set, err := jwk.FetchHTTP(c.jwksURL)
+		set, err := jwk.Fetch(c.jwksURL)
 		if err != nil {
 			return nil, err
 		}
@@ -227,6 +227,10 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 
 // NewAuth makes Auth middleware
 func NewAuth(authConfig *config.ServiceAuthConfig) Auth {
+
+	if authConfig.JwksURL != "" {
+		return Auth{Verifier: NewJWTVerifierURL(authConfig.JwksURL)}
+	}
 
 	if authConfig.HMACSecret == "" {
 		return Auth{Verifier: NoAuth{}}

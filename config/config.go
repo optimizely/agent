@@ -42,6 +42,7 @@ func NewDefaultConfig() *AgentConfig {
 				Clients:    make([]OAuthClientCredentials, 0),
 				HMACSecret: "",
 				TTL:        0,
+				JwksURL:    "",
 			},
 			MaxConns:            0,
 			Port:                "8080",
@@ -149,4 +150,5 @@ type ServiceAuthConfig struct {
 	Clients    []OAuthClientCredentials `yaml:"clients" json:"-"`
 	HMACSecret string                   `yaml:"hmacSecret" json:"-"`
 	TTL        time.Duration            `yaml:"ttl" json:"-"`
+	JwksURL    string                   `yaml:"jwksURL"`
 }
