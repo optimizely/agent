@@ -27,6 +27,7 @@ admin:
     ttl: 30m
     hmacSecrets:
       - "efgh"
+      - "ijkl"
     clients:
       - id: clientid2
         secret: clientsecret2
@@ -39,6 +40,7 @@ api:
     ttl: 30m
     hmacSecrets:
       - "abcd"
+      - "efgh"
     clients:
       - id: clientid1
         secret: clientsecret1
