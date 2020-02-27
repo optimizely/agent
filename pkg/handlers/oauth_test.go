@@ -44,8 +44,8 @@ func (s *OAuthTestSuite) SetupTest() {
 				Secret: "client_seekrit",
 			},
 		},
-		HMACSecret: "hmac_seekrit",
-		TTL:        30 * time.Minute,
+		HMACSecrets: []string{"hmac_seekrit"},
+		TTL:         30 * time.Minute,
 	}
 	s.handler = NewOAuthHandler(&config)
 

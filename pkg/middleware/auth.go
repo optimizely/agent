@@ -59,12 +59,12 @@ type Verifier interface {
 
 // JWTVerifier checks token with JWT, implements Verifier
 type JWTVerifier struct {
-	secretKey string
+	secretKeys []string
 }
 
 // NewJWTVerifier creates JWTVerifier with secret key
-func NewJWTVerifier(secretKey string) JWTVerifier {
-	return JWTVerifier{secretKey: secretKey}
+func NewJWTVerifier(secretKeys []string) JWTVerifier {
+	return JWTVerifier{secretKeys: secretKeys}
 }
 
 // CheckToken checks the token and returns it if it's valid
@@ -73,21 +73,29 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 		return nil, errors.New("invalid token")
 	}
 
-	tk, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+	err := errors.New("invalid token")
+	var tk  *jwt.Token
+	for _, secretKey := range c.secretKeys {
+		tk, err = jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, errors.New("unexpected signing method")
+			}
+			return []byte(secretKey), nil
+		})
+
+		if err != nil {
+			continue
 		}
-		return []byte(c.secretKey), nil
-	})
-	if err != nil {
-		return nil, err
+
+		if !tk.Valid {
+			err = errors.New("invalid token")
+			continue
+		}
+
+		return tk, nil
 	}
 
-	if !tk.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	return tk, nil
+	return nil, err
 }
 
 func (a Auth) verify(r *http.Request) (*jwt.Token, error) {
@@ -181,10 +189,10 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 // NewAuth makes Auth middleware
 func NewAuth(authConfig *config.ServiceAuthConfig) Auth {
 
-	if authConfig.HMACSecret == "" {
+	if len(authConfig.HMACSecrets) == 0 {
 		return Auth{Verifier: NoAuth{}}
 	}
 
-	return Auth{Verifier: NewJWTVerifier(authConfig.HMACSecret)}
+	return Auth{Verifier: NewJWTVerifier(authConfig.HMACSecrets)}
 
 }

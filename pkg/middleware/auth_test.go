@@ -64,9 +64,9 @@ func (suite *AuthTestSuite) SetupTest() {
 
 	suite.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	suite.authConfig = &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: []string{suite.signature},
+		TTL:         0,
 	}
 
 }

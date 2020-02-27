@@ -60,7 +60,8 @@ func assertAdmin(t *testing.T, actual config.AdminConfig) {
 
 func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, 30*time.Minute, actual.TTL)
-	assert.Equal(t, "efgh", actual.HMACSecret)
+	assert.Len(t, actual.HMACSecrets, 1)
+	assert.Equal(t, "efgh", actual.HMACSecrets[0])
 	assert.Equal(t, config.OAuthClientCredentials{
 		ID:     "clientid2",
 		Secret: "clientsecret2",
@@ -76,7 +77,8 @@ func assertAPI(t *testing.T, actual config.APIConfig) {
 
 func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, 30*time.Minute, actual.TTL)
-	assert.Equal(t, "abcd", actual.HMACSecret)
+	assert.Len(t, actual.HMACSecrets, 1)
+	assert.Equal(t, "abcd", actual.HMACSecrets[0])
 	assert.Equal(t, config.OAuthClientCredentials{
 		ID:     "clientid1",
 		Secret: "clientsecret1",
@@ -137,7 +139,7 @@ func TestViperProps(t *testing.T) {
 
 	v.Set("admin.port", "3002")
 	v.Set("admin.auth.ttl", "30m")
-	v.Set("admin.auth.hmacSecret", "efgh")
+	v.Set("admin.auth.hmacSecrets", "efgh")
 	v.Set("admin.auth.clients", []map[string]string{
 		{
 			"id":     "clientid2",
@@ -150,7 +152,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.enableOverrides", true)
 	v.Set("api.port", "3000")
 	v.Set("api.auth.ttl", "30m")
-	v.Set("api.auth.hmacSecret", "abcd")
+	v.Set("api.auth.hmacSecrets", "abcd")
 	v.Set("api.auth.clients", []map[string]string{
 		{
 			"id":     "clientid1",
