@@ -34,6 +34,7 @@ func NewDefaultConfig() *AgentConfig {
 				Clients:    make([]OAuthClientCredentials, 0),
 				HMACSecret: "",
 				TTL:        0,
+				JwksURL:    "",
 			},
 			Port: "8088",
 		},

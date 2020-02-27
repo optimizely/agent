@@ -239,26 +239,6 @@ func (suite *AuthTestSuite) TestAuthAuthorizeInvalidJwksURL() {
 	suite.Equal(http.StatusUnauthorized, rec.Code)
 }
 
-func (suite *AuthTestSuite) TestAuthAuthorizeMockValidJwksURL() {
-	const token = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg`
-
-	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
-		JwksURL:    "fake_url",
-	}
-
-	auth := NewAuth(authConfig)
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/some_url", nil)
-	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add(OptlySDKHeader, "SDK_KEY")
-
-	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusOK, rec.Code)
-}
-
 func TestAuth(t *testing.T) {
 	suite.Run(t, new(AuthTestSuite))
 }
