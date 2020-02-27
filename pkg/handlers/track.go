@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/entities"
 
 	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 type trackBody struct {
@@ -60,20 +62,12 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		Attributes: body.UserAttributes,
 	}
 
-	pc, err := optlyClient.ConfigManager.GetConfig()
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
-		return
-	}
-
-	if _, err = pc.GetEventByKey(eventKey); err != nil {
-		RenderError(err, http.StatusNotFound, w, r)
-		return
-	}
-
-	err = optlyClient.Track(eventKey, uc, body.EventTags)
-	if err != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
+	if err = optlyClient.TrackEvent(eventKey, uc, body.EventTags); err != nil {
+		if errors.Is(err, optimizely.ErrEventKeyDoesNotExist) {
+			RenderError(fmt.Errorf("event with key %q not found", eventKey), http.StatusNotFound, w, r)
+		} else {
+			RenderError(err, http.StatusInternalServerError, w, r)
+		}
 		return
 	}
 

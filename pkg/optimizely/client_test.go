@@ -19,7 +19,12 @@ package optimizely
 
 import (
 	"errors"
+	"fmt"
 	"testing"
+
+	"github.com/optimizely/go-sdk/pkg/client"
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
@@ -305,4 +310,77 @@ func (suite *ClientTestSuite) TestActivateExperiment() {
 // a normal test function and pass our suite to suite.Run
 func TestClientTestSuite(t *testing.T) {
 	suite.Run(t, new(ClientTestSuite))
+}
+
+type ErrorConfigManager struct{}
+
+func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
+	return nil, fmt.Errorf("config error")
+}
+
+func (e ErrorConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) SyncConfig() {
+	panic("implement me")
+}
+
+type MockConfigManager struct {
+	config config.ProjectConfig
+}
+
+func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
+	return m.config, nil
+}
+
+func (m MockConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	panic("implement me")
+}
+
+func (m MockConfigManager) SyncConfig() {
+	panic("implement me")
+}
+
+func TestTrackErrorConfigManager(t *testing.T) {
+	testClient := optimizelytest.NewClient()
+	optlyClient := &OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    ErrorConfigManager{},
+		ForcedVariations: testClient.ForcedVariations,
+	}
+
+	err := optlyClient.TrackEvent("something", entities.UserContext{}, map[string]interface{}{})
+	assert.EqualError(t, err, "config error")
+}
+
+func TestTrackErrorClient(t *testing.T) {
+	// Construct an OptimizelyClient with an erroring config manager
+	factory := client.OptimizelyFactory{}
+	oClient, _ := factory.Client(
+		client.WithConfigManager(ErrorConfigManager{}),
+	)
+
+	// Construct a valid config manager as part of the OptlyClient wrapper
+	testConfig := optimizelytest.NewConfig()
+	eventKey := "test-event"
+	event := entities.Event{Key: eventKey}
+	testConfig.AddEvent(event)
+
+	optlyClient := &OptlyClient{
+		OptimizelyClient: oClient,
+		ConfigManager:    &MockConfigManager{config: testConfig},
+		ForcedVariations: nil,
+	}
+
+	err := optlyClient.TrackEvent("something", entities.UserContext{}, map[string]interface{}{})
+	assert.Equal(t, ErrEventKeyDoesNotExist, err)
 }
