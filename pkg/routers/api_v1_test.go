@@ -153,7 +153,7 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 }
 
 func (suite *APIV1TestSuite) TestCreateAccessToken() {
-	req := httptest.NewRequest("POST", "/v1/oauth/token", nil)
+	req := httptest.NewRequest("POST", "/oauth/api/token", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)

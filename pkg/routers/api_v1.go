@@ -127,6 +127,7 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(activateTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/activate", opt.handlers.activate)
 		r.With(trackTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/track", opt.handlers.trackEvent)
 		r.With(overrideTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/override", overrideHandler)
-		r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
 	})
+
+	r.With(createAccesstokenTimer).Post("/oauth/api/token", opt.oAuthHandler.CreateAPIAccessToken)
 }
