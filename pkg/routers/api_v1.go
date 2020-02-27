@@ -38,6 +38,8 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
+	oAuthHandler    apiOAuthHandler
+	oAuthMiddleware apiOAuthMiddleware
 }
 
 // Define an interface to facilitate testing
@@ -66,6 +68,14 @@ func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
+type apiOAuthHandler interface {
+	CreateAPIAccessToken(w http.ResponseWriter, r *http.Request)
+}
+
+type apiOAuthMiddleware interface {
+	AuthorizeAPI(next http.Handler) http.Handler
+}
+
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 	spec := &APIV1Options{
@@ -73,6 +83,8 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
+		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
+		oAuthMiddleware: middleware.NewAuth(&conf.Auth),
 	}
 
 	return NewAPIV1Router(spec)
@@ -92,6 +104,7 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
+	createAccesstokenTimer := middleware.Metricize("create-access-token", opt.metricsRegistry)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -110,9 +123,11 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	}
 
 	r.Route("/v1", func(r chi.Router) {
-		r.With(getConfigTimer).Get("/config", opt.handlers.config)
-		r.With(activateTimer).Post("/activate", opt.handlers.activate)
-		r.With(trackTimer).Post("/track", opt.handlers.trackEvent)
-		r.With(overrideTimer).Post("/override", overrideHandler)
+		r.With(getConfigTimer, opt.oAuthMiddleware.AuthorizeAPI).Get("/config", opt.handlers.config)
+		r.With(activateTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/activate", opt.handlers.activate)
+		r.With(trackTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/track", opt.handlers.trackEvent)
+		r.With(overrideTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/override", overrideHandler)
 	})
+
+	r.With(createAccesstokenTimer).Post("/oauth/api/token", opt.oAuthHandler.CreateAPIAccessToken)
 }
