@@ -254,3 +254,51 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 func TestOAuthTestSuite(t *testing.T) {
 	suite.Run(t, new(OAuthTestSuite))
 }
+
+type OAuthDisabledTestSuite struct {
+	suite.Suite
+	handler *OAuthHandler
+	mux     *chi.Mux
+}
+
+func (s *OAuthDisabledTestSuite) SetupTest() {
+	config := config.ServiceAuthConfig{
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: make([]string, 0),
+		TTL:         0,
+	}
+	s.handler = NewOAuthHandler(&config)
+
+	mux := chi.NewMux()
+	mux.Post("/api/token", s.handler.CreateAPIAccessToken)
+	mux.Post("/admin/token", s.handler.CreateAdminAccessToken)
+	s.mux = mux
+}
+
+func (s *OAuthDisabledTestSuite) TestGetAdminAccessTokenDisabled() {
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"grant_type":    "client_credentials",
+		"client_id":     "optly_user",
+		"client_secret": "client_seekrit",
+	})
+	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func (s *OAuthDisabledTestSuite) TestGetAPIAccessTokenDisabled() {
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"grant_type":    "client_credentials",
+		"client_id":     "optly_user",
+		"client_secret": "client_seekrit",
+	})
+	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func TestOAuthDisabledTestSuite(t *testing.T) {
+	suite.Run(t, new(OAuthDisabledTestSuite))
+}
