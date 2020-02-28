@@ -17,7 +17,7 @@ The interface is publicly available.
 
 ## Configuration
 - The API and Admin interfaces are each independently configured to run in one of the above-mentioned modes of operation.
-- Authorization configuration is applied under the `auth` key
+- Authorization configuration is located under the `auth` key
 - Each mode of operation has its own set of configuration properties, described below.
 
 ### Issuer & Validator
@@ -68,3 +68,6 @@ admin:
 ## Secret Rotation (Issuer & Validator mode)
 To support secret rotation, both `hmacSecrets` and `clients` are arrays. In `hmacSecrets`, the first array item will be
 used to sign issued tokens, but tokens signed with any of the array items will be considered valid.
+
+## Example (Python)
+For example requests demonstrating the Issuer & Validator mode, see [here](../examples/auth.py).
