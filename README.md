@@ -64,30 +64,33 @@ Below is a comprehensive list of available configuration properties.
 
 |Property Name|Env Variable|Description|
 |---|---|---|
-|config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
+|admin.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
+|api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
+|api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
+|certfile|OPTIMIZELY_KEYFILE|Path to a certificate file, used to run Agent with HTTPS|
+|client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
+|config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
+|client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
+|client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
+|client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
+|disabledCiphers|OPTIMIZELY_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
+|keyfile|OPTIMIZELY_KEYFILE|Path to a key file, used to run Agent with HTTPS|
+|log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
+|log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |sdkKeys|OPTIMIZELY_SDK_KEYS|List of SDK keys used to initialize on startup|
-|client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
-|client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
-|client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
-|client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
-|log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
-|log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
-|admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
-|admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
-|api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
-|api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
