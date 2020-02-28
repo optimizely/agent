@@ -81,6 +81,21 @@ jobs:
       after_success:
         - ( [ ${TRAVIS_EVENT_TYPE} = "push" ] && [ ! -z ${TRAVIS_TAG} ] ) && scripts/upload_artifacts.sh
 
+    - stage: Test
+      name: acceptance
+      os: linux
+      dist: xenial
+      language: python
+      python:
+        - "3.7"
+      install:
+        - pip install -r requirements.txt
+      script:
+        - pytest -s -v src/test_acceptance/ --host http://localhost:8080
+#      before_script: skip
+#      after_success:
+#        - ( [ ${TRAVIS_EVENT_TYPE} = "push" ] && [ ! -z ${TRAVIS_TAG} ] ) && scripts/upload_artifacts.sh
+
     - stage: Build
       if: type = push AND tag IS present
       name: linux

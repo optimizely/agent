@@ -1,0 +1,30 @@
+- Add better error messaging (same as in godzilla), raise_for_status is useless
+- Add logging
+
+
+ISSUES AND QUESTION:
+
+--------- v1/activate
+1. Multiple query parameters parameters together. How's that handled?
+- for example in activate call: experimentKkey, featureKey, type, enabled together?
+
+2. enabled parameter:
+NOT WORKING - I GET BACK BOTH DECISIONS FOR FEATURES AND EXPERIMENTS, REGARDLESS IF THEY ARE ENABLED OR DISABLED!!!
+SHOULD FILTER PER "enabled" field.
+
+3. How to test disableTracking??
+- Setting to true should disable impression tracking for ab experiments and feature tests.
+But how do I test this, do I need track inside activate and set disableTracking to true and see if track doesn't send event - no 204 code?
+
+- track should not send the event when disableTracking is True. BUT IT SENDS (response is 204) !!!!!!!!!!!!!!! - see test_activate__disableTracking
+
+
+---------- v1/track
+1. If I add experimentKey as param next to eventKey in track call, what happens to experimentKey, because there's no server logs. Get's ignored?
+params = {
+        "experimentKey": experiment_key,
+        "eventKey": "myevent",
+    }
+
+
+2. BUG! - non-existing event resturns 204 instead of 404!!
