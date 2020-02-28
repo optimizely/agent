@@ -3,10 +3,10 @@ import os
 import pytest
 import requests
 
-from acceptance.helpers import ENDPOINT_ACTIVATE
-from acceptance.helpers import ENDPOINT_CONFIG
-from acceptance.helpers import ENDPOINT_TRACK
-from acceptance.helpers import sort_response
+from src.helpers import ENDPOINT_ACTIVATE
+from src.helpers import ENDPOINT_CONFIG
+from src.helpers import ENDPOINT_TRACK
+from src.helpers import sort_response
 
 BASE_URL = os.getenv('host')
 

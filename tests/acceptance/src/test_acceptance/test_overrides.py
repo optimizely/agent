@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from acceptance.helpers import ENDPOINT_OVERRIDE
+from src.helpers import ENDPOINT_OVERRIDE
 
 BASE_URL = os.getenv('host')
 
