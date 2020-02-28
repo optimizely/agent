@@ -34,6 +34,10 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Admin.Auth)
 
+	if _, ok := authProvider.Verifier.(middleware.BadAuth); ok {
+		return nil
+	}
+
 	optlyAdmin := handlers.NewAdmin(conf)
 	tokenHandler := handlers.NewOAuthHandler(&conf.Admin.Auth)
 	r.Use(optlyAdmin.AppInfoHeader)

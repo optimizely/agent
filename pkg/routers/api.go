@@ -50,6 +50,9 @@ type APIOptions struct {
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
+	if _, ok := authProvider.Verifier.(middleware.BadAuth); ok {
+		return nil
+	}
 
 	var notificationsAPI handlers.NotificationAPI
 	notificationsAPI = handlers.NewDisabledNotificationHandler()

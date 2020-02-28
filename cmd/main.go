@@ -118,10 +118,18 @@ func main() {
 		cancel()
 	}()
 
+	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
+	adminRouter := routers.NewWebhookRouter(optlyCache, conf.Webhook)
+
+	if apiRouter == nil || adminRouter == nil {
+		log.Error().Msg("unable to fetch jwks key set, exiting")
+		cancel()
+	}
+
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
+	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
-	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
+	sg.GoListenAndServe("admin", conf.Admin.Port, adminRouter) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

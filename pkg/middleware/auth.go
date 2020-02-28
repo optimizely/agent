@@ -22,12 +22,14 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/optimizely/agent/config"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/rs/zerolog/log"
 )
 
 func getNumberFromJSON(val interface{}) int64 {
@@ -46,6 +48,14 @@ type NoAuth struct{}
 // CheckToken returns no token and no error
 func (NoAuth) CheckToken(string) (*jwt.Token, error) {
 	return nil, nil
+}
+
+// BadAuth is bad auth, it shuts down the server
+type BadAuth struct{}
+
+// CheckToken returns no token and error
+func (BadAuth) CheckToken(string) (*jwt.Token, error) {
+	return nil, errors.New("bad initial auth, not starting the server")
 }
 
 // Auth is the middleware for all REST API's
@@ -71,7 +81,7 @@ func NewJWTVerifier(secretKey string) JWTVerifier {
 // CheckToken checks the token and returns it if it's valid
 func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 	if token == "" {
-		return nil, errors.New("invalid token")
+		return nil, errors.New("empty token")
 	}
 
 	tk, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
@@ -95,26 +105,69 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 type JWTVerifierURL struct {
 	jwksURL string
 
-	parser *jwt.Parser
+	parser   *jwt.Parser
+	jwksKeys *jwk.Set
+	jwksLock sync.RWMutex
+}
+
+func (c *JWTVerifierURL) startTicker(ticker time.Duration) {
+
+	for range time.Tick(ticker) {
+		err := c.updateKeySet()
+		if err != nil {
+			log.Warn().Msg("unable to update JWKS key set")
+		}
+	}
+}
+
+func (c *JWTVerifierURL) updateKeySet() error {
+
+	c.jwksLock.Lock()
+	defer c.jwksLock.Unlock()
+
+	set, err := jwk.Fetch(c.jwksURL)
+	if err != nil {
+		return err
+	}
+	c.jwksKeys = set
+	return nil
+}
+
+func (c *JWTVerifierURL) getKeySet() *jwk.Set {
+	c.jwksLock.RLock()
+	defer c.jwksLock.RUnlock()
+	return c.jwksKeys
+
 }
 
 // NewJWTVerifierURL creates JWTVerifierURL with JWKS URL
-func NewJWTVerifierURL(jwksURL string) JWTVerifierURL {
-	return JWTVerifierURL{jwksURL: jwksURL, parser: new(jwt.Parser)}
+func NewJWTVerifierURL(jwksURL string, updateInterval time.Duration) *JWTVerifierURL {
+
+	http.DefaultClient = &http.Client{Timeout: 10 * time.Second}
+	jwtVerifierURL := JWTVerifierURL{jwksURL: jwksURL, parser: new(jwt.Parser)}
+	err := jwtVerifierURL.updateKeySet()
+
+	if err != nil {
+		return &JWTVerifierURL{}
+	}
+
+	go jwtVerifierURL.startTicker(updateInterval)
+
+	return &jwtVerifierURL
 }
 
 // CheckToken checks the token, validates against JWKS and returns it if it's valid
-func (c JWTVerifierURL) CheckToken(token string) (*jwt.Token, error) {
+func (c *JWTVerifierURL) CheckToken(token string) (tk *jwt.Token, err error) {
 	if token == "" {
-		return nil, errors.New("invalid token")
+		return nil, errors.New("empty token")
 	}
 
-	tk, err := c.parser.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		set, err := jwk.Fetch(c.jwksURL)
-		if err != nil {
-			return nil, err
-		}
+	tk, err = c.parser.Parse(token, func(token *jwt.Token) (interface{}, error) {
 
+		set := c.getKeySet()
+		if set == nil {
+			return nil, fmt.Errorf("unable to update key set")
+		}
 		keyID, ok := token.Header["kid"].(string)
 		if !ok {
 			return nil, errors.New("expecting JWT header to have string kid")
@@ -228,8 +281,21 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 // NewAuth makes Auth middleware
 func NewAuth(authConfig *config.ServiceAuthConfig) Auth {
 
+	if authConfig.JwksURL != "" && authConfig.HMACSecret != "" {
+		log.Warn().Msg("HMAC Secret will be ignored, JWKS URL will be used for token validation")
+	}
+
 	if authConfig.JwksURL != "" {
-		return Auth{Verifier: NewJWTVerifierURL(authConfig.JwksURL)}
+		if authConfig.JwksUpdateInterval <= 0 {
+			log.Error().Msg("JwksUpdateInterval must be set")
+			return Auth{Verifier: BadAuth{}}
+		}
+		verifier := NewJWTVerifierURL(authConfig.JwksURL, authConfig.JwksUpdateInterval)
+		if verifier.jwksKeys == nil {
+			log.Error().Msg("problem with getting JWKS key set")
+			return Auth{Verifier: BadAuth{}}
+		}
+		return Auth{Verifier: verifier}
 	}
 
 	if authConfig.HMACSecret == "" {

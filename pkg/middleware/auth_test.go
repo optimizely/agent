@@ -18,11 +18,13 @@
 package middleware
 
 import (
-	"github.com/optimizely/agent/config"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
+
+	"github.com/optimizely/agent/config"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/suite"
@@ -47,6 +49,8 @@ type AuthTestSuite struct {
 	handler         http.HandlerFunc
 	signature       string
 	authConfig      *config.ServiceAuthConfig
+
+	server *httptest.Server
 }
 
 func (suite *AuthTestSuite) SetupTest() {
@@ -70,6 +74,87 @@ func (suite *AuthTestSuite) SetupTest() {
 		TTL:        0,
 	}
 
+	suite.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.URL.String() == "/good" {
+			fmt.Fprintln(w, `{"keys":[{"alg":"RS256","e":"AQAB","kid":"_YuxWTx2dp2ESUok72e3r3KoDz9fnxWI3oCBwNby2_E","kty":"RSA","n":"2ZNUw2VOO30mR15JcT5Lz85GznV2p3K0DtXRJiOhGOD0YnCkNZL3cPHR_r7_eVVJMokz4yGIW8hwSJN0GrzmihzULDTpFlAmSkSissSMIYANZOdHOPm5iCYCCeX_5ceCtDS85Z2gh0dN7vX7GkoYxJs-eLc0W8EVzA5V8S9c42ARGenH99nX8CiwiINEoZyLvv-Le2RX5zetVWqVD6EfP-mjzku-h5Nxx4PLk8tdiSpV-DllVGoYt5_P9_FgyTsZ1-62e2GJmNy0odZEUsTAxWnF_c1InEQZggI-vtCPNNVF1qgjArc86mGBc6z26EmRU91TavehP6n_oszhif83QQ","use":"sig"}]}`)
+		}
+		if r.URL.String() == "/bad" {
+			fmt.Fprintln(w, `{"keys":[{"alg":"RS256","e":"AQAB","kid":"bad_id","kty":"RSA","n":"2ZNUw2VOO30mR15JcT5Lz85GznV2p3K0DtXRJiOhGOD0YnCkNZL3cPHR_r7_eVVJMokz4yGIW8hwSJN0GrzmihzULDTpFlAmSkSissSMIYANZOdHOPm5iCYCCeX_5ceCtDS85Z2gh0dN7vX7GkoYxJs-eLc0W8EVzA5V8S9c42ARGenH99nX8CiwiINEoZyLvv-Le2RX5zetVWqVD6EfP-mjzku-h5Nxx4PLk8tdiSpV-DllVGoYt5_P9_FgyTsZ1-62e2GJmNy0odZEUsTAxWnF_c1InEQZggI-vtCPNNVF1qgjArc86mGBc6z26EmRU91TavehP6n_oszhif83QQ","use":"sig"}]}`)
+		}
+	}))
+
+}
+
+func (suite *AuthTestSuite) TearDownTest() {
+	suite.server.Close()
+
+}
+
+func (suite *AuthTestSuite) TestNewAuthNoAuth() {
+	authConfig := &config.ServiceAuthConfig{}
+	auth := NewAuth(authConfig)
+
+	if _, ok := auth.Verifier.(NoAuth); !ok {
+		suite.Fail("expected NoAuth type")
+	}
+}
+
+func (suite *AuthTestSuite) TestNewAuthJWTVerifier() {
+	authConfig := &config.ServiceAuthConfig{
+		Clients:    make([]config.OAuthClientCredentials, 0),
+		HMACSecret: suite.signature,
+		TTL:        0,
+	}
+	auth := NewAuth(authConfig)
+
+	if _, ok := auth.Verifier.(JWTVerifier); !ok {
+		suite.Fail("expected JWTVerifier type")
+	}
+}
+
+func (suite *AuthTestSuite) TestNewAuthJWTVerifierURL() {
+	authConfig := &config.ServiceAuthConfig{
+		Clients:            make([]config.OAuthClientCredentials, 0),
+		HMACSecret:         suite.signature,
+		TTL:                0,
+		JwksURL:            suite.server.URL + "/good",
+		JwksUpdateInterval: time.Second,
+	}
+	auth := NewAuth(authConfig)
+
+	if _, ok := auth.Verifier.(*JWTVerifierURL); !ok {
+		suite.Fail("expected JWTVerifierURL type")
+	}
+}
+
+func (suite *AuthTestSuite) TestNewAuthBadAuthNoInterval() {
+	authConfig := &config.ServiceAuthConfig{
+		Clients:    make([]config.OAuthClientCredentials, 0),
+		HMACSecret: suite.signature,
+		TTL:        0,
+		JwksURL:    suite.server.URL + "/good",
+	}
+	auth := NewAuth(authConfig)
+
+	if _, ok := auth.Verifier.(BadAuth); !ok {
+		suite.Fail("expected BadAuth type")
+	}
+}
+
+func (suite *AuthTestSuite) TestNewAuthBadAuthBadURL() {
+	authConfig := &config.ServiceAuthConfig{
+		Clients:            make([]config.OAuthClientCredentials, 0),
+		HMACSecret:         suite.signature,
+		TTL:                0,
+		JwksURL:            "fake_url",
+		JwksUpdateInterval: time.Second,
+	}
+	auth := NewAuth(authConfig)
+
+	if _, ok := auth.Verifier.(BadAuth); !ok {
+		suite.Fail("expected BadAuth type")
+	}
 }
 
 func (suite *AuthTestSuite) TestNoAuthCheckToken() {
@@ -106,24 +191,26 @@ func (suite *AuthTestSuite) TestAuthInvalidCheckToken() {
 	suite.Error(err)
 }
 
-func (suite *AuthTestSuite) TestAuthValidCheckTokenFromJwks() {
+func (suite *AuthTestSuite) TestAuthValidCheckTokenFromValidJwks() {
 
 	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg`
-	dir, _ := os.Getwd()
+
 	authConfig := &config.ServiceAuthConfig{
 		Clients:    make([]config.OAuthClientCredentials, 0),
 		HMACSecret: suite.signature,
 		TTL:        0,
-		JwksURL:    "file://" + dir + "/testdata/jwks_url.txt",
+		JwksURL:    suite.server.URL + "/good",
 	}
 
 	auth := JWTVerifierURL{jwksURL: authConfig.JwksURL, parser: &jwt.Parser{SkipClaimsValidation: true}}
+
+	auth.updateKeySet()
 	token, err := auth.CheckToken(tk)
 	suite.Equal(tk, token.Raw)
 	suite.NoError(err)
 }
 
-func (suite *AuthTestSuite) TestAuthInvalidCheckTokenFromJwksURL() {
+func (suite *AuthTestSuite) TestAuthValidCheckTokenFromInvalidJwksURL() {
 
 	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg`
 
@@ -137,6 +224,63 @@ func (suite *AuthTestSuite) TestAuthInvalidCheckTokenFromJwksURL() {
 	auth := NewAuth(authConfig)
 	token, err := auth.CheckToken(tk)
 	suite.Nil(token)
+	suite.Error(err)
+}
+
+func (suite *AuthTestSuite) TestAuthInvalidCheckTokenFromValidJwksURL() {
+
+	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg_invalid`
+
+	authConfig := &config.ServiceAuthConfig{
+		Clients:    make([]config.OAuthClientCredentials, 0),
+		HMACSecret: suite.signature,
+		TTL:        0,
+		JwksURL:    suite.server.URL + "/good",
+	}
+
+	auth := JWTVerifierURL{jwksURL: authConfig.JwksURL, parser: &jwt.Parser{SkipClaimsValidation: true}}
+	auth.updateKeySet()
+	token, err := auth.CheckToken(tk)
+	suite.Nil(token)
+	suite.Error(err)
+}
+
+func (suite *AuthTestSuite) TestAuthValidCheckTokenFromJwksURLwithCaching() {
+
+	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg`
+
+	validJwksURL := suite.server.URL + "/good"
+	invalidJwksURL := suite.server.URL + "/bad"
+
+	// constructing witih skipping claims validation
+	verifier := &JWTVerifierURL{jwksURL: "fake_url", parser: &jwt.Parser{SkipClaimsValidation: true}}
+	verifier.updateKeySet()
+	go verifier.startTicker(time.Second)
+
+	auth := NewAuth(&config.ServiceAuthConfig{})
+	auth.Verifier = verifier
+
+	token, err := auth.CheckToken(tk) // using fake_url
+	suite.Nil(token)
+	suite.Error(err)
+
+	verifier.jwksURL = validJwksURL
+
+	token, err = auth.CheckToken(tk)
+	suite.Nil(token) // still bad - polling every minute, still using fake_url
+	suite.Error(err)
+
+	<-time.After(1500 * time.Millisecond)
+
+	token, err = auth.CheckToken(tk)
+	suite.Equal(tk, token.Raw) // using /good URL
+	suite.NoError(err)
+
+	verifier.jwksURL = invalidJwksURL
+	<-time.After(1500 * time.Millisecond)
+
+	token, err = auth.CheckToken(tk)
+	suite.Nil(token) // changed to bad, after a minute using /bad URL
 	suite.Error(err)
 }
 

@@ -150,8 +150,9 @@ type OAuthClientCredentials struct {
 
 // ServiceAuthConfig holds the authentication configuration for a particular service
 type ServiceAuthConfig struct {
-	Clients    []OAuthClientCredentials `yaml:"clients" json:"-"`
-	HMACSecret string                   `yaml:"hmacSecret" json:"-"`
-	TTL        time.Duration            `yaml:"ttl" json:"-"`
-	JwksURL    string                   `yaml:"jwksURL"`
+	Clients            []OAuthClientCredentials `yaml:"clients" json:"-"`
+	HMACSecret         string                   `yaml:"hmacSecret" json:"-"`
+	TTL                time.Duration            `yaml:"ttl" json:"-"`
+	JwksURL            string                   `yaml:"jwksURL"`
+	JwksUpdateInterval time.Duration            `yaml:"jwksUpdateInterval"`
 }
