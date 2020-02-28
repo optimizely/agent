@@ -74,9 +74,8 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 	}
 
 	err := errors.New("invalid token")
-	var tk  *jwt.Token
 	for _, secretKey := range c.secretKeys {
-		tk, err = jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		tk, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("unexpected signing method")
 			}
