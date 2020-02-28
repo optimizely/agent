@@ -76,7 +76,7 @@ Below is a comprehensive list of available configuration properties.
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
-|certfile|OPTIMIZELY_KEYFILE|Path to a certificate file, used to run Agent with HTTPS|
+|certfile|OPTIMIZELY_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
