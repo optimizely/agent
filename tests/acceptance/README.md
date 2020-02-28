@@ -2,7 +2,8 @@
 
 First, do everything from the agent's root directory. 
 
-It is recommended to set up a python virtual environment (Py version 3.7+).    
+Python version 3.7 or greater is required.
+It is recommended to set up a python virtual environment.     
 Activate virtual environment.  
 Install requirements `pip install -r tests/acceptance/requirements.txt` 
 
