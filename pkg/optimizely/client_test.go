@@ -43,7 +43,10 @@ type ClientTestSuite struct {
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
-	suite.optlyClient = &OptlyClient{testClient.OptimizelyClient, nil, testClient.ForcedVariations}
+	suite.optlyClient = &OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    &MockConfigManager{config: testClient.ProjectConfig},
+		ForcedVariations: testClient.ForcedVariations}
 	suite.optlyContext = NewContext("userId", make(map[string]interface{}))
 }
 
@@ -129,6 +132,22 @@ func (suite *ClientTestSuite) TestTrackEventWithContext() {
 func (suite *ClientTestSuite) TestTrackEventWithContextError() {
 	err := suite.optlyClient.TrackEventWithContext("missing-key", suite.optlyContext, map[string]interface{}{})
 	suite.NoError(err) // TODO Should this error?
+}
+
+func (suite *ClientTestSuite) TestTrackEvent() {
+	eventKey := "eventKey"
+	suite.testClient.AddEvent(entities.Event{Key: eventKey})
+	tags := map[string]interface{}{"tag": "value"}
+	err := suite.optlyClient.TrackEvent(eventKey, *suite.optlyContext.UserContext, tags)
+	suite.NoError(err)
+
+	events := suite.testClient.GetProcessedEvents()
+	suite.Equal(1, len(events))
+
+	actual := events[0]
+	suite.Equal(eventKey, actual.Conversion.Key)
+	suite.Equal("userId", actual.VisitorID)
+	suite.Equal(tags, actual.Conversion.Tags)
 }
 
 func (suite *ClientTestSuite) TestGetExperiment() {
