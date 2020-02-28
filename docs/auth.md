@@ -27,7 +27,7 @@ The configuration properties pertaining to Issuer & Validator mode are listed be
 |---|---|
 |ttl|Time-to-live of access tokens issued|
 |hmacSecrets|Secret used to sign issued access tokens, using the HMAC SHA256 algorithm|
-|clients|Array of client credentials, any of which can be exchanged for an access token|
+|clients|Array of client credentials, any of which can be exchanged for an access token. Each object in the array should have `"id"` and `"secret"` string properties.|
 
 ### Validator-only
 The configuration properties pertaining to Validator-only mode are listed below:

@@ -78,8 +78,16 @@ Below is a comprehensive list of available configuration properties.
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
+|admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
@@ -187,6 +195,9 @@ Custom metrics are also provided for the individual service endpoints and follow
 "timers.<metric-name>.responseTimeHist.p95": 0,
 "timers.<metric-name>.responseTimeHist.p99": 0,
 ```
+
+## Authorization
+Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see the [Authorization Guide](./docs/auth.md).
 
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
