@@ -1,6 +1,6 @@
 import os
 
-from src.helpers import ENDPOINT_CONFIG
+from tests.acceptance.helpers import ENDPOINT_CONFIG
 
 BASE_URL = os.getenv('host')
 

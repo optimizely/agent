@@ -5,9 +5,9 @@ import os
 import pytest
 import requests
 
-from src.helpers import PROJECT_ROOT
-from src.helpers import get_process_id_list
-from src.helpers import wait_for_agent_to_start
+from tests.acceptance.helpers import PROJECT_ROOT
+from tests.acceptance.helpers import get_process_id_list
+from tests.acceptance.helpers import wait_for_agent_to_start
 
 # sdk key of the project "Agent Acceptance", under QA account
 sdk_key = "KZbunNn9bVfBWLpZPq2XC4"

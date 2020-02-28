@@ -3,7 +3,7 @@ import os
 import pytest
 import requests
 
-from src.helpers import ENDPOINT_TRACK
+from tests.acceptance.helpers import ENDPOINT_TRACK
 
 BASE_URL = os.getenv('host')
 

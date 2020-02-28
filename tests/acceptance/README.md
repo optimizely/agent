@@ -1,15 +1,21 @@
-### API acceptance tests for Optimizely Agent project
+### API acceptance tests for Optimizely Agent
 
-It is recommended to do it all in a virtual environment. 
-  
-1. Make sure you have latest Agent in the root directory. If not, then clone it:   
-`git clone git@github.com:optimizely/agent.git`  
-2. Install [Golang](https://golang.org/doc/install) (>= 1.13) if you don't have it already
-3. `pip install -e .` 
-4. `pytest -v agent_acceptance/test_acceptance/ --host http://localhost:8080`
+First, do everything from the agent's root directory. 
 
-To run an individual test 
+It is recommended to set up a python virtual environment (Py version 3.7+).    
+Activate virtual environment.  
+Install requirements `pip install -r tests/acceptance/requirements.txt` 
+
+
+Run tests  
+1. `pytest -v tests/acceptance/test_acceptance/ --host http://localhost:8080`
+
+`--host` can point to any URL where agent service is located
+
+To run an individual test  
 TBD
+
+
 
 
 
