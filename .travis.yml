@@ -91,7 +91,7 @@ jobs:
       install:
         - pip install -r tests/acceptance/requirements.txt
       script:
-        - pytest -s -v tests/acceptance/src/test_acceptance --host http://localhost:8080
+        - pytest -v tests/acceptance/src/test_acceptance/ --host http://localhost:8080
 #      before_script: skip
 #      after_success:
 #        - ( [ ${TRAVIS_EVENT_TYPE} = "push" ] && [ ! -z ${TRAVIS_TAG} ] ) && scripts/upload_artifacts.sh
