@@ -212,6 +212,14 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenMissingSDKKey() {
 	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
+func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidBody() {
+	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader([]byte("<><**")))
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code)
+}
+
+
 func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",

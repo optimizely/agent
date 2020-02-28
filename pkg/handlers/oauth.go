@@ -100,7 +100,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	var reqBody tokenRequest
 	err := ParseRequestBody(r, &reqBody)
 	if err != nil {
-		return nil, 0, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if reqBody.GrantType == "" {
