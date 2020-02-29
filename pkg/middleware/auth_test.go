@@ -363,6 +363,8 @@ func TestAuthValidCheckTokenFromJwksURLwithUpdating(t *testing.T) {
 		}
 	}))
 
+	defer server.Close()
+
 	validJwksURL := server.URL + "/good"
 	invalidJwksURL := server.URL + "/bad"
 
