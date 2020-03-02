@@ -9,8 +9,12 @@ There are three modes of operation:
 ### Issuer & Validator
 Access tokens are issued by Agent itself, using a [Client Credentials grant](https://www.oauth.com/oauth2-servers/access-tokens/client-credentials/). Access tokens are signed and validated using the HS256 algorithm with a signing secret provided in configuration.
 
+Issuer & Validator mode is useful if you want to implement authorization, and you are not already running an authorization server that can issue JWTs.
+
 ### Validator-only
 Agent validates access tokens that were issued elsewhere. Access tokens are validated with public keys fetched from a [JWKS](https://tools.ietf.org/html/rfc7517) URL provided in configuration.
+
+Validator-only mode is useful if you want to plug directly into an existing JWT-based workflow already being used in your system or organization.
 
 ### No authorization (default)
 The interface is publicly available.
@@ -39,30 +43,31 @@ The configuration properties pertaining to Validator-only mode are listed below:
 ### No authorization (default)
 The API & Admin interfaces run with no authorization when no `auth` configuration is given.
 
-### Example configuration file (yaml)
+### Example configuration files (yaml)
+#### Issuer & Validator
 ```yaml
-# In this example, the API interface is configured in Validator-only mode, and the admin
-# interface is configured in Issuer & Validation mode.
-
-api:
-    # Validator-only 
-    auth:
-        # Signing keys will be fetched from this url and used when validating access tokens
-        jwksURL: https://YOUR_DOMAIN/.well-known/jwks.json
+### In this example, the Admin interface is configured in Issuer & Validator mode
 admin:
-    # Issuer & Validator
     auth:
         # Access tokens will expire after 30 minutes
         ttl: 30m
-         # Access tokens will be signed & validated using this secret
         hmacSecrets:
+            # Access tokens will be signed & validated using this secret
             - QPtUGP/RqaXRltZf1QE1KxlF2Iuo09J0buZ3UNKeIr0
-        # Either of these two id/secret pairs can be exchanged for access tokens
         clients:
+            # Either of these two id/secret pairs can be exchanged for access tokens
             - id: agentConsumer1
             secret: XgZTeTvWaZ6fLiey6EBSOxJ2QFdd6dIiUcZGDIIJ+IY 
             - id: agentConsumer2
             secret: ssz0EEViKIinkFXxzqncKxz+6VygEc2d2rKf+la5rXM 
+```
+#### Validator-only
+```yaml
+# In this example, the API interface is configured in Validator-only mode
+api:
+    auth:
+        # Signing keys will be fetched from this url and used when validating access tokens
+        jwksURL: https://YOUR_DOMAIN/.well-known/jwks.json
 ```
 
 ## Secret Rotation (Issuer & Validator mode)

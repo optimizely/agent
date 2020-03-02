@@ -5,12 +5,13 @@ import json
 import requests
 import sys
 
-# This example demonstrates obtaining an access token and using it to request the
-# current Optimizely Config from the API interface.
-
+# This example demonstrates interacting with Agent running in Issuer & Validator mode.
+# We obtain an access token and use it to request the current Optimizely Config
+# from the API interface.
+#
 # Before running, add the following to your Agent configuration file (default:
 # config.yaml) under the "api" section:
-
+#
 # auth:
 #   ttl: 30m
 #   hmacSecrets:
@@ -18,9 +19,11 @@ import sys
 #   clients:
 #     - id: clientid1
 #       secret: clientsecret1
-
+#
 # With this configuration, an access token can be requested from the
-# /oauth/apitoken endpoint using the configured id and secret. 
+# /oauth/apitoken endpoint using the configured id and secret.
+
+# For more information, see docs/auth.md
 
 if len(sys.argv) < 2:
     sys.exit('Requires one argument: <SDK-Key>')
