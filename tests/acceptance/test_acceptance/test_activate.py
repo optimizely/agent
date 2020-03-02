@@ -152,27 +152,84 @@ def test_activate__disableTracking(session_obj):
     assert not resp.status_code == 204
 
 
-# TODO - I DON'T GET THIS, or it's a bug
-# TODO: NOT WORKING - I GET BACK BOTH DECISIONS FOR FEATURES AND EXPERIMENTS, REGARDLESS IF THEY ARE ENABLED OR DISABLED!!!
-# TODO - SHOULD FILTER PER "enabled" field.
-def test_activate__enabled(session_obj):
+# TODO: when "true" should return:
+# [{'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1', 'type': 'experiment', 'enabled': True}]
+# TODO when "false" should return
+# [{'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '', 'type': 'feature', 'enabled': False}]
+# TODO - code thsese above in - parameterize!
+# makse assertion that certain feature IS NOT in the response
+
+
+expected_enabled_true_all_true = [
+    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
+     'type': 'feature',
+     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
+     'enabled': True},
+    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
+     'type': 'experiment', 'enabled': True}]
+expected_enabled_true_feature_off = [
+    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
+     'type': 'experiment', 'enabled': True}]
+expected_enabled_false_feature_on = []
+expected_enabled_false_feature_off = [
+    {'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '',
+     'type': 'feature', 'enabled': False}]
+expected_enabled_empty = [
+    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
+     'type': 'experiment', 'enabled': True},
+    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
+     'type': 'feature',
+     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
+     'enabled': True}]
+expected_enabled_invalid = [
+    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
+     'type': 'experiment', 'enabled': True},
+    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
+     'type': 'feature',
+     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
+     'enabled': True}]
+
+
+# TODO - EXAMINE WHT CASE 1 IS INTERMITENTTLY FAILING
+@pytest.mark.parametrize(
+    "enabled, experimentKey, featureKey, expected_response, expected_status_code", [
+        pytest.param("true", "ab_test1", "feature_1", expected_enabled_true_all_true, 200,
+                     marks=pytest.mark.xfail(
+                         reason="TO EXAMINS WHY IT'S INTERMITTENTLY FAILING.")),
+        ("true", "ab_test1", "feature_3", expected_enabled_true_feature_off, 200),
+        ("false", "ab_test1", "feature_1", expected_enabled_false_feature_on, 200),
+        ("false", "ab_test1", "feature_3", expected_enabled_false_feature_off, 200),
+        pytest.param("", "ab_test1", "feature_1", expected_enabled_empty, 400,
+                     marks=pytest.mark.xfail(reason="Status code should be 4xx")),
+        pytest.param("invalid value for enabled", "ab_test1", "feature_1",
+                     expected_enabled_invalid, 400,
+                     marks=pytest.mark.xfail(reason="Status code should be 4xx"))
+    ], ids=["enabled true, all true", "enabled true, feature off",
+            "enabled false, feature on",
+            "enabled false, feature off", "empty value for enabled",
+            "invalid value for enabled"])
+def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
+                           expected_response, expected_status_code):
     """
     Filter the activation response to return only enabled decisions.
+    Value for enabled key needs to be a string: "true" or "false"
+
+    - feature_1 feature is enabled - should not appear in response when enabled is set to False
+    - featur_3 feature is not enabled in the project - should not appear in the project when enabled is True
     :param session_obj: session fixture
     """
-    feature_1_key = 'feature_1'  # should not appear in response when enabled is set to False
-    feature_3_key = 'feature_3'  # TODO - THIS FEATURE 3 IS NOT ENABLED IN THE PROJECT - SHOULD NOT APPEAR IN THE RESPONSE WHEN enabled is True
-    experiment_key = 'ab_test1'
-
     payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
     params = {
-        "experimentKey": experiment_key,
-        "featureKey": feature_3_key,
-        "enabled": True
+        "experimentKey": experimentKey,
+        "featureKey": featureKey,
+        "enabled": enabled
     }
 
     resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
 
+    expected_response = sort_response(expected_response, 'experimentKey', 'featureKey')
+    assert resp.json() == expected_response
+    assert resp.status_code == expected_status_code
     resp.raise_for_status()
 
 
