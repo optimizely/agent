@@ -29,10 +29,13 @@ import (
 
 var errNullOptimizelyConfig = errors.New("optimizely config is null")
 
+// ErrEventKeyDoesNotExist signals that the eventKey does not exist as part of the current configuration
+var ErrEventKeyDoesNotExist = errors.New("eventKey does not exist")
+
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
-	ConfigManager    *optimizelyconfig.PollingProjectConfigManager
+	ConfigManager    SyncedConfigManager
 	ForcedVariations *decision.MapExperimentOverridesStore
 }
 
@@ -116,6 +119,20 @@ func (c *OptlyClient) UpdateConfig() {
 // TrackEventWithContext calls the OptimizelyClient Track method with the current OptlyContext.
 func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, eventTags map[string]interface{}) error {
 	return c.Track(eventKey, *ctx.UserContext, eventTags)
+}
+
+// TrackEvent checks for the existence of the event before calling the OptimizelyClient Track method
+func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, eventTags map[string]interface{}) error {
+	pc, err := c.ConfigManager.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	if _, err = pc.GetEventByKey(eventKey); err != nil {
+		return ErrEventKeyDoesNotExist
+	}
+
+	return c.Track(eventKey, uc, eventTags)
 }
 
 // GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext

@@ -31,19 +31,20 @@ func NewDefaultConfig() *AgentConfig {
 
 		Admin: AdminConfig{
 			Auth: ServiceAuthConfig{
-				Clients:    make([]OAuthClientCredentials, 0),
-				HMACSecret: "",
-				TTL:        0,
-				JwksURL:    "",
+
+				Clients:     make([]OAuthClientCredentials, 0),
+				HMACSecrets: make([]string, 0),
+				TTL:         0,
+				JwksURL:     "",
 			},
 			Port: "8088",
 		},
 		API: APIConfig{
 			Auth: ServiceAuthConfig{
-				Clients:    make([]OAuthClientCredentials, 0),
-				HMACSecret: "",
-				TTL:        0,
-				JwksURL:    "",
+				Clients:     make([]OAuthClientCredentials, 0),
+				HMACSecrets: make([]string, 0),
+				TTL:         0,
+				JwksURL:     "",
 			},
 			MaxConns:            0,
 			Port:                "8080",
@@ -151,7 +152,7 @@ type OAuthClientCredentials struct {
 // ServiceAuthConfig holds the authentication configuration for a particular service
 type ServiceAuthConfig struct {
 	Clients            []OAuthClientCredentials `yaml:"clients" json:"-"`
-	HMACSecret         string                   `yaml:"hmacSecret" json:"-"`
+	HMACSecrets        []string                 `yaml:"hmacSecrets" json:"-"`
 	TTL                time.Duration            `yaml:"ttl" json:"-"`
 	JwksURL            string                   `yaml:"jwksURL"`
 	JwksUpdateInterval time.Duration            `yaml:"jwksUpdateInterval"`

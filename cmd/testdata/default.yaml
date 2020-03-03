@@ -25,7 +25,9 @@ admin:
   port: "3002"
   auth:
     ttl: 30m
-    hmacSecret: "efgh"
+    hmacSecrets:
+      - "efgh"
+      - "ijkl"
     clients:
       - id: clientid2
         secret: clientsecret2
@@ -38,7 +40,9 @@ api:
   enableOverrides: true
   auth:
     ttl: 30m
-    hmacSecret: "abcd"
+    hmacSecrets:
+      - "abcd"
+      - "efgh"
     clients:
       - id: clientid1
         secret: clientsecret1

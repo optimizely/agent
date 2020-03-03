@@ -57,6 +57,24 @@ func (m MockHandlers) override(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(methodHeaderKey, "override")
 }
 
+type MockOAuthHandlers struct{}
+
+func (m MockOAuthHandlers) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add(methodHeaderKey, "oauth/token")
+}
+
+const middlewareHeaderKey = "X-Middleware-Header"
+
+type MockOAuthMiddleware struct{}
+
+func (m MockOAuthMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(middlewareHeaderKey, "mockMiddleware")
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
+}
+
 type APIV1TestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
@@ -73,6 +91,8 @@ func (suite *APIV1TestSuite) SetupTest() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: true,
+		oAuthHandler:    MockOAuthHandlers{},
+		oAuthMiddleware: MockOAuthMiddleware{},
 	}
 
 	suite.mux = NewAPIV1Router(opts)
@@ -98,6 +118,7 @@ func (suite *APIV1TestSuite) TestOverride() {
 
 		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
+		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
 	}
 }
 
@@ -114,6 +135,8 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: false,
+		oAuthHandler:    MockOAuthHandlers{},
+		oAuthMiddleware: MockOAuthMiddleware{},
 	}
 
 	mux := NewAPIV1Router(opts)
@@ -127,6 +150,15 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 	response := string(rec.Body.Bytes())
 	suite.Equal("Overrides not enabled\n", response)
 
+}
+
+func (suite *APIV1TestSuite) TestCreateAccessToken() {
+	req := httptest.NewRequest("POST", "/oauth/api/token", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+	suite.Equal("oauth/token", rec.Header().Get(methodHeaderKey))
 }
 
 func TestAPIV1TestSuite(t *testing.T) {

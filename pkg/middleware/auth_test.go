@@ -44,35 +44,42 @@ func (c OptlyClaims) Valid() error {
 
 type AuthTestSuite struct {
 	suite.Suite
-	validAPIToken   *jwt.Token
-	validAdminToken *jwt.Token
-	expiredToken    *jwt.Token
-	handler         http.HandlerFunc
-	signature       string
-	authConfig      *config.ServiceAuthConfig
 
 	server *httptest.Server
+
+	validAPIToken         *jwt.Token
+	validAPITokenOtherSig *jwt.Token
+	validAdminToken       *jwt.Token
+	expiredToken          *jwt.Token
+	handler               http.HandlerFunc
+	signatures            []string
+	authConfig            *config.ServiceAuthConfig
 }
 
 func (suite *AuthTestSuite) SetupTest() {
-	suite.signature = "test"
+	suite.signatures = []string{"test", "test2"}
+
 	claims := OptlyClaims{ExpiresAt: 12313123123213, SdkKey: "SDK_KEY", Issuer: "iss"} // exp = March 9, 2360
 	suite.validAPIToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validAPIToken.Raw, _ = suite.validAPIToken.SignedString([]byte(suite.signature))
+	suite.validAPIToken.Raw, _ = suite.validAPIToken.SignedString([]byte(suite.signatures[0]))
+
+	claims = OptlyClaims{ExpiresAt: 12313123123213, SdkKey: "SDK_KEY", Issuer: "iss"} // exp = March 9, 2360
+	suite.validAPITokenOtherSig = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	suite.validAPITokenOtherSig.Raw, _ = suite.validAPITokenOtherSig.SignedString([]byte(suite.signatures[1]))
 
 	claims = OptlyClaims{ExpiresAt: 12313123123213, Admin: true, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAdminToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validAdminToken.Raw, _ = suite.validAdminToken.SignedString([]byte(suite.signature))
+	suite.validAdminToken.Raw, _ = suite.validAdminToken.SignedString([]byte(suite.signatures[0]))
 
 	claims = OptlyClaims{ExpiresAt: 0, SdkKey: "SDK_KEY", Issuer: "iss"}
 	suite.expiredToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.expiredToken.Raw, _ = suite.expiredToken.SignedString([]byte(suite.signature))
+	suite.expiredToken.Raw, _ = suite.expiredToken.SignedString([]byte(suite.signatures[0]))
 
 	suite.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	suite.authConfig = &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
 	}
 
 	suite.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -103,9 +110,9 @@ func (suite *AuthTestSuite) TestNewAuthNoAuth() {
 
 func (suite *AuthTestSuite) TestNewAuthJWTVerifier() {
 	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
 	}
 	auth := NewAuth(authConfig)
 
@@ -117,7 +124,7 @@ func (suite *AuthTestSuite) TestNewAuthJWTVerifier() {
 func (suite *AuthTestSuite) TestNewAuthJWTVerifierURL() {
 	authConfig := &config.ServiceAuthConfig{
 		Clients:            make([]config.OAuthClientCredentials, 0),
-		HMACSecret:         suite.signature,
+		HMACSecrets:        suite.signatures,
 		TTL:                0,
 		JwksURL:            suite.server.URL + "/good",
 		JwksUpdateInterval: time.Second,
@@ -131,10 +138,10 @@ func (suite *AuthTestSuite) TestNewAuthJWTVerifierURL() {
 
 func (suite *AuthTestSuite) TestNewAuthBadAuthNoInterval() {
 	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
-		JwksURL:    suite.server.URL + "/good",
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
+		JwksURL:     suite.server.URL + "/good",
 	}
 	auth := NewAuth(authConfig)
 
@@ -146,7 +153,7 @@ func (suite *AuthTestSuite) TestNewAuthBadAuthNoInterval() {
 func (suite *AuthTestSuite) TestNewAuthBadAuthBadURL() {
 	authConfig := &config.ServiceAuthConfig{
 		Clients:            make([]config.OAuthClientCredentials, 0),
-		HMACSecret:         suite.signature,
+		HMACSecrets:        suite.signatures,
 		TTL:                0,
 		JwksURL:            "fake_url",
 		JwksUpdateInterval: time.Second,
@@ -197,10 +204,10 @@ func (suite *AuthTestSuite) TestAuthValidCheckTokenFromValidJwks() {
 	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg`
 
 	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
-		JwksURL:    suite.server.URL + "/good",
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
+		JwksURL:     suite.server.URL + "/good",
 	}
 
 	auth := JWTVerifierURL{jwksURL: authConfig.JwksURL, parser: &jwt.Parser{SkipClaimsValidation: true}}
@@ -216,10 +223,10 @@ func (suite *AuthTestSuite) TestAuthValidCheckTokenFromInvalidJwksURL() {
 	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg`
 
 	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
-		JwksURL:    "fake_url",
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
+		JwksURL:     "fake_url",
 	}
 
 	auth := NewAuth(authConfig)
@@ -233,10 +240,10 @@ func (suite *AuthTestSuite) TestAuthInvalidCheckTokenFromValidJwksURL() {
 	const tk = `eyJhbGciOiJSUzI1NiIsImtpZCI6Il9ZdXhXVHgyZHAyRVNVb2s3MmUzcjNLb0R6OWZueFdJM29DQndOYnkyX0UiLCJ0eXAiOiJKV1QifQ.eyJhY2NvdW50X2lkIjo0Njg1MjgwNDQ0LCJhdWQiOiJTUlZDIiwiZXhwIjoxNTgyMzI1NjE5LCJpYXQiOjE1ODIzMjUwMTksImlzcyI6IlRPS0VOX1NFUlZJQ0UiLCJqdGkiOiI2OWVlN2M2NS1jNWU1LTQwNzYtYjI2Zi0yOGYzY2JlZjQwZjUiLCJuYmYiOjE1ODIzMjUwMTksInByb2plY3RfaWQiOjkyNjQzNjc2OTAsInNjb3BlcyI6ImF0dHJpYnV0ZXMubW9kaWZ5IGF0dHJpYnV0ZXMucmVhZCBhdWRpZW5jZXMucmVhZCBjaGFuZ2VfaGlzdG9yeS5yZWFkIGNvbGxhYm9yYXRvcnMubW9kaWZ5IGNvbGxhYm9yYXRvcnMucmVhZCBkY3AubW9kaWZ5IGRjcC5yZWFkIGV2ZW50cy5yZWFkIGV4cGVyaW1lbnRzLm1vZGlmeSBleHBlcmltZW50cy5yZWFkIGV4dGVuc2lvbnMubW9kaWZ5IGV4dGVuc2lvbnMucmVhZCBwYWdlcy5yZWFkIHByb2plY3RzLnJlYWQgcmVjb21tZW5kZXJzLm1vZGlmeSByZWNvbW1lbmRlcnMucmVhZCByZXN1bHRzLnJlYWQgc2FyLm1vZGlmeSBzYXIucmVhZCB1c2VyLnJlYWQiLCJzdWIiOiJ1cm46dXNlcjplMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiIsInVzZXJfaWQiOiJlMDk4ZjYwMGMwNzkxMWU1YjQ0NmU1MGRmMzdhOWEyMiJ9.D9KVOiyvMP8ctJHIJAjt1ddj4Dol1c7vmPc0ZJg9A7t-yOv3WDjlxYMeTOPwPvN3iTHxIb-MFGIQyDpv63v13s00G0P4CFJHdXYBYTQETHCH1kFfjU5hK1lUAlqel3v25-uE-LgOnpnDsJK_LBmPwGJxh1_S5lyY6fBpQo9guMgmFIoN-GXGHzSWMD93oyD5CoiXWbxvLMIGMOrafl3YzqnEPK4WgmujnSR2vnj5lSLuJF_5-EICSXwuK2JVOq0xjGwa2trhw6xeVzN7JcKMb_baRq2tKxiiOjTnC-jPtkR22G8CWFcWUtOkkl-9XM9PXop2tHyLDWXxk73RChpAHg_invalid`
 
 	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
-		JwksURL:    suite.server.URL + "/good",
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
+		JwksURL:     suite.server.URL + "/good",
 	}
 
 	auth := JWTVerifierURL{jwksURL: authConfig.JwksURL, parser: &jwt.Parser{SkipClaimsValidation: true}}
@@ -290,6 +297,18 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaims() 
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
+func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaimsOtherSig() {
+
+	auth := NewAuth(suite.authConfig)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.validAPITokenOtherSig.Raw)
+	req.Header.Add(OptlySDKHeader, "SDK_KEY")
+
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+}
+
 func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenAuthorizationValidClaims() {
 
 	auth := NewAuth(suite.authConfig)
@@ -329,10 +348,10 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAdminTokenAuthorizationValidClaimsE
 func (suite *AuthTestSuite) TestAuthAuthorizeInvalidJwksURL() {
 
 	authConfig := &config.ServiceAuthConfig{
-		Clients:    make([]config.OAuthClientCredentials, 0),
-		HMACSecret: suite.signature,
-		TTL:        0,
-		JwksURL:    "fake_url",
+		Clients:     make([]config.OAuthClientCredentials, 0),
+		HMACSecrets: suite.signatures,
+		TTL:         0,
+		JwksURL:     "fake_url",
 	}
 
 	auth := NewAuth(authConfig)

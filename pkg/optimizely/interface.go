@@ -17,7 +17,18 @@
 // Package optimizely wraps the Optimizely SDK
 package optimizely
 
+import (
+	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+)
+
 // Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
 type Cache interface {
 	GetClient(sdkKey string) (*OptlyClient, error)
+}
+
+// SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates
+type SyncedConfigManager interface {
+	GetConfig() (optimizelyconfig.ProjectConfig, error)
+	GetOptimizelyConfig() *optimizelyconfig.OptimizelyConfig
+	SyncConfig()
 }
