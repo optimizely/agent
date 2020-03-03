@@ -72,6 +72,7 @@ Below is a comprehensive list of available configuration properties.
 |api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
 |api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
 |api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.jwksUpdateInterval|OPTIMIZELY_API_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](./docs/auth.md)|
 |api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|

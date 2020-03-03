@@ -143,11 +143,9 @@ func (suite *AuthTestSuite) TestNewAuthBadAuthNoInterval() {
 		TTL:         0,
 		JwksURL:     suite.server.URL + "/good",
 	}
-	auth := NewAuth(authConfig)
 
-	if _, ok := auth.Verifier.(BadAuth); !ok {
-		suite.Fail("expected BadAuth type")
-	}
+	auth := NewAuth(authConfig)
+	suite.Nil(auth)
 }
 
 func (suite *AuthTestSuite) TestNewAuthBadAuthBadURL() {
@@ -158,11 +156,9 @@ func (suite *AuthTestSuite) TestNewAuthBadAuthBadURL() {
 		JwksURL:            "fake_url",
 		JwksUpdateInterval: time.Second,
 	}
-	auth := NewAuth(authConfig)
 
-	if _, ok := auth.Verifier.(BadAuth); !ok {
-		suite.Fail("expected BadAuth type")
-	}
+	auth := NewAuth(authConfig)
+	suite.Nil(auth)
 }
 
 func (suite *AuthTestSuite) TestNoAuthCheckToken() {
@@ -408,7 +404,7 @@ func TestAuthValidCheckTokenFromJwksURLwithUpdating(t *testing.T) {
 	assert.Nil(t, token) // still bad - polling every minute, still using fake_url
 	assert.Error(t, err)
 
-	<-time.After(1500 * time.Millisecond)
+	<-time.After(1200 * time.Millisecond)
 
 	token, err = auth.CheckToken(tk)
 	assert.Equal(t, tk, token.Raw) // using /good URL
@@ -417,7 +413,7 @@ func TestAuthValidCheckTokenFromJwksURLwithUpdating(t *testing.T) {
 	verifier.jwksLock.Lock()
 	verifier.jwksURL = invalidJwksURL
 	verifier.jwksLock.Unlock()
-	<-time.After(1500 * time.Millisecond)
+	<-time.After(1200 * time.Millisecond)
 
 	token, err = auth.CheckToken(tk)
 	assert.Nil(t, token) // changed to bad, after a minute using /bad URL
