@@ -31,20 +31,21 @@ func NewDefaultConfig() *AgentConfig {
 
 		Admin: AdminConfig{
 			Auth: ServiceAuthConfig{
-
-				Clients:     make([]OAuthClientCredentials, 0),
-				HMACSecrets: make([]string, 0),
-				TTL:         0,
-				JwksURL:     "",
+				Clients:            make([]OAuthClientCredentials, 0),
+				HMACSecrets:        make([]string, 0),
+				TTL:                0,
+				JwksURL:            "",
+				JwksUpdateInterval: 0,
 			},
 			Port: "8088",
 		},
 		API: APIConfig{
 			Auth: ServiceAuthConfig{
-				Clients:     make([]OAuthClientCredentials, 0),
-				HMACSecrets: make([]string, 0),
-				TTL:         0,
-				JwksURL:     "",
+				Clients:            make([]OAuthClientCredentials, 0),
+				HMACSecrets:        make([]string, 0),
+				TTL:                0,
+				JwksURL:            "",
+				JwksUpdateInterval: 0,
 			},
 			MaxConns:            0,
 			Port:                "8080",

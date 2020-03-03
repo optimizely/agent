@@ -50,14 +50,6 @@ func (NoAuth) CheckToken(string) (*jwt.Token, error) {
 	return nil, nil
 }
 
-// BadAuth is bad auth, it shuts down the server
-type BadAuth struct{}
-
-// CheckToken returns no token and error
-func (BadAuth) CheckToken(string) (*jwt.Token, error) {
-	return nil, errors.New("bad initial auth, not starting the server")
-}
-
 // Auth is the middleware for all REST API's
 type Auth struct {
 	Verifier
@@ -74,8 +66,8 @@ type JWTVerifier struct {
 }
 
 // NewJWTVerifier creates JWTVerifier with secret key
-func NewJWTVerifier(secretKeys []string) JWTVerifier {
-	return JWTVerifier{secretKeys: secretKeys}
+func NewJWTVerifier(secretKeys []string) *JWTVerifier {
+	return &JWTVerifier{secretKeys: secretKeys}
 }
 
 // CheckToken checks the token and returns it if it's valid
@@ -157,7 +149,7 @@ func NewJWTVerifierURL(jwksURL string, updateInterval time.Duration) *JWTVerifie
 	err := jwtVerifierURL.updateKeySet()
 
 	if err != nil {
-		return &JWTVerifierURL{}
+		return nil
 	}
 
 	go jwtVerifierURL.startTicker(updateInterval)
@@ -288,7 +280,7 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 }
 
 // NewAuth makes Auth middleware
-func NewAuth(authConfig *config.ServiceAuthConfig) Auth {
+func NewAuth(authConfig *config.ServiceAuthConfig) *Auth {
 
 	if authConfig.JwksURL != "" && len(authConfig.HMACSecrets) != 0 {
 		log.Warn().Msg("HMAC Secret will be ignored, JWKS URL will be used for token validation")
@@ -297,20 +289,20 @@ func NewAuth(authConfig *config.ServiceAuthConfig) Auth {
 	if authConfig.JwksURL != "" {
 		if authConfig.JwksUpdateInterval <= 0 {
 			log.Error().Msg("JwksUpdateInterval must be set")
-			return Auth{Verifier: BadAuth{}}
+			return nil
 		}
 		verifier := NewJWTVerifierURL(authConfig.JwksURL, authConfig.JwksUpdateInterval)
-		if verifier.jwksKeys == nil {
-			log.Error().Msg("problem with getting JWKS key set")
-			return Auth{Verifier: BadAuth{}}
+		if verifier == nil {
+			log.Error().Msg("problem with getting initial JWKS key set")
+			return nil
 		}
-		return Auth{Verifier: verifier}
+		return &Auth{Verifier: verifier}
 	}
 
 	if len(authConfig.HMACSecrets) == 0 {
-		return Auth{Verifier: NoAuth{}}
+		return &Auth{Verifier: NoAuth{}}
 	}
 
-	return Auth{Verifier: NewJWTVerifier(authConfig.HMACSecrets)}
+	return &Auth{Verifier: NewJWTVerifier(authConfig.HMACSecrets)}
 
 }

@@ -43,14 +43,14 @@ type APIOptions struct {
 	userOverrideAPI  handlers.UserOverrideAPI
 	metricsRegistry  *metrics.Registry
 	oAuthHandler     *handlers.OAuthHandler
-	oAuthMiddleware  middleware.Auth
+	oAuthMiddleware  *middleware.Auth
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
-	if _, ok := authProvider.Verifier.(middleware.BadAuth); ok {
+	if authProvider == nil {
 		return nil
 	}
 

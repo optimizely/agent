@@ -34,7 +34,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Admin.Auth)
 
-	if _, ok := authProvider.Verifier.(middleware.BadAuth); ok {
+	if authProvider == nil {
 		return nil
 	}
 

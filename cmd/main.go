@@ -119,10 +119,10 @@ func main() {
 	}()
 
 	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
-	adminRouter := routers.NewWebhookRouter(optlyCache, conf.Webhook)
+	adminRouter := routers.NewAdminRouter(*conf)
 
 	if apiRouter == nil || adminRouter == nil {
-		log.Error().Msg("unable to fetch jwks key set, exiting")
+		log.Error().Msg("failed to start router, exiting")
 		cancel()
 	}
 
