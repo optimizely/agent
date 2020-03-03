@@ -18,7 +18,6 @@
 package routers
 
 import (
-	"github.com/go-chi/render"
 	"net/http"
 
 	"github.com/optimizely/agent/config"
@@ -29,6 +28,8 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
 // APIOptions defines the configuration parameters for Router.
@@ -51,6 +52,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	authProvider := middleware.NewAuth(&conf.Auth)
 	if authProvider == nil {
+		log.Error().Msg("unable to initialize api auth middleware.")
 		return nil
 	}
 

@@ -113,10 +113,13 @@ type JWTVerifierURL struct {
 
 func (c *JWTVerifierURL) startTicker(ticker time.Duration) {
 
-	for range time.Tick(ticker) {
+	tick := time.NewTicker(ticker)
+	defer tick.Stop()
+
+	for range tick.C {
 		err := c.updateKeySet()
 		if err != nil {
-			log.Warn().Msg("unable to update JWKS key set")
+			log.Warn().Err(err).Msg("unable to update JWKS key set")
 		}
 	}
 }
@@ -149,6 +152,7 @@ func NewJWTVerifierURL(jwksURL string, updateInterval time.Duration) *JWTVerifie
 	err := jwtVerifierURL.updateKeySet()
 
 	if err != nil {
+		log.Error().Msg("unable to construct NewJWTVerifierURL")
 		return nil
 	}
 
@@ -293,7 +297,7 @@ func NewAuth(authConfig *config.ServiceAuthConfig) *Auth {
 		}
 		verifier := NewJWTVerifierURL(authConfig.JwksURL, authConfig.JwksUpdateInterval)
 		if verifier == nil {
-			log.Error().Msg("problem with getting initial JWKS key set")
+			log.Error().Msg("unable to construct NewJWTVerifierURL")
 			return nil
 		}
 		return &Auth{Verifier: verifier}

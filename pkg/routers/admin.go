@@ -26,6 +26,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
 // NewAdminRouter returns HTTP admin router
@@ -35,6 +36,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	authProvider := middleware.NewAuth(&conf.Admin.Auth)
 
 	if authProvider == nil {
+		log.Error().Msg("unable to initialize admin auth middleware.")
 		return nil
 	}
 
