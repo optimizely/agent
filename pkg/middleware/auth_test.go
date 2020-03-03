@@ -116,7 +116,7 @@ func (suite *AuthTestSuite) TestNewAuthJWTVerifier() {
 	}
 	auth := NewAuth(authConfig)
 
-	if _, ok := auth.Verifier.(JWTVerifier); !ok {
+	if _, ok := auth.Verifier.(*JWTVerifier); !ok {
 		suite.Fail("expected JWTVerifier type")
 	}
 }
@@ -226,9 +226,8 @@ func (suite *AuthTestSuite) TestAuthValidCheckTokenFromInvalidJwksURL() {
 	}
 
 	auth := NewAuth(authConfig)
-	token, err := auth.CheckToken(tk)
-	suite.Nil(token)
-	suite.Error(err)
+	suite.Nil(auth)
+
 }
 
 func (suite *AuthTestSuite) TestAuthInvalidCheckTokenFromValidJwksURL() {
@@ -351,13 +350,7 @@ func (suite *AuthTestSuite) TestAuthAuthorizeInvalidJwksURL() {
 	}
 
 	auth := NewAuth(authConfig)
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/some_url", nil)
-	req.Header.Add("Authorization", "Bearer "+suite.validAdminToken.Raw)
-	req.Header.Add(OptlySDKHeader, "SDK_KEY")
-
-	auth.AuthorizeAdmin(suite.handler).ServeHTTP(rec, req)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
+	suite.Nil(auth)
 }
 
 func TestAuth(t *testing.T) {
