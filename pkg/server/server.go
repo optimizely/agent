@@ -39,8 +39,12 @@ type Server struct {
 // NewServer initializes new service.
 // Configuration is pulled from viper configuration.
 func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
-	if port == "0" || handler == nil {
+	if port == "0" {
 		return Server{}, fmt.Errorf(`"%s" not enabled`, name)
+	}
+
+	if handler == nil {
+		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
 	logger := log.With().Str("port", port).Str("name", name).Logger()
