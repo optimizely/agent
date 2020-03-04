@@ -82,8 +82,13 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		}
 	}
 
+	hmacSecret := ""
+	if len(authConfig.HMACSecrets) > 0 {
+		hmacSecret = authConfig.HMACSecrets[0]
+	}
+
 	h := &OAuthHandler{
-		hmacSecret:        []byte(authConfig.HMACSecret),
+		hmacSecret:        []byte(hmacSecret),
 		ClientCredentials: clientCredentials,
 	}
 	return h
@@ -103,7 +108,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 	var reqBody tokenRequest
 	err := ParseRequestBody(r, &reqBody)
 	if err != nil {
-		return nil, 0, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if reqBody.GrantType == "" {

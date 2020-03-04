@@ -171,7 +171,7 @@ func (suite *RouterTestSuite) SetupTest() {
 		middleware:       new(MockOptlyMiddleware),
 		metricsRegistry:  metricsRegistry,
 		oAuthHandler:     &handlers.OAuthHandler{},
-		oAuthMiddleware:  middleware.Auth{Verifier: middleware.NoAuth{}},
+		oAuthMiddleware:  &middleware.Auth{Verifier: middleware.NoAuth{}},
 	}
 
 	suite.mux = NewAPIRouter(opts)

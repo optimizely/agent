@@ -21,12 +21,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/go-chi/chi"
+	"github.com/optimizely/go-sdk/pkg/client"
+	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -48,12 +52,50 @@ func (suite *TrackTestSuite) ClientCtx(next http.Handler) http.Handler {
 	})
 }
 
+type ErrorConfigManager struct{}
+
+func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
+	return nil, fmt.Errorf("config error")
+}
+
+func (e ErrorConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	panic("implement me")
+}
+
+func (e ErrorConfigManager) SyncConfig() {
+	panic("implement me")
+}
+
+type MockConfigManager struct {
+	config config.ProjectConfig
+}
+
+func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
+	return m.config, nil
+}
+
+func (m MockConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	panic("implement me")
+}
+
+func (m MockConfigManager) SyncConfig() {
+	panic("implement me")
+}
+
 // Setup Mux
 func (suite *TrackTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
-		ConfigManager:    nil,
+		ConfigManager:    MockConfigManager{config: testClient.ProjectConfig},
 		ForcedVariations: testClient.ForcedVariations,
 	}
 
@@ -134,20 +176,24 @@ func (suite *TrackTestSuite) TestTrackEventWithInvalidTags() {
 	suite.assertError(rec, "error parsing request body", http.StatusBadRequest)
 }
 
-func (suite *TrackTestSuite) TestTrackEventError() {
-	req := httptest.NewRequest("POST", "/track?eventKey=invalid", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
+func (suite *TrackTestSuite) TestTrackEventParamError() {
+	scenarios := []struct {
+		param   string
+		code    int
+		message string
+	}{
+		{"?eventKey=invalid", http.StatusNotFound, `event with key "invalid" not found`},
+		{"?eventKey=", http.StatusBadRequest, "missing required path parameter: eventKey"},
+		{"", http.StatusBadRequest, "missing required path parameter: eventKey"},
+	}
 
-	suite.Equal(http.StatusNoContent, rec.Code) // TODO Should this 404?
-}
+	for _, scenario := range scenarios {
+		req := httptest.NewRequest("POST", "/track"+scenario.param, nil)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
 
-func (suite *TrackTestSuite) TestTrackEventEmptyKey() {
-	req := httptest.NewRequest("POST", "/track", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.assertError(rec, "missing required path parameter: eventKey", http.StatusBadRequest)
+		suite.assertError(rec, scenario.message, scenario.code)
+	}
 }
 
 func (suite *TrackTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
@@ -165,4 +211,65 @@ func TestTrackMissingOptlyCtx(t *testing.T) {
 	rec := httptest.NewRecorder()
 	http.HandlerFunc(TrackEvent).ServeHTTP(rec, req)
 	assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
+}
+
+func TestTrackErrorConfigManager(t *testing.T) {
+	testClient := optimizelytest.NewClient()
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: testClient.OptimizelyClient,
+		ConfigManager:    ErrorConfigManager{},
+		ForcedVariations: testClient.ForcedVariations,
+	}
+
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	mux := chi.NewMux()
+	mux.With(mw).Post("/track", TrackEvent)
+
+	req := httptest.NewRequest("POST", "/track?eventKey=something", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	assertError(t, rec, "config error", http.StatusInternalServerError)
+}
+
+func TestTrackErrorClient(t *testing.T) {
+	// Construct an OptimizelyClient with an erroring config manager
+	factory := client.OptimizelyFactory{}
+	oClient, _ := factory.Client(
+		client.WithConfigManager(ErrorConfigManager{}),
+	)
+
+	// Construct a valid config manager as part of the OptlyClient wrapper
+	testConfig := optimizelytest.NewConfig()
+	eventKey := "test-event"
+	event := entities.Event{Key: eventKey}
+	testConfig.AddEvent(event)
+
+	optlyClient := &optimizely.OptlyClient{
+		OptimizelyClient: oClient,
+		ConfigManager:    MockConfigManager{config: testConfig},
+		ForcedVariations: nil,
+	}
+
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), middleware.OptlyClientKey, optlyClient)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	mux := chi.NewMux()
+	mux.With(mw).Post("/track", TrackEvent)
+
+	req := httptest.NewRequest("POST", "/track?eventKey=test-event", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	assertError(t, rec, "config error", http.StatusInternalServerError)
 }

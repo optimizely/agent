@@ -41,21 +41,26 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, "8088", conf.Admin.Port)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.Admin.Auth.Clients)
-	assert.Equal(t, "", conf.Admin.Auth.HMACSecret)
+	assert.Equal(t, make([]string, 0), conf.Admin.Auth.HMACSecrets)
 	assert.Equal(t, time.Duration(0), conf.Admin.Auth.TTL)
+	assert.Equal(t, "", conf.Admin.Auth.JwksURL)
+	assert.Equal(t, time.Duration(0), conf.Admin.Auth.JwksUpdateInterval)
 
 	assert.Equal(t, 0, conf.API.MaxConns)
 	assert.Equal(t, "8080", conf.API.Port)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
-	assert.Equal(t, "", conf.API.Auth.HMACSecret)
+	assert.Equal(t, make([]string, 0), conf.API.Auth.HMACSecrets)
 	assert.Equal(t, time.Duration(0), conf.API.Auth.TTL)
+	assert.Equal(t, "", conf.API.Auth.JwksURL)
+	assert.Equal(t, time.Duration(0), conf.API.Auth.JwksUpdateInterval)
 	assert.Equal(t, false, conf.API.EnableOverrides)
 	assert.Equal(t, false, conf.API.EnableNotifications)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)
 
-	assert.Equal(t, 10, conf.Processor.BatchSize)
-	assert.Equal(t, 1000, conf.Processor.QueueSize)
-	assert.Equal(t, 30*time.Second, conf.Processor.FlushInterval)
+	assert.Equal(t, 1*time.Minute, conf.Client.PollingInterval)
+	assert.Equal(t, 10, conf.Client.BatchSize)
+	assert.Equal(t, 1000, conf.Client.QueueSize)
+	assert.Equal(t, 30*time.Second, conf.Client.FlushInterval)
 }

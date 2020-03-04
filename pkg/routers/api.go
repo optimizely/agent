@@ -18,7 +18,6 @@
 package routers
 
 import (
-	"github.com/go-chi/render"
 	"net/http"
 
 	"github.com/optimizely/agent/config"
@@ -29,6 +28,8 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
 // APIOptions defines the configuration parameters for Router.
@@ -43,13 +44,17 @@ type APIOptions struct {
 	userOverrideAPI  handlers.UserOverrideAPI
 	metricsRegistry  *metrics.Registry
 	oAuthHandler     *handlers.OAuthHandler
-	oAuthMiddleware  middleware.Auth
+	oAuthMiddleware  *middleware.Auth
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
+	if authProvider == nil {
+		log.Error().Msg("unable to initialize api auth middleware.")
+		return nil
+	}
 
 	var notificationsAPI handlers.NotificationAPI
 	notificationsAPI = handlers.NewDisabledNotificationHandler()
@@ -158,6 +163,8 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 		middleware:      opt.middleware,
 		handlers:        new(defaultHandlers),
 		metricsRegistry: opt.metricsRegistry,
+		oAuthHandler:    opt.oAuthHandler,
+		oAuthMiddleware: opt.oAuthMiddleware,
 	}
 
 	r.Group(func(r chi.Router) { WithAPIV1Router(spec, r) })

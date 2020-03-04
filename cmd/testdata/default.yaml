@@ -8,22 +8,31 @@ sdkKeys:
 server:
   readTimeout: 5s
   writeTimeout: 10s
-  keyfile: "keyfile"
-  certfile: "certfile"
+  keyFile: "keyfile"
+  certFile: "certfile"
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
 log:
   pretty: true
   level: debug
+client:
+  pollingInterval: 10s
+  batchSize: 1
+  queueSize: 10
+  flushInterval: 1m
 admin:
   port: "3002"
   auth:
     ttl: 30m
-    hmacSecret: "efgh"
+    hmacSecrets:
+      - "efgh"
+      - "ijkl"
     clients:
       - id: clientid2
         secret_hash: clientsecret2
+    jwksURL: "admin_jwks_url"
+    jwksUpdateInterval: "25s"
 api:
   maxConns: 100
   port: "3000"
@@ -31,10 +40,14 @@ api:
   enableOverrides: true
   auth:
     ttl: 30m
-    hmacSecret: "abcd"
+    hmacSecrets:
+      - "abcd"
+      - "efgh"
     clients:
       - id: clientid1
         secret_hash: clientsecret1
+    jwksURL: "api_jwks_url"
+    jwksUpdateInterval: "25s"
 webhook:
   port: "3001"
   projects:

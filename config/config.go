@@ -31,17 +31,21 @@ func NewDefaultConfig() *AgentConfig {
 
 		Admin: AdminConfig{
 			Auth: ServiceAuthConfig{
-				Clients:    make([]OAuthClientCredentials, 0),
-				HMACSecret: "",
-				TTL:        0,
+				Clients:            make([]OAuthClientCredentials, 0),
+				HMACSecrets:        make([]string, 0),
+				TTL:                0,
+				JwksURL:            "",
+				JwksUpdateInterval: 0,
 			},
 			Port: "8088",
 		},
 		API: APIConfig{
 			Auth: ServiceAuthConfig{
-				Clients:    make([]OAuthClientCredentials, 0),
-				HMACSecret: "",
-				TTL:        0,
+				Clients:            make([]OAuthClientCredentials, 0),
+				HMACSecrets:        make([]string, 0),
+				TTL:                0,
+				JwksURL:            "",
+				JwksUpdateInterval: 0,
 			},
 			MaxConns:            0,
 			Port:                "8080",
@@ -52,10 +56,11 @@ func NewDefaultConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
-		Processor: ProcessorConfig{
-			BatchSize:     10,
-			QueueSize:     1000,
-			FlushInterval: 30 * time.Second,
+		Client: ClientConfig{
+			PollingInterval: 1 * time.Minute,
+			BatchSize:       10,
+			QueueSize:       1000,
+			FlushInterval:   30 * time.Second,
 		},
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
@@ -80,19 +85,20 @@ type AgentConfig struct {
 
 	SDKKeys []string `yaml:"sdkKeys" json:"sdkKeys"`
 
-	Admin     AdminConfig     `json:"admin"`
-	API       APIConfig       `json:"api"`
-	Log       LogConfig       `json:"log"`
-	Processor ProcessorConfig `json:"processor"`
-	Server    ServerConfig    `json:"server"`
-	Webhook   WebhookConfig   `json:"webhook"`
+	Admin   AdminConfig   `json:"admin"`
+	API     APIConfig     `json:"api"`
+	Log     LogConfig     `json:"log"`
+	Client  ClientConfig  `json:"client"`
+	Server  ServerConfig  `json:"server"`
+	Webhook WebhookConfig `json:"webhook"`
 }
 
-// ProcessorConfig holds the configuration options for the Optimizely Event Processor.
-type ProcessorConfig struct {
-	BatchSize     int           `json:"batchSize" default:"10"`
-	QueueSize     int           `json:"queueSize" default:"1000"`
-	FlushInterval time.Duration `json:"flushInterval" default:"30s"`
+// ClientConfig holds the configuration options for the Optimizely Client.
+type ClientConfig struct {
+	PollingInterval time.Duration `json:"pollingInterval"`
+	BatchSize       int           `json:"batchSize" default:"10"`
+	QueueSize       int           `json:"queueSize" default:"1000"`
+	FlushInterval   time.Duration `json:"flushInterval" default:"30s"`
 }
 
 // LogConfig holds the log configuration
@@ -105,8 +111,8 @@ type LogConfig struct {
 type ServerConfig struct {
 	ReadTimeout     time.Duration `json:"readTimeout"`
 	WriteTimeout    time.Duration `json:"writeTimeout"`
-	CertFile        string        `json:"certfile"`
-	KeyFile         string        `json:"keyfile"`
+	CertFile        string        `json:"certFile"`
+	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
 }
 
@@ -146,7 +152,9 @@ type OAuthClientCredentials struct {
 
 // ServiceAuthConfig holds the authentication configuration for a particular service
 type ServiceAuthConfig struct {
-	Clients    []OAuthClientCredentials `yaml:"clients" json:"-"`
-	HMACSecret string                   `yaml:"hmacSecret" json:"-"`
-	TTL        time.Duration            `yaml:"ttl" json:"-"`
+	Clients            []OAuthClientCredentials `yaml:"clients" json:"-"`
+	HMACSecrets        []string                 `yaml:"hmacSecrets" json:"-"`
+	TTL                time.Duration            `yaml:"ttl" json:"-"`
+	JwksURL            string                   `yaml:"jwksURL"`
+	JwksUpdateInterval time.Duration            `yaml:"jwksUpdateInterval"`
 }

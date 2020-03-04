@@ -104,7 +104,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache(ctx, conf.Processor, sdkMetricsRegistry)
+	optlyCache := optimizely.NewCache(ctx, conf.Client, sdkMetricsRegistry)
 	optlyCache.Init(conf.SDKKeys)
 
 	// goroutine to check for signals to gracefully shutdown listeners
@@ -118,10 +118,13 @@ func main() {
 		cancel()
 	}()
 
+	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
+	adminRouter := routers.NewAdminRouter(*conf)
+
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Port, routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry))
+	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
-	sg.GoListenAndServe("admin", conf.Admin.Port, routers.NewAdminRouter(*conf)) // Admin should be added last.
+	sg.GoListenAndServe("admin", conf.Admin.Port, adminRouter) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {
