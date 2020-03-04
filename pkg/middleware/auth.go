@@ -287,7 +287,7 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 func NewAuth(authConfig *config.ServiceAuthConfig) *Auth {
 
 	if authConfig.JwksURL != "" && len(authConfig.HMACSecrets) != 0 {
-		log.Warn().Msg("HMAC Secret will be ignored, JWKS URL will be used for token validation")
+		log.Warn().Msg("HMAC SecretHash will be ignored, JWKS URL will be used for token validation")
 	}
 
 	if authConfig.JwksURL != "" {
