@@ -103,7 +103,7 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func TestViperYaml(t *testing.T) {
 	v := viper.New()
-	v.Set("config.filename", "./testdata/default.yaml")
+	v.Set("config.filename", "../testdata/default.yaml")
 
 	err := initConfig(v)
 	assert.NoError(t, err)
