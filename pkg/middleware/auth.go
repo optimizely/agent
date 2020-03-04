@@ -152,7 +152,7 @@ func NewJWTVerifierURL(jwksURL string, updateInterval time.Duration) *JWTVerifie
 	err := jwtVerifierURL.updateKeySet()
 
 	if err != nil {
-		log.Error().Msg("unable to construct NewJWTVerifierURL")
+		log.Error().Err(err).Msg("unable to construct NewJWTVerifierURL")
 		return nil
 	}
 

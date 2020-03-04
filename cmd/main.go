@@ -121,11 +121,6 @@ func main() {
 	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
 	adminRouter := routers.NewAdminRouter(*conf)
 
-	if apiRouter == nil || adminRouter == nil {
-		log.Error().Msg("failed to start router, exiting")
-		cancel()
-	}
-
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
 	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
