@@ -67,6 +67,8 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 		ID:     "clientid2",
 		Secret: "clientsecret2",
 	}, actual.Clients[0])
+	assert.Equal(t, "admin_jwks_url", actual.JwksURL)
+	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
 }
 
 func assertAPI(t *testing.T, actual config.APIConfig) {
@@ -85,6 +87,8 @@ func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 		ID:     "clientid1",
 		Secret: "clientsecret1",
 	}, actual.Clients[0])
+	assert.Equal(t, "api_jwks_url", actual.JwksURL)
+	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
 }
 
 func assertWebhook(t *testing.T, actual config.WebhookConfig) {
@@ -142,6 +146,9 @@ func TestViperProps(t *testing.T) {
 	v.Set("admin.port", "3002")
 	v.Set("admin.auth.ttl", "30m")
 	v.Set("admin.auth.hmacSecrets", "efgh,ijkl")
+	v.Set("admin.auth.jwksURL", "admin_jwks_url")
+	v.Set("admin.auth.jwksUpdateInterval", "25s")
+
 	v.Set("admin.auth.clients", []map[string]string{
 		{
 			"id":     "clientid2",
@@ -154,7 +161,11 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.enableOverrides", true)
 	v.Set("api.port", "3000")
 	v.Set("api.auth.ttl", "30m")
+
 	v.Set("api.auth.hmacSecrets", "abcd,efgh")
+	v.Set("api.auth.jwksURL", "api_jwks_url")
+	v.Set("api.auth.jwksUpdateInterval", "25s")
+
 	v.Set("api.auth.clients", []map[string]string{
 		{
 			"id":     "clientid1",

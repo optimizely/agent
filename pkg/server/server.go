@@ -43,6 +43,10 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		return Server{}, fmt.Errorf(`"%s" not enabled`, name)
 	}
 
+	if handler == nil {
+		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
+	}
+
 	logger := log.With().Str("port", port).Str("name", name).Logger()
 	srv := &http.Server{
 		Addr:         ":" + port,
