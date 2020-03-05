@@ -42,7 +42,7 @@ Client Secret: i3SrdrCy/wEGqggv9OI4FgIsdHHNpOacrmIMJ6SFIkE=
 Client Secret's hash: JDJhJDEyJERGNzhjRXVTNTdOQUZ3cndxTkZ6Li5XQURlazU2R21YeFZjb1pWSkN5eGZ1SXM4VXRLb0ZD
 ```
 
-Use the hash value to configure Agent, and pass the secret value as `client_secret` when making acces token requests to `/oauth/token`. For details of the access token issuance endpoint, see the OpenAPI spec file.
+Use the hash value to configure Agent, and pass the secret value as `client_secret` when making access token requests to `/oauth/token`. For details of the access token issuance endpoint, see the OpenAPI spec file.
 
 ### Validator-only
 The configuration properties pertaining to Validator-only mode are listed below:
