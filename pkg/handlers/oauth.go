@@ -164,10 +164,16 @@ func renderClientCredentialsError(err error, status int, w http.ResponseWriter, 
 
 // CreateAPIAccessToken returns a JWT access token for the API service
 func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
-
 	clientCreds, httpCode, err := h.verifyClientCredentials(r)
 	if err != nil {
 		renderClientCredentialsError(err, httpCode, w, r)
+		return
+	}
+
+	if len(h.hmacSecret) == 0 {
+		middleware.GetLogger(r).Error().Msg("Invalid hmac secret in configuration, can't issue token")
+		render.Status(r, http.StatusInternalServerError)
+		render.PlainText(w, r, "Invalid server configuration, can't issue token")
 		return
 	}
 
@@ -196,6 +202,13 @@ func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Req
 	clientCreds, httpCode, err := h.verifyClientCredentials(r)
 	if err != nil {
 		renderClientCredentialsError(err, httpCode, w, r)
+		return
+	}
+
+	if len(h.hmacSecret) == 0 {
+		middleware.GetLogger(r).Error().Msg("Invalid hmac secret in configuration, can't issue token")
+		render.Status(r, http.StatusInternalServerError)
+		render.PlainText(w, r, "Invalid server configuration, can't issue token")
 		return
 	}
 

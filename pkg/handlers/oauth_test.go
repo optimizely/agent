@@ -221,7 +221,6 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidBody() {
 	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
-
 func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
@@ -311,4 +310,60 @@ func (s *OAuthDisabledTestSuite) TestGetAPIAccessTokenDisabled() {
 
 func TestOAuthDisabledTestSuite(t *testing.T) {
 	suite.Run(t, new(OAuthDisabledTestSuite))
+}
+
+type OAuthMissingHMACSecretTestSuite struct {
+	suite.Suite
+	handler *OAuthHandler
+	mux     *chi.Mux
+	secret  string
+}
+
+func (s *OAuthMissingHMACSecretTestSuite) SetupTest() {
+	s.secret = "RW+Uo/7z4ag9hAb10w8LIZFRFaSwS4nt1/l+uVgChIQ="
+	config := config.ServiceAuthConfig{
+		Clients: []config.OAuthClientCredentials{
+			{
+				ID:         "optly_user",
+				SecretHash: "JDJhJDEyJDNDOG12LmNCNzlHaHhGcEJtLzZZQk9VLnRneEpGTTlnTXozb2kyNS9ERzhJTDZOZkpGa0ND",
+			},
+		},
+		// No HMACSecrets provided, so should not issue token, and should return 500 status
+		HMACSecrets: []string{},
+		TTL:         30 * time.Minute,
+	}
+	s.handler = NewOAuthHandler(&config)
+
+	mux := chi.NewMux()
+	mux.Post("/api/token", s.handler.CreateAPIAccessToken)
+	mux.Post("/admin/token", s.handler.CreateAdminAccessToken)
+	s.mux = mux
+}
+
+func (s *OAuthMissingHMACSecretTestSuite) TestGetAdminAccessTokenDisabled() {
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"grant_type":    "client_credentials",
+		"client_id":     "optly_user",
+		"client_secret": s.secret,
+	})
+	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusInternalServerError, rec.Code)
+}
+
+func (s *OAuthMissingHMACSecretTestSuite) TestGetAPIAccessTokenDisabled() {
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"grant_type":    "client_credentials",
+		"client_id":     "optly_user",
+		"client_secret": s.secret,
+	})
+	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+	s.Equal(http.StatusInternalServerError, rec.Code)
+}
+
+func TestOAuthMissingHMACSecretTestSuite(t *testing.T) {
+	suite.Run(t, new(OAuthMissingHMACSecretTestSuite))
 }
