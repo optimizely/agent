@@ -68,7 +68,7 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 	if conf.KeyFile != "" && conf.CertFile != "" {
 		cfg, err := makeTLSConfig(conf)
 		if err != nil {
-			return Server{}, err
+			return Server{}, ListenerError{message: err.Error(), name: name, shutDown: false}
 		}
 		srv.TLSConfig = cfg
 	}
