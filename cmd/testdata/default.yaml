@@ -30,7 +30,7 @@ admin:
       - "ijkl"
     clients:
       - id: clientid2
-        secret_hash: clientsecret2
+        secretHash: clientsecret2
     jwksURL: "admin_jwks_url"
     jwksUpdateInterval: "25s"
 api:
@@ -45,7 +45,7 @@ api:
       - "efgh"
     clients:
       - id: clientid1
-        secret_hash: clientsecret1
+        secretHash: clientsecret1
     jwksURL: "api_jwks_url"
     jwksUpdateInterval: "25s"
 webhook:

@@ -152,7 +152,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("admin.auth.clients", []map[string]string{
 		{
 			"id":     "clientid2",
-			"secret": "clientsecret2",
+			"secretHash": "clientsecret2",
 		},
 	})
 
@@ -169,7 +169,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.auth.clients", []map[string]string{
 		{
 			"id":     "clientid1",
-			"secret": "clientsecret1",
+			"secretHash": "clientsecret1",
 		},
 	})
 
