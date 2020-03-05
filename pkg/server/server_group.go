@@ -54,8 +54,12 @@ func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 // go routines to maintain startup order of each listener.
 func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
 	server, err := NewServer(name, port, handler, g.conf)
-	if err != nil {
+
+	if listenerError, ok := err.(ListenerError); ok {
 		log.Info().Err(err).Msg("Not starting server")
+		if listenerError.shutDown {
+			g.stop()
+		}
 		return
 	}
 
