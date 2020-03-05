@@ -27,11 +27,24 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
+var metricsRegistry = metrics.NewRegistry()
+
 const methodHeaderKey = "X-Method-Header"
+const clientHeaderKey = "X-Client-Header"
+
+type MockOptlyMiddleware struct{}
+
+func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(clientHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
 
 type MockCache struct{}
 
@@ -165,8 +178,8 @@ func TestAPIV1TestSuite(t *testing.T) {
 	suite.Run(t, new(APIV1TestSuite))
 }
 
-func TestNewDefaultClientRouter(t *testing.T) {
-	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
+func TestNewDefaultAPIV1Router(t *testing.T) {
+	client := NewDefaultAPIV1Router(MockCache{}, config.APIConfig{}, metricsRegistry)
 	assert.NotNil(t, client)
 }
 
