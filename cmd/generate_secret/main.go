@@ -14,6 +14,10 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
+// generate_secret is a tool for generating random secrets and their associated hashes.
+// For more information, see docs/auth.md.
+
+// package main
 package main
 
 import (

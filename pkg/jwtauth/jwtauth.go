@@ -59,9 +59,9 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, e
 	return tokenString, nil
 }
 
-var secretBytesLen int = 32
+var secretBytesLen = 32
 
-var bcryptWorkFactor int = 12
+var bcryptWorkFactor = 12
 
 // ValidateClientSecret returns true if the hash of the secret provided in config matches
 // the secret provided in the request. Returns an error if the req secret fails base64
@@ -80,19 +80,19 @@ func ValidateClientSecret(reqSecret string, configSecretHash []byte) (bool, erro
 // - The second return value is the bcrypt hash of the secret.
 // - The hash should be included in Agent's auth configuration as the client_secret value.
 // - The secret should be sent in the request to the token issuer endpoint.
-func GenerateClientSecretAndHash() (string, string, error) {
+func GenerateClientSecretAndHash() (secretStr, hashStr string, err error) {
 	secretBytes := make([]byte, secretBytesLen)
-	_, err := rand.Read(secretBytes)
+	_, err = rand.Read(secretBytes)
 	if err != nil {
 		return "", "", fmt.Errorf("error returned from rand.Read: %v", err)
 	}
-	secretStr := base64.StdEncoding.EncodeToString(secretBytes)
+	secretStr = base64.StdEncoding.EncodeToString(secretBytes)
 
 	hashBytes, err := bcrypt.GenerateFromPassword(secretBytes, bcryptWorkFactor)
 	if err != nil {
 		return "", "", fmt.Errorf("error returned from bcrypt.GenerateFromPassword: %v", err)
 	}
-	hashStr := base64.StdEncoding.EncodeToString(hashBytes)
+	hashStr = base64.StdEncoding.EncodeToString(hashBytes)
 
 	return secretStr, hashStr, nil
 }
