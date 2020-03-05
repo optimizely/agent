@@ -144,7 +144,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 
 	isValid, err := jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.SecretHash)
 	if err != nil {
-		middleware.GetLogger(r).Debug().Err(err).Msg("validating request secret")
+		middleware.GetLogger(r).Info().Err(err).Msg("validating request secret")
 	}
 	if !isValid {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
