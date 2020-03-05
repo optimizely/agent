@@ -9,6 +9,7 @@ info:
   version: 0.12.0
 security:
   - SdkKeyAuth: []
+  - TokenAuth: []
 paths:
   /v1/config:
     get:
@@ -23,6 +24,8 @@ paths:
               schema:
                 description: Optimizely Configuration
                 $ref: '#/components/schemas/OptimizelyConfig'
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/track:
@@ -37,6 +40,8 @@ paths:
           description: No content, event received
         '400':
           description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -68,6 +73,8 @@ paths:
                   $ref: '#/components/schemas/Decision'
         '400':
           description: Bad request, invalid parameters
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
@@ -86,10 +93,25 @@ paths:
           description: Forced variation was already set
         '400':
           description: Invalid user id, experiment key, or variation key
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
         $ref: '#/components/requestBodies/OverrideContext'
+  /oauth/token:
+    post:
+      summary: Get JWT token to authenticate all requests.
+      operationId: getToken
+      description: Generate JWT token for grant_type, client_id and client_secret, and X-Optimizely-SDK-Key as well. It matches the configured values and generates a valid token with expiration provided in configuration.
+      responses:
+        '200':
+          description: Generates a valid token
+        '401':
+          description: Unauthorized, invalid values for parameter(s)
+          $ref: '#/components/responses/UnauthorizedToken'
+      requestBody:
+        $ref: '#/components/requestBodies/TokenContext'
 components:
   parameters:
     disableTrackingParam:
@@ -158,6 +180,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
+    TokenContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenContext'
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -165,10 +193,22 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    UnauthorizedToken:
+      description: Unable to match credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TokenError'
   schemas:
     Error:
       properties:
         error:
+          type: string
+    TokenError:
+      properties:
+        error:
+          type: string
+        error_description:
           type: string
     Experiment:
       properties:
@@ -296,8 +336,20 @@ components:
       required:
         - id
         - key
+    TokenContext:
+      properties:
+        grant_type:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
   securitySchemes:
     SdkKeyAuth:
       in: header
       name: X-Optimizely-SDK-Key
       type: apiKey
+    TokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
