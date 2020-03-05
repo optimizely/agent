@@ -19,9 +19,11 @@ package server
 
 import (
 	"context"
-	"github.com/optimizely/agent/config"
+	"fmt"
 	"net/http"
 	"sync"
+
+	"github.com/optimizely/agent/config"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
@@ -53,13 +55,17 @@ func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 // to initiate a graceful shutdown. This method blocks on adding the
 // go routines to maintain startup order of each listener.
 func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
+
+	if port == "0" {
+		log.Info().Msg(fmt.Sprintf(`"%s" not enabled`, name))
+		return
+	}
+
 	server, err := NewServer(name, port, handler, g.conf)
 
-	if listenerError, ok := err.(ListenerError); ok {
-		log.Info().Err(err).Msg("Not starting server")
-		if listenerError.shutDown {
-			g.stop()
-		}
+	if err != nil {
+		log.Error().Err(err).Msg("Failed starting server")
+		g.stop()
 		return
 	}
 
