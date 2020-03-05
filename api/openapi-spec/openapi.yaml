@@ -24,6 +24,8 @@ paths:
               schema:
                 description: Optimizely Configuration
                 $ref: '#/components/schemas/OptimizelyConfig'
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
   /v1/track:
@@ -38,6 +40,8 @@ paths:
           description: No content, event received
         '400':
           description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -69,6 +73,8 @@ paths:
                   $ref: '#/components/schemas/Decision'
         '400':
           description: Bad request, invalid parameters
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
@@ -87,6 +93,8 @@ paths:
           description: Forced variation was already set
         '400':
           description: Invalid user id, experiment key, or variation key
+        '401':
+          description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
       requestBody:
