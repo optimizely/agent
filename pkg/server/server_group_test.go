@@ -32,6 +32,13 @@ func TestServeAndShutdown(t *testing.T) {
 	sg.Wait()
 }
 
+func TestNotEnabledServerGroup(t *testing.T) {
+	sg := NewGroup(context.Background(), conf)
+	sg.GoListenAndServe("disabled", "0", handler)
+
+	sg.Wait() // server should terminate by itself
+}
+
 func TestInvalidServer(t *testing.T) {
 	sg := NewGroup(context.Background(), conf)
 	sg.GoListenAndServe("invalid", "-1", handler)
