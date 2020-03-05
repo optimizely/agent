@@ -164,6 +164,7 @@ func renderClientCredentialsError(err error, status int, w http.ResponseWriter, 
 
 // CreateAPIAccessToken returns a JWT access token for the API service
 func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+
 	clientCreds, httpCode, err := h.verifyClientCredentials(r)
 	if err != nil {
 		renderClientCredentialsError(err, httpCode, w, r)
