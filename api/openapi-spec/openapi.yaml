@@ -9,6 +9,7 @@ info:
   version: 0.12.0
 security:
   - SdkKeyAuth: []
+  - TokenAuth: []
 paths:
   /v1/config:
     get:
@@ -301,3 +302,7 @@ components:
       in: header
       name: X-Optimizely-SDK-Key
       type: apiKey
+    TokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
