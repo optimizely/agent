@@ -14,14 +14,16 @@ import sys
 #
 # auth:
 #   ttl: 30m
-#   hmacSecrets:
-#     - "abcd"
 #   clients:
 #     - id: clientid1
-#       secret: clientsecret1
+#       secretHash: JDJhJDEyJFlkTWRIM1dEU3U3ZDNMTE1ZMGJoTU95a3lWZEUzaWRLWS5GWHpUSU05NHNlMTdnR09pdFJ1
+#
+# Then, set the following environment variable, which is the signing secret for access tokens Agent will issue:
+
+# export OPTIMIZELY_API_AUTH_HMACSECRETS=llmO3xTUx+6TIfUU6eXmH/1Fh44ioL0h87G1iSrd5Gg
 #
 # With this configuration, an access token can be requested from the
-# /oauth/apitoken endpoint using the configured id and secret.
+# /oauth/apitoken endpoint using the configured client credentials.
 
 # For more information, see docs/auth.md
 
@@ -29,8 +31,8 @@ if len(sys.argv) < 2:
     sys.exit('Requires one argument: <SDK-Key>')
 
 sdk_key = sys.argv[1]
-client_id = sys.argv[2]
-client_secret = sys.argv[3]
+client_id = "clientid1"
+client_secret = "bvz7VWyxgLUySOZQpzSblsy3/8570JjIPKWO06SjliA="
 
 s = requests.Session()
 s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
@@ -38,7 +40,7 @@ s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 resp = s.get('http://localhost:8080/v1/config')
 print('first config request, not including access token: response status = {}'.format(resp.status_code))
 
-resp = s.post('http://localhost:8080/oauth/api/token', data=json.dumps({
+resp = s.post('http://localhost:8080/oauth/token', data=json.dumps({
   'grant_type': 'client_credentials',
   'client_id':  client_id,
   'client_secret': client_secret,

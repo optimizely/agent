@@ -69,10 +69,7 @@ GEN_SECRET_TARGET := "generate_secret"
 $(GEN_SECRET_TARGET): check-go
 	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(GEN_SECRET_TARGET) cmd/generate_secret/main.go
 
-build_generate_secret: $(GEN_SECRET_TARGET)
-	@true
-
-run_generate_secret: $(GEN_SECRET_TARGET) ## builds and executes the TARGET binary
+generate_secret: $(GEN_SECRET_TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(GEN_SECRET_TARGET)
 
 help: ## help
