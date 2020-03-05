@@ -104,7 +104,7 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
-	createAccesstokenTimer := middleware.Metricize("create-access-token", opt.metricsRegistry)
+	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -129,5 +129,5 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(overrideTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/override", overrideHandler)
 	})
 
-	r.With(createAccesstokenTimer).Post("/oauth/api/token", opt.oAuthHandler.CreateAPIAccessToken)
+	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
 }

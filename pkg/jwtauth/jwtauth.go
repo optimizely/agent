@@ -14,12 +14,14 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package jwtauth contains JWT-related helpers
+// Package jwtauth contains JWT and authentication-related helpers
 package jwtauth
 
 import (
-	"crypto/subtle"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -57,11 +59,45 @@ func BuildAdminAccessToken(ttl time.Duration, key []byte) (tokenString string, e
 	return tokenString, nil
 }
 
-// ValidateClientSecret compares secret keys
-func ValidateClientSecret(reqSecretStr string, configSecret []byte) bool {
-	reqSecret := []byte(reqSecretStr)
-	if len(configSecret) != len(reqSecret) {
-		return false
+var secretBytesLen = 32
+
+var bcryptWorkFactor = 12
+
+// ValidateClientSecret returns true if the hash of the secret provided in config matches
+// the secret provided in the request. Returns an error if the req secret fails base64
+// decoding.
+func ValidateClientSecret(reqSecret string, configSecretHash []byte) (bool, error) {
+	secretBytes, err := base64.StdEncoding.DecodeString(reqSecret)
+	if err != nil {
+		return false, fmt.Errorf("error decoding string: %v", err)
 	}
-	return subtle.ConstantTimeCompare(reqSecret, configSecret) == 1
+	return bcrypt.CompareHashAndPassword(configSecretHash, secretBytes) == nil, nil
+}
+
+// GenerateClientSecretAndHash returns a random secret and its hash, for use with
+// Agent's authN/authZ workflow.
+// - The first return value is the secret - 32 random bytes, base64-encoded.
+// - The second return value is the bcrypt hash of the secret.
+// - The hash should be included in Agent's auth configuration as the client_secret value.
+// - The secret should be sent in the request to the token issuer endpoint.
+func GenerateClientSecretAndHash() (secretStr, hashStr string, err error) {
+	secretBytes := make([]byte, secretBytesLen)
+	_, err = rand.Read(secretBytes)
+	if err != nil {
+		return "", "", fmt.Errorf("error returned from rand.Read: %v", err)
+	}
+	secretStr = base64.StdEncoding.EncodeToString(secretBytes)
+
+	hashBytes, err := bcrypt.GenerateFromPassword(secretBytes, bcryptWorkFactor)
+	if err != nil {
+		return "", "", fmt.Errorf("error returned from bcrypt.GenerateFromPassword: %v", err)
+	}
+	hashStr = base64.StdEncoding.EncodeToString(hashBytes)
+
+	return secretStr, hashStr, nil
+}
+
+// DecodeSecretHashFromConfig returns the decoded secret hash as a byte slice, or an error if decoding failed
+func DecodeSecretHashFromConfig(configSecretHash string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(configSecretHash)
 }

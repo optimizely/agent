@@ -26,13 +26,14 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
 // ClientCredentials has all info for client credentials
 type ClientCredentials struct {
-	ID     string
-	TTL    time.Duration
-	Secret []byte
+	ID         string
+	TTL        time.Duration
+	SecretHash []byte
 }
 
 // OAuthHandler provides handler for auth
@@ -67,10 +68,15 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	clientCredentials := make(map[string]ClientCredentials)
 	// TODO: need to validate all client IDs are unique
 	for _, clientCreds := range authConfig.Clients {
+		secretHashBytes, err := jwtauth.DecodeSecretHashFromConfig(clientCreds.SecretHash)
+		if err != nil {
+			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v)", clientCreds.ID)
+			continue
+		}
 		clientCredentials[clientCreds.ID] = ClientCredentials{
-			ID:     clientCreds.ID,
-			Secret: []byte(clientCreds.Secret),
-			TTL:    authConfig.TTL,
+			ID:         clientCreds.ID,
+			SecretHash: secretHashBytes,
+			TTL:        authConfig.TTL,
 		}
 	}
 
@@ -129,12 +135,24 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 		}
 	}
 	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
-	if !ok || !jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.Secret) {
+	if !ok {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
 			ErrorDescription: "invalid client_id or client_secret",
 		}
 	}
+
+	isValid, err := jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.SecretHash)
+	if err != nil {
+		middleware.GetLogger(r).Info().Err(err).Msg("validating request secret")
+	}
+	if !isValid {
+		return nil, http.StatusUnauthorized, &ClientCredentialsError{
+			ErrorCode:        "invalid_client",
+			ErrorDescription: "invalid client_id or client_secret",
+		}
+	}
+
 	return &clientCreds, http.StatusOK, nil
 }
 

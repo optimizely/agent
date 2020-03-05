@@ -64,8 +64,8 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, "efgh", actual.HMACSecrets[0])
 	assert.Equal(t, "ijkl", actual.HMACSecrets[1])
 	assert.Equal(t, config.OAuthClientCredentials{
-		ID:     "clientid2",
-		Secret: "clientsecret2",
+		ID:         "clientid2",
+		SecretHash: "clientsecret2",
 	}, actual.Clients[0])
 	assert.Equal(t, "admin_jwks_url", actual.JwksURL)
 	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
@@ -84,8 +84,8 @@ func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, "abcd", actual.HMACSecrets[0])
 	assert.Equal(t, "efgh", actual.HMACSecrets[1])
 	assert.Equal(t, config.OAuthClientCredentials{
-		ID:     "clientid1",
-		Secret: "clientsecret1",
+		ID:         "clientid1",
+		SecretHash: "clientsecret1",
 	}, actual.Clients[0])
 	assert.Equal(t, "api_jwks_url", actual.JwksURL)
 	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
@@ -103,7 +103,7 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func TestViperYaml(t *testing.T) {
 	v := viper.New()
-	v.Set("config.filename", "./testdata/default.yaml")
+	v.Set("config.filename", "../testdata/default.yaml")
 
 	err := initConfig(v)
 	assert.NoError(t, err)
@@ -152,7 +152,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("admin.auth.clients", []map[string]string{
 		{
 			"id":     "clientid2",
-			"secret": "clientsecret2",
+			"secretHash": "clientsecret2",
 		},
 	})
 
@@ -169,7 +169,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.auth.clients", []map[string]string{
 		{
 			"id":     "clientid1",
-			"secret": "clientsecret1",
+			"secretHash": "clientsecret1",
 		},
 	})
 
