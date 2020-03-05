@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -69,15 +68,14 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	clientCredentials := make(map[string]ClientCredentials)
 	// TODO: need to validate all client IDs are unique
 	for _, clientCreds := range authConfig.Clients {
-		// TODO: too much knowledge of how secrets work. This should not be in a handler function.
-		secretBytes, err := base64.StdEncoding.DecodeString(clientCreds.SecretHash)
+		secretHashBytes, err := jwtauth.DecodeSecretHashFromConfig(clientCreds.SecretHash)
 		if err != nil {
 			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v)", clientCreds.ID)
 			continue
 		}
 		clientCredentials[clientCreds.ID] = ClientCredentials{
 			ID:     clientCreds.ID,
-			Secret: secretBytes,
+			Secret: secretHashBytes,
 			TTL:    authConfig.TTL,
 		}
 	}
