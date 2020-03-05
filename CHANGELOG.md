@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - March 5th, 2020
+- Add ability to blacklist TLS ciphers
+- Disable notifications and overrides by default
+- Update misc items in swagger spec
+- Improve README and add auth examples
+- Update SDK client config namespace
+- Add support for JWKS URI
+- Add OAuth to swagger spec
+- Add client secret creation tool
+
 ## [0.12.0] - February 14th, 2020
 - Add support for typed user attributes
 - Add event-stream API for notifications
