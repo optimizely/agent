@@ -31,9 +31,9 @@ import (
 
 // ClientCredentials has all info for client credentials
 type ClientCredentials struct {
-	ID     string
-	TTL    time.Duration
-	Secret []byte
+	ID         string
+	TTL        time.Duration
+	SecretHash []byte
 }
 
 // OAuthHandler provides handler for auth
@@ -74,9 +74,9 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 			continue
 		}
 		clientCredentials[clientCreds.ID] = ClientCredentials{
-			ID:     clientCreds.ID,
-			Secret: secretHashBytes,
-			TTL:    authConfig.TTL,
+			ID:         clientCreds.ID,
+			SecretHash: secretHashBytes,
+			TTL:        authConfig.TTL,
 		}
 	}
 
@@ -142,7 +142,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 		}
 	}
 
-	isValid, err := jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.Secret)
+	isValid, err := jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.SecretHash)
 	if err != nil {
 		middleware.GetLogger(r).Debug().Err(err).Msg("validating request secret")
 	}
