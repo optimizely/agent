@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -172,9 +173,7 @@ func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Reque
 	}
 
 	if len(h.hmacSecret) == 0 {
-		middleware.GetLogger(r).Error().Msg("Invalid hmac secret in configuration, can't issue token")
-		render.Status(r, http.StatusInternalServerError)
-		render.PlainText(w, r, "Invalid server configuration, can't issue token")
+		RenderError(errors.New("Invalid server configuration, can't issue token"), http.StatusInternalServerError, w, r)
 		return
 	}
 
@@ -207,9 +206,7 @@ func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Req
 	}
 
 	if len(h.hmacSecret) == 0 {
-		middleware.GetLogger(r).Error().Msg("Invalid hmac secret in configuration, can't issue token")
-		render.Status(r, http.StatusInternalServerError)
-		render.PlainText(w, r, "Invalid server configuration, can't issue token")
+		RenderError(errors.New("Invalid server configuration, can't issue token"), http.StatusInternalServerError, w, r)
 		return
 	}
 
