@@ -65,6 +65,9 @@ function buildOptimizelyAgent {
     $env:GO111MODULE = "on"
     $VERSION = (git describe --tags)
     go build -ldflags "-s -w -X main.Version=$VERSION" -o bin\optimizely.exe cmd\main.go
+    if (!$?) {
+        exit 1
+    }
     Get-ChildItem -Path "bin\optimizely.exe"
 }
 
