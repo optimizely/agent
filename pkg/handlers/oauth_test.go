@@ -221,6 +221,7 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenInvalidBody() {
 	s.Equal(http.StatusBadRequest, rec.Code)
 }
 
+
 func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	bodyBytes, _ := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
@@ -328,7 +329,7 @@ func (s *OAuthMissingHMACSecretTestSuite) SetupTest() {
 				SecretHash: "JDJhJDEyJDNDOG12LmNCNzlHaHhGcEJtLzZZQk9VLnRneEpGTTlnTXozb2kyNS9ERzhJTDZOZkpGa0ND",
 			},
 		},
-		// No HMACSecrets provided, so should not issue token, and should return 500 status
+		// No HMACSecrets provided - this configuration is invalid
 		HMACSecrets: []string{},
 		TTL:         30 * time.Minute,
 	}
@@ -340,28 +341,8 @@ func (s *OAuthMissingHMACSecretTestSuite) SetupTest() {
 	s.mux = mux
 }
 
-func (s *OAuthMissingHMACSecretTestSuite) TestGetAdminAccessTokenDisabled() {
-	bodyBytes, _ := json.Marshal(map[string]string{
-		"grant_type":    "client_credentials",
-		"client_id":     "optly_user",
-		"client_secret": s.secret,
-	})
-	req := httptest.NewRequest("POST", "/admin/token", bytes.NewReader(bodyBytes))
-	rec := httptest.NewRecorder()
-	s.mux.ServeHTTP(rec, req)
-	s.Equal(http.StatusInternalServerError, rec.Code)
-}
-
-func (s *OAuthMissingHMACSecretTestSuite) TestGetAPIAccessTokenDisabled() {
-	bodyBytes, _ := json.Marshal(map[string]string{
-		"grant_type":    "client_credentials",
-		"client_id":     "optly_user",
-		"client_secret": s.secret,
-	})
-	req := httptest.NewRequest("POST", "/api/token", bytes.NewReader(bodyBytes))
-	rec := httptest.NewRecorder()
-	s.mux.ServeHTTP(rec, req)
-	s.Equal(http.StatusInternalServerError, rec.Code)
+func (s *OAuthMissingHMACSecretTestSuite) TestInvalidConfig() {
+	s.Nil(s.handler)
 }
 
 func TestOAuthMissingHMACSecretTestSuite(t *testing.T) {

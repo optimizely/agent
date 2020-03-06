@@ -83,6 +83,8 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
 		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
+		// TODO: These two below (NewOAuthHandler and NewAuth) can return nil when given invalid configuration
+		// Make sure to handle that possibility here
 		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
 		oAuthMiddleware: middleware.NewAuth(&conf.Auth),
 	}

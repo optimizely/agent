@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -90,6 +89,12 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		hmacSecret:        []byte(hmacSecret),
 		ClientCredentials: clientCredentials,
 	}
+
+	if len(h.ClientCredentials) > 0 && len(h.hmacSecret) == 0 {
+		log.Error().Msg("Invalid auth configuration: provided client credentials, but missing HMAC secret")
+		return nil
+	}
+
 	return h
 }
 
@@ -172,11 +177,6 @@ func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if len(h.hmacSecret) == 0 {
-		RenderError(errors.New("Invalid server configuration, can't issue token"), http.StatusInternalServerError, w, r)
-		return
-	}
-
 	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
 	if sdkKey == "" {
 		renderClientCredentialsError(&ClientCredentialsError{
@@ -202,11 +202,6 @@ func (h *OAuthHandler) CreateAdminAccessToken(w http.ResponseWriter, r *http.Req
 	clientCreds, httpCode, err := h.verifyClientCredentials(r)
 	if err != nil {
 		renderClientCredentialsError(err, httpCode, w, r)
-		return
-	}
-
-	if len(h.hmacSecret) == 0 {
-		RenderError(errors.New("Invalid server configuration, can't issue token"), http.StatusInternalServerError, w, r)
 		return
 	}
 
