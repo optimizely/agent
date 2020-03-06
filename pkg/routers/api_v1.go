@@ -20,6 +20,8 @@ package routers
 import (
 	"net/http"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/metrics"
@@ -38,8 +40,8 @@ type APIV1Options struct {
 	middleware      middleware.OptlyMiddleware
 	handlers        apiHandlers
 	metricsRegistry *metrics.Registry
-	oAuthHandler    apiOAuthHandler
-	oAuthMiddleware apiOAuthMiddleware
+	oAuthHandler    http.HandlerFunc
+	oAuthMiddleware func(next http.Handler) http.Handler
 }
 
 // Define an interface to facilitate testing
@@ -68,16 +70,21 @@ func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
 	handlers.Override(w, r)
 }
 
-type apiOAuthHandler interface {
-	CreateAPIAccessToken(w http.ResponseWriter, r *http.Request)
-}
-
-type apiOAuthMiddleware interface {
-	AuthorizeAPI(next http.Handler) http.Handler
-}
-
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+
+	authProvider := middleware.NewAuth(&conf.Auth)
+	if authProvider == nil {
+		log.Error().Msg("unable to initialize api auth middleware.")
+		return nil
+	}
+
+	authHandler := handlers.NewOAuthHandler(&conf.Auth)
+	if authHandler == nil {
+		log.Error().Msg("unable to initialize api auth handler.")
+		return nil
+	}
+
 	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
 		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
@@ -85,8 +92,8 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		metricsRegistry: metricsRegistry,
 		// TODO: These two below (NewOAuthHandler and NewAuth) can return nil when given invalid configuration
 		// Make sure to handle that possibility here
-		oAuthHandler:    handlers.NewOAuthHandler(&conf.Auth),
-		oAuthMiddleware: middleware.NewAuth(&conf.Auth),
+		oAuthHandler:    authHandler.CreateAPIAccessToken,
+		oAuthMiddleware: authProvider.AuthorizeAPI,
 	}
 
 	return NewAPIV1Router(spec)
@@ -125,11 +132,11 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 	}
 
 	r.Route("/v1", func(r chi.Router) {
-		r.With(getConfigTimer, opt.oAuthMiddleware.AuthorizeAPI).Get("/config", opt.handlers.config)
-		r.With(activateTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/activate", opt.handlers.activate)
-		r.With(trackTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/track", opt.handlers.trackEvent)
-		r.With(overrideTimer, opt.oAuthMiddleware.AuthorizeAPI).Post("/override", overrideHandler)
+		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.handlers.config)
+		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.handlers.activate)
+		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.handlers.trackEvent)
+		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", overrideHandler)
 	})
 
-	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
+	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
 }
