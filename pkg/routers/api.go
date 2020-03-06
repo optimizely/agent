@@ -56,6 +56,12 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		return nil
 	}
 
+	authHandler := handlers.NewOAuthHandler(&conf.Auth)
+	if authHandler == nil {
+		log.Error().Msg("unable to initialize api auth handler.")
+		return nil
+	}
+
 	var notificationsAPI handlers.NotificationAPI
 	notificationsAPI = handlers.NewDisabledNotificationHandler()
 	if conf.EnableNotifications {
@@ -77,7 +83,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		notificationsAPI: notificationsAPI,
 		userOverrideAPI:  userOverrideAPI,
 		metricsRegistry:  metricsRegistry,
-		oAuthHandler:     handlers.NewOAuthHandler(&conf.Auth),
+		oAuthHandler:     authHandler,
 		oAuthMiddleware:  authProvider,
 		enableOverrides:  conf.EnableOverrides,
 	}

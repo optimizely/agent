@@ -89,6 +89,12 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		hmacSecret:        []byte(hmacSecret),
 		ClientCredentials: clientCredentials,
 	}
+
+	if len(h.ClientCredentials) > 0 && len(h.hmacSecret) == 0 {
+		log.Error().Msg("Invalid auth configuration: provided client credentials, but missing HMAC secret")
+		return nil
+	}
+
 	return h
 }
 

@@ -40,8 +40,13 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 		return nil
 	}
 
-	optlyAdmin := handlers.NewAdmin(conf)
 	tokenHandler := handlers.NewOAuthHandler(&conf.Admin.Auth)
+	if tokenHandler == nil {
+		log.Error().Msg("unable to initialize admin auth handler.")
+		return nil
+	}
+
+	optlyAdmin := handlers.NewAdmin(conf)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))

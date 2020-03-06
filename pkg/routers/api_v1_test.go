@@ -169,3 +169,27 @@ func TestNewDefaultClientRouter(t *testing.T) {
 	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
 	assert.NotNil(t, client)
 }
+
+func TestNewDefaultClientRouterInvalidConfig(t *testing.T) {
+	invalidAPIConfig := config.APIConfig{
+		Auth:                config.ServiceAuthConfig{
+			Clients: []config.OAuthClientCredentials{
+				{
+					ID:         "id1",
+					SecretHash: "JDJhJDEyJFBQM3dSdnNERnVSQmZPNnA4MGcvLk9Eb1RVWExYMm5FZ2VhZXpsS1VmR3hPdFJUT3ViaXVX",
+				},
+			},
+			// Empty HMACSecrets, but non-empty Clients, is an invalid config
+			HMACSecrets: []string{},
+			TTL:                0,
+			JwksURL:            "",
+			JwksUpdateInterval: 0,
+		},
+		MaxConns:            100,
+		Port:                "8080",
+		EnableNotifications: false,
+		EnableOverrides:     false,
+	}
+	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
+	assert.Nil(t, client)
+}
