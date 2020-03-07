@@ -31,13 +31,12 @@ import (
 // Each http handler call creates a new channel and pumps decision service messages onto it.
 type MessageChan chan []byte
 
-// A NotificationHandler handles in coming connections as server side event streams streaming notifications
-// per SDK Key (defined in the header)
-type NotificationHandler struct {
-}
-
 // types of notifications supported.
-var types = map[string]notification.Type{ string(notification.Decision) : notification.Decision, string(notification.Track) : notification.Track, string(notification.ProjectConfigUpdate): notification.ProjectConfigUpdate}
+var types = map[string]notification.Type{
+	string(notification.Decision):            notification.Decision,
+	string(notification.Track):               notification.Track,
+	string(notification.ProjectConfigUpdate): notification.ProjectConfigUpdate,
+}
 
 func getFilter(filters []string) map[string]notification.Type {
 	notificationsToAdd := map[string]notification.Type{}
@@ -48,8 +47,8 @@ func getFilter(filters []string) map[string]notification.Type {
 	// iterate through any filter query parameter included.  There may be more than one
 	for _, filter := range filters {
 		// split it in case it is comma separated list
-		splits := strings.Split(filter,",")
-		for _,split := range splits {
+		splits := strings.Split(filter, ",")
+		for _, split := range splits {
 			// if the string is a valid type
 			if _, ok := types[split]; ok {
 				notificationsToAdd[split] = notification.Type(split)
@@ -63,7 +62,7 @@ func getFilter(filters []string) map[string]notification.Type {
 // HandleEventSteam implements the http.Handler interface.
 // This allows us to wrap HTTP handlers (see auth_handler.go)
 // http://golang.org/pkg/net/http/#Handler
-func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.Request) {
+func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure that the writer supports flushing.
 	flusher, ok := w.(http.Flusher)
 
@@ -98,12 +97,15 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 	filters := r.Form["filter"]
 
 	// Parse out the any filters that were added
-	notificationsToAdd :=  getFilter(filters)
+	notificationsToAdd := getFilter(filters)
 
-	ids := []struct{int; notification.Type}{}
-	
+	ids := []struct {
+		int
+		notification.Type
+	}{}
+
 	for _, value := range notificationsToAdd {
-		id,e := nc.AddHandler(value, func (n interface{}) {
+		id, e := nc.AddHandler(value, func(n interface{}) {
 			jsonEvent, err := json.Marshal(n)
 			if err != nil {
 				middleware.GetLogger(r).Error().Msg("encoding notification to json")
@@ -117,7 +119,10 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 		}
 
 		// do defer outside the loop.
-		ids = append(ids, struct{int;notification.Type}{id, value})
+		ids = append(ids, struct {
+			int
+			notification.Type
+		}{id, value})
 	}
 
 	// Remove the decision listener if we exited.
@@ -157,12 +162,4 @@ func (nh *NotificationHandler) HandleEventSteam(w http.ResponseWriter, r *http.R
 		}
 	}
 
-}
-
-// NewNotificationHandler is the NotificationHandler factory
-func NewNotificationHandler() (nh *NotificationHandler) {
-	// Instantiate a nh
-	nh = &NotificationHandler{}
-
-	return
 }

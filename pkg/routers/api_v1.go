@@ -42,8 +42,15 @@ type APIV1Options struct {
 	activateHandler http.HandlerFunc
 	trackHandler    http.HandlerFunc
 	overrideHandler http.HandlerFunc
+	nStreamHandler  http.HandlerFunc
 	oAuthHandler    http.HandlerFunc
 	oAuthMiddleware func(next http.Handler) http.Handler
+}
+
+func forbiddenHandler(message string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, message, http.StatusForbidden)
+	}
 }
 
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
@@ -63,9 +70,12 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 
 	overrideHandler := handlers.Override
 	if !conf.EnableOverrides {
-		overrideHandler = func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "Overrides not enabled", http.StatusForbidden)
-		}
+		overrideHandler = forbiddenHandler("Overrides not enabled")
+	}
+
+	nStreamHandler := handlers.NotificationEventSteamHandler
+	if !conf.EnableNotifications {
+		nStreamHandler = forbiddenHandler("Notification stream not enabled")
 	}
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
@@ -78,6 +88,7 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		overrideHandler: overrideHandler,
 		trackHandler:    handlers.TrackEvent,
 		sdkMiddleware:   mw.ClientCtx,
+		nStreamHandler:  nStreamHandler,
 		oAuthHandler:    authHandler.CreateAPIAccessToken,
 		oAuthMiddleware: authProvider.AuthorizeAPI,
 	}
@@ -114,6 +125,10 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
 		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
 		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", opt.overrideHandler)
+	})
+
+	r.With(opt.oAuthMiddleware).Route("/notifications", func(r chi.Router) {
+		r.Get("/event-stream", opt.nStreamHandler)
 	})
 
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
