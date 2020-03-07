@@ -271,16 +271,6 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
-    DescribeContext:
-      properties:
-        experimentKey:
-          type: array
-          items:
-            type: string
-        featureKey:
-          type: array
-          items:
-            type: string
     OverrideContext:
       type: array
       items:

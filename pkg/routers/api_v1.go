@@ -36,38 +36,14 @@ import (
 // APIV1Options defines the configuration parameters for Router.
 type APIV1Options struct {
 	maxConns        int
-	enableOverrides bool
-	middleware      middleware.OptlyMiddleware
-	handlers        apiHandlers
+	sdkMiddleware   func(next http.Handler) http.Handler
 	metricsRegistry *metrics.Registry
+	configHandler   http.HandlerFunc
+	activateHandler http.HandlerFunc
+	trackHandler    http.HandlerFunc
+	overrideHandler http.HandlerFunc
 	oAuthHandler    http.HandlerFunc
 	oAuthMiddleware func(next http.Handler) http.Handler
-}
-
-// Define an interface to facilitate testing
-type apiHandlers interface {
-	config(w http.ResponseWriter, r *http.Request)
-	activate(w http.ResponseWriter, r *http.Request)
-	trackEvent(w http.ResponseWriter, r *http.Request)
-	override(w http.ResponseWriter, r *http.Request)
-}
-
-type defaultHandlers struct{}
-
-func (d defaultHandlers) config(w http.ResponseWriter, r *http.Request) {
-	handlers.OptimizelyConfig(w, r)
-}
-
-func (d defaultHandlers) activate(w http.ResponseWriter, r *http.Request) {
-	handlers.Activate(w, r)
-}
-
-func (d defaultHandlers) trackEvent(w http.ResponseWriter, r *http.Request) {
-	handlers.TrackEvent(w, r)
-}
-
-func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
-	handlers.Override(w, r)
 }
 
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
@@ -85,13 +61,23 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		return nil
 	}
 
+	overrideHandler := handlers.Override
+	if !conf.EnableOverrides {
+		overrideHandler = func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Overrides not enabled", http.StatusForbidden)
+		}
+	}
+
+	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
+
 	spec := &APIV1Options{
 		maxConns:        conf.MaxConns,
-		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
-		// TODO: These two below (NewOAuthHandler and NewAuth) can return nil when given invalid configuration
-		// Make sure to handle that possibility here
+		configHandler:   handlers.OptimizelyConfig,
+		activateHandler: handlers.Activate,
+		overrideHandler: overrideHandler,
+		trackHandler:    handlers.TrackEvent,
+		sdkMiddleware:   mw.ClientCtx,
 		oAuthHandler:    authHandler.CreateAPIAccessToken,
 		oAuthMiddleware: authProvider.AuthorizeAPI,
 	}
@@ -120,22 +106,14 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime, opt.middleware.ClientCtx)
+	r.Use(middleware.SetTime, opt.sdkMiddleware)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	overrideHandler := func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Overrides not enabled", http.StatusForbidden)
-	}
-
-	if opt.enableOverrides {
-		overrideHandler = opt.handlers.override
-	}
-
 	r.Route("/v1", func(r chi.Router) {
-		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.handlers.config)
-		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.handlers.activate)
-		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.handlers.trackEvent)
-		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", overrideHandler)
+		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
+		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
+		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
+		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", opt.overrideHandler)
 	})
 
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
