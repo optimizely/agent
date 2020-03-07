@@ -125,10 +125,7 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
 		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
 		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", opt.overrideHandler)
-	})
-
-	r.With(opt.oAuthMiddleware).Route("/notifications", func(r chi.Router) {
-		r.Get("/event-stream", opt.nStreamHandler)
+		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)

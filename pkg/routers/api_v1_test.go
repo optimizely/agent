@@ -79,12 +79,12 @@ func (suite *APIV1TestSuite) SetupTest() {
 	opts := &APIV1Options{
 		maxConns:        1,
 		sdkMiddleware:   testOptlyMiddleware,
-		configHandler:   testHandler("/v1/config"),
-		activateHandler: testHandler("/v1/activate"),
-		overrideHandler: testHandler("/v1/override"),
-		trackHandler:    testHandler("/v1/track"),
-		nStreamHandler:  testHandler("/notifications/event-stream"),
-		oAuthHandler:    testHandler("/oauth/token"),
+		configHandler:   testHandler("config"),
+		activateHandler: testHandler("activate"),
+		overrideHandler: testHandler("override"),
+		trackHandler:    testHandler("track"),
+		nStreamHandler:  testHandler("notifications/event-stream"),
+		oAuthHandler:    testHandler("oauth/token"),
 		oAuthMiddleware: testAuthMiddleware,
 		metricsRegistry: metricsRegistry,
 	}
@@ -98,15 +98,15 @@ func (suite *APIV1TestSuite) TestOverride() {
 		method string
 		path   string
 	}{
-		{"GET", "/v1/config"},
-		{"POST", "/v1/activate"},
-		{"POST", "/v1/track"},
-		{"POST", "/v1/override"},
-		{"GET", "/notifications/event-stream"},
+		{"GET", "config"},
+		{"POST", "activate"},
+		{"POST", "track"},
+		{"POST", "override"},
+		{"GET", "notifications/event-stream"},
 	}
 
 	for _, route := range routes {
-		req := httptest.NewRequest(route.method, route.path, nil)
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
 		suite.Equal(http.StatusOK, rec.Code)
@@ -123,7 +123,7 @@ func (suite *APIV1TestSuite) TestCreateAccessToken() {
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("/oauth/token", rec.Header().Get(methodHeaderKey))
+	suite.Equal("oauth/token", rec.Header().Get(methodHeaderKey))
 }
 
 func TestAPIV1TestSuite(t *testing.T) {
@@ -183,12 +183,12 @@ func TestForbiddenRoutes(t *testing.T) {
 		path   string
 		error  string
 	}{
-		{"POST", "/v1/override", "Overrides not enabled\n"},
-		{"GET", "/notifications/event-stream", "Notification stream not enabled\n"},
+		{"POST", "override", "Overrides not enabled\n"},
+		{"GET", "notifications/event-stream", "Notification stream not enabled\n"},
 	}
 
 	for _, route := range routes {
-		req := httptest.NewRequest(route.method, route.path, nil)
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
 		req.Header.Add("X-Optimizely-SDK-Key", "something")
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
