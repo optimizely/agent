@@ -7,7 +7,7 @@ BASE_URL = os.getenv('host')
 # TODO use json vs dict
 # -> more portable
 
-expected_config = {'revision': '107', 'experimentsMap': {
+expected_config = {'revision': '111', 'experimentsMap': {
     'ab_test1': {'id': '16911963060', 'key': 'ab_test1', 'variationsMap': {
         'variation_1': {'id': '16905941566', 'key': 'variation_1',
                         'featureEnabled': False, 'variablesMap': {}},
