@@ -34,7 +34,7 @@ import (
 )
 
 // APIV1Options defines the configuration parameters for Router.
-type APIV1Options struct {
+type APIOptions struct {
 	maxConns        int
 	sdkMiddleware   func(next http.Handler) http.Handler
 	metricsRegistry *metrics.Registry
@@ -54,7 +54,7 @@ func forbiddenHandler(message string) http.HandlerFunc {
 }
 
 // NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
 	if authProvider == nil {
@@ -80,7 +80,7 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
 
-	spec := &APIV1Options{
+	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
 		metricsRegistry: metricsRegistry,
 		configHandler:   handlers.OptimizelyConfig,
@@ -97,7 +97,7 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 }
 
 // NewAPIV1Router returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
+func NewAPIV1Router(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
 	WithAPIV1Router(opt, r)
 	return r
@@ -105,7 +105,7 @@ func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
 
 // WithAPIV1Router appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
-func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
+func WithAPIV1Router(opt *APIOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
