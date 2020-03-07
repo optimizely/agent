@@ -19,12 +19,9 @@ package middleware
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/go-chi/chi"
 
 	"github.com/optimizely/agent/pkg/optimizely"
 )
@@ -78,107 +75,5 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), OptlyClientKey, optlyClient)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// UserCtx extracts the userId and any associated attributes from the request
-// to create an optimizely.UserContext which will be used by downstream handlers.
-// Future iterations of this middleware would capture pulling additional
-// detail from a UPS or attribute store.
-func (mw *CachedOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := chi.URLParam(r, "userID")
-		if userID == "" {
-			RenderError(fmt.Errorf("invalid request, missing userId"), http.StatusBadRequest, w, r)
-			return
-		}
-
-		// Remove userId and copy values into the attributes map
-		logger := GetLogger(r)
-		values := r.URL.Query()
-		attributes := make(map[string]interface{})
-
-		for k, v := range values {
-			// Assuming a single KV pair exists in the query parameters
-			val := v[0]
-			attributes[k] = CoerceType(val)
-			logger.Debug().Str("attrKey", k).Str("attrVal", val).Msg("User attribute.")
-		}
-
-		optlyContext := optimizely.NewContext(userID, attributes)
-		ctx := context.WithValue(r.Context(), OptlyContextKey, optlyContext)
-
-		logger.Debug().Str("userId", userID).Msg("Adding user context to request.")
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// FeatureCtx extracts the featureKey URL param and adds an optimizelyconfig.OptimizelyFeature to the request context.
-// If no such feature exists in the current config, returns 404
-// Note: featureKey must be available as a URL param, and ClientCtx middleware must run prior to this middleware
-func (mw *CachedOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyClient, err := GetOptlyClient(r)
-		if err != nil {
-			RenderError(fmt.Errorf("optlyClient not available in FeatureCtx"), http.StatusInternalServerError, w, r)
-			return
-		}
-
-		featureKey := chi.URLParam(r, "featureKey")
-		if featureKey == "" {
-			RenderError(fmt.Errorf("invalid request, missing featureKey in FeatureCtx"), http.StatusBadRequest, w, r)
-			return
-		}
-
-		feature, err := optlyClient.GetFeature(featureKey)
-		var statusCode int
-		switch {
-		case err == nil:
-			GetLogger(r).Debug().Str("featureKey", featureKey).Msg("Added feature to request context in FeatureCtx")
-			ctx := context.WithValue(r.Context(), OptlyFeatureKey, &feature)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		case errors.Is(err, optimizely.ErrEntityNotFound):
-			statusCode = http.StatusNotFound
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		GetLogger(r).Debug().Err(err).Str("featureKey", featureKey).Msg("Calling GetFeature in FeatureCtx")
-		RenderError(err, statusCode, w, r)
-	})
-}
-
-// ExperimentCtx extracts the experimentKey URL param and adds a optimizelyconfig.OptimizelyExperiment to the request context.
-// If no such experiment exists in the current config, returns 404
-// Note: experimentKey must be available as a URL param, and ClientCtx middleware must run prior to this middleware
-func (mw *CachedOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		optlyClient, err := GetOptlyClient(r)
-		if err != nil {
-			RenderError(fmt.Errorf("optlyClient not available in ExperimentCtx"), http.StatusInternalServerError, w, r)
-			return
-		}
-
-		experimentKey := chi.URLParam(r, "experimentKey")
-		if experimentKey == "" {
-			RenderError(fmt.Errorf("invalid request, missing experimentKey in ExperimentCtx"), http.StatusBadRequest, w, r)
-			return
-		}
-
-		experiment, err := optlyClient.GetExperiment(experimentKey)
-		var statusCode int
-		switch {
-		case err == nil:
-			GetLogger(r).Debug().Str("experimentKey", experimentKey).Msg("Added experiment to request context in ExperimentCtx")
-			ctx := context.WithValue(r.Context(), OptlyExperimentKey, &experiment)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		case errors.Is(err, optimizely.ErrEntityNotFound):
-			statusCode = http.StatusNotFound
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-		GetLogger(r).Debug().Err(err).Str("experimentKey", experimentKey).Msg("Calling GetExperiment in ExperimentCtx")
-		RenderError(err, statusCode, w, r)
 	})
 }

@@ -27,11 +27,24 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
+var metricsRegistry = metrics.NewRegistry()
+
 const methodHeaderKey = "X-Method-Header"
+const clientHeaderKey = "X-Client-Header"
+
+type MockOptlyMiddleware struct{}
+
+func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(clientHeaderKey, "expected")
+		next.ServeHTTP(w, r)
+	})
+}
 
 type MockCache struct{}
 
@@ -57,17 +70,13 @@ func (m MockHandlers) override(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(methodHeaderKey, "override")
 }
 
-type MockOAuthHandlers struct{}
-
-func (m MockOAuthHandlers) CreateAPIAccessToken(w http.ResponseWriter, r *http.Request) {
+var testAuthHandler = func(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(methodHeaderKey, "oauth/token")
 }
 
 const middlewareHeaderKey = "X-Middleware-Header"
 
-type MockOAuthMiddleware struct{}
-
-func (m MockOAuthMiddleware) AuthorizeAPI(next http.Handler) http.Handler {
+var testAuthMiddleware = func(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(middlewareHeaderKey, "mockMiddleware")
 		next.ServeHTTP(w, r)
@@ -91,8 +100,8 @@ func (suite *APIV1TestSuite) SetupTest() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: true,
-		oAuthHandler:    MockOAuthHandlers{},
-		oAuthMiddleware: MockOAuthMiddleware{},
+		oAuthHandler:    testAuthHandler,
+		oAuthMiddleware: testAuthMiddleware,
 	}
 
 	suite.mux = NewAPIV1Router(opts)
@@ -135,8 +144,8 @@ func (suite *APIV1TestSuite) TestDisabledOverride() {
 		handlers:        MockHandlers{},
 		metricsRegistry: metricsRegistry,
 		enableOverrides: false,
-		oAuthHandler:    MockOAuthHandlers{},
-		oAuthMiddleware: MockOAuthMiddleware{},
+		oAuthHandler:    testAuthHandler,
+		oAuthMiddleware: testAuthMiddleware,
 	}
 
 	mux := NewAPIV1Router(opts)
@@ -165,14 +174,14 @@ func TestAPIV1TestSuite(t *testing.T) {
 	suite.Run(t, new(APIV1TestSuite))
 }
 
-func TestNewDefaultClientRouter(t *testing.T) {
-	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
+func TestNewDefaultAPIV1Router(t *testing.T) {
+	client := NewDefaultAPIV1Router(MockCache{}, config.APIConfig{}, metricsRegistry)
 	assert.NotNil(t, client)
 }
 
-func TestNewDefaultClientRouterInvalidConfig(t *testing.T) {
+func TestNewDefaultAPIV1RouterInvalidHandlerConfig(t *testing.T) {
 	invalidAPIConfig := config.APIConfig{
-		Auth:                config.ServiceAuthConfig{
+		Auth: config.ServiceAuthConfig{
 			Clients: []config.OAuthClientCredentials{
 				{
 					ID:         "id1",
@@ -180,7 +189,7 @@ func TestNewDefaultClientRouterInvalidConfig(t *testing.T) {
 				},
 			},
 			// Empty HMACSecrets, but non-empty Clients, is an invalid config
-			HMACSecrets: []string{},
+			HMACSecrets:        []string{},
 			TTL:                0,
 			JwksURL:            "",
 			JwksUpdateInterval: 0,
@@ -190,6 +199,21 @@ func TestNewDefaultClientRouterInvalidConfig(t *testing.T) {
 		EnableNotifications: false,
 		EnableOverrides:     false,
 	}
-	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
+	client := NewDefaultAPIV1Router(MockCache{}, invalidAPIConfig, metricsRegistry)
+	assert.Nil(t, client)
+}
+
+func TestNewDefaultClientRouterInvalidMiddlewareConfig(t *testing.T) {
+	invalidAPIConfig := config.APIConfig{
+		Auth: config.ServiceAuthConfig{
+			JwksURL:            "not-valid",
+			JwksUpdateInterval: 0,
+		},
+		MaxConns:            100,
+		Port:                "8080",
+		EnableNotifications: false,
+		EnableOverrides:     false,
+	}
+	client := NewDefaultAPIV1Router(MockCache{}, invalidAPIConfig, metricsRegistry)
 	assert.Nil(t, client)
 }

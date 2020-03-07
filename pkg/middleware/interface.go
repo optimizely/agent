@@ -25,10 +25,4 @@ import (
 type OptlyMiddleware interface {
 	// ClientCtx adds an OptlyClient to the request context.
 	ClientCtx(next http.Handler) http.Handler
-	// UserCtx adds a UserContext to the request context.
-	UserCtx(next http.Handler) http.Handler
-	// FeatureCtx adds a Feature to the request context
-	FeatureCtx(next http.Handler) http.Handler
-	// ExperimentCtx adds an Experiment to the request context
-	ExperimentCtx(next http.Handler) http.Handler
 }
