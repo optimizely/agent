@@ -5,7 +5,6 @@ import requests
 
 from tests.acceptance.helpers import ENDPOINT_ACTIVATE
 from tests.acceptance.helpers import ENDPOINT_CONFIG
-from tests.acceptance.helpers import ENDPOINT_TRACK
 from tests.acceptance.helpers import sort_response
 
 BASE_URL = os.getenv('host')
@@ -13,21 +12,68 @@ BASE_URL = os.getenv('host')
 # #######################################################
 # TESTS
 # #######################################################
-expected_activate = [
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
-     'type': 'feature',
-     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
-     'enabled': True}]
+expected_activate_ab = [{'experimentKey': 'ab_test1', 'featureKey': '',
+                         'variationKey': 'variation_1',
+                         'type': 'experiment', 'enabled': True}]
 
 
-# TODO - parameterize - if param is empty or invalid
-def test_activate__experiment_and_feature(session_obj):
+@pytest.mark.parametrize("experiment_key, expected_response, expected_status_code", [
+    ("ab_test1", expected_activate_ab, 200),
+    pytest.param("", {"error": "experimentKey not-found"}, 400, marks=pytest.mark.xfail(
+        reason="Code should be 400 - OASIS-6077")),
+    pytest.param("invalid exper key", {"error": "experimentKey not-found"}, 400,
+                 marks=pytest.mark.xfail(
+                     reason="Code should be 400 - OASIS-6077")),
+], ids=["valid case", "empty exper key", "invalid exper key"])
+def test_activate__experiment(session_obj, experiment_key, expected_response,
+                              expected_status_code):
     """
     Test validates:
     1. Presence of correct variation in the returned decision for AB experiment
-    2. That feature is enabled in the decision for the feature test
+    Instead of on single field (variation, enabled), validation is done on the whole
+    response (that includes variations and enabled fields).
+    This is to add extra robustness to the test.
+
+    Sort the reponses because dictionaries shuffle order.
+    :param session_obj: session object
+    :param experiment_key: experiment_key
+    :param expected_response: expected_response
+    :param expected_status_code: expected_status_code
+    """
+    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    params = {"experimentKey": experiment_key}
+
+    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+
+    if isinstance(resp.json(), dict) and resp.json()['error']:
+        with pytest.raises(requests.exceptions.HTTPError):
+            assert resp.json() == expected_response
+            assert resp.status_code == expected_status_code, resp.text
+            resp.raise_for_status()
+
+
+expected_activate_feat = [{'experimentKey': '', 'featureKey': 'feature_1',
+                           'variationKey': '',
+                           'type': 'feature',
+                           'variables': {'bool_var': True, 'double_var': 5.6,
+                                         'int_var': 1,
+                                         'str_var': 'hello'},
+                           'enabled': True}]
+
+
+@pytest.mark.parametrize("feature_key, expected_response, expected_status_code", [
+    ("feature_1", expected_activate_feat, 200),
+    pytest.param("", {"error": "featureKey not-found"}, 400, marks=pytest.mark.xfail(
+        reason="Code should be 400 - OASIS-6077")),
+    pytest.param("invalid feat key", {"error": "featureKey not-found"}, 400,
+                 marks=pytest.mark.xfail(
+                     reason="Code should be 400 - OASIS-6077")),
+], ids=["valid case", "empty feat key", "invalid feat key"])
+def test_activate__feature(session_obj, feature_key, expected_response,
+                           expected_status_code):
+    """
+    Test validates:
+    That feature is enabled in the decision for the feature test
     Instead of on single field (variation, enabled), validation is done on the whole
     response (that includes variations and enabled fields).
     This is to add extra robustness to the test.
@@ -35,23 +81,16 @@ def test_activate__experiment_and_feature(session_obj):
     Sort the reponses because dictionaries shuffle order.
     :param session_obj: session object
     """
-    feature_key = 'feature_1'
-    experiment_key = 'ab_test1'
-
     payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
-    params = {
-        "featureKey": feature_key,
-        "experimentKey": experiment_key
-    }
+    params = {"featureKey": feature_key}
 
     resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
 
-    resp.raise_for_status()
-
-    sorted_actual = sort_response(resp.json(), 'experimentKey', 'featureKey')
-    sorted_expected = sort_response(expected_activate, 'experimentKey', 'featureKey')
-
-    assert sorted_actual == sorted_expected
+    if isinstance(resp.json(), dict) and resp.json()['error']:
+        with pytest.raises(requests.exceptions.HTTPError):
+            assert resp.json() == expected_response
+            assert resp.status_code == expected_status_code, resp.text
+            resp.raise_for_status()
 
 
 expected_activate_type_exper = [
@@ -127,29 +166,40 @@ def test_activate_403(session_override_sdk_key):
         resp.raise_for_status()
 
 
-# TODO - HOW TO DO THIS TEST ????? Check if impression event was sent in/with track?
-# TODO - THIS IS "GET_VARIATION" !!!! - a version of activate that doesn't send the impression event!!!!
-@pytest.mark.xfail(reason='******** To fix the test. *********')
-def test_activate__disableTracking(session_obj):
+@pytest.mark.parametrize("experiment, disableTracking, expected_status_code", [
+    ("ab_test1", "true", 200),
+    ("ab_test1", "false", 200),
+    ("feature_2_test", "true", 200),
+    ("feature_2_test", "false", 200),
+    ("ab_test1", "", 200),
+    ("ab_test1", "invalid_boolean", 200),
+], ids=["ab_experiment and decision_tr true", "ab_experiment and decision_tr false",
+        "feature test and decision_tr true",
+        "feature test and decision_tr false", "empty disableTracking",
+        "invalid disableTracking"])
+def test_activate__disable_tracking(session_obj, experiment, disableTracking,
+                                    expected_status_code):
     """
     Setting to true will disable impression tracking for ab experiments and feature tests.
+    It's equivalent to previous "get_variation".
+    Can not test it in acceptance tests. Just testing basic status code.
+    FS compatibility test suite uses proxy event displatcher where they test this by
+    validating that event was not sent.
     :param session_obj: session fixture
+    :param experiment: ab experiment or feature test
+    :param disableTracking: true or false
+    :param expected_status_code
     """
     payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
     params = {
-        "disableTracking": True
+        "experimentKey": experiment,
+        "disableTracking": disableTracking
     }
 
     resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
 
     resp.raise_for_status()
-
-    # TRACKING CHECK HERE
-    params = {"eventKey": "myevent"}
-
-    resp = session_obj.post(BASE_URL + ENDPOINT_TRACK, params=params,
-                            json=payload)  # TODO - THIS SHOULD NOT SEND AN EVENT when disableTracking is True. BUT IT SENDS !!!!!!!!!!!!!!!
-    assert not resp.status_code == 204
+    assert resp.status_code == expected_status_code
 
 
 # TODO: when "true" should return:
@@ -158,7 +208,6 @@ def test_activate__disableTracking(session_obj):
 # [{'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '', 'type': 'feature', 'enabled': False}]
 # TODO - code thsese above in - parameterize!
 # makse assertion that certain feature IS NOT in the response
-
 
 expected_enabled_true_all_true = [
     {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
@@ -190,20 +239,19 @@ expected_enabled_invalid = [
      'enabled': True}]
 
 
-# TODO - EXAMINE WHT CASE 1 IS INTERMITENTTLY FAILING
 @pytest.mark.parametrize(
     "enabled, experimentKey, featureKey, expected_response, expected_status_code", [
-        pytest.param("true", "ab_test1", "feature_1", expected_enabled_true_all_true, 200,
-                     marks=pytest.mark.xfail(
-                         reason="TO EXAMINS WHY IT'S INTERMITTENTLY FAILING.")),
+        ("true", "ab_test1", "feature_1", expected_enabled_true_all_true, 200),
         ("true", "ab_test1", "feature_3", expected_enabled_true_feature_off, 200),
         ("false", "ab_test1", "feature_1", expected_enabled_false_feature_on, 200),
         ("false", "ab_test1", "feature_3", expected_enabled_false_feature_off, 200),
         pytest.param("", "ab_test1", "feature_1", expected_enabled_empty, 400,
-                     marks=pytest.mark.xfail(reason="Status code should be 4xx")),
+                     marks=pytest.mark.xfail(
+                         reason="Define what here - status code should be 4xx")),
         pytest.param("invalid value for enabled", "ab_test1", "feature_1",
                      expected_enabled_invalid, 400,
-                     marks=pytest.mark.xfail(reason="Status code should be 4xx"))
+                     marks=pytest.mark.xfail(
+                         reason="Define what here - status code should be 4xx"))
     ], ids=["enabled true, all true", "enabled true, feature off",
             "enabled false, feature on",
             "enabled false, feature off", "empty value for enabled",
@@ -227,8 +275,9 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
 
     resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
 
+    actual_response = sort_response(resp.json(), 'experimentKey', 'featureKey')
     expected_response = sort_response(expected_response, 'experimentKey', 'featureKey')
-    assert resp.json() == expected_response
+    assert actual_response == expected_response
     assert resp.status_code == expected_status_code
     resp.raise_for_status()
 
@@ -260,7 +309,7 @@ expected_activate_with_config = [
 def test_activate_with_config(session_obj):
     """
     Tests experimentKeys, featureKeys, variables and variations because it
-    valdiates against the whole response body.
+    validates against the whole response body.
 
     In "activate"
     Request payload defines the “who” (user id and attributes)
@@ -284,7 +333,6 @@ def test_activate_with_config(session_obj):
     :param session_obj: session object
     """
     # config
-    # TODO make a helper function here for "get config" - will it be used a lot?
     resp = session_obj.get(BASE_URL + ENDPOINT_CONFIG)
     resp_config = resp.json()
 
