@@ -33,7 +33,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-// APIV1Options defines the configuration parameters for Router.
+// APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
 	maxConns        int
 	sdkMiddleware   func(next http.Handler) http.Handler
@@ -53,7 +53,7 @@ func forbiddenHandler(message string) http.HandlerFunc {
 	}
 }
 
-// NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
+// NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
@@ -93,19 +93,19 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		oAuthMiddleware: authProvider.AuthorizeAPI,
 	}
 
-	return NewAPIV1Router(spec)
+	return NewAPIRouter(spec)
 }
 
-// NewAPIV1Router returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIV1Router(opt *APIOptions) *chi.Mux {
+// NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
+func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
-	WithAPIV1Router(opt, r)
+	WithAPIRouter(opt, r)
 	return r
 }
 
-// WithAPIV1Router appends routes and middleware to the given router.
+// WithAPIRouter appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
-func WithAPIV1Router(opt *APIOptions, r chi.Router) {
+func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)

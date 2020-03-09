@@ -59,9 +59,7 @@ func getFilter(filters []string) map[string]notification.Type {
 	return notificationsToAdd
 }
 
-// HandleEventSteam implements the http.Handler interface.
-// This allows us to wrap HTTP handlers (see auth_handler.go)
-// http://golang.org/pkg/net/http/#Handler
+// NotificationEventSteamHandler implements the http.Handler interface.
 func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure that the writer supports flushing.
 	flusher, ok := w.(http.Flusher)

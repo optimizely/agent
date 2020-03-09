@@ -89,7 +89,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		metricsRegistry: metricsRegistry,
 	}
 
-	suite.mux = NewAPIV1Router(opts)
+	suite.mux = NewAPIRouter(opts)
 }
 
 func (suite *APIV1TestSuite) TestOverride() {
