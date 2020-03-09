@@ -37,9 +37,7 @@ var metricsRegistry = metrics.NewRegistry()
 const methodHeaderKey = "X-Method-Header"
 const clientHeaderKey = "X-Client-Header"
 
-type MockOptlyMiddleware struct{}
-
-func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+var testOptlyMiddleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(clientHeaderKey, "expected")
 		next.ServeHTTP(w, r)
@@ -48,30 +46,14 @@ func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 
 type MockCache struct{}
 
-func (m MockCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
-	panic("implement me")
+func (m MockCache) GetClient(_ string) (*optimizely.OptlyClient, error) {
+	return &optimizely.OptlyClient{}, nil
 }
 
-type MockHandlers struct{}
-
-func (m MockHandlers) config(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(methodHeaderKey, "config")
-}
-
-func (m MockHandlers) activate(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(methodHeaderKey, "activate")
-}
-
-func (m MockHandlers) trackEvent(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(methodHeaderKey, "track")
-}
-
-func (m MockHandlers) override(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(methodHeaderKey, "override")
-}
-
-var testAuthHandler = func(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(methodHeaderKey, "oauth/token")
+var testHandler = func(val string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(methodHeaderKey, val)
+	}
 }
 
 const middlewareHeaderKey = "X-Middleware-Header"
@@ -94,17 +76,20 @@ func (suite *APIV1TestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
-	opts := &APIV1Options{
+	opts := &APIOptions{
 		maxConns:        1,
-		middleware:      &MockOptlyMiddleware{},
-		handlers:        MockHandlers{},
-		metricsRegistry: metricsRegistry,
-		enableOverrides: true,
-		oAuthHandler:    testAuthHandler,
+		sdkMiddleware:   testOptlyMiddleware,
+		configHandler:   testHandler("config"),
+		activateHandler: testHandler("activate"),
+		overrideHandler: testHandler("override"),
+		trackHandler:    testHandler("track"),
+		nStreamHandler:  testHandler("notifications/event-stream"),
+		oAuthHandler:    testHandler("oauth/token"),
 		oAuthMiddleware: testAuthMiddleware,
+		metricsRegistry: metricsRegistry,
 	}
 
-	suite.mux = NewAPIV1Router(opts)
+	suite.mux = NewAPIRouter(opts)
 }
 
 func (suite *APIV1TestSuite) TestOverride() {
@@ -117,6 +102,7 @@ func (suite *APIV1TestSuite) TestOverride() {
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
+		{"GET", "notifications/event-stream"},
 	}
 
 	for _, route := range routes {
@@ -129,36 +115,6 @@ func (suite *APIV1TestSuite) TestOverride() {
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
 		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
 	}
-}
-
-func (suite *APIV1TestSuite) TestDisabledOverride() {
-
-	route := struct {
-		method string
-		path   string
-	}{"POST", "override"}
-
-	opts := &APIV1Options{
-		maxConns:        1,
-		middleware:      &MockOptlyMiddleware{},
-		handlers:        MockHandlers{},
-		metricsRegistry: metricsRegistry,
-		enableOverrides: false,
-		oAuthHandler:    testAuthHandler,
-		oAuthMiddleware: testAuthMiddleware,
-	}
-
-	mux := NewAPIV1Router(opts)
-
-	req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
-	rec := httptest.NewRecorder()
-	mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusForbidden, rec.Code)
-
-	// Unmarshal response
-	response := string(rec.Body.Bytes())
-	suite.Equal("Overrides not enabled\n", response)
-
 }
 
 func (suite *APIV1TestSuite) TestCreateAccessToken() {
@@ -175,7 +131,7 @@ func TestAPIV1TestSuite(t *testing.T) {
 }
 
 func TestNewDefaultAPIV1Router(t *testing.T) {
-	client := NewDefaultAPIV1Router(MockCache{}, config.APIConfig{}, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
 	assert.NotNil(t, client)
 }
 
@@ -199,7 +155,7 @@ func TestNewDefaultAPIV1RouterInvalidHandlerConfig(t *testing.T) {
 		EnableNotifications: false,
 		EnableOverrides:     false,
 	}
-	client := NewDefaultAPIV1Router(MockCache{}, invalidAPIConfig, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
 	assert.Nil(t, client)
 }
 
@@ -214,6 +170,31 @@ func TestNewDefaultClientRouterInvalidMiddlewareConfig(t *testing.T) {
 		EnableNotifications: false,
 		EnableOverrides:     false,
 	}
-	client := NewDefaultAPIV1Router(MockCache{}, invalidAPIConfig, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
 	assert.Nil(t, client)
+}
+
+func TestForbiddenRoutes(t *testing.T) {
+	conf := config.APIConfig{}
+	mux := NewDefaultAPIRouter(MockCache{}, conf, metricsRegistry)
+
+	routes := []struct {
+		method string
+		path   string
+		error  string
+	}{
+		{"POST", "override", "Overrides not enabled\n"},
+		{"GET", "notifications/event-stream", "Notification stream not enabled\n"},
+	}
+
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		req.Header.Add("X-Optimizely-SDK-Key", "something")
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusForbidden, rec.Code)
+
+		response := string(rec.Body.Bytes())
+		assert.Equal(t, route.error, response)
+	}
 }

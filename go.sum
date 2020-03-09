@@ -83,8 +83,8 @@ github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 h1:Esafd1046DLD
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
-github.com/optimizely/go-sdk v1.0.1-0.20200128173910-895dbc7355a5 h1:bpmrGA36u0sjfYgl0mWjmBxQXdEqq853sWjeExFjJvM=
-github.com/optimizely/go-sdk v1.0.1-0.20200128173910-895dbc7355a5/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
+github.com/optimizely/go-sdk v1.1.0 h1:vJbKuiSI/+dgDrd0QEUfYNIfW5Re71Bf1QOOp75b+2c=
+github.com/optimizely/go-sdk v1.1.0/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6 h1:lNCW6THrCKBiJBpz8kbVGjC7MgdCGKwuvBgc7LoD6sw=
 github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6/go.mod h1:Lu3tH6HLW3feq74c2GC+jIMS/K2CFcDWnWD9XkenwhI=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=

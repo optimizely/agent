@@ -33,45 +33,28 @@ import (
 	"github.com/go-chi/render"
 )
 
-// APIV1Options defines the configuration parameters for Router.
-type APIV1Options struct {
+// APIOptions defines the configuration parameters for Router.
+type APIOptions struct {
 	maxConns        int
-	enableOverrides bool
-	middleware      middleware.OptlyMiddleware
-	handlers        apiHandlers
+	sdkMiddleware   func(next http.Handler) http.Handler
 	metricsRegistry *metrics.Registry
+	configHandler   http.HandlerFunc
+	activateHandler http.HandlerFunc
+	trackHandler    http.HandlerFunc
+	overrideHandler http.HandlerFunc
+	nStreamHandler  http.HandlerFunc
 	oAuthHandler    http.HandlerFunc
 	oAuthMiddleware func(next http.Handler) http.Handler
 }
 
-// Define an interface to facilitate testing
-type apiHandlers interface {
-	config(w http.ResponseWriter, r *http.Request)
-	activate(w http.ResponseWriter, r *http.Request)
-	trackEvent(w http.ResponseWriter, r *http.Request)
-	override(w http.ResponseWriter, r *http.Request)
+func forbiddenHandler(message string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, message, http.StatusForbidden)
+	}
 }
 
-type defaultHandlers struct{}
-
-func (d defaultHandlers) config(w http.ResponseWriter, r *http.Request) {
-	handlers.OptimizelyConfig(w, r)
-}
-
-func (d defaultHandlers) activate(w http.ResponseWriter, r *http.Request) {
-	handlers.Activate(w, r)
-}
-
-func (d defaultHandlers) trackEvent(w http.ResponseWriter, r *http.Request) {
-	handlers.TrackEvent(w, r)
-}
-
-func (d defaultHandlers) override(w http.ResponseWriter, r *http.Request) {
-	handlers.Override(w, r)
-}
-
-// NewDefaultAPIV1Router creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+// NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
 	if authProvider == nil {
@@ -85,30 +68,44 @@ func NewDefaultAPIV1Router(optlyCache optimizely.Cache, conf config.APIConfig, m
 		return nil
 	}
 
-	spec := &APIV1Options{
+	overrideHandler := handlers.Override
+	if !conf.EnableOverrides {
+		overrideHandler = forbiddenHandler("Overrides not enabled")
+	}
+
+	nStreamHandler := handlers.NotificationEventSteamHandler
+	if !conf.EnableNotifications {
+		nStreamHandler = forbiddenHandler("Notification stream not enabled")
+	}
+
+	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
+
+	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
-		middleware:      &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		handlers:        new(defaultHandlers),
 		metricsRegistry: metricsRegistry,
-		// TODO: These two below (NewOAuthHandler and NewAuth) can return nil when given invalid configuration
-		// Make sure to handle that possibility here
+		configHandler:   handlers.OptimizelyConfig,
+		activateHandler: handlers.Activate,
+		overrideHandler: overrideHandler,
+		trackHandler:    handlers.TrackEvent,
+		sdkMiddleware:   mw.ClientCtx,
+		nStreamHandler:  nStreamHandler,
 		oAuthHandler:    authHandler.CreateAPIAccessToken,
 		oAuthMiddleware: authProvider.AuthorizeAPI,
 	}
 
-	return NewAPIV1Router(spec)
+	return NewAPIRouter(spec)
 }
 
-// NewAPIV1Router returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIV1Router(opt *APIV1Options) *chi.Mux {
+// NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
+func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
-	WithAPIV1Router(opt, r)
+	WithAPIRouter(opt, r)
 	return r
 }
 
-// WithAPIV1Router appends routes and middleware to the given router.
+// WithAPIRouter appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
-func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
+func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
@@ -120,22 +117,15 @@ func WithAPIV1Router(opt *APIV1Options, r chi.Router) {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime, opt.middleware.ClientCtx)
+	r.Use(middleware.SetTime, opt.sdkMiddleware)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	overrideHandler := func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Overrides not enabled", http.StatusForbidden)
-	}
-
-	if opt.enableOverrides {
-		overrideHandler = opt.handlers.override
-	}
-
 	r.Route("/v1", func(r chi.Router) {
-		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.handlers.config)
-		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.handlers.activate)
-		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.handlers.trackEvent)
-		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", overrideHandler)
+		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
+		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
+		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
+		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", opt.overrideHandler)
+		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
