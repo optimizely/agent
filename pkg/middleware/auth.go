@@ -277,25 +277,21 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 				RenderError(errors.New("Invalid claims: sdk_keys not found, or have the wrong type"), http.StatusUnauthorized, w, r)
 				return
 			}
-			claimsSdkKeys := make([]string, len(rawClaimsSdkKeys))
-			for i, rawSdkKey := range rawClaimsSdkKeys {
+			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
+			foundMatchingSdkKey := false
+			for _, rawSdkKey := range rawClaimsSdkKeys {
 				sdkKey, ok := rawSdkKey.(string)
 				if !ok {
 					// TODO: log
 					continue
 				}
-				claimsSdkKeys[i] = sdkKey
-			}
-			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
-			foundMatchingSdkKey := false
-			for _, sdkKey := range claimsSdkKeys {
 				if sdkKey == sdkKeyFromHeader {
 					foundMatchingSdkKey = true
 					break
 				}
 			}
 			if !foundMatchingSdkKey {
-				RenderError(fmt.Errorf("SDK key %v, given in X-Optimizely-Sdk-Key header, was not found in the SDK keys in this token's claims (%v)", sdkKeyFromHeader, claimsSdkKeys), http.StatusUnauthorized, w, r)
+				RenderError(errors.New("SDK key given in X-Optimizely-Sdk-Key header was not found in the SDK keys in this token's claims"), http.StatusUnauthorized, w, r)
 				return
 			}
 		}
