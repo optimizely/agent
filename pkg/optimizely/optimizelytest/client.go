@@ -79,6 +79,16 @@ func (t *TestClient) GetProcessedEvents() []event.UserEvent {
 	return t.EventProcessor.GetEvents()
 }
 
+// AddExperimentWithVariations is a helper method for adding and experiment with N variations
+func (t TestClient) AddExperimentWithVariations(experimentKey string, variationKeys ...string) {
+	variations := make([]entities.Variation, len(variationKeys))
+	for i, key := range variationKeys {
+		variations[i] = entities.Variation{Key: key}
+	}
+
+	t.AddExperiment(experimentKey, variations)
+}
+
 // AddExperiment is a helper method for creating experiments in the ProjectConfig to facilitate testing.
 func (t *TestClient) AddExperiment(experimentKey string, variations []entities.Variation) {
 	t.ProjectConfig.AddExperiment(experimentKey, variations)

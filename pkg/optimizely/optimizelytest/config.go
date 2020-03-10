@@ -207,6 +207,7 @@ func (c *TestProjectConfig) AddFeatureTest(f entities.Feature) *TestProjectConfi
 
 	f.FeatureExperiments = []entities.Experiment{experiment}
 	c.FeatureMap[f.Key] = f
+	c.ExperimentMap[experiment.Key] = experiment
 	return c
 }
 

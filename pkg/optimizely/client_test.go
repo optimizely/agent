@@ -236,6 +236,19 @@ func (suite *ClientTestSuite) TestSetForcedVariationDifferentVariation() {
 	suite.True(isEnabled)
 }
 
+func (suite *ClientTestSuite) TestSetForcedVariationMissingExperiment() {
+	wasSet, err := suite.optlyClient.SetForcedVariation("does-not-exist", "userId", "disabled_var")
+	suite.False(wasSet)
+	suite.EqualError(err, `experimentKey: "does-not-exist" not found`)
+}
+
+func (suite *ClientTestSuite) TestSetForcedVariationMissingVariation() {
+	suite.testClient.AddExperimentWithVariations("my_exp", "my_var")
+	wasSet, err := suite.optlyClient.SetForcedVariation("my_exp", "userId", "does-not-exist")
+	suite.False(wasSet)
+	suite.EqualError(err, `variationKey: "does-not-exist" not found`)
+}
+
 func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 	feature := entities.Feature{Key: "my_feat"}
 	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")

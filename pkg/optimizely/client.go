@@ -182,10 +182,21 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 	if c.ForcedVariations == nil {
 		return false, ErrForcedVariationsUninitialized
 	}
+
+	// Check the entities exist as part of the Optimizely configuration
+	if optimizelyConfig := c.GetOptimizelyConfig(); optimizelyConfig == nil {
+		return false, errors.New("optimizely config is null")
+	} else if experiment, ok := optimizelyConfig.ExperimentsMap[experimentKey]; !ok {
+		return false, fmt.Errorf("experimentKey: %q %w", experimentKey, ErrEntityNotFound)
+	} else if _, ok := experiment.VariationsMap[variationKey]; !ok {
+		return false, fmt.Errorf("variationKey: %q %w", variationKey, ErrEntityNotFound)
+	}
+
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        userID,
 		ExperimentKey: experimentKey,
 	}
+
 	previousVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey)
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
 	wasSet := !ok || previousVariationKey != variationKey
