@@ -182,7 +182,7 @@ func (suite *TrackTestSuite) TestTrackEventParamError() {
 		code    int
 		message string
 	}{
-		{"?eventKey=invalid", http.StatusNotFound, `event with key "invalid" not found`},
+		{"?eventKey=invalid", http.StatusNotFound, `eventKey: "invalid" not found`},
 		{"?eventKey=", http.StatusBadRequest, "missing required path parameter: eventKey"},
 		{"", http.StatusBadRequest, "missing required path parameter: eventKey"},
 	}
