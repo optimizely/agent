@@ -68,12 +68,11 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		if err != nil {
 			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v), skipping these credentials", clientCreds.ID)
 			continue
-
 		}
+
 		if len(clientCreds.SDKKeys) == 0 {
 			log.Error().Err(err).Msgf("client creds missing or empty SDK keys (with client ID: %v), skipping these credentials", clientCreds.ID)
 			continue
-
 		}
 
 		clientCredentials[clientCreds.ID] = ClientCredentials{
