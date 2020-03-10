@@ -68,6 +68,8 @@ func (suite *OverrideTestSuite) SetupTest() {
 	testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
 	featureExp := testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 
+	testClient.AddExperimentWithVariations("valid", "valid")
+
 	ab := OverrideBody{
 		UserID:        "testUser",
 		ExperimentKey: featureExp.Key,
@@ -110,16 +112,24 @@ func (suite *OverrideTestSuite) TestSetForcedVariation() {
 }
 
 func (suite *OverrideTestSuite) TestSetForcedVariationInvalidPayload() {
-	invalid := []OverrideBody{
+	invalid := []map[string]interface{}{
 		{
-			UserID:        "",
-			ExperimentKey: "valid",
-			VariationKey:  "variation_enabled",
+			"userID":        "",
+			"experimentKey": "valid",
+			"variationKey":  "valid",
 		},
 		{
-			UserID:        "valid",
-			ExperimentKey: "",
-			VariationKey:  "variation_enabled",
+			"userID":        "valid",
+			"experimentKey": "",
+			"variationKey":  "valid",
+		},
+		{
+			"userID":        "valid",
+			"experimentKey": "not-valid",
+			"variationKey":  "valid",
+		},
+		{
+			"userId": true,
 		},
 	}
 
