@@ -261,6 +261,12 @@ components:
           type: object
           additionalProperties:
             type: string
+        invalid:
+          type: boolean
+        key:
+          type: string
+        message:
+          type: string
       required:
         #        - id
         - key
