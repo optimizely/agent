@@ -108,7 +108,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, decisions)
 }
 
-func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
+func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) {
 	for _, key := range keys {
 		_, ok := oConf.ExperimentsMap[key]
 		if !ok {
@@ -117,11 +117,9 @@ func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, kmap key
 			kmap[key] = "experiment"
 		}
 	}
-
-	return nil
 }
 
-func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
+func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) {
 	for _, key := range keys {
 		_, ok := oConf.FeaturesMap[key]
 		if !ok {
@@ -130,8 +128,6 @@ func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap
 			kmap[key] = "feature"
 		}
 	}
-
-	return nil
 }
 
 func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
