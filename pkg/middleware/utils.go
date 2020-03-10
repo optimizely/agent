@@ -46,16 +46,6 @@ func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 	return optlyClient, nil
 }
 
-// GetOptlyContext is a utility to extract the OptlyContext from the http request context.
-func GetOptlyContext(r *http.Request) (*optimizely.OptlyContext, error) {
-	optlyContext, ok := r.Context().Value(OptlyContextKey).(*optimizely.OptlyContext)
-	if !ok {
-		return nil, fmt.Errorf("optlyContext not available")
-	}
-
-	return optlyContext, nil
-}
-
 // GetLogger gets the logger with some info coming from http request
 func GetLogger(r *http.Request) *zerolog.Logger {
 	sdkKey := r.Header.Get(OptlySDKHeader)

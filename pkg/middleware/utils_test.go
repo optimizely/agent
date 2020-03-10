@@ -49,24 +49,6 @@ func TestGetOptlyClientWithError(t *testing.T) {
 	assert.Equal(t, "optlyClient not available", err.Error())
 }
 
-func TestGetOptlyContext(t *testing.T) {
-	expected := new(optimizely.OptlyContext)
-
-	req := httptest.NewRequest("GET", "/", nil)
-	ctx := context.WithValue(req.Context(), OptlyContextKey, expected)
-
-	actual, err := GetOptlyContext(req.WithContext(ctx))
-	assert.NoError(t, err)
-	assert.Same(t, expected, actual)
-}
-
-func TestGetOptlyContextWithError(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
-	_, err := GetOptlyContext(req)
-	assert.Error(t, err)
-	assert.Equal(t, "optlyContext not available", err.Error())
-}
-
 func TestGetLogger(t *testing.T) {
 	out := &bytes.Buffer{}
 	req := httptest.NewRequest("GET", "/", nil)

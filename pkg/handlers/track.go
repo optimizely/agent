@@ -63,8 +63,8 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = optlyClient.TrackEvent(eventKey, uc, body.EventTags); err != nil {
-		if errors.Is(err, optimizely.ErrEventKeyDoesNotExist) {
-			RenderError(fmt.Errorf("event with key %q not found", eventKey), http.StatusNotFound, w, r)
+		if errors.Is(err, optimizely.ErrEntityNotFound) {
+			RenderError(err, http.StatusNotFound, w, r)
 		} else {
 			RenderError(err, http.StatusInternalServerError, w, r)
 		}

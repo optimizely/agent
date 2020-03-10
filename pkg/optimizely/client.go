@@ -22,15 +22,15 @@ import (
 	"fmt"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
-	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
-var errNullOptimizelyConfig = errors.New("optimizely config is null")
+// ErrEntityNotFound is returned when no entity exists with a given key
+var ErrEntityNotFound = errors.New("not found")
 
-// ErrEventKeyDoesNotExist signals that the eventKey does not exist as part of the current configuration
-var ErrEventKeyDoesNotExist = errors.New("eventKey does not exist")
+// ErrForcedVariationsUninitialized is returned from SetForcedVariation and GetForcedVariation when the forced variations store is not initialized
+var ErrForcedVariationsUninitialized = errors.New("client forced variations store not initialized")
 
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
@@ -49,76 +49,11 @@ type Decision struct {
 	Enabled       bool                   `json:"enabled"`
 }
 
-// ListFeatures returns all available features
-func (c *OptlyClient) ListFeatures() (features []optimizelyconfig.OptimizelyFeature, err error) {
-	optimizelyConfig := c.GetOptimizelyConfig()
-	if optimizelyConfig == nil {
-		return features, errNullOptimizelyConfig
-	}
-	features = []optimizelyconfig.OptimizelyFeature{}
-	for _, feature := range optimizelyConfig.FeaturesMap {
-		features = append(features, feature)
-	}
-
-	return features, err
-}
-
-// ErrEntityNotFound is returned when no entity exists with a given key
-var ErrEntityNotFound = errors.New("not found")
-
-// GetFeature returns the feature definition
-func (c *OptlyClient) GetFeature(featureKey string) (optimizelyconfig.OptimizelyFeature, error) {
-
-	optimizelyConfig := c.GetOptimizelyConfig()
-	if optimizelyConfig == nil {
-		return optimizelyconfig.OptimizelyFeature{}, errNullOptimizelyConfig
-	}
-
-	if feature, ok := optimizelyConfig.FeaturesMap[featureKey]; ok {
-		return feature, nil
-	}
-
-	return optimizelyconfig.OptimizelyFeature{}, fmt.Errorf("feature %s %w", featureKey, ErrEntityNotFound)
-}
-
-// ListExperiments returns all available experiments
-func (c *OptlyClient) ListExperiments() (experiments []optimizelyconfig.OptimizelyExperiment, err error) {
-	optimizelyConfig := c.GetOptimizelyConfig()
-	if optimizelyConfig == nil {
-		return experiments, errNullOptimizelyConfig
-	}
-	experiments = []optimizelyconfig.OptimizelyExperiment{}
-	for _, experiment := range optimizelyConfig.ExperimentsMap {
-		experiments = append(experiments, experiment)
-	}
-
-	return experiments, err
-}
-
-// GetExperiment returns the experiment definition
-func (c *OptlyClient) GetExperiment(experimentKey string) (optimizelyconfig.OptimizelyExperiment, error) {
-	optimizelyConfig := c.GetOptimizelyConfig()
-	if optimizelyConfig == nil {
-		return optimizelyconfig.OptimizelyExperiment{}, errNullOptimizelyConfig
-	}
-
-	if experiment, ok := optimizelyConfig.ExperimentsMap[experimentKey]; ok {
-		return experiment, nil
-	}
-
-	return optimizelyconfig.OptimizelyExperiment{}, fmt.Errorf("experiment %s %w", experimentKey, ErrEntityNotFound)
-}
-
 // UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {
 		c.ConfigManager.SyncConfig()
 	}
-}
-
-// TrackEventWithContext calls the OptimizelyClient Track method with the current OptlyContext.
-func (c *OptlyClient) TrackEventWithContext(eventKey string, ctx *OptlyContext, eventTags map[string]interface{}) error {
-	return c.Track(eventKey, *ctx.UserContext, eventTags)
 }
 
 // TrackEvent checks for the existence of the event before calling the OptimizelyClient Track method
@@ -129,51 +64,11 @@ func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, event
 	}
 
 	if _, err = pc.GetEventByKey(eventKey); err != nil {
-		return ErrEventKeyDoesNotExist
+		return fmt.Errorf("eventKey: %q %w", eventKey, ErrEntityNotFound)
 	}
 
 	return c.Track(eventKey, uc, eventTags)
 }
-
-// GetFeatureWithContext calls the OptimizelyClient with the current OptlyContext
-func (c *OptlyClient) GetFeatureWithContext(featureKey string, ctx *OptlyContext) (enabled bool, variableMap map[string]interface{}, err error) {
-	return c.GetAllFeatureVariables(featureKey, *ctx.UserContext)
-}
-
-// GetExperimentVariation calls the OptimizelyClient with the current OptlyContext
-func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivate bool, ctx *OptlyContext) (variation optimizelyconfig.OptimizelyVariation, err error) {
-
-	optimizelyConfig := c.GetOptimizelyConfig()
-	if optimizelyConfig == nil {
-		return variation, errors.New("optimizely config is null")
-	}
-
-	var experiment optimizelyconfig.OptimizelyExperiment
-	experiment, err = c.GetExperiment(experimentKey)
-	if err != nil {
-		return variation, nil
-	}
-
-	var variationKey string
-	if shouldActivate {
-		variationKey, err = c.Activate(experimentKey, *ctx.UserContext)
-	} else {
-		variationKey, err = c.GetVariation(experimentKey, *ctx.UserContext)
-	}
-
-	if err != nil {
-		return variation, err
-	}
-
-	if experimentVariation, ok := experiment.VariationsMap[variationKey]; ok {
-		variation = experimentVariation
-	}
-
-	return variation, nil
-}
-
-// ErrForcedVariationsUninitialized is returned from SetForcedVariation and GetForcedVariation when the forced variations store is not initialized
-var ErrForcedVariationsUninitialized = errors.New("client forced variations store not initialized")
 
 // SetForcedVariation sets a forced variation for the argument experiment key and user ID
 // Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
