@@ -117,10 +117,11 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Use(middleware.SetTime, opt.sdkMiddleware)
+	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Use(opt.sdkMiddleware)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
 		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
 		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
