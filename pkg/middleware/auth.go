@@ -274,7 +274,7 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 
 			rawClaimsSdkKeys, ok := claims["sdk_keys"].([]interface{})
 			if !ok {
-				RenderError(errors.New("Invalid claims: sdk_keys not found, or have the wrong type"), http.StatusUnauthorized, w, r)
+				RenderError(errors.New("invalid claims: sdk_keys not found, or have the wrong type"), http.StatusUnauthorized, w, r)
 				return
 			}
 			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)

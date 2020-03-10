@@ -148,7 +148,7 @@ type WebhookProject struct {
 type OAuthClientCredentials struct {
 	ID         string   `yaml:"id"`
 	SecretHash string   `yaml:"secretHash"`
-	SDKKeys    []string `yaml:sdkKeys`
+	SDKKeys    []string `yaml:"sdkKeys"`
 }
 
 // ServiceAuthConfig holds the authentication configuration for a particular service
