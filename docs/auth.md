@@ -32,7 +32,7 @@ The configuration properties pertaining to Issuer & Validator mode are listed be
 |---|---|---|
 |ttl|TTL|Time-to-live of access tokens issued|
 |hmacSecrets|HMACSECRETS|Array of secrets used to sign & validate access tokens, using the HMAC SHA256 algorithm. The first value in the array is used to sign issued access tokens. Access tokens signed with any value in the array are considered valid.|
-|clients|N/A|Array of `id` and `secretHash` pairs, used for access token issuance. Clients provide ID and secret in their requests to `/oauth/token`. Agent validates the request credentials by checking for an exact match of ID, and checking that the BCrypt hash of the request secret matches the `secretHash` from configuration. The `secretHash` in configuration is expected as a base64-format string.
+|clients|N/A|Array of objects, used for token issuance, consisting of `id`, `secretHash`, and `sdkKeys`. Clients provide ID and secret in their requests to `/oauth/token`. Agent validates the request credentials by checking for an exact match of ID, checking that the BCrypt hash of the request secret matches the `secretHash` from configuration, and that the SDK key provided in the `X-Optimizely-Sdk-Key` request header exists in the `sdkKeys` from configuration.|
 
 To make setup easier, Agent provides a command-line tool that can generate base64-encoded 32-byte random values, and their associated base64-encoded BCrypt hashes:
 ```shell script
@@ -50,6 +50,7 @@ The configuration properties pertaining to Validator-only mode are listed below:
 |Property Name|Environment Variable|Description|
 |---|---|---|
 |jwksURL|JWKSURL|URL from which public keys should be fetched for token validation|
+|jwksUpdateInterval|JWKSUPDATEINTERVAL|Interval on which public keys should be re-fetched (example: `30m` for 30 minutes)|
 
 ### No authorization (default)
 The API & Admin interfaces run with no authorization when no `auth` configuration is given.
@@ -78,8 +79,15 @@ admin:
             # Either of these two id/secret pairs can be exchanged for access tokens
             - id: agentConsumer1
             secretHash: XgZTeTvWaZ6fLiey6EBSOxJ2QFdd6dIiUcZGDIIJ+IY 
+            sdkKeys:
+              # These credentials can be exchanged for tokens granting access to these two SDK keys
+              - abcd1234
+              - efgh5678
             - id: agentConsumer2
             secretHash: ssz0EEViKIinkFXxzqncKxz+6VygEc2d2rKf+la5rXM 
+            sdkKeys:
+              # These credentials can be exchanged for tokens granting access only to this one SDK key
+              - ijkl9012
 ```
 #### Validator-only
 ```yaml
@@ -88,6 +96,8 @@ api:
     auth:
         # Signing keys will be fetched from this url and used when validating access tokens
         jwksURL: https://YOUR_DOMAIN/.well-known/jwks.json
+        # Siging keys will be periodically fetched on this interval
+        jwksUpdateInterval: 30m
 ```
 
 ## Secret Rotation (Issuer & Validator mode)
