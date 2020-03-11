@@ -50,6 +50,12 @@ func TestStartAndShutdown(t *testing.T) {
 	srv.Shutdown()
 }
 
+func TestNoHandler(t *testing.T) {
+	ns, err := NewServer("test", "0", nil, conf)
+	assert.Error(t, err)
+	assert.Equal(t, ns, Server{})
+}
+
 func TestNotEnabledServer(t *testing.T) {
 	_, err := NewServer("not-enabled", "0", handler, conf)
 	assert.NoError(t, err) // this is checked in server group
