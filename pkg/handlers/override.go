@@ -21,8 +21,9 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/render"
+
 	"github.com/optimizely/agent/pkg/middleware"
-	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 // OverrideBody defines the request body for an override
@@ -70,15 +71,9 @@ func Override(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
-	wasSet, err := optlyClient.SetForcedVariation(experimentKey, body.UserID, body.VariationKey)
-	switch {
-	case errors.Is(err, optimizely.ErrEntityNotFound):
-		RenderError(err, http.StatusBadRequest, w, r)
-	case err != nil:
+	if override, err := optlyClient.SetForcedVariation(experimentKey, body.UserID, body.VariationKey); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
-	case wasSet:
-		w.WriteHeader(http.StatusCreated)
-	default:
-		w.WriteHeader(http.StatusNoContent)
+	} else {
+		render.JSON(w, r, override)
 	}
 }
