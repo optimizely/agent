@@ -81,16 +81,14 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			d, err = optlyClient.ActivateFeature(key, uc, disableTracking)
 		case "experimentKey-not-found":
 			d = &optimizely.Decision{
-				Invalid: true,
-				Key: key,
-				Message: "experimentKey not found",
+				ExperimentKey: key,
+				Error: "experimentKey not found",
 			}
 			err = nil
 		case "featureKey-not-found":
 			d = &optimizely.Decision{
-				Invalid: true,
-				Key: key,
-				Message: "featureKey not found",
+				FeatureKey: key,
+				Error: "featureKey not found",
 			}
 			err = nil
 		default:

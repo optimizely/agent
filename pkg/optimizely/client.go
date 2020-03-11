@@ -47,9 +47,7 @@ type Decision struct {
 	Type          string                 `json:"type"`
 	Variables     map[string]interface{} `json:"variables,omitempty"`
 	Enabled       bool                   `json:"enabled"`
-	Invalid       bool                   `json:"invalid"`
-	Key           string                 `json:"key"`
-	Message       string                 `json:"message"`
+	Error         string                 `json:"error"`
 }
 
 // ListFeatures returns all available features

@@ -168,9 +168,8 @@ func (suite *ActivateTestSuite) TestGetFeatureMissingFeature() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		Invalid:    true,
-		Key:        "feature-missing",
-		Message:    "featureKey not found",
+		FeatureKey: "feature-missing",
+		Error:      "featureKey not found",
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -215,9 +214,8 @@ func (suite *ActivateTestSuite) TestGetVariationMissingExperiment() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		Invalid:    true,
-		Key:        "experiment-missing",
-		Message:    "experimentKey not found",
+		ExperimentKey: "experiment-missing",
+		Error:         "experimentKey not found",
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
