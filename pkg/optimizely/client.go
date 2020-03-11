@@ -47,6 +47,7 @@ type Decision struct {
 	Type          string                 `json:"type"`
 	Variables     map[string]interface{} `json:"variables,omitempty"`
 	Enabled       bool                   `json:"enabled"`
+	Error         string                 `json:"error"`
 }
 
 // UpdateConfig uses config manager to sync and set project config

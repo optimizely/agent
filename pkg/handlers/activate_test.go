@@ -160,7 +160,20 @@ func (suite *ActivateTestSuite) TestGetFeatureMissingFeature() {
 	req := httptest.NewRequest("POST", "/activate?featureKey=feature-missing", suite.body)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNotFound, rec.Code)
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual []optimizely.Decision
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := optimizely.Decision{
+		FeatureKey: "feature-missing",
+		Error:      "featureKey not found",
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual[0])
 }
 
 func (suite *ActivateTestSuite) TestGetVariation() {
@@ -193,15 +206,20 @@ func (suite *ActivateTestSuite) TestGetVariationMissingExperiment() {
 	req := httptest.NewRequest("POST", "/activate?experimentKey=experiment-missing", suite.body)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNotFound, rec.Code)
+	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	actual := ErrorResponse{}
+	var actual []optimizely.Decision
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
+	expected := optimizely.Decision{
+		ExperimentKey: "experiment-missing",
+		Error:         "experimentKey not found",
+	}
+
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
-	suite.Equal(ErrorResponse{Error: "experimentKey not-found"}, actual)
+	suite.Equal(expected, actual[0])
 }
 
 func (suite *ActivateTestSuite) TestActivateExperiment() {
