@@ -31,6 +31,8 @@ admin:
     clients:
       - id: clientid2
         secretHash: clientsecret2
+        sdkKeys:
+          - 123
     jwksURL: "admin_jwks_url"
     jwksUpdateInterval: "25s"
 api:
@@ -46,6 +48,8 @@ api:
     clients:
       - id: clientid1
         secretHash: clientsecret1
+        sdkKeys:
+          - 123
     jwksURL: "api_jwks_url"
     jwksUpdateInterval: "25s"
 webhook:

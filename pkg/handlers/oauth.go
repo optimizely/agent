@@ -89,6 +89,8 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	}
 
 	h := &OAuthHandler{
+		// TODO: Interpret hmacSecret as a base64-format string, since we are already doing that for
+		// client secrets
 		hmacSecret:        []byte(hmacSecret),
 		ClientCredentials: clientCredentials,
 	}

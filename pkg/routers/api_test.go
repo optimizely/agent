@@ -122,7 +122,6 @@ func (suite *APIV1TestSuite) TestCreateAccessToken() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 	suite.Equal("oauth/token", rec.Header().Get(methodHeaderKey))
 }
 
@@ -142,6 +141,7 @@ func TestNewDefaultAPIV1RouterInvalidHandlerConfig(t *testing.T) {
 				{
 					ID:         "id1",
 					SecretHash: "JDJhJDEyJFBQM3dSdnNERnVSQmZPNnA4MGcvLk9Eb1RVWExYMm5FZ2VhZXpsS1VmR3hPdFJUT3ViaXVX",
+					SDKKeys:    []string{"123"},
 				},
 			},
 			// Empty HMACSecrets, but non-empty Clients, is an invalid config

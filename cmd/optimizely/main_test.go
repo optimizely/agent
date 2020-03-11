@@ -66,6 +66,7 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, config.OAuthClientCredentials{
 		ID:         "clientid2",
 		SecretHash: "clientsecret2",
+		SDKKeys:    []string{"123"},
 	}, actual.Clients[0])
 	assert.Equal(t, "admin_jwks_url", actual.JwksURL)
 	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
@@ -86,6 +87,7 @@ func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, config.OAuthClientCredentials{
 		ID:         "clientid1",
 		SecretHash: "clientsecret1",
+		SDKKeys:    []string{"123"},
 	}, actual.Clients[0])
 	assert.Equal(t, "api_jwks_url", actual.JwksURL)
 	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
@@ -149,10 +151,11 @@ func TestViperProps(t *testing.T) {
 	v.Set("admin.auth.jwksURL", "admin_jwks_url")
 	v.Set("admin.auth.jwksUpdateInterval", "25s")
 
-	v.Set("admin.auth.clients", []map[string]string{
+	v.Set("admin.auth.clients", []map[string]interface{}{
 		{
-			"id":     "clientid2",
+			"id":         "clientid2",
 			"secretHash": "clientsecret2",
+			"sdkKeys":    []string{"123"},
 		},
 	})
 
@@ -166,10 +169,11 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.auth.jwksURL", "api_jwks_url")
 	v.Set("api.auth.jwksUpdateInterval", "25s")
 
-	v.Set("api.auth.clients", []map[string]string{
+	v.Set("api.auth.clients", []map[string]interface{}{
 		{
-			"id":     "clientid1",
+			"id":         "clientid1",
 			"secretHash": "clientsecret1",
+			"sdkKeys":    []string{"123"},
 		},
 	})
 

@@ -32,10 +32,10 @@ import (
 )
 
 type OptlyClaims struct {
-	ExpiresAt int64  `json:"exp,omitempty"`
-	Issuer    string `json:"iss,omitempty"`
-	SdkKey    string `json:"sdk_key,omitempty"`
-	Admin     bool   `json:"admin,omitempty"`
+	ExpiresAt int64    `json:"exp,omitempty"`
+	Issuer    string   `json:"iss,omitempty"`
+	SdkKeys   []string `json:"sdk_keys,omitempty"`
+	Admin     bool     `json:"admin,omitempty"`
 }
 
 func (c OptlyClaims) Valid() error {
@@ -47,23 +47,24 @@ type AuthTestSuite struct {
 
 	server *httptest.Server
 
-	validAPIToken         *jwt.Token
-	validAPITokenOtherSig *jwt.Token
-	validAdminToken       *jwt.Token
-	expiredToken          *jwt.Token
-	handler               http.HandlerFunc
-	signatures            []string
-	authConfig            *config.ServiceAuthConfig
+	validAPIToken            *jwt.Token
+	validAPITokenOtherSig    *jwt.Token
+	validAPITokenMultiSdkKey *jwt.Token
+	validAdminToken          *jwt.Token
+	expiredToken             *jwt.Token
+	handler                  http.HandlerFunc
+	signatures               []string
+	authConfig               *config.ServiceAuthConfig
 }
 
 func (suite *AuthTestSuite) SetupTest() {
 	suite.signatures = []string{"test", "test2"}
 
-	claims := OptlyClaims{ExpiresAt: 12313123123213, SdkKey: "SDK_KEY", Issuer: "iss"} // exp = March 9, 2360
+	claims := OptlyClaims{ExpiresAt: 12313123123213, SdkKeys: []string{"SDK_KEY"}, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAPIToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	suite.validAPIToken.Raw, _ = suite.validAPIToken.SignedString([]byte(suite.signatures[0]))
 
-	claims = OptlyClaims{ExpiresAt: 12313123123213, SdkKey: "SDK_KEY", Issuer: "iss"} // exp = March 9, 2360
+	claims = OptlyClaims{ExpiresAt: 12313123123213, SdkKeys: []string{"SDK_KEY"}, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAPITokenOtherSig = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	suite.validAPITokenOtherSig.Raw, _ = suite.validAPITokenOtherSig.SignedString([]byte(suite.signatures[1]))
 
@@ -71,9 +72,13 @@ func (suite *AuthTestSuite) SetupTest() {
 	suite.validAdminToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	suite.validAdminToken.Raw, _ = suite.validAdminToken.SignedString([]byte(suite.signatures[0]))
 
-	claims = OptlyClaims{ExpiresAt: 0, SdkKey: "SDK_KEY", Issuer: "iss"}
+	claims = OptlyClaims{ExpiresAt: 0, SdkKeys: []string{"SDK_KEY"}, Issuer: "iss"}
 	suite.expiredToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	suite.expiredToken.Raw, _ = suite.expiredToken.SignedString([]byte(suite.signatures[0]))
+
+	claims = OptlyClaims{ExpiresAt: 12313123123213, SdkKeys: []string{"SDK_KEY_1", "SDK_KEY_2"}, Issuer: "iss"} // exp = March 9, 2360
+	suite.validAPITokenMultiSdkKey = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	suite.validAPITokenMultiSdkKey.Raw, _ = suite.validAPITokenMultiSdkKey.SignedString([]byte(suite.signatures[0]))
 
 	suite.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	suite.authConfig = &config.ServiceAuthConfig{
@@ -300,6 +305,35 @@ func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenAuthorizationValidClaimsOth
 	req.Header.Add("Authorization", "Bearer "+suite.validAPITokenOtherSig.Raw)
 	req.Header.Add(OptlySDKHeader, "SDK_KEY")
 
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+}
+
+func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenInvalidHeaderSDKKey() {
+	auth := NewAuth(suite.authConfig)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.validAPIToken.Raw)
+	req.Header.Add(OptlySDKHeader, "OTHER_SDK_KEY")
+
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusUnauthorized, rec.Code)
+}
+
+func (suite *AuthTestSuite) TestAuthAuthorizeAPITokenValidClaimsMultipleSDKKeys() {
+	auth := NewAuth(suite.authConfig)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.validAPITokenMultiSdkKey.Raw)
+	req.Header.Add(OptlySDKHeader, "SDK_KEY_1")
+	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest("GET", "/some_url", nil)
+	req.Header.Add("Authorization", "Bearer "+suite.validAPITokenMultiSdkKey.Raw)
+	req.Header.Add(OptlySDKHeader, "SDK_KEY_2")
 	auth.AuthorizeAPI(suite.handler).ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 }
