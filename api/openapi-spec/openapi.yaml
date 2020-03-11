@@ -103,7 +103,7 @@ paths:
     post:
       summary: Get JWT token to authenticate all requests.
       operationId: getToken
-      description: Generate JWT token for grant_type, client_id and client_secret. It matches the configured values and generates a valid token with expiration provided in configuration.
+      description: Generate JWT token for grant_type, client_id and client_secret. It matches the configured values and generates a valid token. Expiration time, and SDK keys to which the token grants access, are provided in configuration.
       responses:
         '200':
           description: Generates a valid token

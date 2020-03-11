@@ -282,7 +282,7 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 			for _, rawSdkKey := range rawClaimsSdkKeys {
 				sdkKey, ok := rawSdkKey.(string)
 				if !ok {
-					// TODO: log
+					GetLogger(r).Warn().Msgf("Non-string value in token claims sdk_keys: %v", sdkKey)
 					continue
 				}
 				if sdkKey == sdkKeyFromHeader {
