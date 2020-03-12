@@ -15,7 +15,11 @@ var_key = sys.argv[3]
 s = requests.Session()
 s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 
-payload = { "userId": "test-user", "experimentKey": exp_key, "variationKey": var_key }
+payload = {
+    "userId": "test-user",
+    "experimentKey": exp_key,
+    "variationKey": var_key
+}
 
 resp = s.post('http://localhost:8080/v1/override', json=payload)
 print(resp)

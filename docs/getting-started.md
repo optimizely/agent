@@ -1,27 +1,18 @@
 # Getting Started Guide
 
-## Installation
-Optimizely Agent is available via most application package managers and can be installed with a single command:
+This is a brief guide showing how to run Agent locally via Docker and how to access some of the common API endpoints.
+If Docker is not installed then you can download it [here](https://docs.docker.com/install/).
 
-### Via RPM (CentOS)
+## Running locally via Docker
+First pull the Docker image with:
 ```bash
-> sudo yum install optimizely
-> sudo service optimizely start
+docker pull optimizely/agent
 ```
 
-### Via DEB (Ubuntu)
+Then start the service in the foreground with the following command:
 ```bash
-> sudo apt-get install optimizely
-> sudo service optimizely start
+docker run -it -p 8080:8080 --env OPTIMIZELY_LOG_PRETTY=true optimizely/agent
 ```
-
-### Via Homebrew (OSX)
-```bash
-> brew install optimizely
-> brew services start optimizely
-```
-
-Once installed and the service is running we can start to explore the REST APIs.
 
 ## Evaluating REST APIs
 The rest of the getting started guide will demonstrate the APIs capabilities. For brevity, we've chosen to illustrate the API usage with Python. Note that the APIs are also defined via OpenAPI (Swagger) and can be found [here](http://localhost:8080/openapi.yaml).
