@@ -27,7 +27,7 @@ payload = {
 
 for key in env['featuresMap']:
     params = {"featureKey": key}
-    resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
+    resp = s.post(url = 'http://localhost:8080/v1/isFeatureEnabled', params=params, json=payload)
     print("Feature Key: {}".format(key))
     print(json.dumps(resp.json()[0], indent=4, sort_keys=True))
 
