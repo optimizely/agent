@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # example: python basic.py <SDK-Key>
+# This basic example shows how to make individual activation requests.
 
 import json
 import requests
@@ -16,7 +17,14 @@ s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 resp = s.get('http://localhost:8080/v1/config')
 env = resp.json()
 
-payload = { "userId": "test-user" }
+payload = {
+    "userId": "test-user",
+    "userAttributes": {
+        "attr1": "sample-attribute-1",
+        "attr2": "sample-attribute-2"
+    }
+}
+
 for key in env['featuresMap']:
     params = {"featureKey": key}
     resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
