@@ -11,8 +11,10 @@ docker pull optimizely/agent
 
 Then start the service in the foreground with the following command:
 ```bash
-docker run -it -p 8080:8080 --env OPTIMIZELY_LOG_PRETTY=true optimizely/agent
+docker run -p 8080:8080 --env OPTIMIZELY_LOG_PRETTY=true optimizely/agent
 ```
+Note that we're enabling "pretty" logs which provide colorized and human readable formatting.
+The default log output format is structured JSON. 
 
 ## Evaluating REST APIs
 The rest of the getting started guide will demonstrate the APIs capabilities. For brevity, we've chosen to illustrate the API usage with Python. Note that the APIs are also defined via OpenAPI (Swagger) and can be found [here](http://localhost:8080/openapi.yaml).
