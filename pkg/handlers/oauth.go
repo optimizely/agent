@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -34,18 +35,13 @@ type ClientCredentials struct {
 	ID         string
 	TTL        time.Duration
 	SecretHash []byte
+	SDKKeys    []string
 }
 
 // OAuthHandler provides handler for auth
 type OAuthHandler struct {
 	ClientCredentials map[string]ClientCredentials
 	hmacSecret        []byte
-}
-
-type tokenRequest struct {
-	GrantType    string `json:"grant_type"`
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
 }
 
 type tokenResponse struct {
@@ -70,13 +66,20 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	for _, clientCreds := range authConfig.Clients {
 		secretHashBytes, err := jwtauth.DecodeSecretHashFromConfig(clientCreds.SecretHash)
 		if err != nil {
-			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v)", clientCreds.ID)
+			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v), skipping these credentials", clientCreds.ID)
 			continue
 		}
+
+		if len(clientCreds.SDKKeys) == 0 {
+			log.Error().Err(err).Msgf("client creds missing or empty SDK keys (with client ID: %v), skipping these credentials", clientCreds.ID)
+			continue
+		}
+
 		clientCredentials[clientCreds.ID] = ClientCredentials{
 			ID:         clientCreds.ID,
 			SecretHash: secretHashBytes,
 			TTL:        authConfig.TTL,
+			SDKKeys:    clientCreds.SDKKeys,
 		}
 	}
 
@@ -109,38 +112,52 @@ func (err *ClientCredentialsError) Error() string {
 }
 
 func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredentials, int, error) {
-	var reqBody tokenRequest
-	err := ParseRequestBody(r, &reqBody)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
+	reqContentType := render.GetContentType(r.Header.Get("Content-Type"))
+	if reqContentType != render.ContentTypeForm {
+		return nil, http.StatusBadRequest, &ClientCredentialsError{
+			ErrorCode:        "invalid_request",
+			ErrorDescription: "Content-Type header value must be application/x-www-form-urlencoded",
+		}
 	}
 
-	if reqBody.GrantType == "" {
+	err := r.ParseForm()
+	if err != nil {
+		return nil, http.StatusBadRequest, &ClientCredentialsError{
+			ErrorCode:        "invalid_request",
+			ErrorDescription: fmt.Sprintf("error parsing request body: %v", err.Error()),
+		}
+	}
+
+	grantType := r.PostFormValue("grant_type")
+	clientID := r.PostFormValue("client_id")
+	clientSecret := r.PostFormValue("client_secret")
+
+	if grantType == "" {
 		return nil, http.StatusBadRequest, &ClientCredentialsError{
 			ErrorCode:        "invalid_request",
 			ErrorDescription: "grant_type missing from request body",
 		}
 	}
-	if reqBody.GrantType != "client_credentials" {
+	if grantType != "client_credentials" {
 		return nil, http.StatusBadRequest, &ClientCredentialsError{
 			ErrorCode: "unsupported_grant_type",
 		}
 	}
 
-	if reqBody.ClientID == "" {
+	if clientID == "" {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
 			ErrorDescription: "client_id missing from request body",
 		}
 	}
 
-	if reqBody.ClientSecret == "" {
+	if clientSecret == "" {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
 			ErrorDescription: "client_secret missing from request body",
 		}
 	}
-	clientCreds, ok := h.ClientCredentials[reqBody.ClientID]
+	clientCreds, ok := h.ClientCredentials[clientID]
 	if !ok {
 		return nil, http.StatusUnauthorized, &ClientCredentialsError{
 			ErrorCode:        "invalid_client",
@@ -148,7 +165,7 @@ func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredenti
 		}
 	}
 
-	isValid, err := jwtauth.ValidateClientSecret(reqBody.ClientSecret, clientCreds.SecretHash)
+	isValid, err := jwtauth.ValidateClientSecret(clientSecret, clientCreds.SecretHash)
 	if err != nil {
 		middleware.GetLogger(r).Info().Err(err).Msg("validating request secret")
 	}
@@ -177,16 +194,7 @@ func (h *OAuthHandler) CreateAPIAccessToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
-	if sdkKey == "" {
-		renderClientCredentialsError(&ClientCredentialsError{
-			ErrorCode:        "invalid_request",
-			ErrorDescription: "X-Optimizely-Sdk-Key header required",
-		}, http.StatusBadRequest, w, r)
-		return
-	}
-
-	accessToken, err := jwtauth.BuildAPIAccessToken(sdkKey, clientCreds.TTL, h.hmacSecret)
+	accessToken, err := jwtauth.BuildAPIAccessToken(clientCreds.SDKKeys, clientCreds.TTL, h.hmacSecret)
 	if err != nil {
 		middleware.GetLogger(r).Error().Err(err).Msg("Calling jwt BuildAPIAccessToken")
 		RenderError(err, http.StatusInternalServerError, w, r)

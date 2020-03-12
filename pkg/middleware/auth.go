@@ -271,9 +271,27 @@ func (a Auth) AuthorizeAPI(next http.Handler) http.Handler {
 				RenderError(errors.New("token expired"), http.StatusUnauthorized, w, r)
 				return
 			}
+
+			rawClaimsSdkKeys, ok := claims["sdk_keys"].([]interface{})
+			if !ok {
+				RenderError(errors.New("invalid claims: sdk_keys not found, or have the wrong type"), http.StatusUnauthorized, w, r)
+				return
+			}
 			sdkKeyFromHeader := r.Header.Get(OptlySDKHeader)
-			if sdkKey, ok := claims["sdk_key"].(string); !ok || sdkKey != sdkKeyFromHeader {
-				RenderError(errors.New("SDK keys not equal"), http.StatusUnauthorized, w, r)
+			foundMatchingSdkKey := false
+			for _, rawSdkKey := range rawClaimsSdkKeys {
+				sdkKey, ok := rawSdkKey.(string)
+				if !ok {
+					GetLogger(r).Warn().Msgf("Non-string value in token claims sdk_keys: %v", sdkKey)
+					continue
+				}
+				if sdkKey == sdkKeyFromHeader {
+					foundMatchingSdkKey = true
+					break
+				}
+			}
+			if !foundMatchingSdkKey {
+				RenderError(errors.New("SDK key given in X-Optimizely-Sdk-Key header was not found in the SDK keys in this token's claims"), http.StatusUnauthorized, w, r)
 				return
 			}
 		}

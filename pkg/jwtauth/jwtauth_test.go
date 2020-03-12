@@ -25,14 +25,14 @@ import (
 	"time"
 )
 
-type JWTAuthTestSuite struct{
+type JWTAuthTestSuite struct {
 	suite.Suite
 }
 
 func (s *JWTAuthTestSuite) TestBuildAPIAccessTokenSuccess() {
 	tokenTtl := 10 * time.Minute
 	secretKey := []byte("seekrit")
-	tokenString, err := BuildAPIAccessToken("123", tokenTtl, secretKey)
+	tokenString, err := BuildAPIAccessToken([]string{"123"}, tokenTtl, secretKey)
 	s.NoError(err)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
 		return secretKey, nil
@@ -41,11 +41,39 @@ func (s *JWTAuthTestSuite) TestBuildAPIAccessTokenSuccess() {
 	s.True(token.Valid)
 	claims, ok := token.Claims.(jwt.MapClaims)
 	s.True(ok)
-	s.Equal("123", claims["sdk_key"])
+	sdkKeys, ok := claims["sdk_keys"].([]interface{})
+	s.True(ok)
+	s.Len(sdkKeys, 1)
+	sdkKey, ok := sdkKeys[0].(string)
+	s.True(ok)
+	s.Equal("123", sdkKey)
 	claimsExpFloat, ok := claims["exp"].(float64)
 	s.True(ok)
 	expectedExpiresIn := time.Now().Add(tokenTtl).Unix()
 	s.Equal(expectedExpiresIn, int64(claimsExpFloat))
+}
+
+func (s *JWTAuthTestSuite) TestBuildAPIAccessTokenMultipleSDKKeysSuccess() {
+	tokenTtl := 10 * time.Minute
+	secretKey := []byte("seekrit")
+	tokenString, err := BuildAPIAccessToken([]string{"456", "789"}, tokenTtl, secretKey)
+	s.NoError(err)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
+		return secretKey, nil
+	})
+	s.NoError(err)
+	s.True(token.Valid)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	s.True(ok)
+	sdkKeys, ok := claims["sdk_keys"].([]interface{})
+	s.True(ok)
+	s.Len(sdkKeys, 2)
+	sdkKey := sdkKeys[0].(string)
+	s.True(ok)
+	s.Equal("456", sdkKey)
+	sdkKey, ok = sdkKeys[1].(string)
+	s.True(ok)
+	s.Equal("789", sdkKey)
 }
 
 func (s *JWTAuthTestSuite) TestBuildAdminAccessTokenSuccess() {

@@ -7,29 +7,40 @@ import sys
 # This example demonstrates interacting with Agent running in Issuer & Validator mode.
 # We obtain an access token and use it to request the current Optimizely Config
 # from the API interface.
-#
-# First, we need client credentials (ID & secret), and the BCrypt hash of our secret
-# You can use the generate_secret tool included with Agent to generate these:
+
+# Fist, we need a secret value to sign access tokens.
+# You can use the generate_secret tool included with Agent to generate this:
+
+# > make generate_secret
+# Client Secret: CvzvkWm3V1D9RBxPWEjC+ud9zvwcOvnnLkWaIkzDGyA=
+
+# You can ignore the second line that says "Client Secret's hash".
+
+# Then, set an environment variable to make this secret available to Agent:
+# > export OPTIMIZELY_API_AUTH_HMACSECRETS=CvzvkWm3V1D9RBxPWEjC+ud9zvwcOvnnLkWaIkzDGyA=
+
+# Next, we need client credentials (ID & secret), and the BCrypt hash of our secret
+# Again, you can use the generate_secret tool included with Agent to generate these:
 #
 # > make generate_secret
 # Client Secret: 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6spM=
 # Client Secret's hash: JDJhJDEyJEdkSHpicHpRODBqOC9FQzRneGIyNXU0ZFVPMFNKcUhkdTRUQXRzWUJOdjRzRmcuVGdFUTUu
 #
-# Take the hash, and add it to your agent configuration file (default: config.yaml) under the "api" section:
+# Take the hash, and add it to your agent configuration file (default: config.yaml) under the "api" section,
+# along with your desired client ID and SDK key:
 #
 # auth:
 #   ttl: 30m
 #   clients:
 #     - id: clientid1
 #       secretHash: JDJhJDEyJEdkSHpicHpRODBqOC9FQzRneGIyNXU0ZFVPMFNKcUhkdTRUQXRzWUJOdjRzRmcuVGdFUTUu
-#
-# Then, set an environment variable for the signing secret that Agent will use to sign access tokens:
-#
-# > export OPTIMIZELY_API_AUTH_HMACSECRETS=llmO3xTUx+6TIfUU6eXmH/1Fh44ioL0h87G1iSrd5Gg
+#       sdkKeys:
+#           - <Your SDK Key>
+
 #
 # Start Agent with the API interface running on the default port (8080).
 # Then, finally, run the example, passing your SDK key, client ID and secret:
-# > python auth.py <Your SDK Key> <Your Client ID> 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6spM=
+# > python auth.py <Your SDK Key> clientid1 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6spM=
 #
 # For more information, see docs/auth.md
 
@@ -46,11 +57,11 @@ s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 resp = s.get('http://localhost:8080/v1/config')
 print('first config request, not including access token: response status = {}'.format(resp.status_code))
 
-resp = s.post('http://localhost:8080/oauth/token', data=json.dumps({
+resp = s.post('http://localhost:8080/oauth/token', data={
     'grant_type': 'client_credentials',
     'client_id':  client_id,
     'client_secret': client_secret,
-}))
+})
 resp_dict = resp.json()
 print('access token response: ')
 print(json.dumps(resp_dict, indent=4, sort_keys=True))

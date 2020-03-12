@@ -146,8 +146,9 @@ type WebhookProject struct {
 
 // OAuthClientCredentials are used for issuing access tokens
 type OAuthClientCredentials struct {
-	ID         string `yaml:"id"`
-	SecretHash string `yaml:"secretHash"`
+	ID         string   `yaml:"id"`
+	SecretHash string   `yaml:"secretHash"`
+	SDKKeys    []string `yaml:"sdkKeys"`
 }
 
 // ServiceAuthConfig holds the authentication configuration for a particular service

@@ -27,13 +27,13 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// BuildAPIAccessToken returns a token for accessing the API service using the argument SDK key and TTL. It also returns the expiration timestamp.
-func BuildAPIAccessToken(sdkKey string, ttl time.Duration, key []byte) (tokenString string, err error) {
+// BuildAPIAccessToken returns a token for accessing the API service using the argument SDK keys and TTL. It also returns the expiration timestamp.
+func BuildAPIAccessToken(sdkKeys []string, ttl time.Duration, key []byte) (tokenString string, err error) {
 	expires := time.Now().Add(ttl).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss":     "Optimizely",
-		"sdk_key": sdkKey,
+		"sdk_keys": sdkKeys,
 		"exp":     expires,
 	})
 	tokenString, err = token.SignedString(key)
