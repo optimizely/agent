@@ -326,7 +326,7 @@ func NewAuth(authConfig *config.ServiceAuthConfig) *Auth {
 		return &Auth{Verifier: NoAuth{}}
 	}
 
-	var decodedSecrets [][]byte
+	decodedSecrets := [][]byte{}
 	for _, hmacSecret := range authConfig.HMACSecrets {
 		decodedSecret, err := jwtauth.DecodeConfigValue(hmacSecret)
 		if err != nil {
