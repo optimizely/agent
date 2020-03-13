@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/jwtauth"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/lestrrat-go/jwx/jwk"
@@ -62,11 +63,11 @@ type Verifier interface {
 
 // JWTVerifier checks token with JWT, implements Verifier
 type JWTVerifier struct {
-	secretKeys []string
+	secretKeys [][]byte
 }
 
 // NewJWTVerifier creates JWTVerifier with secret key
-func NewJWTVerifier(secretKeys []string) *JWTVerifier {
+func NewJWTVerifier(secretKeys [][]byte) *JWTVerifier {
 	return &JWTVerifier{secretKeys: secretKeys}
 }
 
@@ -83,7 +84,7 @@ func (c JWTVerifier) CheckToken(token string) (*jwt.Token, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("unexpected signing method")
 			}
-			return []byte(secretKey), nil
+			return secretKey, nil
 		})
 		lastSeenErr = currentErr
 
@@ -325,6 +326,16 @@ func NewAuth(authConfig *config.ServiceAuthConfig) *Auth {
 		return &Auth{Verifier: NoAuth{}}
 	}
 
-	return &Auth{Verifier: NewJWTVerifier(authConfig.HMACSecrets)}
+	var decodedSecrets [][]byte
+	for _, hmacSecret := range authConfig.HMACSecrets {
+		decodedSecret, err := jwtauth.DecodeConfigValue(hmacSecret)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to decode HMAC secret")
+			return nil
+		}
+		decodedSecrets = append(decodedSecrets, decodedSecret)
+	}
+
+	return &Auth{Verifier: NewJWTVerifier(decodedSecrets)}
 
 }
