@@ -31,8 +31,8 @@ The configuration properties pertaining to Issuer & Validator mode are listed be
 |Property Name|Environment Variable|Description|
 |---|---|---|
 |ttl|TTL|Time-to-live of access tokens issued|
-|hmacSecrets|HMACSECRETS|Array of secrets used to sign & validate access tokens, using the HMAC SHA256 algorithm. The first value in the array is used to sign issued access tokens. Access tokens signed with any value in the array are considered valid.|
-|clients|N/A|Array of objects, used for token issuance, consisting of `id`, `secretHash`, and `sdkKeys`. Clients provide ID and secret in their requests to `/oauth/token`. Agent validates the request credentials by checking for an exact match of ID, checking that the BCrypt hash of the request secret matches the `secretHash` from configuration, and that the SDK key provided in the `X-Optimizely-Sdk-Key` request header exists in the `sdkKeys` from configuration.|
+|hmacSecrets|HMACSECRETS|Array of secrets used to sign & validate access tokens, using the HMAC SHA256 algorithm. Values must be in base64 format. The first value in the array is used to sign issued access tokens. Access tokens signed with any value in the array are considered valid.|
+|clients|N/A|Array of objects, used for token issuance, consisting of `id`, `secretHash`, and `sdkKeys`. Clients provide ID and secret in their requests to `/oauth/token`. Agent validates the request credentials by checking for an exact match of ID, checking that the BCrypt hash of the request secret matches the `secretHash` from configuration, and that the SDK key provided in the `X-Optimizely-Sdk-Key` request header exists in the `sdkKeys` from configuration. `secretHash` values must be in base64 format.|
 
 To make setup easier, Agent provides a command-line tool that can generate base64-encoded 32-byte random values, and their associated base64-encoded BCrypt hashes:
 ```shell script
