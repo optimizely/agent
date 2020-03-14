@@ -123,16 +123,34 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 }
 
 // RemoveForcedVariation removes any forced variation that was previously set for the argument experiment key and user ID
-func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error {
+func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Override, error) {
 	if c.ForcedVariations == nil {
-		return ErrForcedVariationsUninitialized
+		return &Override{}, ErrForcedVariationsUninitialized
 	}
+
+	override := Override{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+		VariationKey:  "",
+	}
+
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        userID,
 		ExperimentKey: experimentKey,
 	}
+
+	messages := make([]string, 0, 1)
+	if prevVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey); ok {
+		override.PrevVariationKey = prevVariationKey
+		messages = append(messages, "removing previous override")
+	} else {
+		messages = append(messages, "no pre-existing override")
+	}
+
+	override.Messages = messages
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
-	return nil
+
+	return &override, nil
 }
 
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all

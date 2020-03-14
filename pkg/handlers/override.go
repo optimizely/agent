@@ -61,12 +61,11 @@ func Override(w http.ResponseWriter, r *http.Request) {
 
 	// Empty variation means remove
 	if body.VariationKey == "" {
-		err = optlyClient.RemoveForcedVariation(experimentKey, body.UserID)
-		if err != nil {
+		if override, err := optlyClient.RemoveForcedVariation(experimentKey, body.UserID); err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
-			return
+		} else {
+			render.JSON(w, r, override)
 		}
-		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
