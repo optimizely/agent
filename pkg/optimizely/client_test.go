@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/client"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/stretchr/testify/assert"
 
@@ -35,6 +36,7 @@ import (
 
 type ClientTestSuite struct {
 	suite.Suite
+	featureExp  entities.Experiment
 	optlyClient *OptlyClient
 	userContext entities.UserContext
 	testClient  *optimizelytest.TestClient
@@ -43,6 +45,9 @@ type ClientTestSuite struct {
 func (suite *ClientTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.testClient = testClient
+	feature := entities.Feature{Key: "my_feat"}
+	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
+	suite.featureExp = suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 	suite.optlyClient = &OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
 		ConfigManager:    &MockConfigManager{config: testClient.ProjectConfig},
@@ -73,73 +78,65 @@ func (suite *ClientTestSuite) TestTrackEvent() {
 	suite.Equal(tags, actual.Conversion.Tags)
 }
 
-func (suite *ClientTestSuite) TestSetForcedVariationSuccess() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
-	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-	actual, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
-	suite.NoError(err)
-	suite.Equal(actual.UserID, "userId")
-	suite.Equal(actual.ExperimentKey, featureExp.Key)
-	suite.Equal(actual.VariationKey, "enabled_var")
-	suite.Empty(actual.PrevVariationKey)
-	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
-	suite.True(isEnabled)
-}
+func (suite *ClientTestSuite) TestValidSetForcedVariations() {
+	scenarios := []struct {
+		experimentKey string
+		variationKey  string
+		previousKey   string
+		messages      []string
+	}{
+		{
+			experimentKey: suite.featureExp.Key,
+			variationKey:  "enabled_var",
+			previousKey:   "",
+			messages:      nil,
+		},
+		{
+			experimentKey: suite.featureExp.Key,
+			variationKey:  "disabled_var",
+			previousKey:   "enabled_var",
+			messages:      []string{"updating previous override"},
+		},
+		{
+			experimentKey: suite.featureExp.Key,
+			variationKey:  "dne-var",
+			previousKey:   "disabled_var",
+			messages: []string{
+				"variationKey not found in configuration",
+				"updating previous override",
+			},
+		},
+		{
+			experimentKey: "dne-exp",
+			variationKey:  "dne-var",
+			previousKey:   "",
+			messages:      []string{"experimentKey not found in configuration"},
+		},
+	}
 
-func (suite *ClientTestSuite) TestSetForcedVariationAlreadySet() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
-	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
-	// Set the same forced variation again
-	actual, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
-	suite.NoError(err)
-	suite.Equal(actual.UserID, "userId")
-	suite.Equal(actual.ExperimentKey, featureExp.Key)
-	suite.Equal(actual.VariationKey, "enabled_var")
-	suite.Equal(actual.PrevVariationKey, "enabled_var")
-	suite.Equal([]string{"updating previous override"}, actual.Messages)
-	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
-	suite.True(isEnabled)
-}
+	userId := "testUser"
+	for _, scenario := range scenarios {
+		actual, err := suite.optlyClient.SetForcedVariation(scenario.experimentKey, userId, scenario.variationKey)
+		suite.NoError(err)
 
-func (suite *ClientTestSuite) TestSetForcedVariationDifferentVariation() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
-	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "disabled_var")
-	// Set a different forced variation
-	actual, err := suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
-	suite.NoError(err)
-	suite.Equal(actual.UserID, "userId")
-	suite.Equal(actual.ExperimentKey, featureExp.Key)
-	suite.Equal(actual.VariationKey, "enabled_var")
-	suite.Equal(actual.PrevVariationKey, "disabled_var")
-	suite.Equal([]string{"updating previous override"}, actual.Messages)
-	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
-	suite.True(isEnabled)
-}
+		expected := &Override{
+			UserID:           userId,
+			ExperimentKey:    scenario.experimentKey,
+			VariationKey:     scenario.variationKey,
+			PrevVariationKey: scenario.previousKey,
+			Messages:         scenario.messages,
+		}
 
-func (suite *ClientTestSuite) TestSetForcedVariationMissingExperiment() {
-	actual, err := suite.optlyClient.SetForcedVariation("does-not-exist", "userId", "disabled_var")
-	suite.NoError(err)
-	suite.Equal(actual.UserID, "userId")
-	suite.Equal(actual.ExperimentKey, "does-not-exist")
-	suite.Equal(actual.VariationKey, "disabled_var")
-	suite.Empty(actual.PrevVariationKey)
-	suite.Equal([]string{"experimentKey not found in configuration"}, actual.Messages)
-}
+		suite.Equal(expected, actual)
 
-func (suite *ClientTestSuite) TestSetForcedVariationMissingVariation() {
-	suite.testClient.AddExperimentWithVariations("my_exp", "my_var")
-	actual, err := suite.optlyClient.SetForcedVariation("my_exp", "userId", "does-not-exist")
-	suite.NoError(err)
-	suite.Equal(actual.UserID, "userId")
-	suite.Equal(actual.ExperimentKey, "my_exp")
-	suite.Equal(actual.VariationKey, "does-not-exist")
-	suite.Empty(actual.PrevVariationKey)
-	suite.Equal([]string{"variationKey not found in configuration"}, actual.Messages)
+		key := decision.ExperimentOverrideKey{
+			ExperimentKey: scenario.experimentKey,
+			UserID:        "testUser",
+		}
+
+		actVar, _ := suite.testClient.ForcedVariations.GetVariation(key)
+		suite.Equal(scenario.variationKey, actVar)
+	}
 }
 
 func (suite *ClientTestSuite) TestRemoveForcedVariation() {
@@ -151,24 +148,6 @@ func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 	suite.NoError(err)
 	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
 	suite.False(isEnabled)
-}
-
-func (suite *ClientTestSuite) TestSetForcedVariationABTestSuccess() {
-	suite.testClient.ProjectConfig.AddMultiVariationABTest("my_exp", "var_1", "var_2")
-	suite.optlyClient.SetForcedVariation("my_exp", "userId", "var_1")
-	variation, err := suite.optlyClient.Activate("my_exp", suite.userContext)
-	suite.NoError(err)
-	suite.Equal("var_1", variation)
-}
-
-func (suite *ClientTestSuite) TestRemoveForcedVariationABTest() {
-	suite.testClient.ProjectConfig.AddMultiVariationABTest("my_exp", "var_1", "var_2")
-	suite.optlyClient.SetForcedVariation("my_exp", "userId", "var_1")
-	_, err := suite.optlyClient.RemoveForcedVariation("my_exp", "userId")
-	suite.NoError(err)
-	variation, err := suite.optlyClient.Activate("my_exp", suite.userContext)
-	suite.NoError(err)
-	suite.Equal("var_2", variation)
 }
 
 func (suite *ClientTestSuite) TestActivateFeature() {
