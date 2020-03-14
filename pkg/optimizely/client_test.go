@@ -140,14 +140,40 @@ func (suite *ClientTestSuite) TestValidSetForcedVariations() {
 }
 
 func (suite *ClientTestSuite) TestRemoveForcedVariation() {
-	feature := entities.Feature{Key: "my_feat"}
-	suite.testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "disabled_var", "enabled_var")
-	featureExp := suite.testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
-	suite.optlyClient.SetForcedVariation(featureExp.Key, "userId", "enabled_var")
-	_, err := suite.optlyClient.RemoveForcedVariation(featureExp.Key, "userId")
-	suite.NoError(err)
-	isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
-	suite.False(isEnabled)
+	scenarios := []struct {
+		previousKey string
+		messages    []string
+	}{
+		{
+			previousKey: "enabled_var",
+			messages:    []string{"removing previous override"},
+		},
+		{
+			previousKey: "",
+			messages:    []string{"no pre-existing override"},
+		},
+	}
+
+	userId := "testUser"
+	_, _ = suite.optlyClient.SetForcedVariation(suite.featureExp.Key, userId, "enabled_var")
+
+	for _, scenario := range scenarios {
+		actual, err := suite.optlyClient.RemoveForcedVariation(suite.featureExp.Key, userId)
+		suite.NoError(err)
+
+		expected := &Override{
+			UserID:           userId,
+			ExperimentKey:    suite.featureExp.Key,
+			VariationKey:     "",
+			PrevVariationKey: scenario.previousKey,
+			Messages:         scenario.messages,
+		}
+
+		suite.Equal(expected, actual)
+		isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
+		suite.False(isEnabled)
+	}
+
 }
 
 func (suite *ClientTestSuite) TestActivateFeature() {
