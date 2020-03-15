@@ -29,20 +29,20 @@ If you have Docker installed, Optimizely Agent can be started as a container. Fi
 docker pull optimizely/agent
 ```
 
-Then run the docker container with:
+By default this will pull the "latest" tag. You can also specify a specific version of Agent by providing the version
+as a tag to the docker command:
 ```bash
-docker run -d --name optimizely-agent \
-         -p 8080:8080 \
-         -p 8088:8088 \
-         -p 8085:8085 \
-         --env OPTIMIZELY_LOG_PRETTY=true \
-         optimizely/agent:latest
+docker pull optimizely/agent:X.Y.Z
 ```
 
-The above command also shows how environment variables can be passed in to alter the configuration without having to
-create a config.yaml file. See the [configuration](#configuration-options) for more options.
+Then run the docker container with:
+```bash
+docker run -p 8080:8080 optimizely/agent
+```
 
-When a new version is released, 2 images are pushed to dockerhub, they are distinguished by their tags:
+This will start Agent in the foreground and expose the container API port 8080 to the host.
+
+Note that when a new version is released, 2 images are pushed to dockerhub, they are distinguished by their tags:
 - :latest (same as :X.Y.Z)
 - :alpine (same as :X.Y.Z-alpine)
 
@@ -75,22 +75,24 @@ Below is a comprehensive list of available configuration properties.
 |api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
 |api.auth.jwksUpdateInterval|OPTIMIZELY_API_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](./docs/auth.md)|
 |api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
+|api.enableNotifications|OPTIMIZELY_API_ENABLENOTIFICATIONS|Enable streaming notification endpoint. Default: false|
+|api.enableOverrides|OPTIMIZELY_API_ENABLEOVERRIDES|Enable bucketing overrides endpoint. Default: false|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
 |certfile|OPTIMIZELY_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
-|config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
 |client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
 |client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
-|disabledCiphers|OPTIMIZELY_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
+|config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |keyfile|OPTIMIZELY_KEYFILE|Path to a key file, used to run Agent with HTTPS|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
-|sdkKeys|OPTIMIZELY_SDK_KEYS|List of SDK keys used to initialize on startup|
+|sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
+|server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
