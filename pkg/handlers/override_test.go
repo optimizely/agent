@@ -145,6 +145,16 @@ func (suite *OverrideTestSuite) TestValidOverrides() {
 func (suite *OverrideTestSuite) TestInvalidOverrides() {
 	invalid := []map[string]interface{}{
 		{
+			"userID":        "",
+			"experimentKey": "valid",
+			"variationKey":  "valid",
+		},
+		{
+			"userID":        "valid",
+			"experimentKey": "",
+			"variationKey":  "valid",
+		},
+		{
 			"userId": true,
 		},
 	}
