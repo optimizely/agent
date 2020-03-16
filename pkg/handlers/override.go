@@ -21,6 +21,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/render"
+
 	"github.com/optimizely/agent/pkg/middleware"
 )
 
@@ -41,8 +43,8 @@ func Override(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body OverrideBody
-	if ParseRequestBody(r, &body) != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
+	if parseErr := ParseRequestBody(r, &body); parseErr != nil {
+		RenderError(parseErr, http.StatusBadRequest, w, r)
 		return
 	}
 
@@ -59,23 +61,18 @@ func Override(w http.ResponseWriter, r *http.Request) {
 
 	// Empty variation means remove
 	if body.VariationKey == "" {
-		err = optlyClient.RemoveForcedVariation(experimentKey, body.UserID)
-		if err != nil {
+		if override, err := optlyClient.RemoveForcedVariation(experimentKey, body.UserID); err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
-			return
+		} else {
+			render.JSON(w, r, override)
 		}
-		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
-	wasSet, err := optlyClient.SetForcedVariation(experimentKey, body.UserID, body.VariationKey)
-	switch {
-	case err != nil:
+	if override, err := optlyClient.SetForcedVariation(experimentKey, body.UserID, body.VariationKey); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
-	case wasSet:
-		w.WriteHeader(http.StatusCreated)
-	default:
-		w.WriteHeader(http.StatusNoContent)
+	} else {
+		render.JSON(w, r, override)
 	}
 }

@@ -87,12 +87,16 @@ paths:
         in memory for debugging and testing purposes and should not be used
         for production overrides.
       responses:
-        '201':
-          description: Forced variation set
-        '204':
-          description: Forced variation was already set
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Override'
         '400':
-          description: Invalid user id, experiment key, or variation key
+          description: Invalid payload
         '401':
           description: Unauthorized, invalid JWT
         '403':
@@ -273,6 +277,20 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
+    Override:
+      properties:
+        userId:
+          type: string
+        experimentKey:
+          type: string
+        variationKey:
+          type: string
+        prevVariationKey:
+          type: string
+        messages:
+          type: array
+          items:
+            type: string
     OverrideContext:
       type: array
       items:

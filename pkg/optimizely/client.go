@@ -50,6 +50,15 @@ type Decision struct {
 	Error         string                 `json:"error"`
 }
 
+// Override model
+type Override struct {
+	UserID           string   `json:"userId"`
+	ExperimentKey    string   `json:"experimentKey"`
+	VariationKey     string   `json:"variationKey"`
+	PrevVariationKey string   `json:"prevVariationKey"`
+	Messages         []string `json:"messages"`
+}
+
 // UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {
@@ -74,31 +83,74 @@ func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, event
 // SetForcedVariation sets a forced variation for the argument experiment key and user ID
 // Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
 // Returns an error when forced variations are not available on this OptlyClient instance
-func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey string) (bool, error) {
+func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey string) (*Override, error) {
 	if c.ForcedVariations == nil {
-		return false, ErrForcedVariationsUninitialized
+		return &Override{}, ErrForcedVariationsUninitialized
 	}
+
+	override := Override{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+		VariationKey:  variationKey,
+	}
+
+	messages := make([]string, 0, 2)
+	// Check the entities exist as part of the Optimizely configuration
+	if optimizelyConfig := c.GetOptimizelyConfig(); optimizelyConfig == nil {
+		messages = append(messages, "override cannot be validated via configuration")
+	} else if experiment, ok := optimizelyConfig.ExperimentsMap[experimentKey]; !ok {
+		messages = append(messages, "experimentKey not found in configuration")
+	} else if _, ok := experiment.VariationsMap[variationKey]; !ok {
+		messages = append(messages, "variationKey not found in configuration")
+	}
+
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        userID,
 		ExperimentKey: experimentKey,
 	}
-	previousVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey)
+
+	if prevVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey); ok {
+		override.PrevVariationKey = prevVariationKey
+		messages = append(messages, "updating previous override")
+	}
+
+	if len(messages) > 0 {
+		override.Messages = messages
+	}
+
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
-	wasSet := !ok || previousVariationKey != variationKey
-	return wasSet, nil
+	return &override, nil
 }
 
 // RemoveForcedVariation removes any forced variation that was previously set for the argument experiment key and user ID
-func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) error {
+func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Override, error) {
 	if c.ForcedVariations == nil {
-		return ErrForcedVariationsUninitialized
+		return &Override{}, ErrForcedVariationsUninitialized
 	}
+
+	override := Override{
+		UserID:        userID,
+		ExperimentKey: experimentKey,
+		VariationKey:  "",
+	}
+
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        userID,
 		ExperimentKey: experimentKey,
 	}
+
+	messages := make([]string, 0, 1)
+	if prevVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey); ok {
+		override.PrevVariationKey = prevVariationKey
+		messages = append(messages, "removing previous override")
+	} else {
+		messages = append(messages, "no pre-existing override")
+	}
+
+	override.Messages = messages
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
-	return nil
+
+	return &override, nil
 }
 
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all

@@ -40,7 +40,6 @@ type OverrideTestSuite struct {
 	suite.Suite
 	oc            *optimizely.OptlyClient
 	tc            *optimizelytest.TestClient
-	body          []byte
 	mux           *chi.Mux
 	experimentKey string
 }
@@ -68,58 +67,95 @@ func (suite *OverrideTestSuite) SetupTest() {
 	testClient.ProjectConfig.AddMultiVariationFeatureTest(feature, "variation_disabled", "variation_enabled")
 	featureExp := testClient.ProjectConfig.FeatureMap["my_feat"].FeatureExperiments[0]
 
-	ab := OverrideBody{
-		UserID:        "testUser",
-		ExperimentKey: featureExp.Key,
-		VariationKey:  "variation_enabled",
-	}
-
-	body, err := json.Marshal(ab)
-	suite.NoError(err)
+	testClient.AddExperimentWithVariations("valid", "valid")
 
 	suite.experimentKey = featureExp.Key
-	suite.body = body
 	suite.mux = mux
 	suite.tc = testClient
 	suite.oc = optlyClient
 }
 
-func (suite *OverrideTestSuite) TestSetForcedVariation() {
-	req := httptest.NewRequest("POST", "/override", bytes.NewBuffer(suite.body))
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusCreated, rec.Code)
-
-	key := decision.ExperimentOverrideKey{
-		ExperimentKey: suite.experimentKey,
-		UserID:        "testUser",
-	}
-
-	actual, ok := suite.tc.ForcedVariations.GetVariation(key)
-	suite.True(ok)
-	suite.Equal("variation_enabled", actual)
-
-	req = httptest.NewRequest("POST", "/override", bytes.NewBuffer(suite.body))
-	rec = httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNoContent, rec.Code)
-
-	actual, ok = suite.tc.ForcedVariations.GetVariation(key)
-	suite.True(ok)
-	suite.Equal("variation_enabled", actual)
-}
-
-func (suite *OverrideTestSuite) TestSetForcedVariationInvalidPayload() {
-	invalid := []OverrideBody{
+func (suite *OverrideTestSuite) TestValidOverrides() {
+	scenarios := []struct {
+		variationKey string
+		previousKey  string
+		messages     []string
+	}{
 		{
-			UserID:        "",
-			ExperimentKey: "valid",
-			VariationKey:  "variation_enabled",
+			variationKey: "variation_enabled",
+			previousKey:  "",
+			messages:     nil,
 		},
 		{
-			UserID:        "valid",
-			ExperimentKey: "",
-			VariationKey:  "variation_enabled",
+			variationKey: "variation_enabled",
+			previousKey:  "variation_enabled",
+			messages:     []string{"updating previous override"},
+		},
+		{
+			variationKey: "",
+			previousKey:  "variation_enabled",
+			messages:     []string{"removing previous override"},
+		},
+		{
+			variationKey: "",
+			previousKey:  "",
+			messages:     []string{"no pre-existing override"},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		ob := OverrideBody{
+			UserID:        "testUser",
+			ExperimentKey: suite.experimentKey,
+			VariationKey:  scenario.variationKey,
+		}
+
+		body, err := json.Marshal(ob)
+		suite.NoError(err)
+
+		req := httptest.NewRequest("POST", "/override", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+
+		// Unmarshal response
+		var actual optimizely.Override
+		suite.NoError(json.Unmarshal(rec.Body.Bytes(), &actual))
+
+		expected := optimizely.Override{
+			UserID:           "testUser",
+			ExperimentKey:    suite.experimentKey,
+			VariationKey:     scenario.variationKey,
+			PrevVariationKey: scenario.previousKey,
+			Messages:         scenario.messages,
+		}
+
+		suite.Equal(expected, actual)
+
+		key := decision.ExperimentOverrideKey{
+			ExperimentKey: suite.experimentKey,
+			UserID:        "testUser",
+		}
+
+		actVar, _ := suite.tc.ForcedVariations.GetVariation(key)
+		suite.Equal(scenario.variationKey, actVar)
+	}
+}
+
+func (suite *OverrideTestSuite) TestInvalidOverrides() {
+	invalid := []map[string]interface{}{
+		{
+			"userID":        "",
+			"experimentKey": "valid",
+			"variationKey":  "valid",
+		},
+		{
+			"userID":        "valid",
+			"experimentKey": "",
+			"variationKey":  "valid",
+		},
+		{
+			"userId": true,
 		},
 	}
 
@@ -132,33 +168,6 @@ func (suite *OverrideTestSuite) TestSetForcedVariationInvalidPayload() {
 		suite.mux.ServeHTTP(rec, req)
 		suite.Equal(http.StatusBadRequest, rec.Code)
 	}
-}
-
-func (suite *OverrideTestSuite) TestRemoveForcedVariation() {
-	suite.tc.ForcedVariations.SetVariation(decision.ExperimentOverrideKey{
-		ExperimentKey: suite.experimentKey,
-		UserID:        "testUser",
-	}, "variation_enabled")
-
-	ab := OverrideBody{
-		UserID:        "testUser",
-		ExperimentKey: suite.experimentKey,
-	}
-
-	payload, err := json.Marshal(ab)
-	suite.NoError(err)
-
-	req := httptest.NewRequest("POST", "/override", bytes.NewBuffer(payload))
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusNoContent, rec.Code)
-
-	key := decision.ExperimentOverrideKey{
-		ExperimentKey: "my_feat",
-		UserID:        "testUser",
-	}
-
-	suite.Empty(suite.tc.ForcedVariations.GetVariation(key))
 }
 
 // In order for 'go test' to run this suite, we need to create
