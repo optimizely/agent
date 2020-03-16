@@ -9,9 +9,6 @@ from tests.acceptance.helpers import sort_response
 
 BASE_URL = os.getenv('host')
 
-# #######################################################
-# TESTS
-# #######################################################
 expected_activate_ab = """[
     {
         "experimentKey": "ab_test1",
@@ -25,11 +22,8 @@ expected_activate_ab = """[
 
 @pytest.mark.parametrize("experiment_key, expected_response, expected_status_code", [
     ("ab_test1", expected_activate_ab, 200),
-    pytest.param("", {"error": "experimentKey not-found"}, 400, marks=pytest.mark.xfail(
-        reason="Code should be 400 - OASIS-6077")),
-    pytest.param("invalid exper key", {"error": "experimentKey not-found"}, 400,
-                 marks=pytest.mark.xfail(
-                     reason="Code should be 400 - OASIS-6077")),
+    ("", '{"error": "experimentKey not-found"}', 404),
+    ("invalid exper key", '{"error": "experimentKey not-found"}', 404),
 ], ids=["valid case", "empty exper key", "invalid exper key"])
 def test_activate__experiment(session_obj, experiment_key, expected_response,
                               expected_status_code):
@@ -46,10 +40,13 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     :param expected_response: expected_response
     :param expected_status_code: expected_status_code
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"experimentKey": experiment_key}
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
+                            json=json.loads(payload))
+
+    print('RESP ', resp.json())
 
     if isinstance(resp.json(), dict) and resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
@@ -57,23 +54,31 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
             assert resp.status_code == expected_status_code, resp.text
             resp.raise_for_status()
 
+    assert json.loads(expected_response) == resp.json()
+    assert resp.status_code == expected_status_code, resp.text
 
-expected_activate_feat = [{'experimentKey': '', 'featureKey': 'feature_1',
-                           'variationKey': '',
-                           'type': 'feature',
-                           'variables': {'bool_var': True, 'double_var': 5.6,
-                                         'int_var': 1,
-                                         'str_var': 'hello'},
-                           'enabled': True}]
+
+expected_activate_feat = """[
+  {
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  }
+]"""
 
 
 @pytest.mark.parametrize("feature_key, expected_response, expected_status_code", [
     ("feature_1", expected_activate_feat, 200),
-    pytest.param("", {"error": "featureKey not-found"}, 400, marks=pytest.mark.xfail(
-        reason="Code should be 400 - OASIS-6077")),
-    pytest.param("invalid feat key", {"error": "featureKey not-found"}, 400,
-                 marks=pytest.mark.xfail(
-                     reason="Code should be 400 - OASIS-6077")),
+    pytest.param("", '{"error": "featureKey not-found"}', 404),
+    pytest.param("invalid feat key", '{"error": "featureKey not-found"}', 404),
 ], ids=["valid case", "empty feat key", "invalid feat key"])
 def test_activate__feature(session_obj, feature_key, expected_response,
                            expected_status_code):
@@ -87,36 +92,82 @@ def test_activate__feature(session_obj, feature_key, expected_response,
     Sort the reponses because dictionaries shuffle order.
     :param session_obj: session object
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"featureKey": feature_key}
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
+                            json=json.loads(payload))
 
     if isinstance(resp.json(), dict) and resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
-            assert resp.json() == expected_response
+            assert resp.json() == json.loads(expected_response)
             assert resp.status_code == expected_status_code, resp.text
             resp.raise_for_status()
 
+    assert json.loads(expected_response) == resp.json()
+    assert resp.status_code == expected_status_code, resp.text
 
-expected_activate_type_exper = [
-    {'experimentKey': 'feature_2_test', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True},
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True}]
-expected_activate_type_feat = [
-    {'experimentKey': '', 'featureKey': 'feature_2', 'variationKey': '',
-     'type': 'feature', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '',
-     'type': 'feature', 'enabled': False},
-    {'experimentKey': '', 'featureKey': 'feature_4', 'variationKey': '',
-     'type': 'feature', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_5', 'variationKey': '',
-     'type': 'feature', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
-     'type': 'feature',
-     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
-     'enabled': True}]
+
+expected_activate_type_exper = """[
+  {
+    "experimentKey": "feature_2_test",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  },
+  {
+    "experimentKey": "ab_test1",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  }
+]"""
+
+expected_activate_type_feat = """[
+  {
+    "experimentKey": "",
+    "featureKey": "feature_2",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_3",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": false
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_4",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_5",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  }
+]"""
 
 
 @pytest.mark.parametrize("decision_type, expected_response, expected_status_code", [
@@ -138,14 +189,18 @@ def test_activate__type(session_obj, decision_type, expected_response,
     :param decision_type: parameterized decision type
     :param expected_response: expected response
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    # payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"type": decision_type}
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    # resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
+                            json=json.loads(payload))
 
     if decision_type in ['experiment', 'feature']:
         sorted_actual = sort_response(resp.json(), 'experimentKey', 'featureKey')
-        sorted_expected = sort_response(expected_response, 'experimentKey', 'featureKey')
+        sorted_expected = sort_response(json.loads(expected_response), 'experimentKey',
+                                        'featureKey')
         assert sorted_actual == sorted_expected
     elif resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
@@ -158,12 +213,12 @@ def test_activate_403(session_override_sdk_key):
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param : session_obj
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"type": "experiment"}
 
     with pytest.raises(requests.exceptions.HTTPError):
         resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
-                                             json=payload)
+                                             json=json.loads(payload))
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \
@@ -196,46 +251,109 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
     :param disableTracking: true or false
     :param expected_status_code
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {
         "experimentKey": experiment,
         "disableTracking": disableTracking
     }
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
+                            json=json.loads(payload))
 
     resp.raise_for_status()
     assert resp.status_code == expected_status_code
 
 
-expected_enabled_true_all_true = [
-    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
-     'type': 'feature',
-     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
-     'enabled': True},
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True}]
-expected_enabled_true_feature_off = [
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True}]
-expected_enabled_false_feature_on = []
-expected_enabled_false_feature_off = [
-    {'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '',
-     'type': 'feature', 'enabled': False}]
-expected_enabled_empty = [
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
-     'type': 'feature',
-     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
-     'enabled': True}]
-expected_enabled_invalid = [
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
-     'type': 'feature',
-     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
-     'enabled': True}]
+expected_enabled_true_all_true = """[
+  {
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  },
+  {
+    "experimentKey": "ab_test1",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  }
+]"""
+
+expected_enabled_true_feature_off = """[
+  {
+    "experimentKey": "ab_test1",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  }
+]"""
+
+expected_enabled_false_feature_on = """[]"""
+
+expected_enabled_false_feature_off = """[
+  {
+    "experimentKey": "",
+    "featureKey": "feature_3",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": false
+  }
+]"""
+
+expected_enabled_empty = """[
+  {
+    "experimentKey": "ab_test1",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  }
+]"""
+
+expected_enabled_invalid = """[
+  {
+    "experimentKey": "ab_test1",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  }
+]"""
 
 
 @pytest.mark.parametrize(
@@ -265,17 +383,19 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
     - featur_3 feature is not enabled in the project - should not appear in the project when enabled is True
     :param session_obj: session fixture
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {
         "experimentKey": experimentKey,
         "featureKey": featureKey,
         "enabled": enabled
     }
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
+                            json=json.loads(payload))
 
     actual_response = sort_response(resp.json(), 'experimentKey', 'featureKey')
-    expected_response = sort_response(expected_response, 'experimentKey', 'featureKey')
+    expected_response = sort_response(json.loads(expected_response), 'experimentKey',
+                                      'featureKey')
     assert actual_response == expected_response
     assert resp.status_code == expected_status_code
     resp.raise_for_status()
@@ -286,23 +406,63 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
 # #######################################################
 
 
-expected_activate_with_config = [
-    {'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True},
-    {'experimentKey': 'feature_2_test', 'featureKey': '', 'variationKey': 'variation_1',
-     'type': 'experiment', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',
-     'type': 'feature',
-     'variables': {'bool_var': True, 'double_var': 5.6, 'int_var': 1, 'str_var': 'hello'},
-     'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_2', 'variationKey': '',
-     'type': 'feature', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '',
-     'type': 'feature', 'enabled': False},
-    {'experimentKey': '', 'featureKey': 'feature_4', 'variationKey': '',
-     'type': 'feature', 'enabled': True},
-    {'experimentKey': '', 'featureKey': 'feature_5', 'variationKey': '',
-     'type': 'feature', 'enabled': True}]
+expected_activate_with_config = """[
+  {
+    "experimentKey": "ab_test1",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  },
+  {
+    "experimentKey": "feature_2_test",
+    "featureKey": "",
+    "variationKey": "variation_1",
+    "type": "experiment",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_2",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_3",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": false
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_4",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  },
+  {
+    "experimentKey": "",
+    "featureKey": "feature_5",
+    "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  }
+]"""
 
 
 def test_activate_with_config(session_obj):
@@ -339,19 +499,20 @@ def test_activate_with_config(session_obj):
     feat = [key for key in resp_config['featuresMap']]
     exp = [key for key in resp_config['experimentsMap']]
 
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {
         "featureKey": feat,
         "experimentKey": exp
     }
 
     resp_activate = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
-                                     json=payload)
+                                     json=json.loads(payload))
 
     resp_activate.raise_for_status()
 
     sorted_actual = sort_response(resp_activate.json(), 'experimentKey', 'featureKey')
-    sorted_expected = sort_response(expected_activate_with_config, 'experimentKey',
+    sorted_expected = sort_response(json.loads(expected_activate_with_config),
+                                    'experimentKey',
                                     'featureKey')
 
     assert sorted_actual == sorted_expected

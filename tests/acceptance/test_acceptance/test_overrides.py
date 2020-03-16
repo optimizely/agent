@@ -1,3 +1,5 @@
+import json
+
 import os
 
 import pytest
@@ -87,10 +89,10 @@ def test_overrides(session_obj):
             "invalid_userId", "invalid_experimentKey", "invalid_variationKey"])
 def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variationKey,
                                       expected_status_code, expected_error_msg):
-    invalid_user_id = {"userId": userId, "userAttributes": {"attr_1": "hola"},
-                       "experimentKey": experimentKey, "variationKey": variationKey}
+    payload = f'{{"userId": "{userId}", "userAttributes": {{"attr_1": "hola"}}, ' \
+        f'"experimentKey": "{experimentKey}", "variationKey": "{variationKey}"}}'
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_OVERRIDE, json=invalid_user_id)
+    resp = session_obj.post(BASE_URL + ENDPOINT_OVERRIDE, json=json.loads(payload))
 
     assert resp.status_code == expected_status_code, resp.text
     assert resp.text == expected_error_msg

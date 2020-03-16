@@ -1,3 +1,5 @@
+import json
+
 import os
 
 import pytest
@@ -23,9 +25,10 @@ def test_track(session_obj, event_key, status_code):
     :param status_code: parameterized param
     """
     # TODO - ADD EVENT TAGS - AND TEST DIFFERENT SCENARIONS WITH EVENT TAGS
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}, "eventTags": {}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}, "eventTags": {}}'
     params = {"eventKey": event_key}
-    resp = session_obj.post(BASE_URL + ENDPOINT_TRACK, params=params, json=payload)
+    resp = session_obj.post(BASE_URL + ENDPOINT_TRACK, params=params,
+                            json=json.loads(payload))
     assert resp.status_code == status_code, f'Status code should be {status_code}. {resp.text}'
 
     if event_key == "":
@@ -46,12 +49,12 @@ def test_track_403(session_override_sdk_key):
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param : session_obj
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"eventKey": "myevent"}
 
     with pytest.raises(requests.exceptions.HTTPError):
         resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_TRACK, params=params,
-                                             json=payload)
+                                             json=json.loads(payload))
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \
