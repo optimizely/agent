@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,356 +18,183 @@
 package routers
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-
-	"github.com/optimizely/agent/pkg/handlers"
-	"github.com/optimizely/agent/pkg/metrics"
-	"github.com/optimizely/agent/pkg/middleware"
-	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
+var metricsRegistry = metrics.NewRegistry()
+
+const methodHeaderKey = "X-Method-Header"
 const clientHeaderKey = "X-Client-Header"
-const userHeaderKey = "X-User-Header"
-const featureHeaderKey = "X-Feature-Header"
-const experimentHeaderKey = "X-Experiment-Header"
 
-type MockOptlyMiddleware struct{}
-
-func (m *MockOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
+var testOptlyMiddleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(clientHeaderKey, "expected")
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (m *MockOptlyMiddleware) UserCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(userHeaderKey, "expected")
-		next.ServeHTTP(w, r)
-	})
+type MockCache struct{}
+
+func (m MockCache) GetClient(_ string) (*optimizely.OptlyClient, error) {
+	return &optimizely.OptlyClient{}, nil
 }
 
-func (m *MockOptlyMiddleware) FeatureCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(featureHeaderKey, "expected")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (m *MockOptlyMiddleware) ExperimentCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add(experimentHeaderKey, "expected")
-		next.ServeHTTP(w, r)
-	})
-}
-
-type MockExperimentAPI struct{}
-
-func (m *MockExperimentAPI) ListExperiments(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-func (m *MockExperimentAPI) GetExperiment(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-type MockFeatureAPI struct{}
-
-func (m *MockFeatureAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-func (m *MockFeatureAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-type MockNotificationsAPI struct{}
-
-func (m *MockNotificationsAPI) HandleEventSteam(rw http.ResponseWriter, req *http.Request) {
-	renderPathParams(rw, req)
-}
-
-type MockUserAPI struct{}
-
-func (m *MockUserAPI) TrackEvent(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) GetFeature(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) TrackFeature(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) ListFeatures(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) TrackFeatures(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) GetVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserAPI) ActivateExperiment(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-type MockUserOverrideAPI struct{}
-
-func (m *MockUserOverrideAPI) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func (m *MockUserOverrideAPI) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
-	renderPathParams(w, r)
-}
-
-func renderPathParams(w http.ResponseWriter, r *http.Request) {
-	pathParams := make(map[string]string)
-	rctx := chi.RouteContext(r.Context())
-	for i, k := range rctx.URLParams.Keys {
-		if k == "*" {
-			continue
-		}
-		pathParams[k] = rctx.URLParams.Values[i]
+var testHandler = func(val string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(methodHeaderKey, val)
 	}
-
-	render.JSON(w, r, pathParams)
 }
 
-type RouterTestSuite struct {
+const middlewareHeaderKey = "X-Middleware-Header"
+
+var testAuthMiddleware = func(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add(middlewareHeaderKey, "mockMiddleware")
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
+}
+
+type APIV1TestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
 	mux *chi.Mux
 }
 
-var metricsRegistry = metrics.NewRegistry()
-
-func (suite *RouterTestSuite) SetupTest() {
-
+func (suite *APIV1TestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
 	opts := &APIOptions{
-		maxConns:         1,
-		experimentAPI:    new(MockExperimentAPI),
-		featureAPI:       new(MockFeatureAPI),
-		userAPI:          new(MockUserAPI),
-		notificationsAPI: new(MockNotificationsAPI),
-		userOverrideAPI:  new(MockUserOverrideAPI),
-		middleware:       new(MockOptlyMiddleware),
-		metricsRegistry:  metricsRegistry,
-		oAuthHandler:     &handlers.OAuthHandler{},
-		oAuthMiddleware:  middleware.Auth{Verifier: middleware.NoAuth{}},
+		maxConns:        1,
+		sdkMiddleware:   testOptlyMiddleware,
+		configHandler:   testHandler("config"),
+		activateHandler: testHandler("activate"),
+		overrideHandler: testHandler("override"),
+		trackHandler:    testHandler("track"),
+		nStreamHandler:  testHandler("notifications/event-stream"),
+		oAuthHandler:    testHandler("oauth/token"),
+		oAuthMiddleware: testAuthMiddleware,
+		metricsRegistry: metricsRegistry,
 	}
 
 	suite.mux = NewAPIRouter(opts)
 }
 
-func (suite *RouterTestSuite) TestListFeatures() {
-	req := httptest.NewRequest("GET", "/features", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
+func (suite *APIV1TestSuite) TestOverride() {
 
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Empty(rec.Header().Get(userHeaderKey))
-
-	expected := map[string]string{}
-	suite.assertValid(rec, expected)
-}
-
-func (suite *RouterTestSuite) TestGetFeature() {
-	req := httptest.NewRequest("GET", "/features/one", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Empty(rec.Header().Get(userHeaderKey))
-	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
-
-	expected := map[string]string{
-		"featureKey": "one",
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"GET", "config"},
+		{"POST", "activate"},
+		{"POST", "track"},
+		{"POST", "override"},
+		{"GET", "notifications/event-stream"},
 	}
-	suite.assertValid(rec, expected)
+
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+
+		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
+		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
+		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
+	}
 }
 
-func (suite *RouterTestSuite) TestGetUserFeatures() {
-	req := httptest.NewRequest("GET", "/users/me/features", nil)
+func (suite *APIV1TestSuite) TestCreateAccessToken() {
+	req := httptest.NewRequest("POST", "/oauth/token", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-
-	expected := map[string]string{
-		"userID": "me",
-	}
-	suite.assertValid(rec, expected)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("oauth/token", rec.Header().Get(methodHeaderKey))
 }
 
-func (suite *RouterTestSuite) TestGetUserFeature() {
-	req := httptest.NewRequest("GET", "/users/me/features/one", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-	suite.Equal("expected", rec.Header().Get(featureHeaderKey))
-
-	expected := map[string]string{
-		"userID":     "me",
-		"featureKey": "one",
-	}
-	suite.assertValid(rec, expected)
+func TestAPIV1TestSuite(t *testing.T) {
+	suite.Run(t, new(APIV1TestSuite))
 }
 
-func (suite *RouterTestSuite) TestTrackUserFeatures() {
-	req := httptest.NewRequest("POST", "/users/me/features", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-
-	expected := map[string]string{
-		"userID": "me",
-	}
-	suite.assertValid(rec, expected)
+func TestNewDefaultAPIV1Router(t *testing.T) {
+	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
+	assert.NotNil(t, client)
 }
 
-func (suite *RouterTestSuite) TestTrackEvent() {
-	req := httptest.NewRequest("POST", "/users/me/events/key", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-
-	expected := map[string]string{
-		"userID":   "me",
-		"eventKey": "key",
+func TestNewDefaultAPIV1RouterInvalidHandlerConfig(t *testing.T) {
+	invalidAPIConfig := config.APIConfig{
+		Auth: config.ServiceAuthConfig{
+			Clients: []config.OAuthClientCredentials{
+				{
+					ID:         "id1",
+					SecretHash: "JDJhJDEyJFBQM3dSdnNERnVSQmZPNnA4MGcvLk9Eb1RVWExYMm5FZ2VhZXpsS1VmR3hPdFJUT3ViaXVX",
+					SDKKeys:    []string{"123"},
+				},
+			},
+			// Empty HMACSecrets, but non-empty Clients, is an invalid config
+			HMACSecrets:        []string{},
+			TTL:                0,
+			JwksURL:            "",
+			JwksUpdateInterval: 0,
+		},
+		MaxConns:            100,
+		Port:                "8080",
+		EnableNotifications: false,
+		EnableOverrides:     false,
 	}
-	suite.assertValid(rec, expected)
+	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
+	assert.Nil(t, client)
 }
 
-func (suite *RouterTestSuite) TestGetVariation() {
-	req := httptest.NewRequest("GET", "/users/me/experiments/key", nil)
-	rec := httptest.NewRecorder()
-
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
-
-	expected := map[string]string{
-		"userID":        "me",
-		"experimentKey": "key",
+func TestNewDefaultClientRouterInvalidMiddlewareConfig(t *testing.T) {
+	invalidAPIConfig := config.APIConfig{
+		Auth: config.ServiceAuthConfig{
+			JwksURL:            "not-valid",
+			JwksUpdateInterval: 0,
+		},
+		MaxConns:            100,
+		Port:                "8080",
+		EnableNotifications: false,
+		EnableOverrides:     false,
 	}
-	suite.assertValid(rec, expected)
+	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
+	assert.Nil(t, client)
 }
 
-func (suite *RouterTestSuite) TestActivateExperiment() {
-	req := httptest.NewRequest("POST", "/users/me/experiments/key", nil)
-	rec := httptest.NewRecorder()
+func TestForbiddenRoutes(t *testing.T) {
+	conf := config.APIConfig{}
+	mux := NewDefaultAPIRouter(MockCache{}, conf, metricsRegistry)
 
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-	suite.Equal("expected", rec.Header().Get(experimentHeaderKey))
-
-	expected := map[string]string{
-		"userID":        "me",
-		"experimentKey": "key",
+	routes := []struct {
+		method string
+		path   string
+		error  string
+	}{
+		{"POST", "override", "Overrides not enabled\n"},
+		{"GET", "notifications/event-stream", "Notification stream not enabled\n"},
 	}
-	suite.assertValid(rec, expected)
-}
 
-func (suite *RouterTestSuite) TestSetForcedVariation() {
-	req := httptest.NewRequest("PUT", "/overrides/users/me/experiments/exp_key", nil)
-	rec := httptest.NewRecorder()
-
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-
-	expected := map[string]string{
-		"userID":        "me",
-		"experimentKey": "exp_key",
-	}
-	suite.assertValid(rec, expected)
-}
-
-func (suite *RouterTestSuite) TestRemoveForcedVariation() {
-	req := httptest.NewRequest("DELETE", "/overrides/users/me/experiments/exp_key", nil)
-	rec := httptest.NewRecorder()
-
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal("expected", rec.Header().Get(clientHeaderKey))
-	suite.Equal("expected", rec.Header().Get(userHeaderKey))
-
-	expected := map[string]string{
-		"userID":        "me",
-		"experimentKey": "exp_key",
-	}
-	suite.assertValid(rec, expected)
-}
-
-// This test is flaky and really shouldn't be necessary.
-// Disabling for now to unblock the build
-func (suite *RouterTestSuite) DisabledTestThrottleConfig() {
-	req := httptest.NewRequest("GET", "/throttled", nil)
-
-	wg1 := sync.WaitGroup{}
-	wg1.Add(1)
-	suite.mux.Get("/throttled", func(w http.ResponseWriter, r *http.Request) {
-		wg1.Wait()
-	})
-
-	wg2 := sync.WaitGroup{}
-	wg2.Add(1)
-
-	mux := suite.mux // copy pointer to avoid data race
-
-	go func() {
-		wg2.Done()
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		req.Header.Add("X-Optimizely-SDK-Key", "something")
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
-	}()
-	wg2.Wait()
+		assert.Equal(t, http.StatusForbidden, rec.Code)
 
-	rec := httptest.NewRecorder()
-	mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusServiceUnavailable, rec.Code)
-	wg1.Done()
-}
-
-func (suite *RouterTestSuite) assertValid(rec *httptest.ResponseRecorder, expected map[string]string) {
-	suite.Equal(http.StatusOK, rec.Code)
-
-	var actual map[string]string
-	err := json.Unmarshal(rec.Body.Bytes(), &actual)
-	assert.NoError(suite.T(), err)
-
-	assert.Equal(suite.T(), expected, actual)
-}
-
-func TestRouter(t *testing.T) {
-	suite.Run(t, new(RouterTestSuite))
+		response := string(rec.Body.Bytes())
+		assert.Equal(t, route.error, response)
+	}
 }

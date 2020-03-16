@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,8 +18,9 @@
 package routers
 
 import (
-	"github.com/go-chi/render"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
@@ -29,140 +30,104 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/render"
 )
 
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns         int
-	enableOverrides  bool
-	middleware       middleware.OptlyMiddleware
-	experimentAPI    handlers.ExperimentAPI
-	featureAPI       handlers.FeatureAPI
-	userAPI          handlers.UserAPI
-	notificationsAPI handlers.NotificationAPI
-	userOverrideAPI  handlers.UserOverrideAPI
-	metricsRegistry  *metrics.Registry
-	oAuthHandler     *handlers.OAuthHandler
-	oAuthMiddleware  middleware.Auth
+	maxConns        int
+	sdkMiddleware   func(next http.Handler) http.Handler
+	metricsRegistry *metrics.Registry
+	configHandler   http.HandlerFunc
+	activateHandler http.HandlerFunc
+	trackHandler    http.HandlerFunc
+	overrideHandler http.HandlerFunc
+	nStreamHandler  http.HandlerFunc
+	oAuthHandler    http.HandlerFunc
+	oAuthMiddleware func(next http.Handler) http.Handler
+}
+
+func forbiddenHandler(message string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, message, http.StatusForbidden)
+	}
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
 func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
-
-	var notificationsAPI handlers.NotificationAPI
-	notificationsAPI = handlers.NewDisabledNotificationHandler()
-	if conf.EnableNotifications {
-		notificationsAPI = handlers.NewNotificationHandler()
+	if authProvider == nil {
+		log.Error().Msg("unable to initialize api auth middleware.")
+		return nil
 	}
 
-	var userOverrideAPI handlers.UserOverrideAPI
-	userOverrideAPI = new(handlers.DisabledUserOverrideHandler)
-	if conf.EnableOverrides {
-		userOverrideAPI = new(handlers.UserOverrideHandler)
+	authHandler := handlers.NewOAuthHandler(&conf.Auth)
+	if authHandler == nil {
+		log.Error().Msg("unable to initialize api auth handler.")
+		return nil
 	}
+
+	overrideHandler := handlers.Override
+	if !conf.EnableOverrides {
+		overrideHandler = forbiddenHandler("Overrides not enabled")
+	}
+
+	nStreamHandler := handlers.NotificationEventSteamHandler
+	if !conf.EnableNotifications {
+		nStreamHandler = forbiddenHandler("Notification stream not enabled")
+	}
+
+	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
 
 	spec := &APIOptions{
-		maxConns:         conf.MaxConns,
-		middleware:       &middleware.CachedOptlyMiddleware{Cache: optlyCache},
-		experimentAPI:    new(handlers.ExperimentHandler),
-		featureAPI:       new(handlers.FeatureHandler),
-		userAPI:          new(handlers.UserHandler),
-		notificationsAPI: notificationsAPI,
-		userOverrideAPI:  userOverrideAPI,
-		metricsRegistry:  metricsRegistry,
-		oAuthHandler:     handlers.NewOAuthHandler(&conf.Auth),
-		oAuthMiddleware:  authProvider,
-		enableOverrides:  conf.EnableOverrides,
+		maxConns:        conf.MaxConns,
+		metricsRegistry: metricsRegistry,
+		configHandler:   handlers.OptimizelyConfig,
+		activateHandler: handlers.Activate,
+		overrideHandler: overrideHandler,
+		trackHandler:    handlers.TrackEvent,
+		sdkMiddleware:   mw.ClientCtx,
+		nStreamHandler:  nStreamHandler,
+		oAuthHandler:    authHandler.CreateAPIAccessToken,
+		oAuthMiddleware: authProvider.AuthorizeAPI,
 	}
 
 	return NewAPIRouter(spec)
 }
 
-func setMiddleWareTime(r chi.Router) {
-	r.Use(middleware.SetTime)
-	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
-}
-
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
+	WithAPIRouter(opt, r)
+	return r
+}
 
-	listFeaturesTimer := middleware.Metricize("list-features", opt.metricsRegistry)
-	getFeatureTimer := middleware.Metricize("get-feature", opt.metricsRegistry)
-	listExperimentsTimer := middleware.Metricize("list-experiments", opt.metricsRegistry)
-	getExperimentTimer := middleware.Metricize("get-experiment", opt.metricsRegistry)
-	trackEventTimer := middleware.Metricize("track-event", opt.metricsRegistry)
-	listUserFeaturesTimer := middleware.Metricize("list-user-features", opt.metricsRegistry)
-	trackUserFeaturesTimer := middleware.Metricize("track-user-features", opt.metricsRegistry)
-	getUserFeatureTimer := middleware.Metricize("get-user-feature", opt.metricsRegistry)
-	trackUserFeatureTimer := middleware.Metricize("track-user-feature", opt.metricsRegistry)
-	getVariationTimer := middleware.Metricize("get-variation", opt.metricsRegistry)
-	activateExperimentTimer := middleware.Metricize("activate-experiment", opt.metricsRegistry)
-	setForcedVariationTimer := middleware.Metricize("set-forced-variation", opt.metricsRegistry)
-	removeForcedVariationTimer := middleware.Metricize("remove-forced-variation", opt.metricsRegistry)
+// WithAPIRouter appends routes and middleware to the given router.
+// See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
+func WithAPIRouter(opt *APIOptions, r chi.Router) {
+	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
+	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
+	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
+	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
+	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
-	r.Route("/notifications/event-stream", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.oAuthMiddleware.AuthorizeAPI)
-		r.Get("/", opt.notificationsAPI.HandleEventSteam)
+	r.Use(middleware.SetTime)
+	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
+
+	r.Route("/v1", func(r chi.Router) {
+		r.Use(opt.sdkMiddleware)
+		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
+		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
+		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
+		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", opt.overrideHandler)
+		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
-	r.Route("/features", func(r chi.Router) {
-		setMiddleWareTime(r)
-		r.Use(opt.middleware.ClientCtx, opt.oAuthMiddleware.AuthorizeAPI)
-		r.With(listFeaturesTimer).Get("/", opt.featureAPI.ListFeatures)
-		r.With(getFeatureTimer, opt.middleware.FeatureCtx).Get("/{featureKey}", opt.featureAPI.GetFeature)
-	})
-
-	r.Route("/experiments", func(r chi.Router) {
-		setMiddleWareTime(r)
-		r.Use(opt.middleware.ClientCtx, opt.oAuthMiddleware.AuthorizeAPI)
-		r.With(listExperimentsTimer).Get("/", opt.experimentAPI.ListExperiments)
-		r.With(getExperimentTimer, opt.middleware.ExperimentCtx).Get("/{experimentKey}", opt.experimentAPI.GetExperiment)
-	})
-
-	r.Route("/users/{userID}", func(r chi.Router) {
-		setMiddleWareTime(r)
-
-		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx, opt.oAuthMiddleware.AuthorizeAPI)
-
-		r.With(trackEventTimer).Post("/events/{eventKey}", opt.userAPI.TrackEvent)
-
-		r.With(listUserFeaturesTimer).Get("/features", opt.userAPI.ListFeatures)
-		r.With(trackUserFeaturesTimer).Post("/features", opt.userAPI.TrackFeatures)
-		r.With(getUserFeatureTimer, opt.middleware.FeatureCtx).Get("/features/{featureKey}", opt.userAPI.GetFeature)
-		r.With(trackUserFeatureTimer, opt.middleware.FeatureCtx).Post("/features/{featureKey}", opt.userAPI.TrackFeature)
-		r.With(getVariationTimer, opt.middleware.ExperimentCtx).Get("/experiments/{experimentKey}", opt.userAPI.GetVariation)
-		r.With(activateExperimentTimer, opt.middleware.ExperimentCtx).Post("/experiments/{experimentKey}", opt.userAPI.ActivateExperiment)
-	})
-
-	r.Route("/overrides/users/{userID}", func(r chi.Router) {
-		r.Use(opt.middleware.ClientCtx, opt.middleware.UserCtx, opt.oAuthMiddleware.AuthorizeAPI)
-
-		r.With(setForcedVariationTimer).Put("/experiments/{experimentKey}", opt.userOverrideAPI.SetForcedVariation)
-		r.With(removeForcedVariationTimer).Delete("/experiments/{experimentKey}", opt.userOverrideAPI.RemoveForcedVariation)
-	})
-
-	r.Post("/oauth/token", opt.oAuthHandler.CreateAPIAccessToken)
-
-	// Kind of a hack to support concurrent APIs without a larger refactor.
-	spec := &APIV1Options{
-		maxConns:        opt.maxConns,
-		enableOverrides: opt.enableOverrides,
-		middleware:      opt.middleware,
-		handlers:        new(defaultHandlers),
-		metricsRegistry: opt.metricsRegistry,
-		oAuthHandler:    opt.oAuthHandler,
-		oAuthMiddleware: opt.oAuthMiddleware,
-	}
-
-	r.Group(func(r chi.Router) { WithAPIV1Router(spec, r) })
-
-	return r
+	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
 }

@@ -14,23 +14,23 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package handlers //
-package handlers
+// generate_secret is a tool for generating random secrets and their associated hashes.
+// For more information, see docs/auth.md.
+
+// package main
+package main
 
 import (
-	"net/http"
+	"fmt"
+	"github.com/optimizely/agent/pkg/jwtauth"
 )
 
-// DisabledUserOverrideHandler implements the disabled overrides
-type DisabledUserOverrideHandler struct{}
-
-// SetForcedVariation - set a forced variation
-func (h *DisabledUserOverrideHandler) SetForcedVariation(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Overrides not enabled", http.StatusForbidden)
-
-}
-
-// RemoveForcedVariation - Remove a forced variation
-func (h *DisabledUserOverrideHandler) RemoveForcedVariation(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Overrides not enabled", http.StatusForbidden)
+func main() {
+	secretStr, hashStr, err := jwtauth.GenerateClientSecretAndHash()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	} else {
+		fmt.Printf("Client Secret: %v\n", secretStr)
+		fmt.Printf("Client Secret's hash: %v\n", hashStr)
+	}
 }

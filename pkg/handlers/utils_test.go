@@ -90,3 +90,13 @@ func TestParseRequestBodyNil(t *testing.T) {
 	err := ParseRequestBody(req, &actual)
 	assert.Error(t, err)
 }
+
+func assertError(t *testing.T, rec *httptest.ResponseRecorder, msg string, code int) {
+	assert.Equal(t, code, rec.Code)
+
+	var actual ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, ErrorResponse{Error: msg}, actual)
+}

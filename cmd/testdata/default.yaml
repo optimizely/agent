@@ -25,10 +25,16 @@ admin:
   port: "3002"
   auth:
     ttl: 30m
-    hmacSecret: "efgh"
+    hmacSecrets:
+      - "efgh"
+      - "ijkl"
     clients:
       - id: clientid2
-        secret: clientsecret2
+        secretHash: clientsecret2
+        sdkKeys:
+          - 123
+    jwksURL: "admin_jwks_url"
+    jwksUpdateInterval: "25s"
 api:
   maxConns: 100
   port: "3000"
@@ -36,10 +42,16 @@ api:
   enableOverrides: true
   auth:
     ttl: 30m
-    hmacSecret: "abcd"
+    hmacSecrets:
+      - "abcd"
+      - "efgh"
     clients:
       - id: clientid1
-        secret: clientsecret1
+        secretHash: clientsecret1
+        sdkKeys:
+          - 123
+    jwksURL: "api_jwks_url"
+    jwksUpdateInterval: "25s"
 webhook:
   port: "3001"
   projects:

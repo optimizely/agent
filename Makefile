@@ -29,7 +29,7 @@ LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION} -X github.com/optimizely/
 all: test lint build ## runs the test, lint and build targets
 
 $(TARGET): check-go
-	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/main.go
+	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/optimizely/main.go
 
 build: $(TARGET) check-go ## builds and installs binary in bin/
 	@true
@@ -62,6 +62,18 @@ test: check-go ## recursively tests all .go files
 	$(GOTEST) ./...
 
 include scripts/Makefile.ci
+
+# Generate secret helper
+GEN_SECRET_TARGET := "generate_secret"
+
+$(GEN_SECRET_TARGET): check-go
+	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(GEN_SECRET_TARGET) cmd/generate_secret/main.go
+
+build_generate_secret: $(GEN_SECRET_TARGET) ## builds the GEN_SECRET_TARGET binary
+	@true
+
+generate_secret: $(GEN_SECRET_TARGET) ## builds and executes the GEN_SECRET_TARGET binary
+	$(GOBIN)/$(GEN_SECRET_TARGET)
 
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

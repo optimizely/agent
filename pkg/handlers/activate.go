@@ -65,17 +65,9 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = parseExperimentKeys(query["experimentKey"], oConf, kmap)
-	if err != nil {
-		RenderError(err, http.StatusNotFound, w, r)
-		return
-	}
+	parseExperimentKeys(query["experimentKey"], oConf, kmap)
 
-	err = parseFeatureKeys(query["featureKey"], oConf, kmap)
-	if err != nil {
-		RenderError(err, http.StatusNotFound, w, r)
-		return
-	}
+	parseFeatureKeys(query["featureKey"], oConf, kmap)
 
 	for key, value := range kmap {
 		var d *optimizely.Decision
@@ -87,6 +79,18 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		case "feature":
 			logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 			d, err = optlyClient.ActivateFeature(key, uc, disableTracking)
+		case "experimentKey-not-found":
+			d = &optimizely.Decision{
+				ExperimentKey: key,
+				Error: "experimentKey not found",
+			}
+			err = nil
+		case "featureKey-not-found":
+			d = &optimizely.Decision{
+				FeatureKey: key,
+				Error: "featureKey not found",
+			}
+			err = nil
 		default:
 			err = fmt.Errorf(`type "%s" not supported`, value)
 		}
@@ -95,7 +99,6 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			RenderError(err, http.StatusBadRequest, w, r)
 			return
 		}
-
 		decisions = append(decisions, d)
 	}
 
@@ -103,30 +106,26 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, decisions)
 }
 
-func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
+func parseExperimentKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) {
 	for _, key := range keys {
 		_, ok := oConf.ExperimentsMap[key]
 		if !ok {
-			return fmt.Errorf("experimentKey not-found")
+			kmap[key] = "experimentKey-not-found"
+		} else {
+			kmap[key] = "experiment"
 		}
-
-		kmap[key] = "experiment"
 	}
-
-	return nil
 }
 
-func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
+func parseFeatureKeys(keys []string, oConf *config.OptimizelyConfig, kmap keyMap) {
 	for _, key := range keys {
 		_, ok := oConf.FeaturesMap[key]
 		if !ok {
-			return fmt.Errorf("featureKey not-found")
+			kmap[key] = "featureKey-not-found"
+		} else {
+			kmap[key] = "feature"
 		}
-
-		kmap[key] = "feature"
 	}
-
-	return nil
 }
 
 func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, kmap keyMap) error {
