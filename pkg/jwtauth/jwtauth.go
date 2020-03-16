@@ -97,7 +97,7 @@ func GenerateClientSecretAndHash() (secretStr, hashStr string, err error) {
 	return secretStr, hashStr, nil
 }
 
-// DecodeSecretHashFromConfig returns the decoded secret hash as a byte slice, or an error if decoding failed
-func DecodeSecretHashFromConfig(configSecretHash string) ([]byte, error) {
+// DecodeConfigValue returns the decoded value from configuration a byte slice, or an error if decoding failed
+func DecodeConfigValue(configSecretHash string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(configSecretHash)
 }

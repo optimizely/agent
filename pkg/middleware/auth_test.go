@@ -18,6 +18,7 @@
 package middleware
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -58,27 +59,33 @@ type AuthTestSuite struct {
 }
 
 func (suite *AuthTestSuite) SetupTest() {
-	suite.signatures = []string{"test", "test2"}
+	suite.signatures = []string{"R8W3PRpnjp6/WmhyeCBZdscrQbMpqf8WIDxx910SlJk=", "LQR5YqSDln9ALMg7PsxC0/69ktrCJEPPUG4gwzZHAww="}
+
+	var decodedSigs [][]byte
+	for _, sig := range suite.signatures {
+		decoded, _ := base64.StdEncoding.DecodeString(sig)
+		decodedSigs = append(decodedSigs, decoded)
+	}
 
 	claims := OptlyClaims{ExpiresAt: 12313123123213, SdkKeys: []string{"SDK_KEY"}, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAPIToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validAPIToken.Raw, _ = suite.validAPIToken.SignedString([]byte(suite.signatures[0]))
+	suite.validAPIToken.Raw, _ = suite.validAPIToken.SignedString(decodedSigs[0])
 
 	claims = OptlyClaims{ExpiresAt: 12313123123213, SdkKeys: []string{"SDK_KEY"}, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAPITokenOtherSig = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validAPITokenOtherSig.Raw, _ = suite.validAPITokenOtherSig.SignedString([]byte(suite.signatures[1]))
+	suite.validAPITokenOtherSig.Raw, _ = suite.validAPITokenOtherSig.SignedString(decodedSigs[1])
 
 	claims = OptlyClaims{ExpiresAt: 12313123123213, Admin: true, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAdminToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validAdminToken.Raw, _ = suite.validAdminToken.SignedString([]byte(suite.signatures[0]))
+	suite.validAdminToken.Raw, _ = suite.validAdminToken.SignedString(decodedSigs[0])
 
 	claims = OptlyClaims{ExpiresAt: 0, SdkKeys: []string{"SDK_KEY"}, Issuer: "iss"}
 	suite.expiredToken = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.expiredToken.Raw, _ = suite.expiredToken.SignedString([]byte(suite.signatures[0]))
+	suite.expiredToken.Raw, _ = suite.expiredToken.SignedString(decodedSigs[0])
 
 	claims = OptlyClaims{ExpiresAt: 12313123123213, SdkKeys: []string{"SDK_KEY_1", "SDK_KEY_2"}, Issuer: "iss"} // exp = March 9, 2360
 	suite.validAPITokenMultiSdkKey = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	suite.validAPITokenMultiSdkKey.Raw, _ = suite.validAPITokenMultiSdkKey.SignedString([]byte(suite.signatures[0]))
+	suite.validAPITokenMultiSdkKey.Raw, _ = suite.validAPITokenMultiSdkKey.SignedString(decodedSigs[0])
 
 	suite.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	suite.authConfig = &config.ServiceAuthConfig{
