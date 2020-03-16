@@ -50,7 +50,7 @@ api:
     ## set to true to enable subscribing to notifications via an SSE event-stream
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
-    enableOverrides: false
+    enableOverrides: true
 
 ##
 ## admin service configuration

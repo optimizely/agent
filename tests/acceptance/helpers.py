@@ -8,6 +8,7 @@ import requests
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
+ENDPOINT_NOTIFICATIONS = '/notifications/event-stream'
 ENDPOINT_OVERRIDE = '/v1/override'
 ENDPOINT_TRACK = '/v1/track'
 
@@ -24,7 +25,7 @@ def test_health():
         if resp.json()['status'] == 'ok':
             return True
     except requests.exceptions.ConnectionError:
-        print(f'Server is not yet ready (connection refused).')
+        print(f'Agent server is not yet ready (connection refused).')
 
 
 def get_pid(name):
@@ -56,6 +57,24 @@ def wait_for_agent_to_start():
             raise RuntimeError("Timeout exceeded. Agent server not started?")
         else:
             time.sleep(1)
+
+    print('Agent server is up and ready on localhost.')
+
+
+def wait_for_agent_to_stop():
+    """
+    Waits until agent server stopped.
+    Keeps checking in a loop if port is available
+    """
+    timeout = time.time() + 30  # 30 s timeout limit to prevent infinite loop
+
+    while test_health():
+        if time.time() > timeout:
+            raise RuntimeError("Timeout exceeded. Agent server not started?")
+        else:
+            time.sleep(1)
+
+    print('Agent server has stopped.')
 
 
 def get_process_id_list(name):
@@ -98,3 +117,31 @@ def sort_response(response_dict, *args):
     :return: sorted response
     """
     return sorted(response_dict, key=lambda k: (k[args[0]], k[args[1]]))
+
+
+# Helper funcitons for overrides
+def activate_experiment(sess):
+    """
+    Helper function to activat eexperiment.
+    :param sess: API request session_object
+    :return: response
+    """
+    BASE_URL = os.getenv('host')
+    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
+    params = {"experimentKey": 'ab_test1'}
+    resp = sess.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    return resp
+
+
+def override_variation(sess, override_with):
+    """
+    Helper funciton to override a variation.
+    :param sess: API request session object.
+    :param override_with: provide new variation name as string to override with
+    :return: response
+    """
+    BASE_URL = os.getenv('host')
+    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"},
+               "experimentKey": "ab_test1", "variationKey": f"{override_with}"}
+    resp = sess.post(BASE_URL + ENDPOINT_OVERRIDE, json=payload)
+    return resp

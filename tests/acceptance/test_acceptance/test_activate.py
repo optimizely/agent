@@ -1,8 +1,8 @@
+import json
 import os
 
 import pytest
 import requests
-
 from tests.acceptance.helpers import ENDPOINT_ACTIVATE
 from tests.acceptance.helpers import ENDPOINT_CONFIG
 from tests.acceptance.helpers import sort_response
@@ -12,9 +12,15 @@ BASE_URL = os.getenv('host')
 # #######################################################
 # TESTS
 # #######################################################
-expected_activate_ab = [{'experimentKey': 'ab_test1', 'featureKey': '',
-                         'variationKey': 'variation_1',
-                         'type': 'experiment', 'enabled': True}]
+expected_activate_ab = """[
+    {
+        "experimentKey": "ab_test1",
+        "featureKey": "",
+        "variationKey": "variation_1",
+        "type": "experiment",
+        "enabled": true
+    }
+]"""
 
 
 @pytest.mark.parametrize("experiment_key, expected_response, expected_status_code", [
@@ -47,7 +53,7 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
 
     if isinstance(resp.json(), dict) and resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
-            assert resp.json() == expected_response
+            assert resp.json() == json.loads(expected_response)
             assert resp.status_code == expected_status_code, resp.text
             resp.raise_for_status()
 
@@ -201,13 +207,6 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
     resp.raise_for_status()
     assert resp.status_code == expected_status_code
 
-
-# TODO: when "true" should return:
-# [{'experimentKey': 'ab_test1', 'featureKey': '', 'variationKey': 'variation_1', 'type': 'experiment', 'enabled': True}]
-# TODO when "false" should return
-# [{'experimentKey': '', 'featureKey': 'feature_3', 'variationKey': '', 'type': 'feature', 'enabled': False}]
-# TODO - code thsese above in - parameterize!
-# makse assertion that certain feature IS NOT in the response
 
 expected_enabled_true_all_true = [
     {'experimentKey': '', 'featureKey': 'feature_1', 'variationKey': '',

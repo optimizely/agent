@@ -1,11 +1,11 @@
 """conftest.py for fixtures"""
 
 import os
+import signal
+import subprocess
 
 import pytest
 import requests
-
-from tests.acceptance.helpers import PROJECT_ROOT
 from tests.acceptance.helpers import get_process_id_list
 from tests.acceptance.helpers import wait_for_agent_to_start
 
@@ -46,17 +46,12 @@ def agent_server():
     """
     Starts Agent server.
     Test run after that.
-    Stops Agent server (zombie 'optimizely' processes still remain though).
+    Stops Agent server.
+    Also updates config.yaml file - before agent server starts it sets enableNotifications
+    to true and enableOverrides to true and then both back to false at the end
     """
     # start server
-    import subprocess
-    import os
-    import signal
-
-    os.chdir(f"{PROJECT_ROOT}")
-    cmd = ["sh", "run_agent.sh"]
-    subprocess.Popen(cmd, shell=False)
-
+    subprocess.Popen(["make", "run"], shell=False)
     wait_for_agent_to_start()
 
     yield
