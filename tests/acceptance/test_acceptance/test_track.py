@@ -40,7 +40,7 @@ def test_track(session_obj, event_key, status_code):
     if event_key == "invalid_event_key":
         with pytest.raises(requests.exceptions.HTTPError):
             assert resp.status_code == status_code
-            assert resp.text == '{"error":"event with key \\"invalid_event_key\\" not found"}\n'
+            assert resp.text == '{"error":"eventKey: \\"invalid_event_key\\" not found"}\n'
             resp.raise_for_status()
 
 

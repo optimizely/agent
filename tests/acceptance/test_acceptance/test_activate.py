@@ -15,15 +15,38 @@ expected_activate_ab = """[
         "featureKey": "",
         "variationKey": "variation_1",
         "type": "experiment",
-        "enabled": true
+        "enabled": true,
+        "error": ""
+    }
+]"""
+
+expected_activate_ab_empty_experimentKey = """[
+    {
+        "experimentKey": "",
+        "featureKey": "",
+        "variationKey": "",
+        "type": "",
+        "enabled": false,
+        "error": "experimentKey not found"
+    }
+]"""
+
+expected_activate_ab_invalid_experimentKey = """[
+    {
+        "experimentKey": "invalid exper key",
+        "featureKey": "",
+        "variationKey": "",
+        "type": "",
+        "enabled": false,
+        "error": "experimentKey not found"
     }
 ]"""
 
 
 @pytest.mark.parametrize("experiment_key, expected_response, expected_status_code", [
     ("ab_test1", expected_activate_ab, 200),
-    ("", '{"error": "experimentKey not-found"}', 404),
-    ("invalid exper key", '{"error": "experimentKey not-found"}', 404),
+    ("", expected_activate_ab_empty_experimentKey, 200),
+    ("invalid exper key", expected_activate_ab_invalid_experimentKey, 200),
 ], ids=["valid case", "empty exper key", "invalid exper key"])
 def test_activate__experiment(session_obj, experiment_key, expected_response,
                               expected_status_code):
@@ -46,16 +69,9 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     resp = session_obj.post(BASE_URL + ENDPOINT_ACTIVATE, params=params,
                             json=json.loads(payload))
 
-    print('RESP ', resp.json())
-
-    if isinstance(resp.json(), dict) and resp.json()['error']:
-        with pytest.raises(requests.exceptions.HTTPError):
-            assert resp.json() == json.loads(expected_response)
-            assert resp.status_code == expected_status_code, resp.text
-            resp.raise_for_status()
-
     assert json.loads(expected_response) == resp.json()
     assert resp.status_code == expected_status_code, resp.text
+    resp.raise_for_status()
 
 
 expected_activate_feat = """[
@@ -70,15 +86,39 @@ expected_activate_feat = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true
+    "enabled": true,
+    "error": ""
+  }
+]"""
+
+expected_activate_feat_empty_featureKey = """[
+  {
+    "experimentKey": "",
+    "featureKey": "",
+    "variationKey": "",
+    "type": "",
+    "enabled": false,
+    "error": "featureKey not found"
+  }
+]"""
+
+
+expected_activate_feat_invalid_featureKey = """[
+  {
+    "experimentKey": "",
+    "featureKey": "invalid feat key",
+    "variationKey": "",
+    "type": "",
+    "enabled": false,
+    "error": "featureKey not found"
   }
 ]"""
 
 
 @pytest.mark.parametrize("feature_key, expected_response, expected_status_code", [
     ("feature_1", expected_activate_feat, 200),
-    pytest.param("", '{"error": "featureKey not-found"}', 404),
-    pytest.param("invalid feat key", '{"error": "featureKey not-found"}', 404),
+    ("", expected_activate_feat_empty_featureKey, 200),
+    ("invalid feat key", expected_activate_feat_invalid_featureKey, 200),
 ], ids=["valid case", "empty feat key", "invalid feat key"])
 def test_activate__feature(session_obj, feature_key, expected_response,
                            expected_status_code):
@@ -114,14 +154,16 @@ expected_activate_type_exper = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   }
 ]"""
 
@@ -131,28 +173,32 @@ expected_activate_type_feat = """[
     "featureKey": "feature_2",
     "variationKey": "",
     "type": "feature",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false
+    "enabled": false,
+    "error": ""
   },
   {
     "experimentKey": "",
     "featureKey": "feature_4",
     "variationKey": "",
     "type": "feature",
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   },
   {
     "experimentKey": "",
     "featureKey": "feature_5",
     "variationKey": "",
     "type": "feature",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
@@ -165,7 +211,8 @@ expected_activate_type_feat = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   }
 ]"""
 
@@ -276,14 +323,16 @@ expected_enabled_true_all_true = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   },
   {
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   }
 ]"""
 
@@ -293,7 +342,8 @@ expected_enabled_true_feature_off = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   }
 ]"""
 
@@ -305,7 +355,8 @@ expected_enabled_false_feature_off = """[
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false
+    "enabled": false,
+    "error": ""    
   }
 ]"""
 
@@ -315,7 +366,8 @@ expected_enabled_empty = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
@@ -328,7 +380,8 @@ expected_enabled_empty = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   }
 ]"""
 
@@ -338,7 +391,8 @@ expected_enabled_invalid = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""    
   },
   {
     "experimentKey": "",
@@ -351,7 +405,8 @@ expected_enabled_invalid = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true
+    "enabled": true,
+    "error": ""
   }
 ]"""
 
@@ -362,13 +417,8 @@ expected_enabled_invalid = """[
         ("true", "ab_test1", "feature_3", expected_enabled_true_feature_off, 200),
         ("false", "ab_test1", "feature_1", expected_enabled_false_feature_on, 200),
         ("false", "ab_test1", "feature_3", expected_enabled_false_feature_off, 200),
-        pytest.param("", "ab_test1", "feature_1", expected_enabled_empty, 400,
-                     marks=pytest.mark.xfail(
-                         reason="Define what here - status code should be 4xx")),
-        pytest.param("invalid value for enabled", "ab_test1", "feature_1",
-                     expected_enabled_invalid, 400,
-                     marks=pytest.mark.xfail(
-                         reason="Define what here - status code should be 4xx"))
+        ("", "ab_test1", "feature_1", expected_enabled_empty, 200),
+        ("invalid for enabled", "ab_test1", "feature_1", expected_enabled_invalid, 200)
     ], ids=["enabled true, all true", "enabled true, feature off",
             "enabled false, feature on",
             "enabled false, feature off", "empty value for enabled",
@@ -412,14 +462,16 @@ expected_activate_with_config = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "feature_2_test",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
@@ -432,35 +484,40 @@ expected_activate_with_config = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
     "featureKey": "feature_2",
     "variationKey": "",
     "type": "feature",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false
+    "enabled": false,
+    "error": ""
   },
   {
     "experimentKey": "",
     "featureKey": "feature_4",
     "variationKey": "",
     "type": "feature",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   },
   {
     "experimentKey": "",
     "featureKey": "feature_5",
     "variationKey": "",
     "type": "feature",
-    "enabled": true
+    "enabled": true,
+    "error": ""
   }
 ]"""
 
