@@ -41,10 +41,13 @@ def test_overrides(session_obj):
     default_variation = activating.json()[0]['variationKey']
     assert activating.status_code == 200, activating.text
     assert default_variation == 'variation_1', activating.text
+    assert activating.json()[0]['error'] == ''
 
     # Override with "variation_2"
     resp_over = override_variation(session_obj, override_with='variation_2')
-    assert resp_over.status_code == 201, resp_over.text
+    assert resp_over.status_code == 200, resp_over.text
+    assert resp_over.json()['messages'] == None
+    assert resp_over.json()['prevVariationKey'] == ''
 
     # Confirm new variation is "variation_2" (activate)
     activating_again = activate_experiment(session_obj)
@@ -55,12 +58,18 @@ def test_overrides(session_obj):
     # Attempt to override variation_2 with the same variation_2. Should be denied (204).
     resp_override_with_same_var = override_variation(session_obj,
                                                      override_with='variation_2')
-    assert resp_override_with_same_var.status_code == 204, \
+
+    assert resp_override_with_same_var.status_code == 200, \
         f'Error: {resp_override_with_same_var.text}'
+
+    assert "updating previous override" in resp_override_with_same_var.json()['messages']
+    assert resp_override_with_same_var.json()['prevVariationKey'] == 'variation_2'
 
     # Delete new variation
     resp_delete = override_variation(session_obj, override_with='')
-    assert resp_delete.status_code == 204, resp_delete.text
+    assert resp_delete.status_code == 200, resp_delete.text
+    assert "removing previous override" in resp_delete.json()['messages']
+    assert resp_override_with_same_var.json()['prevVariationKey'] == 'variation_2'
 
     # Confirm deleting variation_2 caused that the default is now "variation_1" (activate)
     resp_default_now_var_1 = activate_experiment(session_obj)
@@ -69,33 +78,44 @@ def test_overrides(session_obj):
     assert default_variation_confirm == 'variation_1', activating.text
 
 
+expected_empty_user = '{"error":"userId cannot be empty"}\n'
+expected_empty_experiment_key = '{"error":"experimentKey cannot be empty"}\n'
+expected_empty_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' \
+                               '"variationKey":"","prevVariationKey":"","messages":' \
+                               '["no pre-existing override"]}\n'
+expected_invalid_user = '{"userId":"invalid_user","experimentKey":"ab_test1",' \
+                        '"variationKey":"variation_2","prevVariationKey":"",' \
+                        '"messages":null}\n'
+expected_invalid_experiment_key = '{"userId":"matjaz","experimentKey":' \
+                                  '"invalid_experimentKey","variationKey":"variation_2",' \
+                                  '"prevVariationKey":"","messages":' \
+                                  '["experimentKey not found in configuration"]}\n'
+expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' \
+                                 '"variationKey":"invalid_variation",' \
+                                 '"prevVariationKey":"","messages":' \
+                                 '["variationKey not found in configuration"]}\n'
+
+
 @pytest.mark.parametrize(
-    "userId, experimentKey, variationKey, expected_status_code, expected_error_msg", [
-        ("", "ab_test1", "variation_2", 400, '{"error":"userId cannot be empty"}\n'),
-        ("matjaz", "", "variation_2", 400, '{"error":"experimentKey cannot be empty"}\n'),
-        pytest.param("matjaz", "ab_test1", "", 400,
-                     'todo - fill in expected error message',
-                     marks=pytest.mark.xfail(reason='OASIS-6060')),
-        pytest.param("invalid_user", "ab_test1", "variation_2", 400,
-                     'todo - fill in expected error message',
-                     marks=pytest.mark.xfail(reason='OASIS-6060')),
-        pytest.param("matjaz", "invalid_experimentKey", "variation_2", 400,
-                     'todo - fill in expected error message',
-                     marks=pytest.mark.xfail(reason='OASIS-6060')),
-        pytest.param("matjaz", "ab_test1", "invalid_variation", 400,
-                     'todo - fill in expected error message',
-                     marks=pytest.mark.xfail(reason='OASIS-6060')),
+    "userId, experimentKey, variationKey, expected_status_code, expected_response", [
+        ("", "ab_test1", "variation_2", 400, expected_empty_user),
+        ("matjaz", "", "variation_2", 400, expected_empty_experiment_key),
+        ("matjaz", "ab_test1", "", 200, expected_empty_variation_key),
+        ("invalid_user", "ab_test1", "variation_2", 200, expected_invalid_user),
+        ("matjaz", "invalid_experimentKey", "variation_2", 200,
+         expected_invalid_experiment_key),
+        ("matjaz", "ab_test1", "invalid_variation", 200, expected_invalid_variation_key),
     ], ids=["empty_userId", "empty_experiment_key", "empty_variationKey",
             "invalid_userId", "invalid_experimentKey", "invalid_variationKey"])
 def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variationKey,
-                                      expected_status_code, expected_error_msg):
+                                      expected_status_code, expected_response):
     payload = f'{{"userId": "{userId}", "userAttributes": {{"attr_1": "hola"}}, ' \
         f'"experimentKey": "{experimentKey}", "variationKey": "{variationKey}"}}'
 
     resp = session_obj.post(BASE_URL + ENDPOINT_OVERRIDE, json=json.loads(payload))
 
     assert resp.status_code == expected_status_code, resp.text
-    assert resp.text == expected_error_msg
+    assert resp.text == expected_response
 
 
 def test_overrides_403(session_override_sdk_key):
