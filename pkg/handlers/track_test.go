@@ -78,6 +78,14 @@ type MockConfigManager struct {
 	config config.ProjectConfig
 }
 
+func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
+	panic("implement me")
+}
+
+func (m MockConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
+	panic("implement me")
+}
+
 func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
 	return m.config, nil
 }

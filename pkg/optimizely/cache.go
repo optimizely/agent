@@ -34,23 +34,24 @@ import (
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader          func(string, config.ClientConfig, *MetricsRegistry) (*OptlyClient, error)
-	optlyMap        cmap.ConcurrentMap
-	ctx             context.Context
-	wg              sync.WaitGroup
-	clientConf      config.ClientConfig
-	metricsRegistry *MetricsRegistry
+	loader   func(string) (*OptlyClient, error)
+	optlyMap cmap.ConcurrentMap
+	ctx      context.Context
+	wg       sync.WaitGroup
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
 func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+
+	myFunc := func(sdkkey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
+		return sdkconfig.NewPollingProjectConfigManager(sdkkey, options...)
+	}
+
 	cache := &OptlyCache{
-		ctx:             ctx,
-		wg:              sync.WaitGroup{},
-		loader:          initOptlyClient,
-		optlyMap:        cmap.New(),
-		clientConf:      conf,
-		metricsRegistry: metricsRegistry,
+		ctx:      ctx,
+		wg:       sync.WaitGroup{},
+		loader:   defaultLoader(conf, metricsRegistry, myFunc, event.NewBatchEventProcessor),
+		optlyMap: cmap.New(),
 	}
 
 	return cache
@@ -72,7 +73,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(sdkKey, c.clientConf, c.metricsRegistry)
+	oc, err := c.loader(sdkKey)
 	if err != nil {
 		return oc, err
 	}
@@ -101,29 +102,39 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
-func initOptlyClient(sdkKey string, conf config.ClientConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
-	log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
-	configManager := sdkconfig.NewPollingProjectConfigManager(sdkKey, sdkconfig.WithPollingInterval(conf.PollingInterval))
-	if _, err := configManager.GetConfig(); err != nil {
-		return &OptlyClient{}, err
+func defaultLoader(
+	conf config.ClientConfig,
+	metricsRegistry *MetricsRegistry,
+	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
+	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(sdkKey string) (*OptlyClient, error) {
+	return func(sdkKey string) (*OptlyClient, error) {
+		log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
+		configManager := pcFactory(
+			sdkKey,
+			sdkconfig.WithPollingInterval(conf.PollingInterval),
+		)
+
+		if _, err := configManager.GetConfig(); err != nil {
+			return &OptlyClient{}, err
+		}
+
+		q := event.NewInMemoryQueue(conf.QueueSize)
+		ep := bpFactory(
+			event.WithQueueSize(conf.QueueSize),
+			event.WithBatchSize(conf.BatchSize),
+			event.WithFlushInterval(conf.FlushInterval),
+			event.WithQueue(q),
+			event.WithEventDispatcherMetrics(metricsRegistry),
+		)
+
+		forcedVariations := decision.NewMapExperimentOverridesStore()
+		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
+		optimizelyClient, err := optimizelyFactory.Client(
+			client.WithConfigManager(configManager),
+			client.WithExperimentOverrides(forcedVariations),
+			client.WithEventProcessor(ep),
+		)
+
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 	}
-
-	q := event.NewInMemoryQueue(conf.QueueSize)
-	ep := event.NewBatchEventProcessor(
-		event.WithQueueSize(conf.QueueSize),
-		event.WithBatchSize(conf.BatchSize),
-		event.WithFlushInterval(conf.FlushInterval),
-		event.WithQueue(q),
-		event.WithEventDispatcherMetrics(metricsRegistry),
-	)
-
-	forcedVariations := decision.NewMapExperimentOverridesStore()
-	optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
-	optimizelyClient, err := optimizelyFactory.Client(
-		client.WithConfigManager(configManager),
-		client.WithExperimentOverrides(forcedVariations),
-		client.WithEventProcessor(ep),
-	)
-
-	return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
 }
