@@ -109,9 +109,13 @@ func initOptlyClient(sdkKey string, conf config.ClientConfig, metricsRegistry *M
 	}
 
 	q := event.NewInMemoryQueue(conf.QueueSize)
-	ep := event.NewBatchEventProcessor(event.WithQueueSize(conf.QueueSize),
-		event.WithBatchSize(conf.BatchSize), event.WithQueue(q),
-		event.WithEventDispatcherMetrics(metricsRegistry))
+	ep := event.NewBatchEventProcessor(
+		event.WithQueueSize(conf.QueueSize),
+		event.WithBatchSize(conf.BatchSize),
+		event.WithFlushInterval(conf.FlushInterval),
+		event.WithQueue(q),
+		event.WithEventDispatcherMetrics(metricsRegistry),
+	)
 
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 	optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
