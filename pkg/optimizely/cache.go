@@ -43,14 +43,15 @@ type OptlyCache struct {
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
 func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 
-	myFunc := func(sdkkey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
+	// TODO is there a cleaner way to handle this translation???
+	cmLoader := func(sdkkey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
 		return sdkconfig.NewPollingProjectConfigManager(sdkkey, options...)
 	}
 
 	cache := &OptlyCache{
 		ctx:      ctx,
 		wg:       sync.WaitGroup{},
-		loader:   defaultLoader(conf, metricsRegistry, myFunc, event.NewBatchEventProcessor),
+		loader:   defaultLoader(conf, metricsRegistry, cmLoader, event.NewBatchEventProcessor),
 		optlyMap: cmap.New(),
 	}
 
