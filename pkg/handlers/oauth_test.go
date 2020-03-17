@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi"
 	"github.com/optimizely/agent/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
@@ -47,7 +48,7 @@ func (s *OAuthTestSuite) SetupTest() {
 				SDKKeys:    []string{"123"},
 			},
 		},
-		HMACSecrets: []string{"hmac_seekrit"},
+		HMACSecrets: []string{"gwWchSfHnCudOf6uj/zLqf5xQo2NaINWervgHOyv27M="},
 		TTL:         30 * time.Minute,
 	}
 	s.handler = NewOAuthHandler(&authConfig)
@@ -294,15 +295,7 @@ func TestOAuthDisabledTestSuite(t *testing.T) {
 	suite.Run(t, new(OAuthDisabledTestSuite))
 }
 
-type OAuthMissingHMACSecretTestSuite struct {
-	suite.Suite
-	handler *OAuthHandler
-	mux     *chi.Mux
-	secret  string
-}
-
-func (s *OAuthMissingHMACSecretTestSuite) SetupTest() {
-	s.secret = "RW+Uo/7z4ag9hAb10w8LIZFRFaSwS4nt1/l+uVgChIQ="
+func TestOAuthMissingHMACSecret(t *testing.T) {
 	config := config.ServiceAuthConfig{
 		Clients: []config.OAuthClientCredentials{
 			{
@@ -315,18 +308,45 @@ func (s *OAuthMissingHMACSecretTestSuite) SetupTest() {
 		HMACSecrets: []string{},
 		TTL:         30 * time.Minute,
 	}
-	s.handler = NewOAuthHandler(&config)
-
-	mux := chi.NewMux()
-	mux.Post("/api/token", s.handler.CreateAPIAccessToken)
-	mux.Post("/admin/token", s.handler.CreateAdminAccessToken)
-	s.mux = mux
+	handler := NewOAuthHandler(&config)
+	assert.Nil(t, handler)
 }
 
-func (s *OAuthMissingHMACSecretTestSuite) TestInvalidConfig() {
-	s.Nil(s.handler)
+type OAuthHMACSecretsValidationTestSuite struct {
+	suite.Suite
+	config *config.ServiceAuthConfig
 }
 
-func TestOAuthMissingHMACSecretTestSuite(t *testing.T) {
-	suite.Run(t, new(OAuthMissingHMACSecretTestSuite))
+func (s *OAuthHMACSecretsValidationTestSuite) SetupTest() {
+	s.config = &config.ServiceAuthConfig{
+		Clients: []config.OAuthClientCredentials{
+			{
+				ID:         "optly_user",
+				SecretHash: "JDJhJDEyJDNDOG12LmNCNzlHaHhGcEJtLzZZQk9VLnRneEpGTTlnTXozb2kyNS9ERzhJTDZOZkpGa0ND",
+				SDKKeys:    []string{"123"},
+			},
+		},
+		TTL:         30 * time.Minute,
+	}
+}
+
+func (s *OAuthHMACSecretsValidationTestSuite) TestOneHMACSecretNotBase64() {
+	s.config.HMACSecrets = []string {
+		"j390luT0CRUN2Aft4My8/ojuayRXEtE1fdNWUHqwQh8=", // valid base64
+		"not_valid_base64", // invalid
+	}
+	handler := NewOAuthHandler(s.config)
+	s.Nil(handler)
+}
+
+func (s *OAuthHMACSecretsValidationTestSuite) TestOnlyHMACSecretNotBase64() {
+	s.config.HMACSecrets = []string {
+		"not_valid_base64", // invalid
+	}
+	handler := NewOAuthHandler(s.config)
+	s.Nil(handler)
+}
+
+func TestOAuthHMACSecretsValidationTestSuite(t *testing.T) {
+	suite.Run(t, new(OAuthHMACSecretsValidationTestSuite))
 }

@@ -64,7 +64,7 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 	clientCredentials := make(map[string]ClientCredentials)
 	// TODO: need to validate all client IDs are unique
 	for _, clientCreds := range authConfig.Clients {
-		secretHashBytes, err := jwtauth.DecodeSecretHashFromConfig(clientCreds.SecretHash)
+		secretHashBytes, err := jwtauth.DecodeConfigValue(clientCreds.SecretHash)
 		if err != nil {
 			log.Error().Err(err).Msgf("error decoding client creds secret (paired with client ID: %v), skipping these credentials", clientCreds.ID)
 			continue
@@ -83,18 +83,26 @@ func NewOAuthHandler(authConfig *config.ServiceAuthConfig) *OAuthHandler {
 		}
 	}
 
-	hmacSecret := ""
-	if len(authConfig.HMACSecrets) > 0 {
-		hmacSecret = authConfig.HMACSecrets[0]
+	hmacSigningSecret := []byte{}
+	for i, hmacSecret := range authConfig.HMACSecrets {
+		decodedSecret, err := jwtauth.DecodeConfigValue(hmacSecret)
+		if err != nil {
+			log.Error().Err(err).Msgf("error decoding HMAC secret")
+			return nil
+		}
+		if i == 0 {
+			// The first secret is used to sign tokens - the rest are only used for validation (see middleware/auth.go)
+			hmacSigningSecret = decodedSecret
+		}
 	}
 
 	h := &OAuthHandler{
-		hmacSecret:        []byte(hmacSecret),
+		hmacSecret:        hmacSigningSecret,
 		ClientCredentials: clientCredentials,
 	}
 
 	if len(h.ClientCredentials) > 0 && len(h.hmacSecret) == 0 {
-		log.Error().Msg("Invalid auth configuration: provided client credentials, but missing HMAC secret")
+		log.Error().Msg("Invalid auth configuration: provided client credentials, but missing or empty HMAC secret")
 		return nil
 	}
 
