@@ -28,7 +28,6 @@ type Cache interface {
 
 // SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates
 type SyncedConfigManager interface {
-	GetConfig() (optimizelyconfig.ProjectConfig, error)
-	GetOptimizelyConfig() *optimizelyconfig.OptimizelyConfig
+	optimizelyconfig.ProjectConfigManager
 	SyncConfig()
 }

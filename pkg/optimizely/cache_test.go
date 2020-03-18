@@ -21,6 +21,11 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
+
+	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
@@ -89,7 +94,7 @@ func TestCacheTestSuite(t *testing.T) {
 	suite.Run(t, new(CacheTestSuite))
 }
 
-func mockLoader(sdkKey string, conf config.ClientConfig, metricsRegistry *MetricsRegistry) (*OptlyClient, error) {
+func mockLoader(sdkKey string) (*OptlyClient, error) {
 	if sdkKey == "ERROR" {
 		return &OptlyClient{}, fmt.Errorf("Error")
 	}
@@ -99,4 +104,36 @@ func mockLoader(sdkKey string, conf config.ClientConfig, metricsRegistry *Metric
 	tc.ProjectConfig.ProjectID = sdkKey
 
 	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations}, nil
+}
+
+func TestDefaultLoader(t *testing.T) {
+	bp := &event.BatchEventProcessor{}
+	bpFactory := func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
+		for _, option := range options {
+			option(bp)
+		}
+
+		return bp
+	}
+
+	// Note we're NOT testing that the ConfigManager was configured properly
+	// This would require a bit larger refactor since the optimizelyFactory.Client takes a few liberties
+	pcFactory := func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
+		return MockConfigManager{}
+	}
+
+	mr := &MetricsRegistry{}
+	conf := config.ClientConfig{
+		FlushInterval: 321 * time.Second,
+		BatchSize:     1234,
+		QueueSize:     5678,
+	}
+
+	loader := defaultLoader(conf, mr, pcFactory, bpFactory)
+	_, err := loader("sdkkey")
+	assert.NoError(t, err)
+
+	assert.Equal(t, conf.FlushInterval, bp.FlushInterval)
+	assert.Equal(t, conf.BatchSize, bp.BatchSize)
+	assert.Equal(t, conf.QueueSize, bp.MaxQueueSize)
 }
