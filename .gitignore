@@ -7,6 +7,9 @@ bin/
 # Generators created from OpenAPI spec
 generated/
 
+# Embeddable directory for serving static assets
+statik/
+
 # Test binary, built with `go test -c`
 *.test
 
