@@ -8,7 +8,7 @@ import requests
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
-ENDPOINT_NOTIFICATIONS = '/notifications/event-stream'
+ENDPOINT_NOTIFICATIONS = '/v1/notifications/event-stream'
 ENDPOINT_OVERRIDE = '/v1/override'
 ENDPOINT_TRACK = '/v1/track'
 
