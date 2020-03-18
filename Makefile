@@ -43,7 +43,7 @@ clean: check-go ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN) --modcache
 	rm -rf $(GOBIN)
 
-cover: check-go ## runs test suite with coverage profiling
+cover: check-go static ## runs test suite with coverage profiling
 	$(GOTEST) ./... -coverprofile=$(COVER_FILE)
 
 cover-html: cover ## generates test coverage html report
@@ -53,7 +53,7 @@ install: check-go ## installs all dev and ci dependencies, but does not install 
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.19.0
 	go get github.com/rakyll/statik
 
-lint: check-go ## runs `golangci-lint` linters defined in `.golangci.yml` file
+lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false ./...
 
 run: $(TARGET) ## builds and executes the TARGET binary
@@ -62,7 +62,7 @@ run: $(TARGET) ## builds and executes the TARGET binary
 static: check-go
 	statik -src=api/openapi-spec
 
-test: check-go ## recursively tests all .go files
+test: check-go static ## recursively tests all .go files
 	$(GOTEST) ./...
 
 include scripts/Makefile.ci

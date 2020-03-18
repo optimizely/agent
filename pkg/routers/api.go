@@ -28,7 +28,7 @@ import (
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
-	_ "github.com/optimizely/agent/statik"
+	_ "github.com/optimizely/agent/statik" // Required to serve openapi.yaml
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
@@ -122,11 +122,6 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
-	statikFS, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(opt.sdkMiddleware)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
@@ -137,6 +132,11 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	})
 
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
+
+	statikFS, err := fs.New()
+	if err != nil {
+		panic(err)
+	}
 
 	staticServer := http.FileServer(statikFS)
 	r.Handle("/openapi.yaml", staticServer)

@@ -92,7 +92,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 	suite.mux = NewAPIRouter(opts)
 }
 
-func (suite *APIV1TestSuite) TestOverride() {
+func (suite *APIV1TestSuite) TestValidRoutes() {
 
 	routes := []struct {
 		method string
@@ -115,6 +115,13 @@ func (suite *APIV1TestSuite) TestOverride() {
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
 		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
 	}
+}
+
+func (suite *APIV1TestSuite) TestOpenAPISpec() {
+	req := httptest.NewRequest("GET", "/openapi.yaml", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
 }
 
 func (suite *APIV1TestSuite) TestCreateAccessToken() {
