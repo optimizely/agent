@@ -5,15 +5,17 @@ function checkPrereq($software, $URL, $SHA, $mode) {
     $installed = (Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where { $_.DisplayName -eq $software }) -ne $null
 
     If(-Not $installed) {
-	    Write-Host "'$software' is NOT installed.";
+	    Write-Host "'$software' is NOT installed. (You may (s)kip if you already have it installed and it is in your $PATH)";
         if ($mode -eq "noninteractive") {
             $answer = "y"
         } else {
-            $answer = Read-Host -Prompt "Install? (y/n)"
+            $answer = Read-Host -Prompt "Install? (y)es, (n)o or (s)kip"
         }
         if ($answer -eq "y") {
             installPrereq $URL $SHA
-        }else{
+        } elseif ($answer -eq "s") {
+            Write-Host "Skipped by user."
+        } else {
             Write-Host "Aborted by user."
             exit 0
         }
