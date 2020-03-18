@@ -9,22 +9,9 @@ Install requirements `pip install -r tests/acceptance/requirements.txt`
 
 
 Run tests  
-1. `pytest -v tests/acceptance/test_acceptance/ --host http://localhost:8080`
+`pytest -v tests/acceptance/test_acceptance/ --host http://localhost:8080`
 
 `--host` can point to any URL where agent service is located
 
 For a nicer output you can add additional flags and run this  
 `pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080`
-
-To run an individual test  
-TBD
-
-
-
-
-
-
-
-
-
-
