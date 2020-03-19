@@ -65,8 +65,7 @@ function buildOptimizelyAgent {
 
     $env:GO111MODULE = "on"
     $VERSION = (git describe --tags)
-    go get github.com/rakyll/statik
-    statik -src=api/openapi-spec
+
 
     go build -ldflags "-s -w -X main.Version=$VERSION" -o bin\optimizely.exe cmd\optimizely\main.go
     if (!$?) {
@@ -79,6 +78,12 @@ function refreshPath {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") +
                 ";" +
                 [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
+function installDeps {
+    Write-Host "Installing build dependencies for Optimizely Agent..." -ForegroundColor Green
+    go get github.com/rakyll/statik
+    statik -src=api/openapi-spec
 }
 
 function runOptimizelyAgentTests {
@@ -96,7 +101,6 @@ function main($mode) {
 
     # noninteractive mode: ./build.ps1 noninteractive (default: interactive)
 
-
     # check if go is installed, if not, install it.
     checkPrereq 'Go Programming Language amd64 go1.13.5' https://dl.google.com/go/go1.13.5.windows-amd64.msi eabcf66d6d8f44de21a96a18d957990c62f21d7fadcb308a25c6b58c79ac2b96 $mode
     # same but with git
@@ -104,6 +108,9 @@ function main($mode) {
 
     # refresh $PATH
     refreshPath
+
+    # Install additional build deps
+    installDeps
 
     # run tests
     runOptimizelyAgentTests
