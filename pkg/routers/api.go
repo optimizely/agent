@@ -139,5 +139,5 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	}
 
 	staticServer := http.FileServer(statikFS)
-	r.Handle("/openapi.yaml", staticServer)
+	r.Handle("/*", staticServer)
 }

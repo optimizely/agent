@@ -117,11 +117,21 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 	}
 }
 
-func (suite *APIV1TestSuite) TestOpenAPISpec() {
-	req := httptest.NewRequest("GET", "/openapi.yaml", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-	suite.Equal(http.StatusOK, rec.Code)
+func (suite *APIV1TestSuite) TestStaticContent() {
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"GET", "/"},
+		{"POST", "/openapi.yaml"},
+	}
+
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, route.path, nil)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+	}
 }
 
 func (suite *APIV1TestSuite) TestCreateAccessToken() {

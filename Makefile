@@ -60,7 +60,7 @@ run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
 
 static: check-go
-	statik -src=api/openapi-spec
+	statik -src=web/static -f
 
 test: check-go static ## recursively tests all .go files
 	$(GOTEST) ./...
