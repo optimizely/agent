@@ -16,12 +16,22 @@ usage in our [examples folder](./examples).
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
-## Running from source
+## Running from source (Linux / OSX)
 Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
+
+## Running from source (Windows)
+A helper script is available under [scripts/build.ps1](./scripts/build.ps1) to automate compiling Agent in a Windows environment. The script will download and install both Git and Golang and then attempt to compile Agent. Open a Powershell terminal and run 
+```bash
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+
+.\scripts\build.ps1
+
+.\bin\optimizely.exe
+```
 
 ## Running via Docker
 If you have Docker installed, Optimizely Agent can be started as a container. First pull the Docker image with:
