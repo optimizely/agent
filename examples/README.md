@@ -7,7 +7,7 @@ Full Stack or Rollouts account.
 ### Installation
 
 The included examples were written in python and assumes python 3.7+. If using a python3 venv [virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
-you can install all of the dependencies in the requirement.txt:
+you can install all of the dependencies in the requirements.txt:
 ```bash
 pip install -r requirements.txt
 ```
