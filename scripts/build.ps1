@@ -62,8 +62,12 @@ function buildOptimizelyAgent {
         Write-Host "Optimizely Agent needs to build from its own git repository in order to determine its version." -ForegroundColor Red
         exit 1
     }
+
     $env:GO111MODULE = "on"
     $VERSION = (git describe --tags)
+    go get github.com/rakyll/statik
+    statik -src=api/openapi-spec
+
     go build -ldflags "-s -w -X main.Version=$VERSION" -o bin\optimizely.exe cmd\optimizely\main.go
     if (!$?) {
         exit 1
