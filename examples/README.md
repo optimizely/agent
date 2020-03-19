@@ -1,6 +1,8 @@
 ## Optimizely Agent Examples
 
-This folder provides a set of sample scripts to illustrate some of the main API features.
+This folder provides a set of sample scripts to illustrate some of the main API features. Most of the examples below
+require an SDK key `<SDK-Key>` as one of the arguments. The SDK key can be found in the settings of your Optimizely
+Full Stack or Rollouts account.
 
 ### Installation
 
