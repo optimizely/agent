@@ -47,7 +47,7 @@ jobs:
       os: linux
       dist: xenial
       script:
-        - make -e install lint
+        - make -e lint
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
 
     - stage: Test
@@ -113,4 +113,4 @@ jobs:
 before_script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-  - make -e build
+  - make -e install build

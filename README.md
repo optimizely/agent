@@ -280,6 +280,10 @@ sync
 (c) 2009 The Go Authors
 License (BSD 3-Clause): https://github.com/golang/sync
 
+statik
+(c) 2014 rakyll
+License (Apache 2): github.com/rakyll/statik v0.1.7
+
 sys 
 (c) 2009 The Go Authors
 License (BSD 3-Clause): https://github.com/golang/sys

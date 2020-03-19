@@ -28,7 +28,7 @@ LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION} -X github.com/optimizely/
 
 all: test lint build ## runs the test, lint and build targets
 
-$(TARGET): check-go
+$(TARGET): check-go static
 	$(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/optimizely/main.go
 
 build: $(TARGET) check-go ## builds and installs binary in bin/
@@ -43,7 +43,7 @@ clean: check-go ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN) --modcache
 	rm -rf $(GOBIN)
 
-cover: check-go ## runs test suite with coverage profiling
+cover: check-go static ## runs test suite with coverage profiling
 	$(GOTEST) ./... -coverprofile=$(COVER_FILE)
 
 cover-html: cover ## generates test coverage html report
@@ -51,14 +51,18 @@ cover-html: cover ## generates test coverage html report
 
 install: check-go ## installs all dev and ci dependencies, but does not install golang
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.19.0
+	go get github.com/rakyll/statik
 
-lint: check-go ## runs `golangci-lint` linters defined in `.golangci.yml` file
+lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false ./...
 
 run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
 
-test: check-go ## recursively tests all .go files
+static: check-go
+	statik -src=web/static -f
+
+test: check-go static ## recursively tests all .go files
 	$(GOTEST) ./...
 
 include scripts/Makefile.ci
