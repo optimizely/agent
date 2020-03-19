@@ -24,12 +24,11 @@ make run
 This will start the Optimizely Agent with the default configuration in the foreground.
 
 ## Running from source (Windows)
-A helper script is available under [scripts/build.ps1](./scripts/build.ps1) to automate compiling Agent in a Windows environment. Open a Powershell terminal and run 
+A helper script is available under [scripts/build.ps1](./scripts/build.ps1) to automate compiling Agent in a Windows environment. The script will download and install both Git and Golang and then attempt to compile Agent. Open a Powershell terminal and run 
 ```bash
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
 .\scripts\build.ps1
 ```
-The script will download and install both Git and Golang and then attempt to compile Agent. Click here to see expected [output](https://travis-ci.com/github/optimizely/agent) (look under Test/windows build.ps1 test)
 
 ## Running via Docker
 If you have Docker installed, Optimizely Agent can be started as a container. First pull the Docker image with:
