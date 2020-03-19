@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# example: python track.py <SDK-Key> <Event-Key>
+# This track example shows how to send conversion events via the /track api.
 
 import json
 import requests
