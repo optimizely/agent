@@ -50,7 +50,9 @@ def agent_server():
     Also updates config.yaml file - before agent server starts it sets enableNotifications
     to true and enableOverrides to true and then both back to false at the end
     """
-    if os.getenv('host') == 'http://localhost:8080/':
+    host = os.getenv('host')
+
+    if host == 'http://localhost:8080':
         # start server
         subprocess.Popen(["make", "run"], shell=False)
         wait_for_agent_to_start()
