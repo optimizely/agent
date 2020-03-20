@@ -216,6 +216,9 @@ Custom metrics are also provided for the individual service endpoints and follow
 ## Authorization
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see the [Authorization Guide](./docs/auth.md).
 
+## Notifications
+Just as you can use Notification Listeners to subscribe to events of interest with Optimizely SDKs, you can use the Notifications endpoint to subscribe to events in Agent. For more information, see the [Notifications Guide](./docs/notifications.md).
+
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
 

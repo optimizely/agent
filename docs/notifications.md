@@ -17,12 +17,21 @@ Or, enable it by setting an environment variable:
 export OPTIMIZELY_API_ENABLENOTIFICATIONS=1
 ```
 
-Then, sent a `GET` request to `/v1/notifications/event-stream`.
+## Usage
+Send a `GET` request to `/v1/notifications/event-stream` to subscribe:
 ```shell script
 curl -N -H "Accept:text/event-stream" -H "X-Optimizely-Sdk-Key:9LCprAQyd1bs1BBXZ3nVji"\
   http://localhost:8080/v1/notifications/event-stream
 ```
 This connection will remain open, and any notifications triggered by other requests received by Agent are pushed as events to this stream. Try sending requests to `/v1/activate` or `/v1/track` to see notifications being triggered.
+
+
+### Filtering
+To subscribe only to a particular category of notifications, add a `filter` query parameter. For example, to subscribe only to Decision notifications:
+```shell script
+curl -N -H "Accept:text/event-stream" -H "X-Optimizely-Sdk-Key:9LCprAQyd1bs1BBXZ3nVji"\
+  http://localhost:8080/v1/notifications/event-stream?filter=decision
+```
 
 
 ## Example
