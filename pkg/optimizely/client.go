@@ -47,7 +47,7 @@ type Decision struct {
 	Type          string                 `json:"type"`
 	Variables     map[string]interface{} `json:"variables,omitempty"`
 	Enabled       bool                   `json:"enabled"`
-	Error         string                 `json:"error"`
+	Error         string                 `json:"error,omitempty"`
 }
 
 // Override model
@@ -63,7 +63,7 @@ type Override struct {
 type Track struct {
 	UserID   string `json:"userId"`
 	EventKey string `json:"eventKey"`
-	Error    string `json:"error"`
+	Error    string `json:"error,omitempty"`
 }
 
 // UpdateConfig uses config manager to sync and set project config

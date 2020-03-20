@@ -65,16 +65,23 @@ func (suite *ClientTestSuite) TestTrackEvent() {
 	eventKey := "eventKey"
 	suite.testClient.AddEvent(entities.Event{Key: eventKey})
 	tags := map[string]interface{}{"tag": "value"}
-	_, err := suite.optlyClient.TrackEvent(eventKey, suite.userContext, tags)
+	actual, err := suite.optlyClient.TrackEvent(eventKey, suite.userContext, tags)
 	suite.NoError(err)
+
+	expected := &Track{
+		UserID:   "userId",
+		EventKey: "eventKey",
+	}
+
+	suite.Equal(expected, actual)
 
 	events := suite.testClient.GetProcessedEvents()
 	suite.Equal(1, len(events))
 
-	actual := events[0]
-	suite.Equal(eventKey, actual.Conversion.Key)
-	suite.Equal("userId", actual.VisitorID)
-	suite.Equal(tags, actual.Conversion.Tags)
+	actualEvent := events[0]
+	suite.Equal(eventKey, actualEvent.Conversion.Key)
+	suite.Equal("userId", actualEvent.VisitorID)
+	suite.Equal(tags, actualEvent.Conversion.Tags)
 }
 
 func (suite *ClientTestSuite) TestValidSetForcedVariations() {
