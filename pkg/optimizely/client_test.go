@@ -191,6 +191,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig().FeaturesMap["advanced"]
 
 	expected := &Decision{
+		UserID:     "testUser",
 		FeatureKey: "advanced",
 		Type:       "feature",
 		Variables: map[string]interface{}{
@@ -218,6 +219,7 @@ func (suite *ClientTestSuite) TestActivateExperiment() {
 	experiment := suite.testClient.OptimizelyClient.GetOptimizelyConfig().ExperimentsMap["testExperiment1"]
 
 	expected := &Decision{
+		UserID:        "testUser",
 		ExperimentKey: "testExperiment1",
 		VariationKey:  "variationA",
 		Type:          "experiment",

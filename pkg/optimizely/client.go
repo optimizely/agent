@@ -41,6 +41,7 @@ type OptlyClient struct {
 
 // Decision Model
 type Decision struct {
+	UserID        string                 `json:"userId"`
 	ExperimentKey string                 `json:"experimentKey"`
 	FeatureKey    string                 `json:"featureKey"`
 	VariationKey  string                 `json:"variationKey"`
@@ -172,6 +173,7 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 
 	// TODO add experiment and variation keys where applicable
 	dec := &Decision{
+		UserID:     uc.ID,
 		FeatureKey: key,
 		Variables:  variables,
 		Enabled:    enabled,
@@ -196,6 +198,7 @@ func (c *OptlyClient) ActivateExperiment(key string, uc entities.UserContext, di
 	}
 
 	dec := &Decision{
+		UserID:        uc.ID,
 		ExperimentKey: key,
 		VariationKey:  variation,
 		Enabled:       variation != "",

@@ -82,6 +82,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		case "experimentKey-not-found":
 			logger.Debug().Str("experimentKey", key).Msg("experimentKey not found")
 			d = &optimizely.Decision{
+				UserID:        uc.ID,
 				ExperimentKey: key,
 				Error:         "experimentKey not found",
 			}
@@ -89,6 +90,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		case "featureKey-not-found":
 			logger.Debug().Str("featureKey", key).Msg("featureKey not found")
 			d = &optimizely.Decision{
+				UserID:     uc.ID,
 				FeatureKey: key,
 				Error:      "featureKey not found",
 			}
