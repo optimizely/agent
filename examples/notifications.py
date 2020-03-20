@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # example: python basic.py <SDK-Key>
-# This basic example shows how to use the notifications endpoint to stream notifications using Server-Sent Events
+# This example shows how to use the notifications endpoint to stream notifications using Server-Sent Events
 
 import json
 import requests
@@ -10,6 +10,8 @@ import threading
 from sseclient import SSEClient
 
 def print_notifications(sdk_key):
+    # SSEClient (https://pypi.org/project/sseclient/) streams Server-Sent Events from the notifications endpoint
+    # (/v1/notifications/event-stream), and we print each one
     messages = SSEClient('http://localhost:8080/v1/notifications/event-stream', headers={
         'X-Optimizely-Sdk-Key': sdk_key,
     })
@@ -24,7 +26,6 @@ sdk_key = sys.argv[1]
 thread = threading.Thread(target=print_notifications, args=(sdk_key,))
 thread.start()
 
-
 s = requests.Session()
 s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 
@@ -38,6 +39,9 @@ payload = {
         "attr2": "sample-attribute-2"
     }
 }
+
+# Activate features and experiments - these will trigger notifications that will be sent to notification event stream
+# subscribers
 
 for key in env['featuresMap']:
     params = {"featureKey": key}
