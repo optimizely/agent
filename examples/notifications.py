@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# example: python basic.py <SDK-Key>
+# example: python notifications.py <SDK-Key>
 # This example shows how to use the notifications endpoint to stream notifications using Server-Sent Events
 
 import json
