@@ -19,7 +19,6 @@ package optimizely
 
 import (
 	"errors"
-	"fmt"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -60,6 +59,13 @@ type Override struct {
 	Messages         []string `json:"messages"`
 }
 
+// Track response model
+type Track struct {
+	UserID   string `json:"userId"`
+	EventKey string `json:"eventKey"`
+	Error    string `json:"error"`
+}
+
 // UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {
@@ -68,17 +74,24 @@ func (c *OptlyClient) UpdateConfig() {
 }
 
 // TrackEvent checks for the existence of the event before calling the OptimizelyClient Track method
-func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, eventTags map[string]interface{}) error {
-	pc, err := c.ConfigManager.GetConfig()
-	if err != nil {
-		return err
+func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, eventTags map[string]interface{}) (*Track, error) {
+	tr := &Track{
+		UserID:   uc.ID,
+		EventKey: eventKey,
 	}
 
-	if _, err = pc.GetEventByKey(eventKey); err != nil {
-		return fmt.Errorf("eventKey: %q %w", eventKey, ErrEntityNotFound)
+	if pc, err := c.ConfigManager.GetConfig(); err != nil {
+		return &Track{}, err
+	} else if _, err := pc.GetEventByKey(eventKey); err != nil {
+		tr.Error = err.Error()
+		return tr, nil
 	}
 
-	return c.Track(eventKey, uc, eventTags)
+	if err := c.Track(eventKey, uc, eventTags); err != nil {
+		return &Track{}, err
+	}
+
+	return tr, nil
 }
 
 // SetForcedVariation sets a forced variation for the argument experiment key and user ID

@@ -44,8 +44,6 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Event does not exist
       requestBody:
         $ref: '#/components/requestBodies/TrackContext'
   /v1/activate:

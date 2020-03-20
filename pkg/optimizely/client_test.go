@@ -18,7 +18,6 @@
 package optimizely
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -66,7 +65,7 @@ func (suite *ClientTestSuite) TestTrackEvent() {
 	eventKey := "eventKey"
 	suite.testClient.AddEvent(entities.Event{Key: eventKey})
 	tags := map[string]interface{}{"tag": "value"}
-	err := suite.optlyClient.TrackEvent(eventKey, suite.userContext, tags)
+	_, err := suite.optlyClient.TrackEvent(eventKey, suite.userContext, tags)
 	suite.NoError(err)
 
 	events := suite.testClient.GetProcessedEvents()
@@ -244,7 +243,13 @@ func TestClientTestSuite(t *testing.T) {
 	suite.Run(t, new(ClientTestSuite))
 }
 
-type ErrorConfigManager struct{}
+type ErrorConfigManager struct {
+	error string
+}
+
+func NewErrorConfigManager(message string) ErrorConfigManager {
+	return ErrorConfigManager{error: message}
+}
 
 func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
 	panic("implement me")
@@ -294,19 +299,23 @@ func TestTrackErrorConfigManager(t *testing.T) {
 	testClient := optimizelytest.NewClient()
 	optlyClient := &OptlyClient{
 		OptimizelyClient: testClient.OptimizelyClient,
-		ConfigManager:    ErrorConfigManager{},
+		ConfigManager:    NewErrorConfigManager("config error"),
 		ForcedVariations: testClient.ForcedVariations,
 	}
 
-	err := optlyClient.TrackEvent("something", entities.UserContext{}, map[string]interface{}{})
+	uc := entities.UserContext{ID: "userId"}
+	actual, err := optlyClient.TrackEvent("something", uc, map[string]interface{}{})
 	assert.EqualError(t, err, "config error")
+
+	expected := &Track{}
+	assert.Equal(t, expected, actual)
 }
 
 func TestTrackErrorClient(t *testing.T) {
 	// Construct an OptimizelyClient with an erroring config manager
 	factory := client.OptimizelyFactory{}
 	oClient, _ := factory.Client(
-		client.WithConfigManager(ErrorConfigManager{}),
+		client.WithConfigManager(NewErrorConfigManager("track error")),
 	)
 
 	// Construct a valid config manager as part of the OptlyClient wrapper
@@ -321,7 +330,15 @@ func TestTrackErrorClient(t *testing.T) {
 		ForcedVariations: nil,
 	}
 
-	err := optlyClient.TrackEvent("something", entities.UserContext{}, map[string]interface{}{})
-	assert.EqualError(t, err, `eventKey: "something" not found`)
-	assert.True(t, errors.Is(err, ErrEntityNotFound))
+	uc := entities.UserContext{ID: "userId"}
+	actual, err := optlyClient.TrackEvent("something", uc, map[string]interface{}{})
+	assert.NoError(t, err)
+
+	expected := &Track{
+		UserID:   "userId",
+		EventKey: "something",
+		Error:    "Event with key something not found",
+	}
+
+	assert.Equal(t, expected, actual)
 }
