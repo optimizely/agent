@@ -110,6 +110,8 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
+More information about configuring Agent can be found in the [Advanced Configuration Notes](./docs/advanced-configuration.md).
+
 ## API
 
 The core API is implemented as a REST service configured on it's own HTTP listener port (default 8080).
