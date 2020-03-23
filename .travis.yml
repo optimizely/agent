@@ -92,7 +92,6 @@ jobs:
         - pip install -r tests/acceptance/requirements.txt
       script:
         - pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
-
     - stage: 'Building Optimizely Agent'
       if: (branch = master AND type = push) OR type = pull_request OR tag IS present
       env:
@@ -105,7 +104,17 @@ jobs:
       script:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
         
-    - stage: Build
+
+    - stage: Test Build using latest tag (no upload)
+      name: linux
+      os: linux
+      dist: xenial
+
+      script:
+        - export APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')
+        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+
+    - stage: Build and Upload
       if: type = push AND tag IS present
       name: linux
       os: linux
@@ -117,10 +126,8 @@ jobs:
       env: APP_VERSION=${TRAVIS_TAG#v}
 
       script:
-        # now we're going to create packages
-        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
-        # upload packages to artifactory
-        - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+        # now we're going to create packages & upload packages
+        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh && $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
 
 before_script:
   # https://github.com/travis-ci/gimme

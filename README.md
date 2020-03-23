@@ -16,12 +16,22 @@ usage in our [examples folder](./examples).
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
-## Running from source
+## Running from source (Linux / OSX)
 Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
+
+## Running from source (Windows)
+A helper script is available under [scripts/build.ps1](./scripts/build.ps1) to automate compiling Agent in a Windows environment. The script will download and install both Git and Golang and then attempt to compile Agent. Open a Powershell terminal and run 
+```bash
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+
+.\scripts\build.ps1
+
+.\bin\optimizely.exe
+```
 
 ## Running via Docker
 If you have Docker installed, Optimizely Agent can be started as a container. First pull the Docker image with:
@@ -99,6 +109,8 @@ Below is a comprehensive list of available configuration properties.
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
+
+More information about configuring Agent can be found in the [Advanced Configuration Notes](./docs/advanced-configuration.md).
 
 ## API
 
@@ -205,6 +217,9 @@ Custom metrics are also provided for the individual service endpoints and follow
 
 ## Authorization
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see the [Authorization Guide](./docs/auth.md).
+
+## Notifications
+Just as you can use Notification Listeners to subscribe to events of interest with Optimizely SDKs, you can use the Notifications endpoint to subscribe to events in Agent. For more information, see the [Notifications Guide](./docs/notifications.md).
 
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
