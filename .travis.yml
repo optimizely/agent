@@ -93,7 +93,16 @@ jobs:
       script:
         - pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
 
-    - stage: Build
+    - stage: Test Build using latest tag (no upload)
+      name: linux
+      os: linux
+      dist: xenial
+
+      script:
+        - export APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')
+        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+
+    - stage: Build and Upload
       if: type = push AND tag IS present
       name: linux
       os: linux
