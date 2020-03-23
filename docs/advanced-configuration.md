@@ -30,7 +30,7 @@ client:
 export OPTIMIZELY_CLIENT_POLLINGINTERVAL=120s
 ```
 
-##Unsupported Environment Variable Options
+## Unsupported Environment Variable Options
 Some options can only be set via config file, and not environment variable (for details on these options, see the Configuration Options table in the [main README](../README.md)):
 - `admin.auth.clients`
 - `api.auth.clients`
