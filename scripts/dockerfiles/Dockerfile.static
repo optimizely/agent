@@ -3,7 +3,6 @@ FROM golang:$GO_VERSION as builder
 
 WORKDIR /go/src/github.com/optimizely/agent
 COPY . .
-
 RUN make install
 RUN make ci_build_static_binary
 
