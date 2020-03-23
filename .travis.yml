@@ -105,10 +105,8 @@ jobs:
       env: APP_VERSION=${TRAVIS_TAG#v}
 
       script:
-        # now we're going to create packages
-        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
-        # upload packages to artifactory
-        - $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+        # now we're going to create packages & upload packages
+        - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh && $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
 
 before_script:
   # https://github.com/travis-ci/gimme
