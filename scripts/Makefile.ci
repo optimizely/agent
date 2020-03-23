@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-ci_build_static_binary: ## build static binary
+ci_build_static_binary: check-go ## build static binary
 	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/optimizely/main.go
 
 ci_build_dockerimage: ## build minimal docker image of optimizely
