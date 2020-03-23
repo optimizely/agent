@@ -16,8 +16,7 @@ expected_activate_ab = """[
         "featureKey": "",
         "variationKey": "variation_1",
         "type": "experiment",
-        "enabled": true,
-        "error": ""
+        "enabled": true
     }
 ]"""
 
@@ -90,8 +89,7 @@ expected_activate_feat = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
@@ -161,8 +159,7 @@ expected_activate_type_exper = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -170,8 +167,7 @@ expected_activate_type_exper = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
@@ -182,8 +178,7 @@ expected_activate_type_feat = """[
     "featureKey": "feature_2",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -191,8 +186,7 @@ expected_activate_type_feat = """[
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false,
-    "error": ""
+    "enabled": false
   },
   {
     "userId": "matjaz",
@@ -200,8 +194,7 @@ expected_activate_type_feat = """[
     "featureKey": "feature_4",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -209,8 +202,7 @@ expected_activate_type_feat = """[
     "featureKey": "feature_5",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -224,8 +216,7 @@ expected_activate_type_feat = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
@@ -337,8 +328,7 @@ expected_enabled_true_all_true = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -346,8 +336,7 @@ expected_enabled_true_all_true = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
@@ -358,8 +347,7 @@ expected_enabled_true_feature_off = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
@@ -372,8 +360,7 @@ expected_enabled_false_feature_off = """[
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false,
-    "error": ""    
+    "enabled": false
   }
 ]"""
 
@@ -384,8 +371,7 @@ expected_enabled_empty = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -399,8 +385,7 @@ expected_enabled_empty = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
@@ -411,8 +396,7 @@ expected_enabled_invalid = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -426,8 +410,7 @@ expected_enabled_invalid = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
@@ -484,8 +467,7 @@ expected_activate_with_config = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -493,8 +475,7 @@ expected_activate_with_config = """[
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -508,8 +489,7 @@ expected_activate_with_config = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -517,8 +497,7 @@ expected_activate_with_config = """[
     "featureKey": "feature_2",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -526,8 +505,7 @@ expected_activate_with_config = """[
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false,
-    "error": ""
+    "enabled": false
   },
   {
     "userId": "matjaz",
@@ -535,8 +513,7 @@ expected_activate_with_config = """[
     "featureKey": "feature_4",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
     "userId": "matjaz",
@@ -544,8 +521,7 @@ expected_activate_with_config = """[
     "featureKey": "feature_5",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
