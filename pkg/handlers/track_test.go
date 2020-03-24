@@ -133,14 +133,25 @@ func (suite *TrackTestSuite) TestTrackEventNoTags() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.Equal(http.StatusNoContent, rec.Code)
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual optimizely.Track
+	suite.NoError(json.Unmarshal(rec.Body.Bytes(), &actual))
+
+	expected := optimizely.Track{
+		UserID:   "testUser",
+		EventKey: eventKey,
+	}
+
+	suite.Equal(expected, actual)
 
 	events := suite.tc.GetProcessedEvents()
 	suite.Equal(1, len(events))
 
-	actual := events[0]
-	suite.Equal(eventKey, actual.Conversion.Key)
-	suite.Equal("testUser", actual.VisitorID)
+	actualEvent := events[0]
+	suite.Equal(eventKey, actualEvent.Conversion.Key)
+	suite.Equal("testUser", actualEvent.VisitorID)
 }
 
 func (suite *TrackTestSuite) TestTrackEventWithTags() {
@@ -161,15 +172,26 @@ func (suite *TrackTestSuite) TestTrackEventWithTags() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.Equal(http.StatusNoContent, rec.Code)
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual optimizely.Track
+	suite.NoError(json.Unmarshal(rec.Body.Bytes(), &actual))
+
+	expected := optimizely.Track{
+		UserID:   "testUser",
+		EventKey: eventKey,
+	}
+
+	suite.Equal(expected, actual)
 
 	events := suite.tc.GetProcessedEvents()
 	suite.Equal(1, len(events))
 
-	actual := events[0]
-	suite.Equal(eventKey, actual.Conversion.Key)
-	suite.Equal(tb.UserID, actual.VisitorID)
-	suite.Equal(tb.EventTags, actual.Conversion.Tags)
+	actualEvent := events[0]
+	suite.Equal(eventKey, actualEvent.Conversion.Key)
+	suite.Equal(tb.UserID, actualEvent.VisitorID)
+	suite.Equal(tb.EventTags, actualEvent.Conversion.Tags)
 }
 
 func (suite *TrackTestSuite) TestTrackEventWithInvalidTags() {
@@ -190,7 +212,7 @@ func (suite *TrackTestSuite) TestTrackEventParamError() {
 		code    int
 		message string
 	}{
-		{"?eventKey=invalid", http.StatusNotFound, `eventKey: "invalid" not found`},
+		{"?eventKey=invalid", http.StatusOK, "Event with key invalid not found"},
 		{"?eventKey=", http.StatusBadRequest, "missing required path parameter: eventKey"},
 		{"", http.StatusBadRequest, "missing required path parameter: eventKey"},
 	}

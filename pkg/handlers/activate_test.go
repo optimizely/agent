@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,7 +39,7 @@ type ActivateTestSuite struct {
 	suite.Suite
 	oc   *optimizely.OptlyClient
 	tc   *optimizelytest.TestClient
-	body io.Reader
+	body []byte
 	mux  *chi.Mux
 }
 
@@ -70,7 +69,7 @@ func (suite *ActivateTestSuite) SetupTest() {
 	payload, err := json.Marshal(ab)
 	suite.NoError(err)
 
-	suite.body = bytes.NewBuffer(payload)
+	suite.body = payload
 	suite.mux = mux
 	suite.tc = testClient
 	suite.oc = optlyClient
@@ -80,7 +79,7 @@ func (suite *ActivateTestSuite) TestGetFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
-	req := httptest.NewRequest("POST", "/activate?featureKey=one&disableTracking=true", suite.body)
+	req := httptest.NewRequest("POST", "/activate?featureKey=one&disableTracking=true", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -92,6 +91,7 @@ func (suite *ActivateTestSuite) TestGetFeatureWithFeatureTest() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
+		UserID:     "testUser",
 		FeatureKey: "one",
 		Type:       "feature",
 		Enabled:    true,
@@ -105,7 +105,7 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureRollout() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
-	req := httptest.NewRequest("POST", "/activate?featureKey=one", suite.body)
+	req := httptest.NewRequest("POST", "/activate?featureKey=one", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -117,6 +117,7 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureRollout() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
+		UserID:     "testUser",
 		FeatureKey: "one",
 		Enabled:    true,
 		Type:       "feature",
@@ -130,7 +131,7 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
-	req := httptest.NewRequest("POST", "/activate?featureKey=one", suite.body)
+	req := httptest.NewRequest("POST", "/activate?featureKey=one", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -142,6 +143,7 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
+		UserID:     "testUser",
 		FeatureKey: "one",
 		Type:       "feature",
 		Enabled:    true,
@@ -157,7 +159,7 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureTest() {
 }
 
 func (suite *ActivateTestSuite) TestGetFeatureMissingFeature() {
-	req := httptest.NewRequest("POST", "/activate?featureKey=feature-missing", suite.body)
+	req := httptest.NewRequest("POST", "/activate?featureKey=feature-missing", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
@@ -168,6 +170,7 @@ func (suite *ActivateTestSuite) TestGetFeatureMissingFeature() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
+		UserID:     "testUser",
 		FeatureKey: "feature-missing",
 		Error:      "featureKey not found",
 	}
@@ -176,34 +179,8 @@ func (suite *ActivateTestSuite) TestGetFeatureMissingFeature() {
 	suite.Equal(expected, actual[0])
 }
 
-func (suite *ActivateTestSuite) TestGetVariation() {
-	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
-	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
-
-	req := httptest.NewRequest("POST", "/activate?experimentKey=one&disableTracking=true", nil)
-	rec := httptest.NewRecorder()
-	suite.mux.ServeHTTP(rec, req)
-
-	suite.Equal(http.StatusOK, rec.Code)
-
-	// Unmarshal response
-	var actual []optimizely.Decision
-	err := json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-
-	expected := optimizely.Decision{
-		ExperimentKey: "one",
-		VariationKey:  testVariation.Key,
-		Type:          "experiment",
-		Enabled:       true,
-	}
-
-	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
-	suite.Equal(expected, actual[0])
-}
-
 func (suite *ActivateTestSuite) TestGetVariationMissingExperiment() {
-	req := httptest.NewRequest("POST", "/activate?experimentKey=experiment-missing", suite.body)
+	req := httptest.NewRequest("POST", "/activate?experimentKey=experiment-missing", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
@@ -214,6 +191,7 @@ func (suite *ActivateTestSuite) TestGetVariationMissingExperiment() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
+		UserID:        "testUser",
 		ExperimentKey: "experiment-missing",
 		Error:         "experimentKey not found",
 	}
@@ -226,7 +204,7 @@ func (suite *ActivateTestSuite) TestActivateExperiment() {
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
 
-	req := httptest.NewRequest("POST", "/activate?experimentKey=one", suite.body)
+	req := httptest.NewRequest("POST", "/activate?experimentKey=one", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -238,6 +216,7 @@ func (suite *ActivateTestSuite) TestActivateExperiment() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
+		UserID:        "testUser",
 		ExperimentKey: "one",
 		VariationKey:  testVariation.Key,
 		Type:          "experiment",
@@ -264,16 +243,19 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 
 	expected := []optimizely.Decision{
 		{
+			UserID:     "testUser",
 			Enabled:    true,
 			FeatureKey: "featureA",
 			Type:       "feature",
 		},
 		{
+			UserID:     "testUser",
 			Enabled:    true,
 			FeatureKey: "featureB",
 			Type:       "feature",
 		},
 		{
+			UserID:     "testUser",
 			Enabled:    true,
 			FeatureKey: "featureC",
 			Type:       "feature",
@@ -285,7 +267,7 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 
 	// Toggle between tracking and no tracking.
 	for _, flag := range []string{"true", "false"} {
-		req := httptest.NewRequest("POST", "/activate?type=feature&disableTracking="+flag, suite.body)
+		req := httptest.NewRequest("POST", "/activate?type=feature&disableTracking="+flag, bytes.NewBuffer(suite.body))
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
 
@@ -315,18 +297,21 @@ func (suite *ActivateTestSuite) TestActivateExperiments() {
 
 	expected := []optimizely.Decision{
 		{
+			UserID:        "testUser",
 			ExperimentKey: "one",
 			VariationKey:  testVariationA.Key,
 			Type:          "experiment",
 			Enabled:       true,
 		},
 		{
+			UserID:        "testUser",
 			ExperimentKey: "two",
 			VariationKey:  testVariationB.Key,
 			Type:          "experiment",
 			Enabled:       true,
 		},
 		{
+			UserID:        "testUser",
 			ExperimentKey: "three",
 			VariationKey:  testVariationC.Key,
 			Type:          "experiment",
@@ -336,7 +321,7 @@ func (suite *ActivateTestSuite) TestActivateExperiments() {
 
 	// Toggle between tracking and no tracking.
 	for _, flag := range []string{"true", "false"} {
-		req := httptest.NewRequest("POST", "/activate?type=experiment&disableTracking="+flag, suite.body)
+		req := httptest.NewRequest("POST", "/activate?type=experiment&disableTracking="+flag, bytes.NewBuffer(suite.body))
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
 
@@ -369,11 +354,13 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 
 	expected := []optimizely.Decision{
 		{
+			UserID:     "testUser",
 			Enabled:    true,
 			FeatureKey: "featureA",
 			Type:       "feature",
 		},
 		{
+			UserID:     "testUser",
 			Enabled:    true,
 			FeatureKey: "featureC",
 			Type:       "feature",
@@ -382,6 +369,7 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 			},
 		},
 		{
+			UserID:     "testUser",
 			Enabled:    false,
 			FeatureKey: "featureB",
 			Type:       "feature",
@@ -407,7 +395,7 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 	}
 
 	for _, scenario := range scenarios {
-		req := httptest.NewRequest("POST", "/activate?type=feature"+scenario.param, suite.body)
+		req := httptest.NewRequest("POST", "/activate?type=feature"+scenario.param, bytes.NewBuffer(suite.body))
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
 
