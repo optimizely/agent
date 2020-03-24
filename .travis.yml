@@ -102,7 +102,7 @@ jobs:
         ./scripts/pull_travis_ci_tools.sh
       install: skip
       script:
-        - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
+        - "$HOME/travisci-tools/trigger-script-with-status-update.sh sohail/agentfix"
         
 
     - stage: Test Build using latest tag (no upload)
