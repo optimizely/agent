@@ -11,9 +11,9 @@ BASE_URL = os.getenv('host')
 
 
 @pytest.mark.parametrize("event_key, status_code", [
-    ("myevent", 204),
+    ("myevent", 200),
     ("", 400),
-    ("invalid_event_key", 404)
+    ("invalid_event_key", 200)
 ], ids=["Valid event key", "Empty event key", "Invalid event key"])
 def test_track(session_obj, event_key, status_code):
     """
@@ -38,10 +38,8 @@ def test_track(session_obj, event_key, status_code):
             resp.raise_for_status()
 
     if event_key == "invalid_event_key":
-        with pytest.raises(requests.exceptions.HTTPError):
-            assert resp.status_code == status_code
-            assert resp.text == '{"error":"eventKey: \\"invalid_event_key\\" not found"}\n'
-            resp.raise_for_status()
+        assert resp.status_code == status_code
+        assert resp.text == '{"userId":"matjaz","eventKey":"invalid_event_key","error":"event with key \\"invalid_event_key\\" not found"}\n'
 
 
 def test_track_403(session_override_sdk_key):

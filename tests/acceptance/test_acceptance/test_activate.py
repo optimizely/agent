@@ -11,17 +11,18 @@ BASE_URL = os.getenv('host')
 
 expected_activate_ab = """[
     {
+        "userId": "matjaz",
         "experimentKey": "ab_test1",
         "featureKey": "",
         "variationKey": "variation_1",
         "type": "experiment",
-        "enabled": true,
-        "error": ""
+        "enabled": true
     }
 ]"""
 
 expected_activate_ab_empty_experimentKey = """[
     {
+        "userId": "matjaz",
         "experimentKey": "",
         "featureKey": "",
         "variationKey": "",
@@ -33,6 +34,7 @@ expected_activate_ab_empty_experimentKey = """[
 
 expected_activate_ab_invalid_experimentKey = """[
     {
+        "userId": "matjaz",
         "experimentKey": "invalid exper key",
         "featureKey": "",
         "variationKey": "",
@@ -76,6 +78,7 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
 
 expected_activate_feat = """[
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_1",
     "variationKey": "",
@@ -86,13 +89,13 @@ expected_activate_feat = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
 expected_activate_feat_empty_featureKey = """[
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "",
     "variationKey": "",
@@ -105,6 +108,7 @@ expected_activate_feat_empty_featureKey = """[
 
 expected_activate_feat_invalid_featureKey = """[
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "invalid feat key",
     "variationKey": "",
@@ -150,57 +154,58 @@ def test_activate__feature(session_obj, feature_key, expected_response,
 
 expected_activate_type_exper = """[
   {
+    "userId": "matjaz",
     "experimentKey": "feature_2_test",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
 expected_activate_type_feat = """[
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_2",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false,
-    "error": ""
+    "enabled": false
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_4",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_5",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_1",
     "variationKey": "",
@@ -211,8 +216,7 @@ expected_activate_type_feat = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
@@ -313,6 +317,7 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
 
 expected_enabled_true_all_true = """[
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_1",
     "variationKey": "",
@@ -323,27 +328,26 @@ expected_enabled_true_all_true = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
 expected_enabled_true_feature_off = """[
   {
+    "userId": "matjaz",
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
@@ -351,25 +355,26 @@ expected_enabled_false_feature_on = """[]"""
 
 expected_enabled_false_feature_off = """[
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false,
-    "error": ""    
+    "enabled": false
   }
 ]"""
 
 expected_enabled_empty = """[
   {
+    "userId": "matjaz",
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_1",
     "variationKey": "",
@@ -380,21 +385,21 @@ expected_enabled_empty = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   }
 ]"""
 
 expected_enabled_invalid = """[
   {
+    "userId": "matjaz",
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""    
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_1",
     "variationKey": "",
@@ -405,8 +410,7 @@ expected_enabled_invalid = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 
@@ -458,22 +462,23 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
 
 expected_activate_with_config = """[
   {
+    "userId": "matjaz",
     "experimentKey": "ab_test1",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "feature_2_test",
     "featureKey": "",
     "variationKey": "variation_1",
     "type": "experiment",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_1",
     "variationKey": "",
@@ -484,40 +489,39 @@ expected_activate_with_config = """[
       "int_var": 1,
       "str_var": "hello"
     },
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_2",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_3",
     "variationKey": "",
     "type": "feature",
-    "enabled": false,
-    "error": ""
+    "enabled": false
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_4",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   },
   {
+    "userId": "matjaz",
     "experimentKey": "",
     "featureKey": "feature_5",
     "variationKey": "",
     "type": "feature",
-    "enabled": true,
-    "error": ""
+    "enabled": true
   }
 ]"""
 

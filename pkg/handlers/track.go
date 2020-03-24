@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/entities"
 
 	"github.com/optimizely/agent/pkg/middleware"
-	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 type trackBody struct {
@@ -62,15 +60,12 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		Attributes: body.UserAttributes,
 	}
 
-	if err = optlyClient.TrackEvent(eventKey, uc, body.EventTags); err != nil {
-		if errors.Is(err, optimizely.ErrEntityNotFound) {
-			RenderError(err, http.StatusNotFound, w, r)
-		} else {
-			RenderError(err, http.StatusInternalServerError, w, r)
-		}
+	track, err := optlyClient.TrackEvent(eventKey, uc, body.EventTags)
+	if err != nil {
+		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
 	middleware.GetLogger(r).Debug().Str("eventKey", eventKey).Msg("tracking event")
-	render.NoContent(w, r)
+	render.JSON(w, r, track)
 }
