@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - March 25th 2020
+- Update documentation and examples
+- Add response body for override and track
+- Add user id in activate response
+- Add python integration test suite
+- Add route handler and serve /openapi.yaml
+
 ## [0.14.0] - March 12th, 2020
 - Update windows build script
 - Remove pre-v1 api references
