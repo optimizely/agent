@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.0] - March 25th 2020
 - Update documentation and examples
 - Add response body for override and track
-- Add user id in activate response
+- Add userId in /activate response
+- Require userId in /activate request
 - Add python integration test suite
 - Add route handler and serve /openapi.yaml
+- Improve logging from the SDK
 
 ## [0.14.0] - March 12th, 2020
 - Update windows build script
