@@ -91,7 +91,7 @@ jobs:
       install:
         - pip install -r tests/acceptance/requirements.txt
       script:
-        - pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
+        - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
 
     - stage: Test Build using latest tag (no upload)
       name: linux
