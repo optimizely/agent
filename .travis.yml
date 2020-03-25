@@ -91,7 +91,8 @@ jobs:
       install:
         - pip install -r tests/acceptance/requirements.txt
       script:
-        - pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
+        - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
+
     - stage: 'Building Optimizely Agent'
       if: (branch = master AND type = push) OR type = pull_request OR tag IS present
       env:
@@ -103,7 +104,6 @@ jobs:
       install: skip
       script:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh sohail/agentfix"
-        
 
     - stage: Test Build using latest tag (no upload)
       name: linux

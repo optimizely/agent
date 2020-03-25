@@ -14,7 +14,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test -race
 GOGET=$(GOCMD) get
-GOLINT=golangci-lint
+GOLINT=$(GOPATH)/bin/golangci-lint
 BINARY_UNIX=$(TARGET)_unix
 
 # Make is verbose in Linux. Make it silent.
@@ -60,7 +60,7 @@ run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
 
 static: check-go
-	statik -src=web/static -f
+	$(GOPATH)/bin/statik -src=web/static -f
 
 test: check-go static ## recursively tests all .go files
 	$(GOTEST) ./...

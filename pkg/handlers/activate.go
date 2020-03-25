@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -174,11 +175,18 @@ func filterDecisions(r *http.Request, decisions []*optimizely.Decision) []*optim
 	return filtered
 }
 
+// ErrEmptyUserID is a constant error if userId is omitted from the request
+var ErrEmptyUserID = errors.New(`missing "userId" in request payload`)
+
 func getUserContext(r *http.Request) (entities.UserContext, error) {
 	var body ActivateBody
 	err := ParseRequestBody(r, &body)
 	if err != nil {
 		return entities.UserContext{}, err
+	}
+
+	if body.UserID == "" {
+		return entities.UserContext{}, ErrEmptyUserID
 	}
 
 	return entities.UserContext{ID: body.UserID, Attributes: body.UserAttributes}, nil

@@ -75,6 +75,14 @@ func (suite *ActivateTestSuite) SetupTest() {
 	suite.oc = optlyClient
 }
 
+func (suite *ActivateTestSuite) TestInvalidPayload() {
+	req := httptest.NewRequest("POST", "/activate", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.assertError(rec, `missing "userId" in request payload`, http.StatusBadRequest)
+}
+
 func (suite *ActivateTestSuite) TestGetFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
@@ -410,17 +418,11 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 }
 
 func (suite *ActivateTestSuite) TestInvalidFilter() {
-	req := httptest.NewRequest("POST", "/activate?type=invalid", nil)
+	req := httptest.NewRequest("POST", "/activate?type=invalid", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.Equal(http.StatusBadRequest, rec.Code)
-
-	// Unmarshal response
-	var actual ErrorResponse
-	err := json.Unmarshal(rec.Body.Bytes(), &actual)
-	suite.NoError(err)
-	suite.Equal(`type "invalid" not supported`, actual.Error)
+	suite.assertError(rec, `type "invalid" not supported`, http.StatusBadRequest)
 }
 
 func (suite *ActivateTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
