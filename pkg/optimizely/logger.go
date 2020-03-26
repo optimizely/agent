@@ -34,6 +34,7 @@ var levelMap = map[logging.LogLevel]zerolog.Level{
 // init overrides the Optimizely SDK logger with the default zerolog logger.
 func init() {
 	SetLogger(&log.Logger)
+	logging.IncludeSDKKeyInLogFields(true)
 }
 
 // SetLogger explicitly overwrites the zerolog used by the SDK with the provided zerolog logger.

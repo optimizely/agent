@@ -23,6 +23,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
@@ -41,7 +42,7 @@ func NewClient() *TestClient {
 
 	factory := client.OptimizelyFactory{}
 	optlyClient, _ := factory.Client(
-		client.WithConfigManager(config.NewStaticProjectConfigManager(projectConfig)),
+		client.WithConfigManager(config.NewStaticProjectConfigManager(projectConfig, logging.GetLogger("test", "test"))),
 		client.WithEventProcessor(eventProcessor),
 		client.WithExperimentOverrides(forcedVariations),
 	)

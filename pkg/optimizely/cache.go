@@ -121,6 +121,7 @@ func defaultLoader(
 
 		q := event.NewInMemoryQueue(conf.QueueSize)
 		ep := bpFactory(
+			event.WithSDKKey(sdkKey),
 			event.WithQueueSize(conf.QueueSize),
 			event.WithBatchSize(conf.BatchSize),
 			event.WithFlushInterval(conf.FlushInterval),
