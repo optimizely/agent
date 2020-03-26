@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
 	cmap "github.com/orcaman/concurrent-map"
@@ -107,12 +108,9 @@ func mockLoader(sdkKey string) (*OptlyClient, error) {
 }
 
 func TestDefaultLoader(t *testing.T) {
-	bp := &event.BatchEventProcessor{}
+	var bp *event.BatchEventProcessor
 	bpFactory := func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
-		for _, option := range options {
-			option(bp)
-		}
-
+		bp = event.NewBatchEventProcessor(options...)
 		return bp
 	}
 
@@ -122,7 +120,7 @@ func TestDefaultLoader(t *testing.T) {
 		return MockConfigManager{}
 	}
 
-	mr := &MetricsRegistry{}
+	mr := &MetricsRegistry{metrics.NewRegistry()}
 	conf := config.ClientConfig{
 		FlushInterval: 321 * time.Second,
 		BatchSize:     1234,
