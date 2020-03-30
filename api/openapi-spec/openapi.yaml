@@ -56,10 +56,7 @@ paths:
     post:
       summary: Activate selected features and experiments for the given user.
       operationId: activate
-      description: Returns Optimizely's decision about which features and experiments a given user is exposed to.
-        Optionally sends an impression event to the Optimizely analytics backend
-        for any decision made for an experiment. This endpoint wraps up key functionality from
-        the Full Stack SDKs into one convenient call.
+      description: Returns Optimizely's decision about which features and experiments a given user is exposed to. Optionally sends an impression event to the Optimizely analytics backend for any decision made for an experiment. This endpoint consolidates key functionality from the Full Stack SDKs into one convenient call.
       responses:
         '200':
           description: Valid response
@@ -81,8 +78,7 @@ paths:
     post:
       summary: Override an experiment decision for a user
       operationId: override
-      description: For  debugging or testing, override an experiment and variation decision for a given user in local memory only. 
-      Do not use this endpoint for production overrides.
+      description: For  debugging or testing. Overrides an experiment and variation decision for a given user, in local memory only. Do not use this endpoint for production overrides.
       responses:
         '200':
           description: Valid response
@@ -104,7 +100,7 @@ paths:
     post:
       summary: Get JWT token to authenticate all requests.
       operationId: getToken
-      description: Generates valid JWT token for grant_type, client_id, and client_secret, using the values you pass in the request body.  Configure expiration time and SDK keys (to which the token grants access) in Optimizely config. FE QUESTION - don't quite get this, where are you configuring expiration/sdk? is it reflected in the datafile? Is "Optimizely config" endpoint a subset of the datafile, or the datafile itself...? 
+      description: Generates valid JWT token for grant_type, client_id, and client_secret, using the values you pass in the request body.  Configure expiration time and SDK keys (to which the token grants access) in Optimizely config. 
       responses:
         '200':
           description: Generates a valid token
@@ -119,7 +115,7 @@ components:
       in: query
       name: disableTracking
       required: false
-      description: Setting to true will disable impression tracking for ab experiments and feature tests.
+      description: Setting to true will disable impression tracking for experiments.
       schema:
         type: boolean
     enabledParam:
