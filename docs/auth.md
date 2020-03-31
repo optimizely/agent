@@ -38,8 +38,8 @@ To make setup easier, Agent provides a command-line tool that can generate base6
 ```shell script
 // From the Agent root directory
 > make generate_secret
-Client Secret: i3SrdrCy/wEGqggv9OI4FgIsdHHNpOacrmIMJ6SFIkE=
-Client Secret's hash: JDJhJDEyJERGNzhjRXVTNTdOQUZ3cndxTkZ6Li5XQURlazU2R21YeFZjb1pWSkN5eGZ1SXM4VXRLb0ZD
+Secret: i3SrdrCy/wEGqggv9OI4FgIsdHHNpOacrmIMJ6SFIkE=
+Secret's hash: JDJhJDEyJERGNzhjRXVTNTdOQUZ3cndxTkZ6Li5XQURlazU2R21YeFZjb1pWSkN5eGZ1SXM4VXRLb0ZD
 ```
 
 Use the hash value to configure Agent, and pass the secret value as `client_secret` when making access token requests to `/oauth/token`. For details of the access token issuance endpoint, see the OpenAPI spec file.
