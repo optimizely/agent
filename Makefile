@@ -56,7 +56,7 @@ install: check-go ## installs all dev and ci dependencies, but does not install 
 lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false ./...
 
-run: $(TARGET) ## builds and executes the TARGET binary
+run: install $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
 
 static: check-go
