@@ -19,6 +19,7 @@ Installers and binary archives for most platforms can be downloaded directly fro
 ## Running from source (Linux / OSX)
 Once Go is installed, the Optimizely Agent can be started via the following `make` command:
 ```bash
+make setup
 make run
 ```
 This will start the Optimizely Agent with the default configuration in the foreground.
