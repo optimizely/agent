@@ -132,4 +132,4 @@ jobs:
 before_script:
   # https://github.com/travis-ci/gimme
   - eval "$(gimme)"
-  - make -e install build
+  - make -e setup build
