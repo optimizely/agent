@@ -1,10 +1,4 @@
-#!/bin/bash -ex
+#!/bin/sh
 
-echo "running serssssssssssssssssssssssssss"
-pwd 
-ls
-/go/src/github.com/optimizely/agent/perfmon_agent.sh
+sh perfmon_agent.sh
 /optimizely
-
-
-
