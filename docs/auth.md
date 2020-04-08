@@ -31,7 +31,7 @@ The configuration properties pertaining to Issuer & Validator mode are listed be
 |Property Name|Environment Variable|Description|
 |---|---|---|
 |ttl|TTL|Time-to-live of access tokens issued|
-|hmacSecrets|HMACSECRETS|Array of secrets used to sign & validate access tokens, using the HMAC SHA256 algorithm. Values must be base64-format strings. The first value in the array is used to sign issued access tokens. Access tokens signed with any value in the array are considered valid.|
+|hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS or OPTIMIZELY_API_AUTH_HMACSECRETS|Array of secrets used to sign & validate access tokens, using the HMAC SHA256 algorithm. Values must be base64-format strings. The first value in the array is used to sign issued access tokens. Access tokens signed with any value in the array are considered valid.|
 |clients|N/A|Array of objects, used for token issuance, consisting of `id`, `secretHash`, and `sdkKeys`. Clients provide ID and secret in their requests to `/oauth/token`. Agent validates the request credentials by checking for an exact match of ID, checking that the BCrypt hash of the request secret matches the `secretHash` from configuration, and that the SDK key provided in the `X-Optimizely-Sdk-Key` request header exists in the `sdkKeys` from configuration. `secretHash` values must be base64-format strings.|
 
 To make setup easier, Agent provides a command-line tool that can generate base64-encoded 32-byte random values, and their associated base64-encoded BCrypt hashes:
@@ -66,7 +66,7 @@ In the below example, the Admin interface is configured in Issuer & Validator mo
 // Comma-separated value, to set multiple hmacSecrets.
 // Access tokens are signed with the first value.
 // Access tokens are valid when they are signed with either of these values.
-export OPTIMIZELY_ADMIN_HMACSECRETS=QPtUGP/RqaXRltZf1QE1KxlF2Iuo09J0buZ3UNKeIr0,bkZAqSsZuM5NSnwEyO9Pzb6F8gGNu1BBuX/SpPaMeyM
+export OPTIMIZELY_ADMIN_AUTH_HMACSECRETS=QPtUGP/RqaXRltZf1QE1KxlF2Iuo09J0buZ3UNKeIr0,bkZAqSsZuM5NSnwEyO9Pzb6F8gGNu1BBuX/SpPaMeyM
 ```
 
 ```yaml
