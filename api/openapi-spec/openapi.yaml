@@ -78,7 +78,7 @@ paths:
     post:
       summary: Override an experiment decision for a user
       operationId: override
-      description: For  debugging or testing. Overrides an experiment and variation decision for a given user, in local memory only. Do not use this endpoint for production overrides.
+      description: For debugging or testing. Overrides an experiment and variation decision for a given user, in local memory only. Do not use this endpoint for production overrides.
       responses:
         '200':
           description: Valid response
