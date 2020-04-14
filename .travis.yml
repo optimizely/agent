@@ -113,6 +113,7 @@ jobs:
       script:
         - export APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh
 
     - stage: Build and Upload
       if: type = push AND tag IS present
