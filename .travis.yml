@@ -109,7 +109,11 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
       script:
         - export APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
