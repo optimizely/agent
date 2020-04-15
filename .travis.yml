@@ -109,11 +109,6 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-      before_install:
-        - ./scripts/pull_travis_ci_tools.sh
-      install:
-        # installs hub to ~/bin
-        - $HOME/travisci-tools/release_github/install_hub.sh
       script:
         - export APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
@@ -130,9 +125,16 @@ jobs:
 
       env: APP_VERSION=${TRAVIS_TAG#v}
 
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+
       script:
         # now we're going to create packages & upload packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh && $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && $HOME/bin/hub release edit "$TRAVIS_TAG" -m "" -a "/tmp/output_packages/generate_secret#generate_secret for Linux 64-bit"
 
 before_script:
   # https://github.com/travis-ci/gimme
