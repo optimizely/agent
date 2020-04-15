@@ -86,8 +86,7 @@ jobs:
       os: linux
       dist: xenial
       language: python
-      python:
-        - "3.7"
+      python: "3.7"
       install:
         - pip install -r tests/acceptance/requirements.txt
       script:
@@ -109,13 +108,13 @@ jobs:
       name: linux
       os: linux
       dist: xenial
-
       script:
         - export APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
+        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh
 
     - stage: Build and Upload
-      if: type = push AND tag IS present
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       name: linux
       os: linux
       dist: xenial
@@ -125,9 +124,20 @@ jobs:
 
       env: APP_VERSION=${TRAVIS_TAG#v}
 
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+
       script:
         # now we're going to create packages & upload packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh && $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+        # create the github release
+        - release_github_v2.sh "$TRAVIS_TAG"
+        # attach generate_secret to the github release
+        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && hub release edit "$TRAVIS_TAG" -m "" -a "/tmp/output_packages/generate_secret#generate_secret for Linux 64-bit"
 
 before_script:
   # https://github.com/travis-ci/gimme
