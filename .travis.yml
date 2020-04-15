@@ -114,7 +114,7 @@ jobs:
         - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh
 
     - stage: Build and Upload
-      if: type = push AND tag IS present
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       name: linux
       os: linux
       dist: xenial
@@ -134,6 +134,9 @@ jobs:
       script:
         # now we're going to create packages & upload packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh && $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
+        # create the github release
+        - $HOME/travisci-tools/release_github/release_github_v2.sh "$TRAVIS_TAG"
+        # attach generate_secret to the github release
         - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && hub release edit "$TRAVIS_TAG" -m "" -a "/tmp/output_packages/generate_secret#generate_secret for Linux 64-bit"
 
 before_script:
