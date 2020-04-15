@@ -44,6 +44,8 @@ Client Secret's hash: JDJhJDEyJERGNzhjRXVTNTdOQUZ3cndxTkZ6Li5XQURlazU2R21YeFZjb1
 
 Use the hash value to configure Agent, and pass the secret value as `client_secret` when making access token requests to `/oauth/token`. For details of the access token issuance endpoint, see the OpenAPI spec file.
 
+The `generate_secret` command-line tool can be downloaded by navigating to Agent's latest [github release](https://github.com/optimizely/agent/releases) and choosing the binary appropriate for your OS architecture.
+
 ### Validator-only
 The configuration properties pertaining to Validator-only mode are listed below:
 
