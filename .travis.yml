@@ -137,7 +137,7 @@ jobs:
         # create the github release
         - release_github_v2.sh "$TRAVIS_TAG"
         # attach generate_secret to the github release
-        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && hub release edit "$TRAVIS_TAG" -m "" -a "/tmp/output_packages/generate_secret#generate_secret for Linux 64-bit"
+        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && $TRAVIS_BUILD_DIR/scripts/ci_attach_generate_secret.sh
 
 before_script:
   # https://github.com/travis-ci/gimme
