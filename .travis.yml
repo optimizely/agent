@@ -137,7 +137,71 @@ jobs:
         # create the github release
         - release_github_v2.sh "$TRAVIS_TAG"
         # attach generate_secret to the github release
-        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && hub release edit "$TRAVIS_TAG" -m "" -a "/tmp/output_packages/generate_secret#generate_secret for Linux 64-bit"
+        - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && $TRAVIS_BUILD_DIR/scripts/ci_attach_generate_secret.sh
+
+    - stage: Test github release assets
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      name: linux
+      os: linux
+      env: APP_VERSION=${TRAVIS_TAG#v}
+
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+
+      before_script: skip
+
+      script:
+        - hub release download $(git describe --abbrev=0 --tags) -i '*-linux-amd64-*'
+        - tar xvfz generate_secret-linux-amd64-${APP_VERSION}.tar.gz -C /tmp
+        - /tmp/generate_secret
+
+    - stage: Test github release assets
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      name: darwin
+      os: osx
+      env: APP_VERSION=${TRAVIS_TAG#v}
+
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+        - brew install jq
+
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+
+      before_script: skip
+
+      script:
+        - hub release download $(git describe --abbrev=0 --tags) -i '*-darwin-amd64-*'
+        - tar xvfz generate_secret-darwin-amd64-${APP_VERSION}.tar.gz -C /tmp
+        - /tmp/generate_secret
+
+    - stage: Test github release assets
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      name: windows
+      os: windows
+      env: APP_VERSION=${TRAVIS_TAG#v}
+
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+
+      before_script: skip
+
+      script:
+        - hub release download $(git describe --abbrev=0 --tags) -i '*-windows-amd64-*'
+        - tar xvfz generate_secret-windows-amd64-${APP_VERSION}.tar.gz -C /tmp
+        - /tmp/generate_secret.exe
 
 before_script:
   # https://github.com/travis-ci/gimme
