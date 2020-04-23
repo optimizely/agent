@@ -91,3 +91,5 @@ client:
     queueSize: 1000
     ## the maximum time between events being dispatched
     flushInterval: 30s
+    ## the endpoint for retrieving the datafile from the CDN
+    datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
