@@ -21,6 +21,7 @@ client:
   batchSize: 1
   queueSize: 10
   flushInterval: 1m
+  datafileURLTemplate: "https://localhost/v1/%s.json"
 admin:
   port: "3002"
   auth:

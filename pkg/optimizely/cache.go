@@ -113,6 +113,7 @@ func defaultLoader(
 		configManager := pcFactory(
 			sdkKey,
 			sdkconfig.WithPollingInterval(conf.PollingInterval),
+			sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
 		)
 
 		if _, err := configManager.GetConfig(); err != nil {

@@ -91,3 +91,5 @@ client:
     queueSize: 1000
     ## the maximum time between events being dispatched
     flushInterval: 30s
+    ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
+    datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
