@@ -76,7 +76,7 @@ jobs:
       script:
         - scripts/run_srcclr.sh
 
-    - stage: Test
+    - stage: Tests
       name: windows build.ps1 test
       os: windows
       language: shell
