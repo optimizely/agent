@@ -32,6 +32,7 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 )
 
@@ -47,6 +48,7 @@ type APIOptions struct {
 	nStreamHandler  http.HandlerFunc
 	oAuthHandler    http.HandlerFunc
 	oAuthMiddleware func(next http.Handler) http.Handler
+	corsHandler     func(next http.Handler) http.Handler
 }
 
 func forbiddenHandler(message string) http.HandlerFunc {
@@ -82,6 +84,17 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
 
+	/// TODO: use conf.CORS. ...
+	corsHandler := cors.Handler(cors.Options{
+		AllowedOrigins: []string{"*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	})
+
 	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
 		metricsRegistry: metricsRegistry,
@@ -93,6 +106,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		nStreamHandler:  nStreamHandler,
 		oAuthHandler:    authHandler.CreateAPIAccessToken,
 		oAuthMiddleware: authProvider.AuthorizeAPI,
+		corsHandler:     corsHandler,
 	}
 
 	return NewAPIRouter(spec)
@@ -124,6 +138,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(opt.sdkMiddleware)
+		r.Use(opt.corsHandler)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
 		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
 		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)

@@ -47,6 +47,14 @@ func NewDefaultConfig() *AgentConfig {
 				JwksURL:            "",
 				JwksUpdateInterval: 0,
 			},
+			CORS: CORSConfig{
+				AllowedOrigins:     []string{},
+				AllowedMethods:     []string{},
+				AllowedHeaders:     []string{},
+				ExposedHeaders:     []string{},
+				AllowedCredentials: false,
+				MaxAge:             300,
+			},
 			MaxConns:            0,
 			Port:                "8080",
 			EnableNotifications: false,
@@ -119,10 +127,20 @@ type ServerConfig struct {
 // APIConfig holds the REST API configuration
 type APIConfig struct {
 	Auth                ServiceAuthConfig `json:"-"`
+	CORS                CORSConfig        `json:"cors"`
 	MaxConns            int               `json:"maxConns"`
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
+}
+
+type CORSConfig struct {
+	AllowedOrigins     []string `json:"allowedOrigins"`
+	AllowedMethods     []string `json:"allowedMethods"`
+	AllowedHeaders     []string `json:"allowedHeaders"`
+	ExposedHeaders     []string `json:"exposedHeaders"`
+	AllowedCredentials bool     `json:"allowedCredentials"`
+	MaxAge             int      `json:"maxAge"`
 }
 
 // AdminConfig holds the configuration for the admin web interface
