@@ -40,6 +40,7 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, "keyfile", actual.KeyFile)
 	assert.Equal(t, "certfile", actual.CertFile)
 	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
+	assert.Equal(t, []string{"https://foo.com", "http://foo.com"}, actual.CORSAllowedOrigins)
 }
 
 func assertClient(t *testing.T, actual config.ClientConfig) {
@@ -137,6 +138,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.certFile", "certfile")
 	v.Set("server.keyFile", "keyfile")
 	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+	v.Set("server.corsAllowedOrigins", "https://foo.com,http://foo.com")
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
@@ -212,6 +214,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+	_ = os.Setenv("OPTIMIZELY_SERVER_CORSALLOWEDORIGINS", "https://foo.com,http://foo.com")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_POLLINGINTERVAL", "10s")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_BATCHSIZE", "1")

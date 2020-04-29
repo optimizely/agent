@@ -25,6 +25,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -121,8 +123,16 @@ func main() {
 	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
 	adminRouter := routers.NewAdminRouter(*conf)
 
+	// CORS middleware
+	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: conf.Server.CORSAllowedOrigins,
+		AllowedMethods: []string{"POST"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+	}))
+
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
+	sg.GoListenAndServe("api", conf.API.Port, r.Middlewares().Handler(apiRouter))
 	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
 	sg.GoListenAndServe("admin", conf.Admin.Port, adminRouter) // Admin should be added last.
 

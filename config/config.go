@@ -64,11 +64,12 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 		},
 		Server: ServerConfig{
-			ReadTimeout:     5 * time.Second,
-			WriteTimeout:    10 * time.Second,
-			CertFile:        "",
-			KeyFile:         "",
-			DisabledCiphers: make([]string, 0),
+			ReadTimeout:        5 * time.Second,
+			WriteTimeout:       10 * time.Second,
+			CertFile:           "",
+			KeyFile:            "",
+			DisabledCiphers:    make([]string, 0),
+			CORSAllowedOrigins: make([]string, 0),
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
@@ -111,11 +112,12 @@ type LogConfig struct {
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
-	ReadTimeout     time.Duration `json:"readTimeout"`
-	WriteTimeout    time.Duration `json:"writeTimeout"`
-	CertFile        string        `json:"certFile"`
-	KeyFile         string        `json:"keyFile"`
-	DisabledCiphers []string      `json:"disabledCiphers"`
+	ReadTimeout        time.Duration `json:"readTimeout"`
+	WriteTimeout       time.Duration `json:"writeTimeout"`
+	CertFile           string        `json:"certFile"`
+	KeyFile            string        `json:"keyFile"`
+	DisabledCiphers    []string      `json:"disabledCiphers"`
+	CORSAllowedOrigins []string      `json:"corsAllowedOrigins"`
 }
 
 // APIConfig holds the REST API configuration

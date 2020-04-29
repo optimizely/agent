@@ -105,6 +105,7 @@ Below is a comprehensive list of available configuration properties.
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
 |server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
+|server.corsAllowedOrigins|OPTIMIZELY_SERVER_CORSALLOWEDORIGINS|List of origins a cross-domain request can be executed from|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
