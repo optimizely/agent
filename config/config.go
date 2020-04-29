@@ -65,10 +65,11 @@ func NewDefaultConfig() *AgentConfig {
 			Level:  "info",
 		},
 		Client: ClientConfig{
-			PollingInterval: 1 * time.Minute,
-			BatchSize:       10,
-			QueueSize:       1000,
-			FlushInterval:   30 * time.Second,
+			PollingInterval:     1 * time.Minute,
+			BatchSize:           10,
+			QueueSize:           1000,
+			FlushInterval:       30 * time.Second,
+			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 		},
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
@@ -103,10 +104,11 @@ type AgentConfig struct {
 
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
-	PollingInterval time.Duration `json:"pollingInterval"`
-	BatchSize       int           `json:"batchSize" default:"10"`
-	QueueSize       int           `json:"queueSize" default:"1000"`
-	FlushInterval   time.Duration `json:"flushInterval" default:"30s"`
+	PollingInterval     time.Duration `json:"pollingInterval"`
+	BatchSize           int           `json:"batchSize" default:"10"`
+	QueueSize           int           `json:"queueSize" default:"1000"`
+	FlushInterval       time.Duration `json:"flushInterval" default:"30s"`
+	DatafileURLTemplate string        `json:"datafileURLTemplate"`
 }
 
 // LogConfig holds the log configuration
