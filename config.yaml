@@ -55,10 +55,14 @@ api:
     ## https://github.com/go-chi/cors
     cors:
         ## If allowedOrigins is nil or empty, value is set to ["*"].
-        allowedOrigins:
-            - "http://localhost.com"
+        allowedOrigins: []            
         ## Default value is (HEAD, GET and POST)
-        allowedMethods: []
+        allowedMethods:
+            - "HEAD"
+            - "GET"
+            - "POST"
+            - "PUT"
+            - "DELETE"
         ## Default value is [] but "Origin" is always appended to the list.
         allowedHeaders: []
         exposedHeaders: []
