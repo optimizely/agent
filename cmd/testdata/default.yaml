@@ -41,6 +41,20 @@ api:
   port: "3000"
   enableNotifications: true
   enableOverrides: true
+  cors:
+    allowedOrigins: 
+      - "http://test.com"
+    allowedMethods: 
+      - "POST"
+      - "GET"
+      - "OPTIONS"
+    allowedHeaders: 
+      - "Accept"
+      - "Authorization"
+    exposedHeaders:
+      - "Header1"
+    allowedCredentials: true
+    maxAge: 500
   auth:
     ttl: 30m
     hmacSecrets:

@@ -83,17 +83,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 	}
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
-
-	/// TODO: use conf.CORS. ...
-	corsHandler := cors.Handler(cors.Options{
-		AllowedOrigins: []string{"*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	})
+	corsHandler := cors.Handler(conf.CORS.ToCorsOptions())
 
 	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
@@ -137,8 +127,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Use(opt.sdkMiddleware)
-		r.Use(opt.corsHandler)
+		r.Use(opt.corsHandler, opt.sdkMiddleware)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
 		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
 		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)

@@ -94,6 +94,15 @@ func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 	assert.Equal(t, 25*time.Second, actual.JwksUpdateInterval)
 }
 
+func assertAPICORS(t *testing.T, actual config.CORSConfig) {
+	assert.Equal(t, []string{"http://test.com"}, actual.AllowedOrigins)
+	assert.Equal(t, []string{"POST", "GET", "OPTIONS"}, actual.AllowedMethods)
+	assert.Equal(t, []string{"Accept", "Authorization"}, actual.AllowedHeaders)
+	assert.Equal(t, []string{"Header1"}, actual.ExposedHeaders)
+	assert.Equal(t, true, actual.AllowedCredentials)
+	assert.Equal(t, 500, actual.MaxAge)
+}
+
 func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 	assert.Equal(t, "3001", actual.Port)
 	assert.Equal(t, "secret-10000", actual.Projects[10000].Secret)
@@ -121,6 +130,7 @@ func TestViperYaml(t *testing.T) {
 	assertAdminAuth(t, actual.Admin.Auth)
 	assertAPI(t, actual.API)
 	assertAPIAuth(t, actual.API.Auth)
+	assertAPICORS(t, actual.API.CORS)
 	assertWebhook(t, actual.Webhook)
 }
 
