@@ -2,5 +2,5 @@
 set -e
 
 choco install awscli
-export PATH=$PATH:'/c/Program Files/Amazon/AWSCLI/bin'
+export PATH=$PATH:'/c/Program Files/Amazon/AWSCLIV2'
 aws s3 cp "bin\optimizely.exe" "s3://${AWS_BUCKET}/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/optimizely.exe" --quiet
