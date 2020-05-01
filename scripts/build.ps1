@@ -5,7 +5,7 @@ function checkPrereq($software, $URL, $SHA, $mode) {
     $installed = (Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where { $_.DisplayName -eq $software }) -ne $null
 
     If(-Not $installed) {
-	    Write-Host "'$software' is NOT installed. (You may (s)kip if you already have it installed and it is in your $PATH)";
+	    Write-Host "'$software' is NOT installed. (You may (s)kip if you already have it installed and it is in your PATH)";
         if ($mode -eq "noninteractive") {
             $answer = "y"
         } else {
