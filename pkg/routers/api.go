@@ -83,7 +83,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 	}
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
-	corsHandler := cors.Handler(conf.CORS.ToCorsOptions())
+	corsHandler := createCorsHandler(conf.CORS)
 
 	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
@@ -144,4 +144,17 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 
 	staticServer := http.FileServer(statikFS)
 	r.Handle("/*", staticServer)
+}
+
+func createCorsHandler(c config.CORSConfig) func(next http.Handler) http.Handler {
+	options := cors.Options{
+		AllowedOrigins:   c.AllowedOrigins,
+		AllowedMethods:   c.AllowedMethods,
+		AllowedHeaders:   c.AllowedHeaders,
+		ExposedHeaders:   c.ExposedHeaders,
+		AllowCredentials: c.AllowedCredentials,
+		MaxAge:           c.MaxAge,
+	}
+
+	return cors.Handler(options)
 }

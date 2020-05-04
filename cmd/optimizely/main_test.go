@@ -95,7 +95,7 @@ func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
 }
 
 func assertAPICORS(t *testing.T, actual config.CORSConfig) {
-	assert.Equal(t, []string{"http://test.com"}, actual.AllowedOrigins)
+	assert.Equal(t, []string{"http://test1.com", "http://test2.com"}, actual.AllowedOrigins)
 	assert.Equal(t, []string{"POST", "GET", "OPTIONS"}, actual.AllowedMethods)
 	assert.Equal(t, []string{"Accept", "Authorization"}, actual.AllowedHeaders)
 	assert.Equal(t, []string{"Header1"}, actual.ExposedHeaders)

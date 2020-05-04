@@ -55,7 +55,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, time.Duration(0), conf.API.Auth.JwksUpdateInterval)
 	assert.Equal(t, false, conf.API.EnableOverrides)
 	assert.Equal(t, false, conf.API.EnableNotifications)
-	assert.Equal(t, []string(nil), conf.API.CORS.AllowedOrigins)
+	assert.Equal(t, []string{"http://localhost.com"}, conf.API.CORS.AllowedOrigins)
 	assert.Equal(t, []string{"HEAD", "GET", "PUT", "POST", "DELETE"}, conf.API.CORS.AllowedMethods)
 	assert.Equal(t, make([]string, 0), conf.API.CORS.AllowedHeaders)
 	assert.Equal(t, make([]string, 0), conf.API.CORS.ExposedHeaders)

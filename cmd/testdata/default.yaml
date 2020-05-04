@@ -43,7 +43,8 @@ api:
   enableOverrides: true
   cors:
     allowedOrigins: 
-      - "http://test.com"
+      - "http://test1.com"
+      - "http://test2.com"
     allowedMethods: 
       - "POST"
       - "GET"

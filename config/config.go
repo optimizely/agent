@@ -19,8 +19,6 @@ package config
 
 import (
 	"time"
-
-	"github.com/go-chi/cors"
 )
 
 // NewDefaultConfig returns the default configuration for Optimizely Agent
@@ -50,9 +48,9 @@ func NewDefaultConfig() *AgentConfig {
 				JwksUpdateInterval: 0,
 			},
 			CORS: CORSConfig{
-				// If allowedOrigins is nil or empty, value is set to ["*"].
-				AllowedOrigins: nil,
-				// Default value is (HEAD, GET and POST)
+				// If AllowedOrigins is nil or empty, value is set to ["*"].
+				AllowedOrigins: []string{"http://localhost.com"},
+				// If AllowedMethods is nil or empty, value is set to (HEAD, GET and POST).
 				AllowedMethods: []string{"HEAD", "GET", "PUT", "POST", "DELETE"},
 				// Default value is [] but "Origin" is always appended to the list.
 				AllowedHeaders:     []string{},
@@ -149,18 +147,6 @@ type CORSConfig struct {
 	ExposedHeaders     []string `json:"exposedHeaders"`
 	AllowedCredentials bool     `json:"allowedCredentials"`
 	MaxAge             int      `json:"maxAge"`
-}
-
-// ToCorsOptions converts CORSConfig to cors middleware options
-func (c *CORSConfig) ToCorsOptions() cors.Options {
-	return cors.Options{
-		AllowedOrigins:   c.AllowedOrigins,
-		AllowedMethods:   c.AllowedMethods,
-		AllowedHeaders:   c.AllowedHeaders,
-		ExposedHeaders:   c.ExposedHeaders,
-		AllowCredentials: c.AllowedCredentials,
-		MaxAge:           c.MaxAge,
-	}
 }
 
 // AdminConfig holds the configuration for the admin web interface

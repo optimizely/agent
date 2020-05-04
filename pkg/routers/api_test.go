@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/cors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -78,16 +77,18 @@ var testAuthMiddleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-var testCorsHandler = cors.Handler(
-	cors.Options{
-		AllowedOrigins:   []string{validOrigin},
-		AllowedMethods:   []string{"OPTIONS", "GET", "POST"},
-		AllowedHeaders:   []string{"Origin", "Accept", "Content-Type"},
-		ExposedHeaders:   []string{"Header1", "Header2"},
-		AllowCredentials: true,
-		MaxAge:           500,
-	},
-)
+var opts *APIOptions
+
+var corsConfig = config.CORSConfig{
+	AllowedOrigins:     []string{validOrigin},
+	AllowedMethods:     []string{"OPTIONS", "GET", "POST"},
+	AllowedHeaders:     []string{"Origin", "Accept", "Content-Type"},
+	ExposedHeaders:     []string{"Header1", "Header2"},
+	AllowedCredentials: true,
+	MaxAge:             500,
+}
+
+var testCorsHandler = createCorsHandler(corsConfig)
 
 type APIV1TestSuite struct {
 	suite.Suite
@@ -99,7 +100,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
-	opts := &APIOptions{
+	opts = &APIOptions{
 		maxConns:        1,
 		sdkMiddleware:   testOptlyMiddleware,
 		configHandler:   testHandler("config"),
@@ -117,6 +118,15 @@ func (suite *APIV1TestSuite) SetupTest() {
 }
 
 func (suite *APIV1TestSuite) TestValidRoutes() {
+
+	opts.corsHandler = func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add(originHeaderKey, "corsMiddleware")
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+	suite.mux = NewAPIRouter(opts)
 
 	routes := []struct {
 		method string
@@ -138,6 +148,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
 		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
+		suite.Equal("corsMiddleware", rec.Header().Get(originHeaderKey))
 	}
 }
 
