@@ -49,7 +49,7 @@ func NewDefaultConfig() *AgentConfig {
 			},
 			CORS: CORSConfig{
 				// If AllowedOrigins is nil or empty, value is set to ["*"].
-				AllowedOrigins: []string{"http://localhost.com"},
+				AllowedOrigins: nil,
 				// If AllowedMethods is nil or empty, value is set to (HEAD, GET and POST).
 				AllowedMethods: []string{"HEAD", "GET", "PUT", "POST", "DELETE"},
 				// Default value is [] but "Origin" is always appended to the list.
