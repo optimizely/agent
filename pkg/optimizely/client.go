@@ -23,6 +23,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/notification"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -171,26 +172,51 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
 	enabled, variables, err := c.GetAllFeatureVariables(key, uc)
+
 	if err != nil {
 		return &Decision{}, err
 	}
+
+	var experimentKey, variationKey string
+	// Retrieving experiment and variationKey from decision notification
+	notificationID, _ := c.DecisionService.OnDecision(func(n notification.DecisionNotification) {
+		if featureInfoDict, ok := n.DecisionInfo["feature"].(map[string]interface{}); ok {
+			if source, ok := featureInfoDict["source"].(decision.Source); ok && source == decision.FeatureTest {
+				if sourceInfo, ok := featureInfoDict["sourceInfo"].(interface{}); ok {
+					sourceInfoDict := sourceInfo.((map[string]string))
+					if expKey, ok := sourceInfoDict["experimentKey"]; ok {
+						if varKey, ok := sourceInfoDict["variationKey"]; ok {
+							experimentKey = expKey
+							variationKey = varKey
+						}
+					}
+				}
+			}
+		}
+	})
 
 	// HACK - Triggers impression events when applicable. This is not
 	// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
 	if !disableTracking {
 		_, tErr := c.IsFeatureEnabled(key, uc)
 		if tErr != nil {
+			c.DecisionService.RemoveOnDecision(notificationID)
 			return &Decision{}, tErr
 		}
 	}
 
-	// TODO add experiment and variation keys where applicable
+	c.DecisionService.RemoveOnDecision(notificationID)
 	dec := &Decision{
 		UserID:     uc.ID,
 		FeatureKey: key,
 		Variables:  variables,
 		Enabled:    enabled,
 		Type:       "feature",
+	}
+
+	if experimentKey != "" && variationKey != "" {
+		dec.ExperimentKey = experimentKey
+		dec.VariationKey = variationKey
 	}
 
 	return dec, nil

@@ -196,7 +196,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	suite.testClient.AddFeatureTest(advancedFeature)
 	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig().FeaturesMap["advanced"]
 
-	expected := &Decision{
+	expectedWithTrackingDisabled := &Decision{
 		UserID:     "testUser",
 		FeatureKey: "advanced",
 		Type:       "feature",
@@ -207,11 +207,28 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 		Enabled: true,
 	}
 
+	expectedWithTrackingEnabled := &Decision{
+		UserID:     "testUser",
+		FeatureKey: "advanced",
+		Type:       "feature",
+		Variables: map[string]interface{}{
+			"var1": "val1",
+			"var2": "val2",
+		},
+		Enabled:       true,
+		ExperimentKey: "5",
+		VariationKey:  "6",
+	}
+
 	// Response should be the same regardless of the flag
 	for _, flag := range []bool{true, false} {
 		actual, err := suite.optlyClient.ActivateFeature(feature.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
-		suite.Equal(expected, actual)
+		if flag {
+			suite.Equal(expectedWithTrackingDisabled, actual)
+		} else {
+			suite.Equal(expectedWithTrackingEnabled, actual)
+		}
 	}
 
 	// Only one event should have been triggered
