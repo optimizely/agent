@@ -51,14 +51,31 @@ api:
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
-
+    ## for details check this out.
+    ## https://github.com/go-chi/cors
+    # cors:
+    #     ## If allowedOrigins is nil or empty, value is set to ["*"].
+    #     allowedOrigins: 
+    #         - ["*"]
+    #     ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
+    #     allowedMethods:
+    #         - "HEAD"
+    #         - "GET"
+    #         - "POST"
+    #         - "PUT"
+    #         - "OPTIONS"
+    #         - "DELETE"
+    #     ## Default value is [] but "Origin" is always appended to the list.
+    #     allowedHeaders: []
+    #     exposedHeaders: []
+    #     allowedCredentials: false
+    #     maxAge: 300
 ##
 ## admin service configuration
 ##
 admin:
     ## http listener port
     port: "8088"
-
 ##
 ## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will
 ## trigger an immediate download of the datafile from the CDN

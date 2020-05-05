@@ -20,11 +20,12 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
-	"net/http"
-	"strings"
 )
 
 // A MessageChan is a channel of bytes
@@ -80,8 +81,6 @@ func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	// this should be settable via config
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Each connection registers its own message channel with the NotificationHandler's connections registry
 	messageChan := make(MessageChan)
