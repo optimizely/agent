@@ -51,7 +51,7 @@ func NewDefaultConfig() *AgentConfig {
 				// If AllowedOrigins is nil or empty, value is set to ["*"].
 				AllowedOrigins: nil,
 				// If AllowedMethods is nil or empty, value is set to (HEAD, GET and POST).
-				AllowedMethods: []string{"HEAD", "GET", "PUT", "POST", "DELETE"},
+				AllowedMethods: nil,
 				// Default value is [] but "Origin" is always appended to the list.
 				AllowedHeaders:     []string{},
 				ExposedHeaders:     []string{},
