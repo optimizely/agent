@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-202, Optimizely, Inc. and contributors                    *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -19,7 +19,6 @@ package optimizely
 
 import (
 	"errors"
-	"strconv"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -172,15 +171,14 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	var enabled bool
-	var featureDecision decision.FeatureDecision
-	variables := make(map[string]interface{})
-	var experimentKey, variationKey string
-
-	projectConfig, err := c.OptimizelyClient.ConfigManager.GetConfig()
+	enabled, variables, err := c.GetAllFeatureVariables(key, uc)
 	if err != nil {
 		return &Decision{}, err
 	}
+
+	var experimentKey, variationKey string
+	// Ignore error since GetAllFeatureVariables already checks for it
+	projectConfig, _ := c.OptimizelyClient.ConfigManager.GetConfig()
 
 	if feature, err := projectConfig.GetFeatureByKey(key); err == nil {
 		variable := entities.Variable{}
@@ -189,8 +187,9 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 			ProjectConfig: projectConfig,
 			Variable:      variable,
 		}
-		if featureDecision, err = c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil && featureDecision.Variation != nil {
-			enabled = featureDecision.Variation.FeatureEnabled
+		// HACK - Triggers impression events when applicable. This is not
+		// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
+		if featureDecision, err := c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil && featureDecision.Variation != nil {
 			variationKey = featureDecision.Variation.Key
 			experimentKey = featureDecision.Experiment.Key
 
@@ -199,31 +198,6 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 				impressionEvent := event.CreateImpressionUserEvent(decisionContext.ProjectConfig, featureDecision.Experiment, *featureDecision.Variation, uc)
 				c.EventProcessor.ProcessEvent(impressionEvent)
 			}
-		}
-
-		for _, v := range feature.VariableMap {
-			val := v.DefaultValue
-
-			if enabled {
-				if variable, ok := featureDecision.Variation.Variables[v.ID]; ok {
-					val = variable.Value
-				}
-			}
-
-			var out interface{}
-			out = val
-			switch varType := v.Type; varType {
-			case entities.Boolean:
-				out, err = strconv.ParseBool(val)
-			case entities.Double:
-				out, err = strconv.ParseFloat(val, 64)
-			case entities.Integer:
-				out, err = strconv.Atoi(val)
-			case entities.String:
-			default:
-			}
-
-			variables[v.Key] = out
 		}
 	}
 
