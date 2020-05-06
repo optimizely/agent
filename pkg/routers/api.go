@@ -32,6 +32,7 @@ import (
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 )
 
@@ -47,6 +48,7 @@ type APIOptions struct {
 	nStreamHandler  http.HandlerFunc
 	oAuthHandler    http.HandlerFunc
 	oAuthMiddleware func(next http.Handler) http.Handler
+	corsHandler     func(next http.Handler) http.Handler
 }
 
 func forbiddenHandler(message string) http.HandlerFunc {
@@ -81,6 +83,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 	}
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
+	corsHandler := createCorsHandler(conf.CORS)
 
 	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
@@ -93,6 +96,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		nStreamHandler:  nStreamHandler,
 		oAuthHandler:    authHandler.CreateAPIAccessToken,
 		oAuthMiddleware: authProvider.AuthorizeAPI,
+		corsHandler:     corsHandler,
 	}
 
 	return NewAPIRouter(spec)
@@ -123,7 +127,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Use(opt.sdkMiddleware)
+		r.Use(opt.corsHandler, opt.sdkMiddleware)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
 		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
 		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
@@ -140,4 +144,17 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 
 	staticServer := http.FileServer(statikFS)
 	r.Handle("/*", staticServer)
+}
+
+func createCorsHandler(c config.CORSConfig) func(next http.Handler) http.Handler {
+	options := cors.Options{
+		AllowedOrigins:   c.AllowedOrigins,
+		AllowedMethods:   c.AllowedMethods,
+		AllowedHeaders:   c.AllowedHeaders,
+		ExposedHeaders:   c.ExposedHeaders,
+		AllowCredentials: c.AllowedCredentials,
+		MaxAge:           c.MaxAge,
+	}
+
+	return cors.Handler(options)
 }

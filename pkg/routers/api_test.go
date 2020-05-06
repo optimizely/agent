@@ -36,6 +36,17 @@ var metricsRegistry = metrics.NewRegistry()
 
 const methodHeaderKey = "X-Method-Header"
 const clientHeaderKey = "X-Client-Header"
+const originHeaderKey = "Origin"
+const corsOriginHeaderKey = "Access-Control-Allow-Origin"
+const corsRequestMethodHeaderKey = "Access-Control-Request-Method"
+const corsAllowMethodHeaderKey = "Access-Control-Allow-Methods"
+const corsExposeHeaderKey = "Access-Control-Expose-Headers"
+const corsRequestHeadersKey = "Access-Control-Request-Headers"
+const corsAllowedHeadersKey = "Access-Control-Allow-Headers"
+const corsCredentialsHeaderKey = "Access-Control-Allow-Credentials"
+const corsMaxAgeHeaderKey = "Access-Control-Max-Age"
+
+const validOrigin = "http://localhost.com"
 
 var testOptlyMiddleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +77,19 @@ var testAuthMiddleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+var opts *APIOptions
+
+var corsConfig = config.CORSConfig{
+	AllowedOrigins:     []string{validOrigin},
+	AllowedMethods:     []string{"OPTIONS", "GET", "POST"},
+	AllowedHeaders:     []string{"Origin", "Accept", "Content-Type"},
+	ExposedHeaders:     []string{"Header1", "Header2"},
+	AllowedCredentials: true,
+	MaxAge:             500,
+}
+
+var testCorsHandler = createCorsHandler(corsConfig)
+
 type APIV1TestSuite struct {
 	suite.Suite
 	tc  *optimizelytest.TestClient
@@ -76,7 +100,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 
-	opts := &APIOptions{
+	opts = &APIOptions{
 		maxConns:        1,
 		sdkMiddleware:   testOptlyMiddleware,
 		configHandler:   testHandler("config"),
@@ -87,12 +111,22 @@ func (suite *APIV1TestSuite) SetupTest() {
 		oAuthHandler:    testHandler("oauth/token"),
 		oAuthMiddleware: testAuthMiddleware,
 		metricsRegistry: metricsRegistry,
+		corsHandler:     testCorsHandler,
 	}
 
 	suite.mux = NewAPIRouter(opts)
 }
 
 func (suite *APIV1TestSuite) TestValidRoutes() {
+
+	opts.corsHandler = func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add(originHeaderKey, "corsMiddleware")
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+	suite.mux = NewAPIRouter(opts)
 
 	routes := []struct {
 		method string
@@ -114,6 +148,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		suite.Equal("expected", rec.Header().Get(clientHeaderKey))
 		suite.Equal(route.path, rec.Header().Get(methodHeaderKey))
 		suite.Equal("mockMiddleware", rec.Header().Get(middlewareHeaderKey))
+		suite.Equal("corsMiddleware", rec.Header().Get(originHeaderKey))
 	}
 }
 
@@ -140,6 +175,131 @@ func (suite *APIV1TestSuite) TestCreateAccessToken() {
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 	suite.Equal("oauth/token", rec.Header().Get(methodHeaderKey))
+}
+
+func (suite *APIV1TestSuite) TestCORSAllowedOrigins() {
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"GET", "config"},
+		{"POST", "activate"},
+		{"POST", "track"},
+		{"POST", "override"},
+		{"GET", "notifications/event-stream"},
+	}
+
+	// Allowed Origin
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		req.Header.Add(originHeaderKey, validOrigin)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+		suite.Equal(validOrigin, rec.Header().Get(corsOriginHeaderKey))
+	}
+
+	// Unallowed Origin
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		req.Header.Add(originHeaderKey, "http://test.com")
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+		suite.Equal("", rec.Header().Get(corsOriginHeaderKey))
+	}
+}
+
+func (suite *APIV1TestSuite) TestCORSAllowedMethods() {
+
+	// Allowed Method
+	req := httptest.NewRequest("OPTIONS", "/v1/config", nil)
+	req.Header.Add(originHeaderKey, validOrigin)
+	req.Header.Add(corsRequestMethodHeaderKey, "GET")
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("GET", rec.Header().Get(corsAllowMethodHeaderKey))
+
+	// Unallowed Method
+	req = httptest.NewRequest("OPTIONS", "/v1/config", nil)
+	req.Header.Add(originHeaderKey, validOrigin)
+	req.Header.Add(corsRequestMethodHeaderKey, "PATCH")
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("", rec.Header().Get(corsAllowMethodHeaderKey))
+}
+
+func (suite *APIV1TestSuite) TestCORSAllowedHeaders() {
+
+	// Allowed Headers
+	req := httptest.NewRequest("OPTIONS", "/v1/config", nil)
+	req.Header.Add(originHeaderKey, validOrigin)
+	req.Header.Add(corsRequestMethodHeaderKey, "GET")
+	req.Header.Add(corsRequestHeadersKey, "Accept")
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("Accept", rec.Header().Get(corsAllowedHeadersKey))
+
+	// Unallowed Headers
+	req = httptest.NewRequest("OPTIONS", "/v1/config", nil)
+	req.Header.Add(originHeaderKey, validOrigin)
+	req.Header.Add(corsRequestMethodHeaderKey, "GET")
+	req.Header.Add(corsRequestHeadersKey, "Invalid")
+	rec = httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("", rec.Header().Get(corsAllowedHeadersKey))
+}
+
+func (suite *APIV1TestSuite) TestCORSExposedHeaders() {
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"GET", "config"},
+		{"POST", "activate"},
+	}
+
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		req.Header.Add(originHeaderKey, validOrigin)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+		suite.Equal("Header1, Header2", rec.Header().Get(corsExposeHeaderKey))
+	}
+}
+
+func (suite *APIV1TestSuite) TestCORSAllowCredentials() {
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"GET", "config"},
+		{"POST", "activate"},
+	}
+
+	for _, route := range routes {
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, nil)
+		req.Header.Add(originHeaderKey, validOrigin)
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
+		suite.Equal("true", rec.Header().Get(corsCredentialsHeaderKey))
+	}
+}
+
+func (suite *APIV1TestSuite) TestCORSMaxAge() {
+	req := httptest.NewRequest("OPTIONS", "/v1/config", nil)
+	req.Header.Add(originHeaderKey, validOrigin)
+	req.Header.Add(corsRequestMethodHeaderKey, "GET")
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("500", rec.Header().Get(corsMaxAgeHeaderKey))
 }
 
 func TestAPIV1TestSuite(t *testing.T) {
