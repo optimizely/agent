@@ -1,4 +1,6 @@
-language: minimal
+os: linux
+dist: xenial
+language: shell
 
 env:
   global:
@@ -14,15 +16,19 @@ branches:
 
 stages:
   - 'Lint markdown files'
-  - 'Test'
-  - 'Build'
-
+  - 'Tests'
+  - 'Trigger FSC Tests'
+  - 'Test Build using latest tag (no upload)'
+  - 'Build, Upload and Publish (draft)'
+  - 'Test github release assets'
+  - 'Publish (real)'
 
 jobs:
 
   include:
 
     - stage: 'Lint markdown files'
+      name: awesome_bot
       os: linux
       language: generic
       install: gem install awesome_bot
@@ -31,6 +37,7 @@ jobs:
         - find . -type f -name '*.md' -exec awesome_bot {} \;
 
     - stage: 'Lint markdown files'
+      name: markdown-spellcheck
       os: linux
       language: generic
       before_install: skip
@@ -42,16 +49,16 @@ jobs:
         - mdspell -a -n -r --en-us '**/*.md'
       after_success: skip
 
-    - stage: Test
-      name: lint
+    - stage: Tests
+      name: hadolint
       os: linux
       dist: xenial
       script:
         - make -e lint
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
 
-    - stage: Test
-      name: unit
+    - stage: Tests
+      name: codecov.io
       os: linux
       dist: xenial
       script:
@@ -60,8 +67,8 @@ jobs:
         # Replace with coveralls if/when the repo is made public
         - bash <(curl -s https://codecov.io/bash)
 
-    - stage: Test
-      name: srcclr
+    - stage: Tests
+      name: sourceclear
       os: linux
       dist: xenial
       install:
@@ -69,7 +76,7 @@ jobs:
       script:
         - scripts/run_srcclr.sh
 
-    - stage: Test
+    - stage: Tests
       name: windows build.ps1 test
       os: windows
       language: shell
@@ -81,7 +88,7 @@ jobs:
       after_success:
         - ( [ ${TRAVIS_EVENT_TYPE} = "push" ] && [ ! -z ${TRAVIS_TAG} ] ) && scripts/upload_artifacts.sh
 
-    - stage: Integration
+    - stage: Tests
       name: acceptance
       os: linux
       dist: xenial
@@ -92,7 +99,7 @@ jobs:
       script:
         - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
 
-    - stage: 'Building Optimizely Agent'
+    - stage: 'Trigger FSC Tests'
       if: (branch = master AND type = push) OR type = pull_request OR tag IS present
       env:
         SDK=agent
@@ -104,7 +111,7 @@ jobs:
       script:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
 
-    - stage: Test Build using latest tag (no upload)
+    - stage: 'Test Build using latest tag (no upload)'
       name: linux
       os: linux
       dist: xenial
@@ -113,7 +120,7 @@ jobs:
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh
         - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh
 
-    - stage: Build and Upload
+    - stage: 'Build, Upload and Publish (draft)'
       if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       name: linux
       os: linux
@@ -134,12 +141,12 @@ jobs:
       script:
         # now we're going to create packages & upload packages
         - $TRAVIS_BUILD_DIR/scripts/ci_create_packages.sh && $TRAVIS_BUILD_DIR/scripts/ci_upload_packages.sh
-        # create the github release
+        # create the github release (draft)
         - release_github_v2.sh "$TRAVIS_TAG"
         # attach generate_secret to the github release
         - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && $TRAVIS_BUILD_DIR/scripts/ci_attach_generate_secret.sh
 
-    - stage: Test github release assets
+    - stage: 'Test github release assets'
       if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       name: linux
       os: linux
@@ -151,7 +158,7 @@ jobs:
       install:
         # installs hub to ~/bin
         - $HOME/travisci-tools/release_github/install_hub.sh
-        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+        - export PATH=$HOME/bin:$HOME/travisci-tools/slack:$PATH
 
       before_script: skip
 
@@ -160,7 +167,10 @@ jobs:
         - tar xvfz generate_secret-linux-amd64-${APP_VERSION}.tar.gz -C /tmp
         - /tmp/generate_secret
 
-    - stage: Test github release assets
+      after_failure:
+        - SLACK_TEXT="${APP_VERSION} $TRAVIS_OS_NAME assets failed verification." send_to_slack.sh
+
+    - stage: 'Test github release assets'
       if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       name: darwin
       os: osx
@@ -168,12 +178,12 @@ jobs:
 
       before_install:
         - ./scripts/pull_travis_ci_tools.sh
-        - brew install jq
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew install jq
 
       install:
         # installs hub to ~/bin
         - $HOME/travisci-tools/release_github/install_hub.sh
-        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+        - export PATH=$HOME/bin:$HOME/travisci-tools/slack:$PATH
 
       before_script: skip
 
@@ -182,7 +192,10 @@ jobs:
         - tar xvfz generate_secret-darwin-amd64-${APP_VERSION}.tar.gz -C /tmp
         - /tmp/generate_secret
 
-    - stage: Test github release assets
+      after_failure:
+        - SLACK_TEXT="${APP_VERSION} $TRAVIS_OS_NAME assets failed verification." send_to_slack.sh
+
+    - stage: 'Test github release assets'
       if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       name: windows
       os: windows
@@ -194,7 +207,7 @@ jobs:
       install:
         # installs hub to ~/bin
         - $HOME/travisci-tools/release_github/install_hub.sh
-        - export PATH=$HOME/bin:$HOME/travisci-tools/release_github:$PATH
+        - export PATH=$HOME/bin:$HOME/travisci-tools/slack:$PATH
 
       before_script: skip
 
@@ -202,6 +215,30 @@ jobs:
         - hub release download $(git describe --abbrev=0 --tags) -i '*-windows-amd64-*'
         - tar xvfz generate_secret-windows-amd64-${APP_VERSION}.tar.gz -C /tmp
         - /tmp/generate_secret.exe
+
+      after_failure:
+        - SLACK_TEXT="${APP_VERSION} $TRAVIS_OS_NAME assets failed verification." send_to_slack.sh
+
+    - stage: 'Publish (real)'
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      name: publish and notify in slack
+      os: linux
+      env: APP_VERSION=${TRAVIS_TAG#v}
+
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+        - export PATH=$HOME/bin:$HOME/travisci-tools/slack:$PATH
+
+      before_script: skip
+
+      script:
+        - SLACK_TEXT="${APP_VERSION} all assets verified. Publishing https://github.com/optimizely/agent/releases/tag/${TRAVIS_TAG}" send_to_slack.sh
+        # how to use hub: https://hub.github.com/hub.1.html
+        - hub release edit --draft=false -m "" ${TRAVIS_TAG}
 
 before_script:
   # https://github.com/travis-ci/gimme
