@@ -237,6 +237,7 @@ jobs:
 
       script:
         - SLACK_TEXT="${APP_VERSION} all assets verified. Publishing https://github.com/optimizely/agent/releases/tag/${TRAVIS_TAG}" send_to_slack.sh
+        # how to use hub: https://hub.github.com/hub.1.html
         - hub release edit --draft=false -m "" ${TRAVIS_TAG}
 
 before_script:
