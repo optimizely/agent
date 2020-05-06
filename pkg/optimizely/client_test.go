@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -196,18 +196,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	suite.testClient.AddFeatureTest(advancedFeature)
 	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig().FeaturesMap["advanced"]
 
-	expectedWithTrackingDisabled := &Decision{
-		UserID:     "testUser",
-		FeatureKey: "advanced",
-		Type:       "feature",
-		Variables: map[string]interface{}{
-			"var1": "val1",
-			"var2": "val2",
-		},
-		Enabled: true,
-	}
-
-	expectedWithTrackingEnabled := &Decision{
+	expected := &Decision{
 		UserID:     "testUser",
 		FeatureKey: "advanced",
 		Type:       "feature",
@@ -224,11 +213,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	for _, flag := range []bool{true, false} {
 		actual, err := suite.optlyClient.ActivateFeature(feature.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
-		if flag {
-			suite.Equal(expectedWithTrackingDisabled, actual)
-		} else {
-			suite.Equal(expectedWithTrackingEnabled, actual)
-		}
+		suite.Equal(expected, actual)
 	}
 
 	// Only one event should have been triggered

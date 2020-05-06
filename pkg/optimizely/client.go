@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-202, Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -19,11 +19,12 @@ package optimizely
 
 import (
 	"errors"
+	"strconv"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/event"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -171,52 +172,69 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	enabled, variables, err := c.GetAllFeatureVariables(key, uc)
+	var enabled bool
+	var featureDecision decision.FeatureDecision
+	variables := make(map[string]interface{})
+	var experimentKey, variationKey string
 
+	projectConfig, err := c.OptimizelyClient.ConfigManager.GetConfig()
 	if err != nil {
 		return &Decision{}, err
 	}
 
-	var experimentKey, variationKey string
-	// Retrieving experiment and variationKey from decision notification
-	notificationID, _ := c.DecisionService.OnDecision(func(n notification.DecisionNotification) {
-		if featureInfoDict, ok := n.DecisionInfo["feature"].(map[string]interface{}); ok {
-			if source, ok := featureInfoDict["source"].(decision.Source); ok && source == decision.FeatureTest {
-				if sourceInfo, ok := featureInfoDict["sourceInfo"].(interface{}); ok {
-					sourceInfoDict := sourceInfo.((map[string]string))
-					if expKey, ok := sourceInfoDict["experimentKey"]; ok {
-						if varKey, ok := sourceInfoDict["variationKey"]; ok {
-							experimentKey = expKey
-							variationKey = varKey
-						}
-					}
-				}
+	if feature, err := projectConfig.GetFeatureByKey(key); err == nil {
+		variable := entities.Variable{}
+		decisionContext := decision.FeatureDecisionContext{
+			Feature:       &feature,
+			ProjectConfig: projectConfig,
+			Variable:      variable,
+		}
+		if featureDecision, err = c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil && featureDecision.Variation != nil {
+			enabled = featureDecision.Variation.FeatureEnabled
+			variationKey = featureDecision.Variation.Key
+			experimentKey = featureDecision.Experiment.Key
+
+			if featureDecision.Source == decision.FeatureTest && !disableTracking {
+				// send impression event for feature tests
+				impressionEvent := event.CreateImpressionUserEvent(decisionContext.ProjectConfig, featureDecision.Experiment, *featureDecision.Variation, uc)
+				c.EventProcessor.ProcessEvent(impressionEvent)
 			}
 		}
-	})
 
-	// HACK - Triggers impression events when applicable. This is not
-	// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
-	if !disableTracking {
-		_, tErr := c.IsFeatureEnabled(key, uc)
-		if tErr != nil {
-			c.DecisionService.RemoveOnDecision(notificationID)
-			return &Decision{}, tErr
+		for _, v := range feature.VariableMap {
+			val := v.DefaultValue
+
+			if enabled {
+				if variable, ok := featureDecision.Variation.Variables[v.ID]; ok {
+					val = variable.Value
+				}
+			}
+
+			var out interface{}
+			out = val
+			switch varType := v.Type; varType {
+			case entities.Boolean:
+				out, err = strconv.ParseBool(val)
+			case entities.Double:
+				out, err = strconv.ParseFloat(val, 64)
+			case entities.Integer:
+				out, err = strconv.Atoi(val)
+			case entities.String:
+			default:
+			}
+
+			variables[v.Key] = out
 		}
 	}
 
-	c.DecisionService.RemoveOnDecision(notificationID)
 	dec := &Decision{
-		UserID:     uc.ID,
-		FeatureKey: key,
-		Variables:  variables,
-		Enabled:    enabled,
-		Type:       "feature",
-	}
-
-	if experimentKey != "" && variationKey != "" {
-		dec.ExperimentKey = experimentKey
-		dec.VariationKey = variationKey
+		UserID:        uc.ID,
+		FeatureKey:    key,
+		Variables:     variables,
+		Enabled:       enabled,
+		Type:          "feature",
+		ExperimentKey: experimentKey,
+		VariationKey:  variationKey,
 	}
 
 	return dec, nil
