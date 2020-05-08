@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	} else {
-		fmt.Printf("Client Secret: %v\n", secretStr)
-		fmt.Printf("Client Secret's hash: %v\n", hashStr)
+		fmt.Printf("Secret: %v\n", secretStr)
+		fmt.Printf("Secret's hash: %v\n", hashStr)
 	}
 }

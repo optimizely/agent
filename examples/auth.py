@@ -12,9 +12,9 @@ import sys
 # You can use the generate_secret tool included with Agent to generate this:
 
 # > make generate_secret
-# Client Secret: CvzvkWm3V1D9RBxPWEjC+ud9zvwcOvnnLkWaIkzDGyA=
+# Secret: CvzvkWm3V1D9RBxPWEjC+ud9zvwcOvnnLkWaIkzDGyA=
 
-# You can ignore the second line that says "Client Secret's hash".
+# You can ignore the second line that says "Secret's hash".
 
 # Then, set an environment variable to make this secret available to Agent:
 # > export OPTIMIZELY_API_AUTH_HMACSECRETS=CvzvkWm3V1D9RBxPWEjC+ud9zvwcOvnnLkWaIkzDGyA=
@@ -23,8 +23,8 @@ import sys
 # Again, you can use the generate_secret tool included with Agent to generate these:
 #
 # > make generate_secret
-# Client Secret: 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6spM=
-# Client Secret's hash: JDJhJDEyJEdkSHpicHpRODBqOC9FQzRneGIyNXU0ZFVPMFNKcUhkdTRUQXRzWUJOdjRzRmcuVGdFUTUu
+# Secret: 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6spM=
+# Secret's hash: JDJhJDEyJEdkSHpicHpRODBqOC9FQzRneGIyNXU0ZFVPMFNKcUhkdTRUQXRzWUJOdjRzRmcuVGdFUTUu
 #
 # Take the hash, and add it to your agent configuration file (default: config.yaml) under the "api" section,
 # along with your desired client ID and SDK key:

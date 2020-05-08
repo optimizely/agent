@@ -34,15 +34,20 @@ The configuration properties pertaining to Issuer & Validator mode are listed be
 |hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS or OPTIMIZELY_API_AUTH_HMACSECRETS|Array of secrets used to sign & validate access tokens, using the HMAC SHA256 algorithm. Values must be base64-format strings. The first value in the array is used to sign issued access tokens. Access tokens signed with any value in the array are considered valid.|
 |clients|N/A|Array of objects, used for token issuance, consisting of `id`, `secretHash`, and `sdkKeys`. Clients provide ID and secret in their requests to `/oauth/token`. Agent validates the request credentials by checking for an exact match of ID, checking that the BCrypt hash of the request secret matches the `secretHash` from configuration, and that the SDK key provided in the `X-Optimizely-Sdk-Key` request header exists in the `sdkKeys` from configuration. `secretHash` values must be base64-format strings.|
 
+#### generate_secret tool
+
 To make setup easier, Agent provides a command-line tool that can generate base64-encoded 32-byte random values, and their associated base64-encoded BCrypt hashes:
 ```shell script
 // From the Agent root directory
 > make generate_secret
-Client Secret: i3SrdrCy/wEGqggv9OI4FgIsdHHNpOacrmIMJ6SFIkE=
-Client Secret's hash: JDJhJDEyJERGNzhjRXVTNTdOQUZ3cndxTkZ6Li5XQURlazU2R21YeFZjb1pWSkN5eGZ1SXM4VXRLb0ZD
+Secret: i3SrdrCy/wEGqggv9OI4FgIsdHHNpOacrmIMJ6SFIkE=
+Secret's hash: JDJhJDEyJERGNzhjRXVTNTdOQUZ3cndxTkZ6Li5XQURlazU2R21YeFZjb1pWSkN5eGZ1SXM4VXRLb0ZD
 ```
 
-Use the hash value to configure Agent, and pass the secret value as `client_secret` when making access token requests to `/oauth/token`. For details of the access token issuance endpoint, see the OpenAPI spec file.
+The generate_secret tool can be used for two purposes:
+- These secrets can be used to set the `hmacSecrets` configuration value.
+- These secrets can be used for authenticating access token requests to `/oauth/token`. Set the hash value as the `secretHash` configuration property (inside `clients`). Then, when making access token requests to `/oauth/token`, pass the secret value as `client_secret` in the request. For details of the access token issuance endpoint, see the [OpenAPI spec file](../api/openapi-spec/openapi.yaml) and the [auth example](../examples/auth.py).
+
 
 The `generate_secret` command-line tool can be downloaded by navigating to Agent's latest [github release](https://github.com/optimizely/agent/releases) and choosing the binary appropriate for your OS architecture.
 
