@@ -20,6 +20,7 @@ package optimizely
 import (
 	"errors"
 
+	"github.com/hashicorp/go-multierror"
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
@@ -171,14 +172,14 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	enabled, variables, err := c.GetAllFeatureVariables(key, uc)
+	projectConfig, err := c.OptimizelyClient.ConfigManager.GetConfig()
 	if err != nil {
 		return &Decision{}, err
 	}
 
+	variables := make(map[string]interface{})
+	enabled := false
 	var experimentKey, variationKey string
-	// Ignore error since GetAllFeatureVariables already checks for it
-	projectConfig, _ := c.OptimizelyClient.ConfigManager.GetConfig()
 
 	if feature, err := projectConfig.GetFeatureByKey(key); err == nil {
 		variable := entities.Variable{}
@@ -187,16 +188,30 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 			ProjectConfig: projectConfig,
 			Variable:      variable,
 		}
-		// HACK - Triggers impression events when applicable. This is not
-		// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
-		if featureDecision, err := c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil && featureDecision.Variation != nil {
-			variationKey = featureDecision.Variation.Key
-			experimentKey = featureDecision.Experiment.Key
 
-			if featureDecision.Source == decision.FeatureTest && !disableTracking {
-				// send impression event for feature tests
-				impressionEvent := event.CreateImpressionUserEvent(decisionContext.ProjectConfig, featureDecision.Experiment, *featureDecision.Variation, uc)
-				c.EventProcessor.ProcessEvent(impressionEvent)
+		if featureDecision, err := c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil {
+			if featureDecision.Variation != nil {
+				enabled = featureDecision.Variation.FeatureEnabled
+				variationKey = featureDecision.Variation.Key
+				experimentKey = featureDecision.Experiment.Key
+
+				if featureDecision.Source == decision.FeatureTest && !disableTracking {
+					// send impression event for feature tests
+					impressionEvent := event.CreateImpressionUserEvent(decisionContext.ProjectConfig, featureDecision.Experiment, *featureDecision.Variation, uc)
+					c.EventProcessor.ProcessEvent(impressionEvent)
+				}
+			}
+
+			errs := new(multierror.Error)
+			for _, v := range feature.VariableMap {
+				value, err := c.GetTypedFeatureVariableValue(enabled, featureDecision, v)
+				errs = multierror.Append(errs, err)
+				variables[v.Key] = value
+			}
+
+			err = errs.ErrorOrNil()
+			if err != nil {
+				return &Decision{}, err
 			}
 		}
 	}
