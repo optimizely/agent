@@ -204,8 +204,8 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 
 			errs := new(multierror.Error)
 			for _, v := range feature.VariableMap {
-				value, err := c.GetTypedFeatureVariableValue(enabled, featureDecision, v)
-				errs = multierror.Append(errs, err)
+				value, e := c.GetTypedFeatureVariableValue(enabled, featureDecision, v)
+				errs = multierror.Append(errs, e)
 				variables[v.Key] = value
 			}
 
