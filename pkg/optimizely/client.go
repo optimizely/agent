@@ -181,38 +181,43 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 	enabled := false
 	var experimentKey, variationKey string
 
-	if feature, err := projectConfig.GetFeatureByKey(key); err == nil {
-		variable := entities.Variable{}
-		decisionContext := decision.FeatureDecisionContext{
-			Feature:       &feature,
-			ProjectConfig: projectConfig,
-			Variable:      variable,
+	feature, _ := projectConfig.GetFeatureByKey(key)
+	variable := entities.Variable{}
+	decisionContext := decision.FeatureDecisionContext{
+		Feature:       &feature,
+		ProjectConfig: projectConfig,
+		Variable:      variable,
+	}
+
+	if featureDecision, err := c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil {
+		if featureDecision.Variation != nil {
+			enabled = featureDecision.Variation.FeatureEnabled
+			variationKey = featureDecision.Variation.Key
+			experimentKey = featureDecision.Experiment.Key
+
+			if featureDecision.Source == decision.FeatureTest && !disableTracking {
+				// send impression event for feature tests
+				impressionEvent := event.CreateImpressionUserEvent(decisionContext.ProjectConfig, featureDecision.Experiment, *featureDecision.Variation, uc)
+				c.EventProcessor.ProcessEvent(impressionEvent)
+			}
 		}
 
-		if featureDecision, err := c.DecisionService.GetFeatureDecision(decisionContext, uc); err == nil {
-			if featureDecision.Variation != nil {
-				enabled = featureDecision.Variation.FeatureEnabled
-				variationKey = featureDecision.Variation.Key
-				experimentKey = featureDecision.Experiment.Key
-
-				if featureDecision.Source == decision.FeatureTest && !disableTracking {
-					// send impression event for feature tests
-					impressionEvent := event.CreateImpressionUserEvent(decisionContext.ProjectConfig, featureDecision.Experiment, *featureDecision.Variation, uc)
-					c.EventProcessor.ProcessEvent(impressionEvent)
+		errs := new(multierror.Error)
+		for _, v := range feature.VariableMap {
+			val := v.DefaultValue
+			if enabled {
+				if variable, ok := featureDecision.Variation.Variables[v.ID]; ok {
+					val = variable.Value
 				}
 			}
+			value, e := c.GetTypedFeatureVariableValue(val, v)
+			errs = multierror.Append(errs, e)
+			variables[v.Key] = value
+		}
 
-			errs := new(multierror.Error)
-			for _, v := range feature.VariableMap {
-				value, e := c.GetTypedFeatureVariableValue(enabled, featureDecision, v)
-				errs = multierror.Append(errs, e)
-				variables[v.Key] = value
-			}
-
-			err = errs.ErrorOrNil()
-			if err != nil {
-				return &Decision{}, err
-			}
+		err = errs.ErrorOrNil()
+		if err != nil {
+			return &Decision{}, err
 		}
 	}
 
