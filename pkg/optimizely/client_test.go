@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -120,13 +120,13 @@ func (suite *ClientTestSuite) TestValidSetForcedVariations() {
 		},
 	}
 
-	userId := "testUser"
+	userID := "testUser"
 	for _, scenario := range scenarios {
-		actual, err := suite.optlyClient.SetForcedVariation(scenario.experimentKey, userId, scenario.variationKey)
+		actual, err := suite.optlyClient.SetForcedVariation(scenario.experimentKey, userID, scenario.variationKey)
 		suite.NoError(err)
 
 		expected := &Override{
-			UserID:           userId,
+			UserID:           userID,
 			ExperimentKey:    scenario.experimentKey,
 			VariationKey:     scenario.variationKey,
 			PrevVariationKey: scenario.previousKey,
@@ -160,15 +160,15 @@ func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 		},
 	}
 
-	userId := "testUser"
-	_, _ = suite.optlyClient.SetForcedVariation(suite.featureExp.Key, userId, "enabled_var")
+	userID := "testUser"
+	_, _ = suite.optlyClient.SetForcedVariation(suite.featureExp.Key, userID, "enabled_var")
 
 	for _, scenario := range scenarios {
-		actual, err := suite.optlyClient.RemoveForcedVariation(suite.featureExp.Key, userId)
+		actual, err := suite.optlyClient.RemoveForcedVariation(suite.featureExp.Key, userID)
 		suite.NoError(err)
 
 		expected := &Override{
-			UserID:           userId,
+			UserID:           userID,
 			ExperimentKey:    suite.featureExp.Key,
 			VariationKey:     "",
 			PrevVariationKey: scenario.previousKey,
@@ -204,7 +204,9 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 			"var1": "val1",
 			"var2": "val2",
 		},
-		Enabled: true,
+		Enabled:       true,
+		ExperimentKey: "5",
+		VariationKey:  "6",
 	}
 
 	// Response should be the same regardless of the flag
