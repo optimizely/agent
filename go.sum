@@ -93,7 +93,6 @@ github.com/optimizely/go-sdk v1.1.2 h1:rojFANR6mp/eKfC/+HnXZNs+H0tpaS8qrQExBd/Lp
 github.com/optimizely/go-sdk v1.1.2/go.mod h1:aA/UeFjLeQefRlvfTI8QkvBmJWPvLEHamKmp/CdJqGU=
 github.com/optimizely/go-sdk v1.1.3-0.20200504184941-ac759bfb12f8 h1:EO1/LbxE2C40lUfmUyxEZrX++WwHK4AJikB90fmpanE=
 github.com/optimizely/go-sdk v1.1.3-0.20200504184941-ac759bfb12f8/go.mod h1:ehZPiEzNzNJw98EFrZX1C9h9gVgVRCiWosQEVlgivCw=
-// This is a temporary change to use custom branch of go-sdk
 github.com/optimizely/go-sdk v1.1.3-0.20200515100017-bfcdb0f9a79c h1:YVj9iDGi3gAsFHinnUuvlOiPtD1cabccN7U0zk9wud4=
 github.com/optimizely/go-sdk v1.1.3-0.20200515100017-bfcdb0f9a79c/go.mod h1:ehZPiEzNzNJw98EFrZX1C9h9gVgVRCiWosQEVlgivCw=
 github.com/optimizely/go-sdk v1.1.3 h1:zvhrj+nNlCrndXe7DbFtTQiy9Rny6ZLMyqdap1TMFi8=
