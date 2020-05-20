@@ -36,8 +36,8 @@ paths:
       operationId: trackEvent
       description: Send event and user details to Optimizely analytics backend, so you can see metrics for an experiment. You can view metrics either on your Results page or as a data export.
       responses:
-        '204':
-          description: No content, event received
+        '200':
+          description: Valid response, event received
         '400':
           description: Missing required parameters
         '401':
