@@ -170,9 +170,34 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	experimentKey, variationKey, enabled, variables, err := c.GetAllFeatureVariablesWithDecisionAndTracking(key, uc, disableTracking)
+	enabled, variables, err := c.GetAllFeatureVariablesWithDecision(key, uc)
 	if err != nil {
 		return &Decision{}, err
+	}
+
+	var experimentKey, variationKey string
+	projectConfig, _ := c.OptimizelyClient.ConfigManager.GetConfig()
+
+	feature, _ := projectConfig.GetFeatureByKey(key)
+	variable := entities.Variable{}
+	decisionContext := decision.FeatureDecisionContext{
+		Feature:       &feature,
+		ProjectConfig: projectConfig,
+		Variable:      variable,
+	}
+
+	if featureDecision, e := c.DecisionService.GetFeatureDecision(decisionContext, uc); e == nil && featureDecision.Variation != nil {
+		variationKey = featureDecision.Variation.Key
+		experimentKey = featureDecision.Experiment.Key
+	}
+
+	// HACK - Triggers impression events when applicable. This is not
+	// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
+	if !disableTracking {
+		_, tErr := c.IsFeatureEnabled(key, uc)
+		if tErr != nil {
+			return &Decision{}, tErr
+		}
 	}
 
 	dec := &Decision{
