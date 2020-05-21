@@ -183,7 +183,7 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 		if featureInfoDict, ok := n.DecisionInfo["feature"].(map[string]interface{}); ok {
 			if source, ok := featureInfoDict["source"].(decision.Source); ok && source == decision.FeatureTest {
 				if sourceInfo, ok := featureInfoDict["sourceInfo"].(interface{}); ok {
-					sourceInfoDict := sourceInfo.((map[string]string))
+					sourceInfoDict := sourceInfo.(map[string]string)
 					if expKey, ok := sourceInfoDict["experimentKey"]; ok {
 						if varKey, ok := sourceInfoDict["variationKey"]; ok {
 							experimentKey = expKey
@@ -200,12 +200,12 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 	if !disableTracking {
 		_, tErr := c.IsFeatureEnabled(key, uc)
 		if tErr != nil {
-			c.DecisionService.RemoveOnDecision(notificationID)
+			_ = c.DecisionService.RemoveOnDecision(notificationID)
 			return &Decision{}, tErr
 		}
 	}
 
-	c.DecisionService.RemoveOnDecision(notificationID)
+	_ = c.DecisionService.RemoveOnDecision(notificationID)
 	dec := &Decision{
 		UserID:     uc.ID,
 		FeatureKey: key,

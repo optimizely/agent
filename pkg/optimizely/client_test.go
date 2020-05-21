@@ -210,10 +210,13 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	}
 
 	// Response should be the same regardless of the flag
-	for _, flag := range []bool{true, false} {
+	for _, flag := range []bool{false, true} {
 		actual, err := suite.optlyClient.ActivateFeature(feature.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
 		suite.Equal(expected, actual)
+		// clearing for disableTracking true
+		expected.ExperimentKey = ""
+		expected.VariationKey = ""
 	}
 
 	// Only one event should have been triggered
