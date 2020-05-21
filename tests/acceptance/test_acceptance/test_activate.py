@@ -190,25 +190,25 @@ expected_activate_type_feat = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16939051724",
+    "experimentKey": "",
     "featureKey": "feature_4",
-    "variationKey": "16925940659",
+    "variationKey": "",
     "type": "feature",
     "enabled": true
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16932940705",
+    "experimentKey": "",
     "featureKey": "feature_5",
-    "variationKey": "16927890136",
+    "variationKey": "",
     "type": "feature",
     "enabled": true
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16941022436",
+    "experimentKey": "",
     "featureKey": "feature_1",
-    "variationKey": "16906801184",
+    "variationKey": "",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -319,9 +319,9 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
 expected_enabled_true_all_true = """[
   {
     "userId": "matjaz",
-    "experimentKey": "16941022436",
+    "experimentKey": "",
     "featureKey": "feature_1",
-    "variationKey": "16906801184",
+    "variationKey": "",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -376,9 +376,9 @@ expected_enabled_empty = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16941022436",
+    "experimentKey": "",
     "featureKey": "feature_1",
-    "variationKey": "16906801184",
+    "variationKey": "",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -401,9 +401,9 @@ expected_enabled_invalid = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16941022436",
+    "experimentKey": "",
     "featureKey": "feature_1",
-    "variationKey": "16906801184",
+    "variationKey": "",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -481,9 +481,9 @@ expected_activate_with_config = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16941022436",
+    "experimentKey": "",
     "featureKey": "feature_1",
-    "variationKey": "16906801184",
+    "variationKey": "",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -511,17 +511,17 @@ expected_activate_with_config = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16939051724",
+    "experimentKey": "",
     "featureKey": "feature_4",
-    "variationKey": "16925940659",
+    "variationKey": "",
     "type": "feature",
     "enabled": true
   },
   {
     "userId": "matjaz",
-    "experimentKey": "16932940705",
+    "experimentKey": "",
     "featureKey": "feature_5",
-    "variationKey": "16927890136",
+    "variationKey": "",
     "type": "feature",
     "enabled": true
   }
