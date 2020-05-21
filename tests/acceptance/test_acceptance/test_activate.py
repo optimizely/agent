@@ -79,9 +79,9 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
 expected_activate_feat = """[
   {
     "userId": "matjaz",
-    "experimentKey": "16941022436",
+    "experimentKey": "",
     "featureKey": "feature_1",
-    "variationKey": "16906801184",
+    "variationKey": "",
     "type": "feature",
     "variables": {
       "bool_var": true,
