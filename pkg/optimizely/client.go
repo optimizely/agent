@@ -170,7 +170,7 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	enabled, variables, err := c.GetAllFeatureVariablesWithDecision(key, uc)
+	enabled, variables, err := c.GetAllFeatureVariables(key, uc)
 	if err != nil {
 		return &Decision{}, err
 	}
