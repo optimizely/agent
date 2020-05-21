@@ -99,10 +99,12 @@ func (suite *ActivateTestSuite) TestGetFeatureWithFeatureTest() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		UserID:     "testUser",
-		FeatureKey: "one",
-		Type:       "feature",
-		Enabled:    true,
+		UserID:        "testUser",
+		FeatureKey:    "one",
+		Type:          "feature",
+		Enabled:       true,
+		ExperimentKey: "1",
+		VariationKey:  "2",
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -125,10 +127,12 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureRollout() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		UserID:     "testUser",
-		FeatureKey: "one",
-		Enabled:    true,
-		Type:       "feature",
+		UserID:        "testUser",
+		FeatureKey:    "one",
+		Enabled:       true,
+		Type:          "feature",
+		ExperimentKey: "1",
+		VariationKey:  "3",
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -251,12 +255,14 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
 	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
 
-	expectedFlagDisabled := []optimizely.Decision{
+	expected := []optimizely.Decision{
 		{
-			UserID:     "testUser",
-			Enabled:    true,
-			FeatureKey: "featureA",
-			Type:       "feature",
+			UserID:        "testUser",
+			Enabled:       true,
+			FeatureKey:    "featureA",
+			Type:          "feature",
+			ExperimentKey: "1",
+			VariationKey:  "3",
 		},
 		{
 			UserID:        "testUser",
@@ -279,30 +285,6 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 		},
 	}
 
-	expectedFlagEnabled := []optimizely.Decision{
-		{
-			UserID:     "testUser",
-			Enabled:    true,
-			FeatureKey: "featureA",
-			Type:       "feature",
-		},
-		{
-			UserID:     "testUser",
-			Enabled:    true,
-			FeatureKey: "featureB",
-			Type:       "feature",
-		},
-		{
-			UserID:     "testUser",
-			Enabled:    true,
-			FeatureKey: "featureC",
-			Type:       "feature",
-			Variables: map[string]interface{}{
-				"strvar": "abc_notdef",
-			},
-		},
-	}
-
 	// Toggle between tracking and no tracking.
 	for _, flag := range []string{"true", "false"} {
 		req := httptest.NewRequest("POST", "/activate?type=feature&disableTracking="+flag, bytes.NewBuffer(suite.body))
@@ -315,11 +297,7 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 		var actual []optimizely.Decision
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
 		suite.NoError(err)
-		if flag == "true" {
-			suite.ElementsMatch(expectedFlagEnabled, actual)
-		} else {
-			suite.ElementsMatch(expectedFlagDisabled, actual)
-		}
+		suite.ElementsMatch(expected, actual)
 	}
 
 	// 2 for the 2 feature tests
@@ -395,10 +373,12 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 
 	expected := []optimizely.Decision{
 		{
-			UserID:     "testUser",
-			Enabled:    true,
-			FeatureKey: "featureA",
-			Type:       "feature",
+			UserID:        "testUser",
+			Enabled:       true,
+			FeatureKey:    "featureA",
+			Type:          "feature",
+			ExperimentKey: "1",
+			VariationKey:  "3",
 		},
 		{
 			UserID:     "testUser",
@@ -412,10 +392,12 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 			VariationKey:  "14",
 		},
 		{
-			UserID:     "testUser",
-			Enabled:    false,
-			FeatureKey: "featureB",
-			Type:       "feature",
+			UserID:        "testUser",
+			Enabled:       false,
+			FeatureKey:    "featureB",
+			Type:          "feature",
+			ExperimentKey: "5",
+			VariationKey:  "7",
 		},
 	}
 

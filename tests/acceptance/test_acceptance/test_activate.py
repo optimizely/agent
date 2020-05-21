@@ -79,9 +79,9 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
 expected_activate_feat = """[
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16941022436",
     "featureKey": "feature_1",
-    "variationKey": "",
+    "variationKey": "16906801184",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -190,25 +190,25 @@ expected_activate_type_feat = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16939051724",
     "featureKey": "feature_4",
-    "variationKey": "",
+    "variationKey": "16925940659",
     "type": "feature",
     "enabled": true
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16932940705",
     "featureKey": "feature_5",
-    "variationKey": "",
+    "variationKey": "16927890136",
     "type": "feature",
     "enabled": true
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16941022436",
     "featureKey": "feature_1",
-    "variationKey": "",
+    "variationKey": "16906801184",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -319,9 +319,9 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
 expected_enabled_true_all_true = """[
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16941022436",
     "featureKey": "feature_1",
-    "variationKey": "",
+    "variationKey": "16906801184",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -376,9 +376,9 @@ expected_enabled_empty = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16941022436",
     "featureKey": "feature_1",
-    "variationKey": "",
+    "variationKey": "16906801184",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -401,9 +401,9 @@ expected_enabled_invalid = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16941022436",
     "featureKey": "feature_1",
-    "variationKey": "",
+    "variationKey": "16906801184",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -481,9 +481,9 @@ expected_activate_with_config = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16941022436",
     "featureKey": "feature_1",
-    "variationKey": "",
+    "variationKey": "16906801184",
     "type": "feature",
     "variables": {
       "bool_var": true,
@@ -511,17 +511,17 @@ expected_activate_with_config = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16939051724",
     "featureKey": "feature_4",
-    "variationKey": "",
+    "variationKey": "16925940659",
     "type": "feature",
     "enabled": true
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "16932940705",
     "featureKey": "feature_5",
-    "variationKey": "",
+    "variationKey": "16927890136",
     "type": "feature",
     "enabled": true
   }
