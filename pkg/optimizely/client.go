@@ -175,30 +175,8 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 		return &Decision{}, err
 	}
 
-	var experimentKey, variationKey string
-	projectConfig, _ := c.OptimizelyClient.ConfigManager.GetConfig()
-
-	feature, _ := projectConfig.GetFeatureByKey(key)
-	variable := entities.Variable{}
-	decisionContext := decision.FeatureDecisionContext{
-		Feature:       &feature,
-		ProjectConfig: projectConfig,
-		Variable:      variable,
-	}
-
-	if featureDecision, e := c.DecisionService.GetFeatureDecision(decisionContext, uc); e == nil && featureDecision.Variation != nil {
-		variationKey = featureDecision.Variation.Key
-		experimentKey = featureDecision.Experiment.Key
-	}
-
-	// HACK - Triggers impression events when applicable. This is not
-	// ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
-	if !disableTracking {
-		_, tErr := c.IsFeatureEnabled(key, uc)
-		if tErr != nil {
-			return &Decision{}, tErr
-		}
-	}
+	// This is not ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
+	experimentKey, variationKey := c.GetFeatureDecisionKeysAndTrack(key, uc, disableTracking)
 
 	dec := &Decision{
 		UserID:        uc.ID,
