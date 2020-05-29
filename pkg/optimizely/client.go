@@ -170,22 +170,19 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
 func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
-	enabled, variables, err := c.GetAllFeatureVariablesWithDecision(key, uc)
+	unsafeDecisionInfo, err := c.GetDetailedFeatureDecisionUnsafe(key, uc, disableTracking)
 	if err != nil {
 		return &Decision{}, err
 	}
 
-	// This is not ideal since we're making TWO decisions for each feature now. TODO OASIS-5549
-	experimentKey, variationKey := c.GetFeatureDecisionKeysAndTrack(key, uc, disableTracking)
-
 	dec := &Decision{
 		UserID:        uc.ID,
 		FeatureKey:    key,
-		Variables:     variables,
-		Enabled:       enabled,
+		Variables:     unsafeDecisionInfo.VariableMap,
+		Enabled:       unsafeDecisionInfo.Enabled,
 		Type:          "feature",
-		ExperimentKey: experimentKey,
-		VariationKey:  variationKey,
+		ExperimentKey: unsafeDecisionInfo.ExperimentKey,
+		VariationKey:  unsafeDecisionInfo.VariationKey,
 	}
 
 	return dec, nil
