@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/lestrrat-go/jwx v0.9.0
 	// Using custom go-sdk branch for testing purposes.
-	github.com/optimizely/go-sdk v1.2.1-0.20200529111354-c36eeff5c834
+	github.com/optimizely/go-sdk v1.2.1-0.20200601072832-ba80970eacbe
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.15.0
