@@ -130,7 +130,7 @@ The `/health` endpoint is used to determine service availability.
 
 Example Request:
 ```bash
-curl localhost:8088/health
+curl localhost:8080/health
 ```
 
 Example Response:
