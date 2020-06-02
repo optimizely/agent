@@ -43,6 +43,7 @@ type APIOptions struct {
 	metricsRegistry *metrics.Registry
 	configHandler   http.HandlerFunc
 	activateHandler http.HandlerFunc
+	healthHandler   http.HandlerFunc
 	trackHandler    http.HandlerFunc
 	overrideHandler http.HandlerFunc
 	nStreamHandler  http.HandlerFunc
@@ -90,6 +91,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		metricsRegistry: metricsRegistry,
 		configHandler:   handlers.OptimizelyConfig,
 		activateHandler: handlers.Activate,
+		healthHandler:   handlers.Health,
 		overrideHandler: overrideHandler,
 		trackHandler:    handlers.TrackEvent,
 		sdkMiddleware:   mw.ClientCtx,
@@ -117,6 +119,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
+	healthTimer := middleware.Metricize("health", opt.metricsRegistry)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -135,6 +138,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
+	r.With(healthTimer).Get("/health", opt.healthHandler)
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
 
 	statikFS, err := fs.New()

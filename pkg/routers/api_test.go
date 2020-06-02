@@ -105,6 +105,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		sdkMiddleware:   testOptlyMiddleware,
 		configHandler:   testHandler("config"),
 		activateHandler: testHandler("activate"),
+		healthHandler:   testHandler("health"),
 		overrideHandler: testHandler("override"),
 		trackHandler:    testHandler("track"),
 		nStreamHandler:  testHandler("notifications/event-stream"),
@@ -167,6 +168,14 @@ func (suite *APIV1TestSuite) TestStaticContent() {
 		suite.mux.ServeHTTP(rec, req)
 		suite.Equal(http.StatusOK, rec.Code)
 	}
+}
+
+func (suite *APIV1TestSuite) TestHealth() {
+	req := httptest.NewRequest("GET", "/health", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.Equal("health", rec.Header().Get(methodHeaderKey))
 }
 
 func (suite *APIV1TestSuite) TestCreateAccessToken() {

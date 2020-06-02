@@ -1,5 +1,5 @@
 // ****************************************************************************
-// * Copyright 2019, Optimizely, Inc. and contributors                        *
+// * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
 // *                                                                          *
 // * Licensed under the Apache License, Version 2.0 (the "License");          *
 // * you may not use this file except in compliance with the License.         *
@@ -32,20 +32,6 @@ var testConfig = config.AgentConfig{
 	Version: "1",
 	Author:  "2",
 	Name:    "3",
-}
-
-func TestHealthHandlerBothServicesStarted(t *testing.T) {
-
-	req := httptest.NewRequest("GET", "/health", nil)
-	rec := httptest.NewRecorder()
-
-	a := NewAdmin(testConfig)
-	a.Health(rec, req)
-
-	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
-
-	expected := string(`{"status":"ok"}`)
-	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
 
 func TestAppInfoHandler(t *testing.T) {
