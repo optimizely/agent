@@ -115,6 +115,7 @@ func defaultLoader(
 			sdkconfig.WithPollingInterval(conf.PollingInterval),
 			sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
 		)
+		event.EventEndPoint = conf.EventURL
 
 		if _, err := configManager.GetConfig(); err != nil {
 			return &OptlyClient{}, err
