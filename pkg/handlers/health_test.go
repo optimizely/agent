@@ -28,9 +28,9 @@ import (
 
 func TestHealthHandlerBothServicesStarted(t *testing.T) {
 	mux := chi.NewMux()
-	mux.Get("/api/health", Health)
+	mux.Get("/health", Health)
 
-	req := httptest.NewRequest("GET", "/api/health", nil)
+	req := httptest.NewRequest("GET", "/health", nil)
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")

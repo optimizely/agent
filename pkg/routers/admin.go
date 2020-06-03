@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -52,6 +52,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
+	r.With(authProvider.AuthorizeAdmin).Get("/health", optlyAdmin.Health)
 	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
 	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
 

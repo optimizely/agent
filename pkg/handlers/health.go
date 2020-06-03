@@ -23,12 +23,6 @@ import (
 	"github.com/go-chi/render"
 )
 
-// HealthBody is holding info about health checks
-type HealthBody struct {
-	Status  string   `json:"status,omitempty"`
-	Reasons []string `json:"reasons,omitempty"`
-}
-
 // Health displays health status
 func Health(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, HealthBody{Status: "ok"})

@@ -124,27 +124,6 @@ identify the context the request should be evaluated. The SDK key maps to a uniq
 [Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
 Environments to be serviced by a single Agent.
 
-### Health Check
-
-The `/health` endpoint is used to determine service availability.
-
-Example Request:
-```bash
-curl localhost:8080/health
-```
-
-Example Response:
-```json
-{
-    "status": "ok"
-}
-```
-
-Agent will return a HTTP 200 - OK response if and only if all configured listeners are open and all external dependent services can be reached.
-A non-healthy service will return a HTTP 503 - Unavailable response with a descriptive message to help diagnose the issue.
-
-This endpoint can used when placing Agent behind a load balancer to indicate whether a particular instance can receive inbound requests.
-
 ## Webhooks
 
 The webhook listener used to receive inbound [Webhook](https://docs.developers.optimizely.com/rollouts/docs/webhooks)
@@ -177,6 +156,27 @@ Example Response:
     "app_name": "optimizely"
 }
 ```
+
+### Health Check
+
+The `/health` endpoint is used to determine service availability.
+
+Example Request:
+```bash
+curl localhost:8088/health
+```
+
+Example Response:
+```json
+{
+    "status": "ok"
+}
+```
+
+Agent will return a HTTP 200 - OK response if and only if all configured listeners are open and all external dependent services can be reached.
+A non-healthy service will return a HTTP 503 - Unavailable response with a descriptive message to help diagnose the issue.
+
+This endpoint can used when placing Agent behind a load balancer to indicate whether a particular instance can receive inbound requests.
 
 ### Metrics
 

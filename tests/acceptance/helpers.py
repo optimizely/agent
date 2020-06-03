@@ -21,7 +21,7 @@ def test_health():
     :return: boolean True or None
     """
     try:
-        resp = requests.get('http://localhost:8080/health')
+        resp = requests.get('http://localhost:8088/health')
         if resp.json()['status'] == 'ok':
             return True
     except requests.exceptions.ConnectionError:

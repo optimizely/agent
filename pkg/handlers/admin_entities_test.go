@@ -34,6 +34,20 @@ var testConfig = config.AgentConfig{
 	Name:    "3",
 }
 
+func TestAdminHealthHandlerBothServicesStarted(t *testing.T) {
+
+	req := httptest.NewRequest("GET", "/health", nil)
+	rec := httptest.NewRecorder()
+
+	a := NewAdmin(testConfig)
+	a.Health(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
+
+	expected := string(`{"status":"ok"}`)
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
+}
+
 func TestAppInfoHandler(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/info", nil)
