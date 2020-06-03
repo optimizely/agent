@@ -127,12 +127,10 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureRollout() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		UserID:        "testUser",
-		FeatureKey:    "one",
-		Enabled:       true,
-		Type:          "feature",
-		ExperimentKey: "1",
-		VariationKey:  "3",
+		UserID:     "testUser",
+		FeatureKey: "one",
+		Enabled:    true,
+		Type:       "feature",
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -257,12 +255,10 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 
 	expected := []optimizely.Decision{
 		{
-			UserID:        "testUser",
-			Enabled:       true,
-			FeatureKey:    "featureA",
-			Type:          "feature",
-			ExperimentKey: "1",
-			VariationKey:  "3",
+			UserID:     "testUser",
+			Enabled:    true,
+			FeatureKey: "featureA",
+			Type:       "feature",
 		},
 		{
 			UserID:        "testUser",
@@ -373,12 +369,10 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 
 	expected := []optimizely.Decision{
 		{
-			UserID:        "testUser",
-			Enabled:       true,
-			FeatureKey:    "featureA",
-			Type:          "feature",
-			ExperimentKey: "1",
-			VariationKey:  "3",
+			UserID:     "testUser",
+			Enabled:    true,
+			FeatureKey: "featureA",
+			Type:       "feature",
 		},
 		{
 			UserID:     "testUser",
@@ -392,12 +386,10 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 			VariationKey:  "14",
 		},
 		{
-			UserID:        "testUser",
-			Enabled:       false,
-			FeatureKey:    "featureB",
-			Type:          "feature",
-			ExperimentKey: "5",
-			VariationKey:  "7",
+			UserID:     "testUser",
+			Enabled:    false,
+			FeatureKey: "featureB",
+			Type:       "feature",
 		},
 	}
 
