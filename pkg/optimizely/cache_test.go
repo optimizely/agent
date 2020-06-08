@@ -135,5 +135,5 @@ func TestDefaultLoader(t *testing.T) {
 	assert.Equal(t, conf.FlushInterval, bp.FlushInterval)
 	assert.Equal(t, conf.BatchSize, bp.BatchSize)
 	assert.Equal(t, conf.QueueSize, bp.MaxQueueSize)
-	assert.Equal(t, conf.EventURL, event.EventEndPoint)
+	assert.Equal(t, conf.EventURL, bp.EventEndPoint)
 }
