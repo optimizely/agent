@@ -33,12 +33,6 @@ var startTime = time.Now()
 // JSON is a map alias, just for convenience
 type JSON map[string]interface{}
 
-// HealthBody is holding info about health checks
-type HealthBody struct {
-	Status  string   `json:"status,omitempty"`
-	Reasons []string `json:"reasons,omitempty"`
-}
-
 // Info holds the detail to support the info endpoint
 type Info struct {
 	Version string `json:"version,omitempty"`
@@ -63,11 +57,6 @@ func NewAdmin(conf config.AgentConfig) *Admin {
 	}
 
 	return &Admin{Config: conf, Info: info}
-}
-
-// Health displays health status
-func (a Admin) Health(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, HealthBody{Status: "ok"})
 }
 
 // AppInfo returns custom app-info

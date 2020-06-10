@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/rakyll/statik/fs"
@@ -39,6 +40,7 @@ import (
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
 	maxConns        int
+	healthEndPoint  string
 	sdkMiddleware   func(next http.Handler) http.Handler
 	metricsRegistry *metrics.Registry
 	configHandler   http.HandlerFunc
@@ -88,6 +90,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	spec := &APIOptions{
 		maxConns:        conf.MaxConns,
+		healthEndPoint:  conf.HealthEndPoint,
 		metricsRegistry: metricsRegistry,
 		configHandler:   handlers.OptimizelyConfig,
 		activateHandler: handlers.Activate,
@@ -119,7 +122,8 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
-	healthTimer := middleware.Metricize("health", opt.metricsRegistry)
+	healthTimer := middleware.Metricize(opt.healthEndPoint, opt.metricsRegistry)
+	healthEndPoint := fmt.Sprintf("/%s", opt.healthEndPoint)
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -138,7 +142,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
-	r.With(healthTimer).Get("/health", opt.healthHandler)
+	r.With(healthTimer).Get(healthEndPoint, opt.healthHandler)
 	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
 
 	statikFS, err := fs.New()

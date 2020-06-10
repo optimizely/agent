@@ -39,9 +39,7 @@ func TestAdminHealthHandlerBothServicesStarted(t *testing.T) {
 	req := httptest.NewRequest("GET", "/health", nil)
 	rec := httptest.NewRecorder()
 
-	a := NewAdmin(testConfig)
-	a.Health(rec, req)
-
+	Health(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
 
 	expected := string(`{"status":"ok"}`)

@@ -78,6 +78,7 @@ func assertAPI(t *testing.T, actual config.APIConfig) {
 	assert.Equal(t, "3000", actual.Port)
 	assert.Equal(t, true, actual.EnableNotifications)
 	assert.Equal(t, true, actual.EnableOverrides)
+	assert.Equal(t, "healthcheck", actual.HealthEndPoint)
 }
 
 func assertAPIAuth(t *testing.T, actual config.ServiceAuthConfig) {
@@ -175,6 +176,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.enableNotifications", true)
 	v.Set("api.enableOverrides", true)
 	v.Set("api.port", "3000")
+	v.Set("api.healthEndPoint", "healthcheck")
 	v.Set("api.auth.ttl", "30m")
 
 	v.Set("api.auth.hmacSecrets", "abcd,efgh")
@@ -238,6 +240,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")
 	_ = os.Setenv("OPTIMIZELY_API_ENABLENOTIFICATIONS", "true")
 	_ = os.Setenv("OPTIMIZELY_API_ENABLEOVERRIDES", "true")
+	_ = os.Setenv("OPTIMIZELY_API_HEALTHENDPOINT", "healthcheck")
 
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PORT", "3001")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SECRET", "secret-10000")

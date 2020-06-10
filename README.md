@@ -90,6 +90,7 @@ Below is a comprehensive list of available configuration properties.
 |api.enableOverrides|OPTIMIZELY_API_ENABLEOVERRIDES|Enable bucketing overrides endpoint. Default: false|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
+|api.healthEndPoint|OPTIMIZELY_API_HEALTHENDPOINT|Endpoint for the health status api. Default: health|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
 |certfile|OPTIMIZELY_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|

@@ -102,6 +102,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 
 	opts = &APIOptions{
 		maxConns:        1,
+		healthEndPoint:  "health",
 		sdkMiddleware:   testOptlyMiddleware,
 		configHandler:   testHandler("config"),
 		activateHandler: testHandler("activate"),

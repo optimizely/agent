@@ -51,6 +51,8 @@ api:
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
+    ## endpoint for the health status api
+    healthEndPoint: "health"
     ## for details check this out.
     ## https://github.com/go-chi/cors
     # cors:

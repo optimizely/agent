@@ -62,6 +62,7 @@ func NewDefaultConfig() *AgentConfig {
 			Port:                "8080",
 			EnableNotifications: false,
 			EnableOverrides:     false,
+			HealthEndPoint:      "health",
 		},
 		Log: LogConfig{
 			Pretty: false,
@@ -137,6 +138,7 @@ type APIConfig struct {
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
+	HealthEndPoint      string            `json:"healthEndPoint"`
 }
 
 // CORSConfig holds the CORS middleware configuration

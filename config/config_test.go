@@ -48,6 +48,7 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, 0, conf.API.MaxConns)
 	assert.Equal(t, "8080", conf.API.Port)
+	assert.Equal(t, "health", conf.API.HealthEndPoint)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
 	assert.Equal(t, make([]string, 0), conf.API.Auth.HMACSecrets)
 	assert.Equal(t, time.Duration(0), conf.API.Auth.TTL)
