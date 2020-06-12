@@ -18,11 +18,13 @@ package server
 
 import (
 	"crypto/tls"
-	"github.com/optimizely/agent/config"
 	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/optimizely/agent/config"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -129,4 +131,18 @@ func TestBlacklistCiphers(t *testing.T) {
 	}
 	assert.Equal(t, expectedCiphers, ciphers)
 
+}
+
+func TestHealthMW(t *testing.T) {
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Fail(t, "health status api failed")
+	})
+	mw := healthMW(nextHandler, "/health")
+	req := httptest.NewRequest("GET", "/health", nil)
+
+	rec := httptest.NewRecorder()
+	mw.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
+	expected := string(`{"status":"ok"}`)
+	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }

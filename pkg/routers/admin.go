@@ -18,8 +18,6 @@
 package routers
 
 import (
-	"fmt"
-
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/middleware"
@@ -48,13 +46,11 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 		return nil
 	}
 
-	healthEndPoint := fmt.Sprintf("/%s", conf.API.HealthEndPoint)
 	optlyAdmin := handlers.NewAdmin(conf)
 	r.Use(optlyAdmin.AppInfoHeader)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
-	r.With(authProvider.AuthorizeAdmin).Get(healthEndPoint, handlers.Health)
 	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
 	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
 

@@ -90,7 +90,6 @@ Below is a comprehensive list of available configuration properties.
 |api.enableOverrides|OPTIMIZELY_API_ENABLEOVERRIDES|Enable bucketing overrides endpoint. Default: false|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
-|api.healthEndPoint|OPTIMIZELY_API_HEALTHENDPOINT|Endpoint for the health status api. Default: health|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
 |certfile|OPTIMIZELY_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
@@ -108,6 +107,7 @@ Below is a comprehensive list of available configuration properties.
 |server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|api.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|path for the health status api. Default: /health|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|

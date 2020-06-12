@@ -62,7 +62,6 @@ func NewDefaultConfig() *AgentConfig {
 			Port:                "8080",
 			EnableNotifications: false,
 			EnableOverrides:     false,
-			HealthEndPoint:      "health",
 		},
 		Log: LogConfig{
 			Pretty: false,
@@ -78,6 +77,7 @@ func NewDefaultConfig() *AgentConfig {
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
+			HealthCheckPath: "/health",
 			CertFile:        "",
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
@@ -128,6 +128,7 @@ type ServerConfig struct {
 	CertFile        string        `json:"certFile"`
 	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
+	HealthCheckPath string        `json:"healthCheckPath"`
 }
 
 // APIConfig holds the REST API configuration
@@ -138,7 +139,6 @@ type APIConfig struct {
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
-	HealthEndPoint      string            `json:"healthEndPoint"`
 }
 
 // CORSConfig holds the CORS middleware configuration

@@ -8,6 +8,7 @@ sdkKeys:
 server:
   readTimeout: 5s
   writeTimeout: 10s
+  healthCheckPath: "/healthcheck"
   keyFile: "keyfile"
   certFile: "certfile"
   disabledCiphers:
@@ -41,7 +42,6 @@ api:
   port: "3000"
   enableNotifications: true
   enableOverrides: true
-  healthEndPoint: "healthcheck"
   cors:
     allowedOrigins: 
       - "http://test1.com"

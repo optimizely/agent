@@ -22,9 +22,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/optimizely/agent/config"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/go-chi/render"
+	"github.com/optimizely/agent/config"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -36,6 +39,12 @@ type Server struct {
 	logger zerolog.Logger
 }
 
+// HealthInfo is holding info about health checks
+type HealthInfo struct {
+	Status  string   `json:"status,omitempty"`
+	Reasons []string `json:"reasons,omitempty"`
+}
+
 // NewServer initializes new service.
 // Configuration is pulled from viper configuration.
 func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
@@ -44,6 +53,7 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
+	handler = healthMW(handler, conf.HealthCheckPath)
 	logger := log.With().Str("port", port).Str("name", name).Logger()
 	srv := &http.Server{
 		Addr:         ":" + port,
@@ -149,4 +159,16 @@ func blacklistCiphers(blacklist []string, defaultCiphers []uint16) []uint16 {
 	}
 
 	return modifiedCiphers
+}
+
+// healthMW intercepts requests for the given path to return a StatusOK.
+func healthMW(next http.Handler, path string) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" && strings.HasSuffix(strings.ToLower(r.URL.Path), path) {
+			render.JSON(w, r, HealthInfo{Status: "ok"})
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
 }
