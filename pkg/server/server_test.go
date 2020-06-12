@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -139,8 +139,8 @@ func TestHealthMW(t *testing.T) {
 	})
 	mw := healthMW(nextHandler, "/health")
 	req := httptest.NewRequest("GET", "/health", nil)
-
 	rec := httptest.NewRecorder()
+
 	mw.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code, "Status code differs")
 	expected := string(`{"status":"ok"}`)

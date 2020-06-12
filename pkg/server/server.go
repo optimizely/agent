@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,7 +28,6 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -41,8 +40,7 @@ type Server struct {
 
 // HealthInfo is holding info about health checks
 type HealthInfo struct {
-	Status  string   `json:"status,omitempty"`
-	Reasons []string `json:"reasons,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // NewServer initializes new service.
