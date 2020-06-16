@@ -2,6 +2,7 @@ FROM centos:7
 
 ARG APP_VERSION
 
+RUN yum -y update && yum clean all
 RUN yum -y install ruby-devel gcc make rpm-build rubygems
 RUN gem install --no-ri --no-rdoc fpm:1.11.0 pleaserun:0.0.30
 
