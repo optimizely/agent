@@ -48,10 +48,10 @@ jobs:
       name: sourceclear
       os: linux
       dist: xenial
-      install:
-        - curl -sSL https://www.sourceclear.com/install | bash
+      addons:
+        srcclr: true
       script:
-        - scripts/run_srcclr.sh
+        - go get -v -d ./...
 
     - stage: Tests
       name: windows build.ps1 test
