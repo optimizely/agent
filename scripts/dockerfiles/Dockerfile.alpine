@@ -7,6 +7,6 @@ COPY . .
 RUN make setup build
 
 FROM alpine:3.10
-RUN apk add --no-cache ca-certificates=20191127-r0
+RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/src/github.com/optimizely/agent/bin/optimizely /optimizely
 CMD ["/optimizely"]
