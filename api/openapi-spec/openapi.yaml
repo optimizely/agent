@@ -299,11 +299,11 @@ components:
       properties:
         revision:
           type: string
-        experimentMap:
+        experimentsMap:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Experiment'
-        featureMap:
+        featuresMap:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Feature'
