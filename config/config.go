@@ -77,6 +77,7 @@ func NewDefaultConfig() *AgentConfig {
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
+			HealthCheckPath: "/health",
 			CertFile:        "",
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
@@ -127,6 +128,7 @@ type ServerConfig struct {
 	CertFile        string        `json:"certFile"`
 	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
+	HealthCheckPath string        `json:"healthCheckPath"`
 }
 
 // APIConfig holds the REST API configuration

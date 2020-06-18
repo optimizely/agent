@@ -37,6 +37,7 @@ func assertRoot(t *testing.T, actual *config.AgentConfig) {
 func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
+	assert.Equal(t, "/healthcheck", actual.HealthCheckPath)
 	assert.Equal(t, "keyfile", actual.KeyFile)
 	assert.Equal(t, "certfile", actual.CertFile)
 	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
@@ -144,6 +145,7 @@ func TestViperProps(t *testing.T) {
 
 	v.Set("server.readTimeout", 5*time.Second)
 	v.Set("server.writeTimeout", 10*time.Second)
+	v.Set("server.healthCheckPath", "/healthcheck")
 	v.Set("server.certFile", "certfile")
 	v.Set("server.keyFile", "keyfile")
 	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
@@ -219,6 +221,7 @@ func TestViperEnv(t *testing.T) {
 
 	_ = os.Setenv("OPTIMIZELY_SERVER_READTIMEOUT", "5s")
 	_ = os.Setenv("OPTIMIZELY_SERVER_WRITETIMEOUT", "10s")
+	_ = os.Setenv("OPTIMIZELY_SERVER_HEALTHCHECKPATH", "/healthcheck")
 	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")

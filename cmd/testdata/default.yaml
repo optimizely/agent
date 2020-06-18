@@ -8,6 +8,7 @@ sdkKeys:
 server:
   readTimeout: 5s
   writeTimeout: 10s
+  healthCheckPath: "/healthcheck"
   keyFile: "keyfile"
   certFile: "certfile"
   disabledCiphers:

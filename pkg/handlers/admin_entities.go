@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -33,12 +33,6 @@ var startTime = time.Now()
 // JSON is a map alias, just for convenience
 type JSON map[string]interface{}
 
-// Health is holding info about health checks
-type Health struct {
-	Status  string   `json:"status,omitempty"`
-	Reasons []string `json:"reasons,omitempty"`
-}
-
 // Info holds the detail to support the info endpoint
 type Info struct {
 	Version string `json:"version,omitempty"`
@@ -63,11 +57,6 @@ func NewAdmin(conf config.AgentConfig) *Admin {
 	}
 
 	return &Admin{Config: conf, Info: info}
-}
-
-// Health displays health status
-func (a Admin) Health(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, Health{Status: "ok"})
 }
 
 // AppInfo returns custom app-info
