@@ -71,4 +71,5 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 1000, conf.Client.QueueSize)
 	assert.Equal(t, 30*time.Second, conf.Client.FlushInterval)
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
+	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
 }

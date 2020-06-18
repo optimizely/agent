@@ -125,6 +125,7 @@ func TestDefaultLoader(t *testing.T) {
 		FlushInterval: 321 * time.Second,
 		BatchSize:     1234,
 		QueueSize:     5678,
+		EventURL:      "https://localhost/events",
 	}
 
 	loader := defaultLoader(conf, mr, pcFactory, bpFactory)
@@ -134,4 +135,5 @@ func TestDefaultLoader(t *testing.T) {
 	assert.Equal(t, conf.FlushInterval, bp.FlushInterval)
 	assert.Equal(t, conf.BatchSize, bp.BatchSize)
 	assert.Equal(t, conf.QueueSize, bp.MaxQueueSize)
+	assert.Equal(t, conf.EventURL, bp.EventEndPoint)
 }

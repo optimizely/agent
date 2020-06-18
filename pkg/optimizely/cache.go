@@ -125,6 +125,7 @@ func defaultLoader(
 			event.WithSDKKey(sdkKey),
 			event.WithQueueSize(conf.QueueSize),
 			event.WithBatchSize(conf.BatchSize),
+			event.WithEventEndPoint(conf.EventURL),
 			event.WithFlushInterval(conf.FlushInterval),
 			event.WithQueue(q),
 			event.WithEventDispatcherMetrics(metricsRegistry),

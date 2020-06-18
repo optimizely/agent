@@ -73,6 +73,7 @@ func NewDefaultConfig() *AgentConfig {
 			QueueSize:           1000,
 			FlushInterval:       30 * time.Second,
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
+			EventURL:            "https://logx.optimizely.com/v1/events",
 		},
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
@@ -113,6 +114,7 @@ type ClientConfig struct {
 	QueueSize           int           `json:"queueSize" default:"1000"`
 	FlushInterval       time.Duration `json:"flushInterval" default:"30s"`
 	DatafileURLTemplate string        `json:"datafileURLTemplate"`
+	EventURL            string        `json:"eventURL"`
 }
 
 // LogConfig holds the log configuration
