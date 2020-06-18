@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - June 18th, 2020
+- Expose event dispatch URL as a config parameter
+- Return experimentKey and variationKey with feature test decisions
+- Expose health endpoint for all listeners
+- Update API docs
+- Streamline CI stages
+
 ## [1.1.0] - May 21st, 2020
 - Upgrade to use go-sdk 1.2.0. This adds support for multi-rule rollouts.
 

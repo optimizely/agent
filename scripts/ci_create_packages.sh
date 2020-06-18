@@ -8,7 +8,6 @@ if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   make -e ci_build_dockerimage_alpine
 elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
   echo "we're on osx"
-  mkdir /tmp/output_packages # make osx happy
 else
   echo "we're lost!"
 fi
