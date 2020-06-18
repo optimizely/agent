@@ -99,10 +99,12 @@ func (suite *ActivateTestSuite) TestGetFeatureWithFeatureTest() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		UserID:     "testUser",
-		FeatureKey: "one",
-		Type:       "feature",
-		Enabled:    true,
+		UserID:        "testUser",
+		FeatureKey:    "one",
+		Type:          "feature",
+		Enabled:       true,
+		ExperimentKey: "1",
+		VariationKey:  "2",
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -151,10 +153,12 @@ func (suite *ActivateTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.NoError(err)
 
 	expected := optimizely.Decision{
-		UserID:     "testUser",
-		FeatureKey: "one",
-		Type:       "feature",
-		Enabled:    true,
+		UserID:        "testUser",
+		FeatureKey:    "one",
+		Type:          "feature",
+		Enabled:       true,
+		ExperimentKey: "1",
+		VariationKey:  "2",
 	}
 	suite.Equal(expected, actual[0])
 
@@ -257,10 +261,12 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 			Type:       "feature",
 		},
 		{
-			UserID:     "testUser",
-			Enabled:    true,
-			FeatureKey: "featureB",
-			Type:       "feature",
+			UserID:        "testUser",
+			Enabled:       true,
+			FeatureKey:    "featureB",
+			Type:          "feature",
+			ExperimentKey: "5",
+			VariationKey:  "6",
 		},
 		{
 			UserID:     "testUser",
@@ -270,6 +276,8 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 			Variables: map[string]interface{}{
 				"strvar": "abc_notdef",
 			},
+			ExperimentKey: "12",
+			VariationKey:  "13",
 		},
 	}
 
@@ -285,7 +293,6 @@ func (suite *ActivateTestSuite) TestActivateFeatures() {
 		var actual []optimizely.Decision
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
 		suite.NoError(err)
-
 		suite.ElementsMatch(expected, actual)
 	}
 
@@ -375,6 +382,8 @@ func (suite *ActivateTestSuite) TestEnabledFilter() {
 			Variables: map[string]interface{}{
 				"strvar": "abc_notdef",
 			},
+			ExperimentKey: "13",
+			VariationKey:  "14",
 		},
 		{
 			UserID:     "testUser",

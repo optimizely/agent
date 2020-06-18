@@ -174,9 +174,9 @@ expected_activate_type_exper = """[
 expected_activate_type_feat = """[
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "feature_2_test",
     "featureKey": "feature_2",
-    "variationKey": "",
+    "variationKey": "variation_1",
     "type": "feature",
     "enabled": true
   },
@@ -249,7 +249,8 @@ def test_activate__type(session_obj, decision_type, expected_response,
                             json=json.loads(payload))
 
     if decision_type in ['experiment', 'feature']:
-        sorted_actual = sort_response(resp.json(), 'experimentKey', 'featureKey')
+        sorted_actual = sort_response(
+            resp.json(), 'experimentKey', 'featureKey')
         sorted_expected = sort_response(json.loads(expected_response), 'experimentKey',
                                         'featureKey')
         assert sorted_actual == sorted_expected
@@ -422,7 +423,8 @@ expected_enabled_invalid = """[
         ("false", "ab_test1", "feature_1", expected_enabled_false_feature_on, 200),
         ("false", "ab_test1", "feature_3", expected_enabled_false_feature_off, 200),
         ("", "ab_test1", "feature_1", expected_enabled_empty, 200),
-        ("invalid for enabled", "ab_test1", "feature_1", expected_enabled_invalid, 200)
+        ("invalid for enabled", "ab_test1",
+         "feature_1", expected_enabled_invalid, 200)
     ], ids=["enabled true, all true", "enabled true, feature off",
             "enabled false, feature on",
             "enabled false, feature off", "empty value for enabled",
@@ -493,9 +495,9 @@ expected_activate_with_config = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
+    "experimentKey": "feature_2_test",
     "featureKey": "feature_2",
-    "variationKey": "",
+    "variationKey": "variation_1",
     "type": "feature",
     "enabled": true
   },
@@ -571,7 +573,8 @@ def test_activate_with_config(session_obj):
 
     resp_activate.raise_for_status()
 
-    sorted_actual = sort_response(resp_activate.json(), 'experimentKey', 'featureKey')
+    sorted_actual = sort_response(
+        resp_activate.json(), 'experimentKey', 'featureKey')
     sorted_expected = sort_response(json.loads(expected_activate_with_config),
                                     'experimentKey',
                                     'featureKey')
