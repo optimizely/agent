@@ -13,7 +13,7 @@ Optimizely Agent is a stand-alone, open-source, and highly available microservic
 A typical production installation of Optimizely Agent is to run two or more services behind a load balancer or proxy. The service itself can be run via a Docker container or installed from source. See [Setup Optimizely Agent](doc:setup-optimizely-agent) for instructions on how to run Optimizely Agent.
 
 ### Example Implementation
-![example implementation](../../images/agent-example-implementation.png)
+![example implementation](https://files.readme.io/b5c2fc4-Screen_Shot_2020-03-23_at_9.26.51_AM.png)
 # Should I Use Optimizely Agent?
 
 Here are some of the top reasons to consider using Optimizely Agent:
@@ -23,18 +23,18 @@ If you already separate some of your logic into services that might need to acce
 
 The images below compare implementation styles in a service-oriented architecture, first *without* using Optimizely Agent, which shows six SDK embedded instances:
 
-!["A diagram showing the use of SDKs installed on each service in a service oriented architecture \n(Click to Enlarge)"](../../images/agent-soa-1.png)
+!["A diagram showing the use of SDKs installed on each service in a service oriented architecture \n(Click to Enlarge)"](https://files.readme.io/f653562-Screen_Shot_2020-03-23_at_9.18.29_AM.png)
 
 Now *with* Agent, instead of installing the SDK six times, you create just one Optimizely instance: an HTTP API that every service can access as needed. 
 
-!["A diagram showing the use of Optimizely Agent in a single service \n(Click to Enlarge)"](../../images/agent-soa-2.png)
+!["A diagram showing the use of Optimizely Agent in a single service \n(Click to Enlarge)"](https://files.readme.io/be2c361-Screen_Shot_2020-03-23_at_9.18.59_AM.png)
 
 ## 2. Standardize Access Across Teams
 If you want to deploy Optimizely Full Stack once, then roll out the single implementation across a large number of teams, we recommend using Optimizely Agent. 
 
 By standardizing your teams' access to the Optimizely service, you can better enforce processes and implement governance around feature management and experimentation as a practice.
 
-!["A diagram showing the central and standardized access to the Optimizely Agent service across an arbitrary number of teams.\n(Click to Enlarge)"](../../images/agent-saat.png)
+!["A diagram showing the central and standardized access to the Optimizely Agent service across an arbitrary number of teams.\n(Click to Enlarge)"](https://files.readme.io/befdfae-image_1.png)
 
 ## 3. Networking Centralization
 You don’t want many SDK instances connecting to Optimizely's cloud service from every node in your application. Optimizely Agent centralizes your network connection. Only one cluster of agent instances connects to Optimizely for tasks  like update [datafiles](doc:get-the-datafile) and dispatch [events](doc:track-events).
