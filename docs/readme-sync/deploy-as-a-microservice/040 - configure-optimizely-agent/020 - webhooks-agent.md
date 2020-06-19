@@ -1,5 +1,6 @@
 ---
 title: "Webhooks"
+excerpt: ""
 slug: "webhooks-agent"
 hidden: false
 metadata: 
@@ -13,14 +14,24 @@ The webhook listener is configured on its own port (default: 8085) since it can 
 To accept webhook requests Agent must be configured by mapping an Optimizely Project Id to a set of SDK keys along
 with the associated secret used for validating the inbound request. An example webhook configuration can be seen below, while the full example configuration can be found in the the provided [config.yaml](https://github.com/optimizely/agent/blob/master/config.yaml#L58).
 
-[block:code]
-{
-  "codes": [
-    {
-      "code": "##\n## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will\n## trigger an immediate download of the datafile from the CDN\n##\nwebhook:\n    ## http listener port\n    port: \"8089\"\n#    ## a map of Optimizely Projects to one or more SDK keys\n#    projects:\n#        ## <project-id>: Optimizely project id as an integer\n#        <project-id>:\n#            ## sdkKeys: a list of SDKs linked to this project\n#            sdkKeys:\n#                - <sdk-key-1>\n#                - <sdk-key-1>\n#            ## secret: webhook secret used the validate the notification\n#            secret: <secret-10000>\n#            ## skipSignatureCheck: override the signature check (not recommended for production)\n#            skipSignatureCheck: true",
-      "language": "yaml",
-      "name": "config.yaml"
-    }
-  ]
-}
-[/block]
+```yaml
+##
+## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will
+## trigger an immediate download of the datafile from the CDN
+##
+webhook:
+    ## http listener port
+    port: "8089"
+#    ## a map of Optimizely Projects to one or more SDK keys
+#    projects:
+#        ## <project-id>: Optimizely project id as an integer
+#        <project-id>:
+#            ## sdkKeys: a list of SDKs linked to this project
+#            sdkKeys:
+#                - <sdk-key-1>
+#                - <sdk-key-1>
+#            ## secret: webhook secret used the validate the notification
+#            secret: <secret-10000>
+#            ## skipSignatureCheck: override the signature check (not recommended for production)
+#            skipSignatureCheck: true
+```
