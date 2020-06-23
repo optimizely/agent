@@ -13,7 +13,7 @@ Optimizely Agent is a stand-alone, open-source, and highly available microservic
 A typical production installation of Optimizely Agent is to run two or more services behind a load balancer or proxy. The service itself can be run via a Docker container or installed from source. See [Setup Optimizely Agent](doc:setup-optimizely-agent) for instructions on how to run Optimizely Agent.
 
 ### Example Implementation
-![example implementation](agent-example-implementation.png)
+![example implementation](https://raw.githubusercontent.com/optimizely/agent/docs-readme-sync/docs/images/agent-example-implementation.png)
 # Should I Use Optimizely Agent?
 
 Here are some of the top reasons to consider using Optimizely Agent:
