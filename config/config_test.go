@@ -17,6 +17,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -77,14 +78,17 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
 }
 
+type logObservation struct {
+	msg   string
+	level zerolog.Level
+}
+
 type testLogHook struct {
-	messages []string
-	levels   []zerolog.Level
+	logs []*logObservation
 }
 
 func (th *testLogHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	th.levels = append(th.levels, level)
-	th.messages = append(th.messages, msg)
+	th.logs = append(th.logs, &logObservation{msg, level})
 }
 
 type LogConfigurationWarningsTestSuite struct {
@@ -114,9 +118,10 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSNot
 	log.Logger = log.Hook(testHook)
 
 	conf.LogConfigurationWarnings()
-	s.Len(testHook.levels, 1)
-	s.Equal(zerolog.WarnLevel, testHook.levels[0])
-	s.Len(testHook.messages, 1)
+	s.Contains(testHook.logs, &logObservation{
+		msg:   HTTPSDisabledWarning,
+		level: zerolog.WarnLevel,
+	})
 }
 
 func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSSet() {
@@ -128,8 +133,30 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSSet
 	log.Logger = log.Hook(testHook)
 
 	conf.LogConfigurationWarnings()
-	s.Len(testHook.levels, 0)
-	s.Len(testHook.messages, 0)
+	s.NotContains(testHook.logs, &logObservation{
+		msg:   HTTPSDisabledWarning,
+		level: zerolog.WarnLevel,
+	})
+}
+
+func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotSet() {
+	conf := NewDefaultConfig()
+	conf.API.Auth.JwksURL = ""
+	conf.API.Auth.HMACSecrets = []string{}
+
+	testHook := &testLogHook{}
+	log.Logger = log.Hook(testHook)
+
+	conf.LogConfigurationWarnings()
+
+	s.Contains(testHook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
+		level: zerolog.WarnLevel,
+	})
+	s.Contains(testHook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
+		level: zerolog.WarnLevel,
+	})
 }
 
 func TestLogConfigurationWarnings(t *testing.T) {

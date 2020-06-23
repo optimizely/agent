@@ -18,8 +18,9 @@
 package config
 
 import (
-	"github.com/rs/zerolog/log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // NewDefaultConfig returns the default configuration for Optimizely Agent
@@ -108,10 +109,24 @@ type AgentConfig struct {
 	Webhook WebhookConfig `json:"webhook"`
 }
 
+// HTTPSDisabledWarning is logged when keyfile and certifle are not provided in server configuration
+var HTTPSDisabledWarning string = "keyfile and cerfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS."
+
+// AuthDisabledWarningTemplate is used to log a warning when auth is disabled for API or Admin endpoints
+var AuthDisabledWarningTemplate string = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
+
 // LogConfigurationWarnings checks this configuration and logs any relevant warnings.
 func (ac *AgentConfig) LogConfigurationWarnings() {
-	if !ac.Server.isHTTPSConfigurationSet() {
-		log.Warn().Msg("keyfile and cerfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS.")
+	if !ac.Server.isHTTPSEnabled() {
+		log.Warn().Msg(HTTPSDisabledWarning)
+	}
+
+	if !ac.API.Auth.isAuthorizationEnabled() {
+		log.Warn().Msgf(AuthDisabledWarningTemplate, "API")
+	}
+
+	if !ac.Admin.Auth.isAuthorizationEnabled() {
+		log.Warn().Msgf(AuthDisabledWarningTemplate, "Admin")
 	}
 }
 
@@ -141,7 +156,7 @@ type ServerConfig struct {
 	HealthCheckPath string        `json:"healthCheckPath"`
 }
 
-func (sc *ServerConfig) isHTTPSConfigurationSet() bool {
+func (sc *ServerConfig) isHTTPSEnabled() bool {
 	return sc.KeyFile != "" && sc.CertFile != ""
 }
 
@@ -198,4 +213,8 @@ type ServiceAuthConfig struct {
 	TTL                time.Duration            `yaml:"ttl" json:"-"`
 	JwksURL            string                   `yaml:"jwksURL"`
 	JwksUpdateInterval time.Duration            `yaml:"jwksUpdateInterval"`
+}
+
+func (sc *ServiceAuthConfig) isAuthorizationEnabled() bool {
+	return len(sc.HMACSecrets) > 0 || sc.JwksURL != ""
 }
