@@ -17,6 +17,9 @@
 package config
 
 import (
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
 
@@ -72,4 +75,63 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 30*time.Second, conf.Client.FlushInterval)
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
+}
+
+type testLogHook struct {
+	messages []string
+	levels   []zerolog.Level
+}
+
+func (th *testLogHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+	th.levels = append(th.levels, level)
+	th.messages = append(th.messages, msg)
+}
+
+type LogConfigurationWarningsTestSuite struct {
+	suite.Suite
+	hook         *testLogHook
+	globalLogger zerolog.Logger
+}
+
+func (s *LogConfigurationWarningsTestSuite) SetupTest() {
+	testHook := &testLogHook{}
+	// Replace global logger for this test suite
+	s.globalLogger = log.Logger
+	log.Logger = log.Hook(testHook)
+}
+
+func (s *LogConfigurationWarningsTestSuite) TearDownTest() {
+	// Restore global logger to original state
+	log.Logger = s.globalLogger
+}
+
+func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSNotSet() {
+	conf := NewDefaultConfig()
+	conf.Server.KeyFile = ""
+	conf.Server.CertFile = ""
+
+	testHook := &testLogHook{}
+	log.Logger = log.Hook(testHook)
+
+	conf.LogConfigurationWarnings()
+	s.Len(testHook.levels, 1)
+	s.Equal(zerolog.WarnLevel, testHook.levels[0])
+	s.Len(testHook.messages, 1)
+}
+
+func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSSet() {
+	conf := NewDefaultConfig()
+	conf.Server.KeyFile = "/path/to/keyfile"
+	conf.Server.CertFile = "/path/to/certfile"
+
+	testHook := &testLogHook{}
+	log.Logger = log.Hook(testHook)
+
+	conf.LogConfigurationWarnings()
+	s.Len(testHook.levels, 0)
+	s.Len(testHook.messages, 0)
+}
+
+func TestLogConfigurationWarnings(t *testing.T) {
+	suite.Run(t, new(LogConfigurationWarningsTestSuite))
 }

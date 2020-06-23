@@ -18,6 +18,7 @@
 package config
 
 import (
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -107,6 +108,13 @@ type AgentConfig struct {
 	Webhook WebhookConfig `json:"webhook"`
 }
 
+// LogConfigurationWarnings checks this configuration and logs any relevant warnings.
+func (ac *AgentConfig) LogConfigurationWarnings() {
+	if !ac.Server.isHTTPSConfigurationSet() {
+		log.Warn().Msg("keyfile and cerfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS.")
+	}
+}
+
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
 	PollingInterval     time.Duration `json:"pollingInterval"`
@@ -131,6 +139,10 @@ type ServerConfig struct {
 	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
 	HealthCheckPath string        `json:"healthCheckPath"`
+}
+
+func (sc *ServerConfig) isHTTPSConfigurationSet() bool {
+	return sc.KeyFile != "" && sc.CertFile != ""
 }
 
 // APIConfig holds the REST API configuration
