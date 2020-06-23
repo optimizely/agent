@@ -110,10 +110,10 @@ type AgentConfig struct {
 }
 
 // HTTPSDisabledWarning is logged when keyfile and certifle are not provided in server configuration
-var HTTPSDisabledWarning string = "keyfile and cerfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS."
+var HTTPSDisabledWarning = "keyfile and cerfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS."
 
 // AuthDisabledWarningTemplate is used to log a warning when auth is disabled for API or Admin endpoints
-var AuthDisabledWarningTemplate string = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
+var AuthDisabledWarningTemplate = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
 
 // LogConfigurationWarnings checks this configuration and logs any relevant warnings.
 func (ac *AgentConfig) LogConfigurationWarnings() {
