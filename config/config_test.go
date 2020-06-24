@@ -106,10 +106,10 @@ type LogConfigurationWarningsTestSuite struct {
 }
 
 func (s *LogConfigurationWarningsTestSuite) SetupTest() {
-	testHook := &testLogHook{}
+	s.hook = &testLogHook{}
 	// Replace global logger for this test suite
 	s.globalLogger = log.Logger
-	log.Logger = log.Hook(testHook)
+	log.Logger = log.Hook(s.hook)
 }
 
 func (s *LogConfigurationWarningsTestSuite) TearDownTest() {
@@ -122,11 +122,9 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSNot
 	conf.Server.KeyFile = ""
 	conf.Server.CertFile = ""
 
-	testHook := &testLogHook{}
-	log.Logger = log.Hook(testHook)
-
 	conf.LogConfigurationWarnings()
-	s.Contains(testHook.logs, &logObservation{
+
+	s.Contains(s.hook.logs, &logObservation{
 		msg:   HTTPSDisabledWarning,
 		level: zerolog.WarnLevel,
 	})
@@ -137,11 +135,9 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSSet
 	conf.Server.KeyFile = "/path/to/keyfile"
 	conf.Server.CertFile = "/path/to/certfile"
 
-	testHook := &testLogHook{}
-	log.Logger = log.Hook(testHook)
-
 	conf.LogConfigurationWarnings()
-	s.NotContains(testHook.messages(), HTTPSDisabledWarning)
+
+	s.NotContains(s.hook.messages(), HTTPSDisabledWarning)
 }
 
 func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotSet() {
@@ -149,16 +145,13 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotS
 	conf.API.Auth.JwksURL = ""
 	conf.API.Auth.HMACSecrets = []string{}
 
-	testHook := &testLogHook{}
-	log.Logger = log.Hook(testHook)
-
 	conf.LogConfigurationWarnings()
 
-	s.Contains(testHook.logs, &logObservation{
+	s.Contains(s.hook.logs, &logObservation{
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
 		level: zerolog.WarnLevel,
 	})
-	s.Contains(testHook.logs, &logObservation{
+	s.Contains(s.hook.logs, &logObservation{
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
 		level: zerolog.WarnLevel,
 	})
@@ -168,13 +161,10 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsJWKSUrlS
 	conf := NewDefaultConfig()
 	conf.API.Auth.JwksURL = "https://YOUR_DOMAIN/.well-known/jwks.json"
 
-	testHook := &testLogHook{}
-	log.Logger = log.Hook(testHook)
-
 	conf.LogConfigurationWarnings()
 
-	s.NotContains(testHook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
-	s.Contains(testHook.logs, &logObservation{
+	s.NotContains(s.hook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
+	s.Contains(s.hook.logs, &logObservation{
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
 		level: zerolog.WarnLevel,
 	})
@@ -183,16 +173,13 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHMACSecr
 	conf := NewDefaultConfig()
 	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
 
-	testHook := &testLogHook{}
-	log.Logger = log.Hook(testHook)
-
 	conf.LogConfigurationWarnings()
 
-	s.Contains(testHook.logs, &logObservation{
+	s.Contains(s.hook.logs, &logObservation{
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
 		level: zerolog.WarnLevel,
 	})
-	s.NotContains(testHook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
+	s.NotContains(s.hook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
 }
 
 func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthSetForBoth() {
@@ -200,12 +187,9 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthSetF
 	conf.API.Auth.HMACSecrets = []string{"abcd123"}
 	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
 
-	testHook := &testLogHook{}
-	log.Logger = log.Hook(testHook)
-
 	conf.LogConfigurationWarnings()
 
-	messages := testHook.messages()
+	messages := s.hook.messages()
 	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
 	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
 }
