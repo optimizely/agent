@@ -91,6 +91,14 @@ func (th *testLogHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 	th.logs = append(th.logs, &logObservation{msg, level})
 }
 
+func (th *testLogHook) messages() []string {
+	logMessages := []string{}
+	for _, obs := range th.logs {
+		logMessages = append(logMessages, obs.msg)
+	}
+	return logMessages
+}
+
 type LogConfigurationWarningsTestSuite struct {
 	suite.Suite
 	hook         *testLogHook
@@ -133,10 +141,7 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSSet
 	log.Logger = log.Hook(testHook)
 
 	conf.LogConfigurationWarnings()
-	s.NotContains(testHook.logs, &logObservation{
-		msg:   HTTPSDisabledWarning,
-		level: zerolog.WarnLevel,
-	})
+	s.NotContains(testHook.messages(), HTTPSDisabledWarning)
 }
 
 func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotSet() {
@@ -157,6 +162,52 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotS
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
 		level: zerolog.WarnLevel,
 	})
+}
+
+func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsJWKSUrlSetForAPI() {
+	conf := NewDefaultConfig()
+	conf.API.Auth.JwksURL = "https://YOUR_DOMAIN/.well-known/jwks.json"
+
+	testHook := &testLogHook{}
+	log.Logger = log.Hook(testHook)
+
+	conf.LogConfigurationWarnings()
+
+	s.NotContains(testHook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
+	s.Contains(testHook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
+		level: zerolog.WarnLevel,
+	})
+}
+func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHMACSecretsSetForAdmin() {
+	conf := NewDefaultConfig()
+	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
+
+	testHook := &testLogHook{}
+	log.Logger = log.Hook(testHook)
+
+	conf.LogConfigurationWarnings()
+
+	s.Contains(testHook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
+		level: zerolog.WarnLevel,
+	})
+	s.NotContains(testHook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
+}
+
+func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthSetForBoth() {
+	conf := NewDefaultConfig()
+	conf.API.Auth.HMACSecrets = []string{"abcd123"}
+	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
+
+	testHook := &testLogHook{}
+	log.Logger = log.Hook(testHook)
+
+	conf.LogConfigurationWarnings()
+
+	messages := testHook.messages()
+	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
+	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
 }
 
 func TestLogConfigurationWarnings(t *testing.T) {
