@@ -99,30 +99,30 @@ func (th *testLogHook) messages() []string {
 	return logMessages
 }
 
-type LogConfigurationWarningsTestSuite struct {
+type LogConfigWarningsTestSuite struct {
 	suite.Suite
 	hook         *testLogHook
 	globalLogger zerolog.Logger
 }
 
-func (s *LogConfigurationWarningsTestSuite) SetupTest() {
+func (s *LogConfigWarningsTestSuite) SetupTest() {
 	s.hook = &testLogHook{}
 	// Replace global logger for this test suite
 	s.globalLogger = log.Logger
 	log.Logger = log.Hook(s.hook)
 }
 
-func (s *LogConfigurationWarningsTestSuite) TearDownTest() {
+func (s *LogConfigWarningsTestSuite) TearDownTest() {
 	// Restore global logger to original state
 	log.Logger = s.globalLogger
 }
 
-func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSNotSet() {
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsHTTPSNotSet() {
 	conf := NewDefaultConfig()
 	conf.Server.KeyFile = ""
 	conf.Server.CertFile = ""
 
-	conf.LogConfigurationWarnings()
+	conf.LogConfigWarnings()
 
 	s.Contains(s.hook.logs, &logObservation{
 		msg:   HTTPSDisabledWarning,
@@ -130,22 +130,22 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSNot
 	})
 }
 
-func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHTTPSSet() {
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsHTTPSSet() {
 	conf := NewDefaultConfig()
 	conf.Server.KeyFile = "/path/to/keyfile"
 	conf.Server.CertFile = "/path/to/certfile"
 
-	conf.LogConfigurationWarnings()
+	conf.LogConfigWarnings()
 
 	s.NotContains(s.hook.messages(), HTTPSDisabledWarning)
 }
 
-func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotSet() {
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsAuthNotSet() {
 	conf := NewDefaultConfig()
 	conf.API.Auth.JwksURL = ""
 	conf.API.Auth.HMACSecrets = []string{}
 
-	conf.LogConfigurationWarnings()
+	conf.LogConfigWarnings()
 
 	s.Contains(s.hook.logs, &logObservation{
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
@@ -157,11 +157,11 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthNotS
 	})
 }
 
-func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsJWKSUrlSetForAPI() {
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsJWKSUrlSetForAPI() {
 	conf := NewDefaultConfig()
 	conf.API.Auth.JwksURL = "https://YOUR_DOMAIN/.well-known/jwks.json"
 
-	conf.LogConfigurationWarnings()
+	conf.LogConfigWarnings()
 
 	s.NotContains(s.hook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
 	s.Contains(s.hook.logs, &logObservation{
@@ -169,11 +169,12 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsJWKSUrlS
 		level: zerolog.WarnLevel,
 	})
 }
-func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHMACSecretsSetForAdmin() {
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsHMACSecretsSetForAdmin() {
 	conf := NewDefaultConfig()
 	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
 
-	conf.LogConfigurationWarnings()
+	conf.LogConfigWarnings()
 
 	s.Contains(s.hook.logs, &logObservation{
 		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
@@ -182,18 +183,18 @@ func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsHMACSecr
 	s.NotContains(s.hook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
 }
 
-func (s *LogConfigurationWarningsTestSuite) TestLogConfigurationWarningsAuthSetForBoth() {
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsAuthSetForBoth() {
 	conf := NewDefaultConfig()
 	conf.API.Auth.HMACSecrets = []string{"abcd123"}
 	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
 
-	conf.LogConfigurationWarnings()
+	conf.LogConfigWarnings()
 
 	messages := s.hook.messages()
 	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
 	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
 }
 
-func TestLogConfigurationWarnings(t *testing.T) {
-	suite.Run(t, new(LogConfigurationWarningsTestSuite))
+func TestLogConfigWarnings(t *testing.T) {
+	suite.Run(t, new(LogConfigWarningsTestSuite))
 }

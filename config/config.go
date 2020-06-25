@@ -115,8 +115,8 @@ var HTTPSDisabledWarning = "keyfile and cerfile not available, so server will us
 // AuthDisabledWarningTemplate is used to log a warning when auth is disabled for API or Admin endpoints
 var AuthDisabledWarningTemplate = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
 
-// LogConfigurationWarnings checks this configuration and logs any relevant warnings.
-func (ac *AgentConfig) LogConfigurationWarnings() {
+// LogConfigWarnings checks this configuration and logs any relevant warnings.
+func (ac *AgentConfig) LogConfigWarnings() {
 	if !ac.Server.isHTTPSEnabled() {
 		log.Warn().Msg(HTTPSDisabledWarning)
 	}
