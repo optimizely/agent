@@ -99,6 +99,8 @@ func main() {
 	conf := loadConfig(v)
 	initLogging(conf.Log)
 
+	conf.LogConfigWarnings()
+
 	agentMetricsRegistry := metrics.NewRegistry()
 	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)
 

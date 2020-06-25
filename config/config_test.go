@@ -17,10 +17,14 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -72,4 +76,125 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 30*time.Second, conf.Client.FlushInterval)
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
+}
+
+type logObservation struct {
+	msg   string
+	level zerolog.Level
+}
+
+type testLogHook struct {
+	logs []*logObservation
+}
+
+func (th *testLogHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+	th.logs = append(th.logs, &logObservation{msg, level})
+}
+
+func (th *testLogHook) messages() []string {
+	logMessages := []string{}
+	for _, obs := range th.logs {
+		logMessages = append(logMessages, obs.msg)
+	}
+	return logMessages
+}
+
+type LogConfigWarningsTestSuite struct {
+	suite.Suite
+	hook         *testLogHook
+	globalLogger zerolog.Logger
+}
+
+func (s *LogConfigWarningsTestSuite) SetupTest() {
+	s.hook = &testLogHook{}
+	// Replace global logger for this test suite
+	s.globalLogger = log.Logger
+	log.Logger = log.Hook(s.hook)
+}
+
+func (s *LogConfigWarningsTestSuite) TearDownTest() {
+	// Restore global logger to original state
+	log.Logger = s.globalLogger
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsHTTPSNotSet() {
+	conf := NewDefaultConfig()
+	conf.Server.KeyFile = ""
+	conf.Server.CertFile = ""
+
+	conf.LogConfigWarnings()
+
+	s.Contains(s.hook.logs, &logObservation{
+		msg:   HTTPSDisabledWarning,
+		level: zerolog.WarnLevel,
+	})
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsHTTPSSet() {
+	conf := NewDefaultConfig()
+	conf.Server.KeyFile = "/path/to/keyfile"
+	conf.Server.CertFile = "/path/to/certfile"
+
+	conf.LogConfigWarnings()
+
+	s.NotContains(s.hook.messages(), HTTPSDisabledWarning)
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsAuthNotSet() {
+	conf := NewDefaultConfig()
+	conf.API.Auth.JwksURL = ""
+	conf.API.Auth.HMACSecrets = []string{}
+
+	conf.LogConfigWarnings()
+
+	s.Contains(s.hook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
+		level: zerolog.WarnLevel,
+	})
+	s.Contains(s.hook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
+		level: zerolog.WarnLevel,
+	})
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsJWKSUrlSetForAPI() {
+	conf := NewDefaultConfig()
+	conf.API.Auth.JwksURL = "https://YOUR_DOMAIN/.well-known/jwks.json"
+
+	conf.LogConfigWarnings()
+
+	s.NotContains(s.hook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
+	s.Contains(s.hook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"),
+		level: zerolog.WarnLevel,
+	})
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsHMACSecretsSetForAdmin() {
+	conf := NewDefaultConfig()
+	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
+
+	conf.LogConfigWarnings()
+
+	s.Contains(s.hook.logs, &logObservation{
+		msg:   fmt.Sprintf(AuthDisabledWarningTemplate, "API"),
+		level: zerolog.WarnLevel,
+	})
+	s.NotContains(s.hook.messages(), fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsAuthSetForBoth() {
+	conf := NewDefaultConfig()
+	conf.API.Auth.HMACSecrets = []string{"abcd123"}
+	conf.Admin.Auth.HMACSecrets = []string{"abcd123"}
+
+	conf.LogConfigWarnings()
+
+	messages := s.hook.messages()
+	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "API"))
+	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
+}
+
+func TestLogConfigWarnings(t *testing.T) {
+	suite.Run(t, new(LogConfigWarningsTestSuite))
 }
