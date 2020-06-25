@@ -109,8 +109,8 @@ type AgentConfig struct {
 	Webhook WebhookConfig `json:"webhook"`
 }
 
-// HTTPSDisabledWarning is logged when keyfile and certifle are not provided in server configuration
-var HTTPSDisabledWarning = "keyfile and cerfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS."
+// HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration
+var HTTPSDisabledWarning = "keyfile and certfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS."
 
 // AuthDisabledWarningTemplate is used to log a warning when auth is disabled for API or Admin endpoints
 var AuthDisabledWarningTemplate = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
