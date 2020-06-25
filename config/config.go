@@ -93,6 +93,7 @@ func NewDefaultConfig() *AgentConfig {
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
+			Plugins:         make(map[string]interface{}, 0),
 			BatchRequests: BatchRequestsConfig{
 				MaxConcurrency:  10,
 				OperationsLimit: 500,
@@ -161,6 +162,8 @@ type LogConfig struct {
 	Level  string `json:"level"`
 }
 
+type PluginConfigs map[string]interface{}
+
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
 	AllowedHosts    []string            `json:"allowedHosts"`
@@ -172,6 +175,7 @@ type ServerConfig struct {
 	HealthCheckPath string              `json:"healthCheckPath"`
 	Host            string              `json:"host"`
 	BatchRequests   BatchRequestsConfig `json:"batchRequests"`
+	Plugins         interface{}         `json:"plugins",mapstructure:"plugins"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
@@ -192,6 +196,7 @@ type APIConfig struct {
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
+	Plugins             PluginConfigs     `json:"plugins"`
 }
 
 // BatchRequestsConfig holds the configuration for batching
@@ -212,14 +217,16 @@ type CORSConfig struct {
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Auth ServiceAuthConfig `json:"-"`
-	Port string            `json:"port"`
+	Auth    ServiceAuthConfig `json:"-"`
+	Port    string            `json:"port"`
+	Plugins PluginConfigs     `json:"plugins"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
 	Port     string                   `json:"port"`
 	Projects map[int64]WebhookProject `json:"projects"`
+	Plugins  []string                 `json:"plugins"`
 }
 
 // WebhookProject holds the configuration for a single Project webhook
