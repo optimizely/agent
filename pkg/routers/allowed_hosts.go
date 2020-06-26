@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,23 +18,29 @@
 package routers
 
 import (
-	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/handlers"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-
-	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/go-chi/hostrouter"
+	"github.com/rs/zerolog/log"
 )
 
-// NewWebhookRouter returns HTTP API router
-func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) http.Handler {
-	r := chi.NewRouter()
+func createAllowedHostsRouter(r chi.Router, allowedHosts []string, allowedPort string) http.Handler {
+	hr := hostrouter.New()
+	for _, allowedHost := range allowedHosts {
+		hr.Map(fmt.Sprintf("%v:%v", allowedHost, allowedPort), r)
+	}
 
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
+	hostCheckFailedRouter := chi.NewRouter()
+	hostCheckFailedRouter.Mount("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
+		http.Error(w, "invalid request host", http.StatusNotFound)
+	}))
+	hr.Map("*", hostCheckFailedRouter)
+	hr.Map("", hostCheckFailedRouter)
 
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return createAllowedHostsRouter(r, conf.AllowedHosts, conf.Port)
+	log.Debug().Msgf("%v", hr.Routes())
+
+	return hr
 }

@@ -99,7 +99,8 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		corsHandler:     corsHandler,
 	}
 
-	return NewAPIRouter(spec)
+	apiRouter := NewAPIRouter(spec)
+	return createAllowedHostsRouter(apiRouter, conf.AllowedHosts, conf.Port)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
