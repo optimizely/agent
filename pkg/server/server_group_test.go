@@ -25,8 +25,8 @@ func TestServeAndShutdown(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	sg := NewGroup(ctx, conf)
 
-	sg.GoListenAndServe("valid1", "1000", handler)
-	sg.GoListenAndServe("valid2", "1001", handler)
+	sg.GoListenAndServe("valid1", "localhost", "1000", handler)
+	sg.GoListenAndServe("valid2", "localhost", "1001", handler)
 
 	cancel()
 	sg.Wait()
@@ -34,13 +34,13 @@ func TestServeAndShutdown(t *testing.T) {
 
 func TestNotEnabledServerGroup(t *testing.T) {
 	sg := NewGroup(context.Background(), conf)
-	sg.GoListenAndServe("disabled", "0", handler)
+	sg.GoListenAndServe("disabled", "localhost", "0", handler)
 
 	sg.Wait() // server should terminate by itself
 }
 
 func TestInvalidServer(t *testing.T) {
 	sg := NewGroup(context.Background(), conf)
-	sg.GoListenAndServe("invalid", "-1", handler)
+	sg.GoListenAndServe("invalid", "localhost", "-1", handler)
 	sg.Wait() // Don't need to shutdown since server never started
 }

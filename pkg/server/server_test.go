@@ -36,7 +36,7 @@ var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 var conf = config.ServerConfig{}
 
 func TestStartAndShutdown(t *testing.T) {
-	srv, err := NewServer("valid", "1000", handler, conf)
+	srv, err := NewServer("valid", "localhost", "1000", handler, conf)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -53,18 +53,18 @@ func TestStartAndShutdown(t *testing.T) {
 }
 
 func TestNoHandler(t *testing.T) {
-	ns, err := NewServer("test", "0", nil, conf)
+	ns, err := NewServer("test", "localhost", "0", nil, conf)
 	assert.Error(t, err)
 	assert.Equal(t, ns, Server{})
 }
 
 func TestNotEnabledServer(t *testing.T) {
-	_, err := NewServer("not-enabled", "0", handler, conf)
+	_, err := NewServer("not-enabled", "localhost", "0", handler, conf)
 	assert.NoError(t, err) // this is checked in server group
 }
 
 func TestFailedStartService(t *testing.T) {
-	ns, err := NewServer("test", "-9", handler, conf)
+	ns, err := NewServer("test", "localhost", "-9", handler, conf)
 	assert.NoError(t, err)
 	ns.ListenAndServe()
 }
@@ -76,7 +76,7 @@ func TestFailedTSLStartService(t *testing.T) {
 		CertFile:     "testdata/example-cert.pem",
 		KeyFile:      "testdata/example-key.pem1",
 	}
-	ns, err := NewServer("test", "9", handler, cfg)
+	ns, err := NewServer("test", "localhost", "9", handler, cfg)
 	assert.Error(t, err)
 	assert.Equal(t, ns, Server{})
 }
@@ -86,7 +86,7 @@ func TestServerConfigs(t *testing.T) {
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 8 * time.Second,
 	}
-	ns, err := NewServer("test", "1000", handler, cfg)
+	ns, err := NewServer("test", "localhost", "1000", handler, cfg)
 	assert.NoError(t, err)
 
 	assert.Equal(t, cfg.ReadTimeout, ns.srv.ReadTimeout)
@@ -100,7 +100,7 @@ func TestTSLServerConfigs(t *testing.T) {
 		CertFile:     "testdata/example-cert.pem",
 		KeyFile:      "testdata/example-key.pem",
 	}
-	ns, err := NewServer("test", "1000", handler, cfg)
+	ns, err := NewServer("test", "localhost", "1000", handler, cfg)
 	assert.NoError(t, err)
 
 	assert.Equal(t, cfg.ReadTimeout, ns.srv.ReadTimeout)

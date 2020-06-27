@@ -40,6 +40,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.False(t, conf.Log.Pretty)
 	assert.Equal(t, "info", conf.Log.Level)
 
+	assert.Equal(t, "127.0.0.1", conf.Admin.Addr)
 	assert.Equal(t, "8088", conf.Admin.Port)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.Admin.Auth.Clients)
 	assert.Equal(t, make([]string, 0), conf.Admin.Auth.HMACSecrets)
@@ -48,6 +49,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, time.Duration(0), conf.Admin.Auth.JwksUpdateInterval)
 
 	assert.Equal(t, 0, conf.API.MaxConns)
+	assert.Equal(t, "127.0.0.1", conf.API.Addr)
 	assert.Equal(t, "8080", conf.API.Port)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
 	assert.Equal(t, make([]string, 0), conf.API.Auth.HMACSecrets)
@@ -63,6 +65,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, false, conf.API.CORS.AllowedCredentials)
 	assert.Equal(t, 300, conf.API.CORS.MaxAge)
 
+	assert.Equal(t, "127.0.0.1", conf.Webhook.Addr)
 	assert.Equal(t, "8085", conf.Webhook.Port)
 	assert.Empty(t, conf.Webhook.Projects)
 

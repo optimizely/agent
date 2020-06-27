@@ -58,6 +58,7 @@ func assertLog(t *testing.T, actual config.LogConfig) {
 }
 
 func assertAdmin(t *testing.T, actual config.AdminConfig) {
+	assert.Equal(t, "127.0.0.1", actual.Addr)
 	assert.Equal(t, "3002", actual.Port)
 }
 
@@ -77,6 +78,7 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 
 func assertAPI(t *testing.T, actual config.APIConfig) {
 	assert.Equal(t, 100, actual.MaxConns)
+	assert.Equal(t, "127.0.0.1", actual.Addr)
 	assert.Equal(t, "3000", actual.Port)
 	assert.Equal(t, true, actual.EnableNotifications)
 	assert.Equal(t, true, actual.EnableOverrides)
@@ -106,6 +108,7 @@ func assertAPICORS(t *testing.T, actual config.CORSConfig) {
 }
 
 func assertWebhook(t *testing.T, actual config.WebhookConfig) {
+	assert.Equal(t, "127.0.0.1", actual.Addr)
 	assert.Equal(t, "3001", actual.Port)
 	assert.Equal(t, "secret-10000", actual.Projects[10000].Secret)
 	assert.Equal(t, []string{"aaa", "bbb", "ccc"}, actual.Projects[10000].SDKKeys)
@@ -161,6 +164,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
 
+	v.Set("admin.addr", "127.0.0.1")
 	v.Set("admin.port", "3002")
 	v.Set("admin.auth.ttl", "30m")
 	v.Set("admin.auth.hmacSecrets", "efgh,ijkl")
@@ -178,6 +182,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.maxConns", 100)
 	v.Set("api.enableNotifications", true)
 	v.Set("api.enableOverrides", true)
+	v.Set("api.addr", "127.0.0.1")
 	v.Set("api.port", "3000")
 	v.Set("api.auth.ttl", "30m")
 
@@ -193,6 +198,7 @@ func TestViperProps(t *testing.T) {
 		},
 	})
 
+	v.Set("webhook.addr", "127.0.0.1")
 	v.Set("webhook.port", "3001")
 	v.Set("webhook.projects.10000.secret", "secret-10000")
 	v.Set("webhook.projects.10000.sdkKeys", []string{"aaa", "bbb", "ccc"})
@@ -238,14 +244,17 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
 
+	_ = os.Setenv("OPTIMIZELY_ADMIN_ADDR", "127.0.0.1")
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
 
 	_ = os.Setenv("OPTIMIZELY_API_MAXCONNS", "100")
 	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")
+	_ = os.Setenv("OPTIMIZELY_API_ADDR", "127.0.0.1")
 	_ = os.Setenv("OPTIMIZELY_API_ENABLENOTIFICATIONS", "true")
 	_ = os.Setenv("OPTIMIZELY_API_ENABLEOVERRIDES", "true")
 
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PORT", "3001")
+	_ = os.Setenv("OPTIMIZELY_WEBHOOK_ADDR", "127.0.0.1")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SECRET", "secret-10000")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SDKKEYS", "aaa,bbb,ccc")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_10000_SKIPSIGNATURECHECK", "true")
