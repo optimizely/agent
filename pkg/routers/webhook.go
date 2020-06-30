@@ -18,10 +18,11 @@
 package routers
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 
 	"github.com/optimizely/agent/pkg/optimizely"
 )

@@ -53,6 +53,5 @@ func NewAdminRouter(conf config.AgentConfig) *chi.Mux {
 	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
 
 	r.Post("/oauth/token", tokenHandler.CreateAdminAccessToken)
-
 	return r
 }

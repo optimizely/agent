@@ -26,14 +26,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/middleware"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/hostrouter"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/middleware"
 )
 
 // Server has generic functionality for service: it starts the service and performs basic checks
