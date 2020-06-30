@@ -223,7 +223,7 @@ jobs:
       cache: false
 
       # translation: if we're merging into a test branch...
-      if: type = push AND branch = docs-readme-sync
+      if: type = push AND branch = docs-readme-sync-2
 
       language: node_js
       install:
