@@ -21,6 +21,8 @@ stages:
   - 'Build, Upload and Publish (draft)'
   - 'Test github release assets'
   - 'Publish (real)'
+  - 'Readme-sync'
+
 
 jobs:
 
@@ -216,6 +218,55 @@ jobs:
         - SLACK_TEXT="${APP_VERSION} all assets verified. Publishing https://github.com/optimizely/agent/releases/tag/${TRAVIS_TAG}" send_to_slack.sh
         # how to use hub: https://hub.github.com/hub.1.html
         - hub release edit --draft=false -m "" ${TRAVIS_TAG}
+
+    - stage: 'Readme-sync'
+      name: 'run script if changes are detected in docs/'
+      cache: false
+
+      # translation: if we're merging into a test branch...
+      if: type = push AND branch = docs-readme-sync
+
+      language: node_js
+      install:
+        - mkdir $HOME/readme-sync2 && pushd $HOME/readme-sync2 && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/readme-sync2.git && popd
+        - source ~/.nvm/nvm.sh && cd $HOME/readme-sync2 && nvm install && npm install
+        
+        # this preps the input directory for readme-sync script in readme-sync2
+        - mkdir -p $HOME/readme-sync2/docs-repo
+        - cd $HOME/readme-sync2/docs-repo/
+        #now we clone our docs (inside another cloned repo: yuck); the docs dir is at: $HOME/readme-sync2/docs-repo/agent/docs/readme-sync/
+        - git clone https://github.com/optimizely/agent
+
+
+      script:
+        # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
+        - cd $TRAVIS_BUILD_DIR
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ )
+
+
+        
+        
+        #########################################################################################
+        # this commented out stuff is for enabling readme sync for all the SDK repos (authored by JC Tong)
+        #########################################################################################
+        ## this preps the input directory for readme-sync script
+        #- mkdir -p $HOME/readme-sync2/docs/readme-sync/sdk-reference-guides
+        ## ${TRAVIS_REPO_SLUG#optimizely/} translates to go-sdk docs/readme-sync/sdk-reference-guides/go-sdk
+        #- ln -s $TRAVIS_BUILD_DIR/docs/readme-sync/sdk-reference-guides/${TRAVIS_REPO_SLUG#optimizely/} $HOME/readme-sync2/docs/readme-sync/sdk-reference-guides/${TRAVIS_REPO_SLUG#optimizely/}
+
+        ## now we need to get all the other *-sdk repos too
+        ##
+        ## first we list all possible sdks and inside the for loop, remove the one we are updating
+        #- export ALL_SDK_REPOS="android-sdk csharp-sdk go-sdk java-sdk javascript-sdk objective-c-sdk python-sdk react-sdk ruby-sdk swift-sdk"
+        #- mkdir $HOME/sdks && pushd $HOME/sdks && for i in ${ALL_SDK_REPOS//${TRAVIS_REPO_SLUG#optimizely/}}; do git clone https://github.com/optimizely/$i; ( [ -d "$HOME/sdks/$i/docs/readme-sync/sdk-reference-guides/$i" ] && ln -s $HOME/sdks/$i/docs/readme-sync/sdk-reference-guides/$i $HOME/readme-sync2/docs/readme-sync/sdk-reference-guides/$i ) || true; done && popd
+        ## check our work
+        #- ls -al $HOME/sdks
+        #- ls -al $HOME/readme-sync2/docs/readme-sync/sdk-reference-guides
+      #script:
+        ## we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
+        #- cd $TRAVIS_BUILD_DIR
+        #- git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs/readme-sync/ )
+
 
 before_script:
   # https://github.com/travis-ci/gimme
