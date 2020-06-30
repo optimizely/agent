@@ -28,6 +28,10 @@ log:
 ## http server configuration
 ##
 server:
+    ## Allowed hosts - Agent will reject requests whose Host header's host portion isn't included here
+    allowedHosts:
+        - localhost
+        - 127.0.0.1
     ## the maximum duration for reading the entire request, including the body.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
     readTimeout: 5s
@@ -45,10 +49,6 @@ server:
 ## api service configuration
 ##
 api:
-    ## Allowed hosts - Agent will reject requests whose Host header's host portion isn't included here
-    allowedHosts:
-        - localhost
-        - 127.0.0.1
     ## the maximum number of concurrent requests handled by the api listener
 #    maxConns: 10000
     ## http listener port
@@ -80,10 +80,6 @@ api:
 ## admin service configuration
 ##
 admin:
-    ## Allowed hosts - Agent will reject requests whose Host header's host portion isn't included here
-    allowedHosts:
-        - localhost
-        - 127.0.0.1
     ## http listener port
     port: "8088"
 ##
@@ -91,10 +87,6 @@ admin:
 ## trigger an immediate download of the datafile from the CDN
 ##
 webhook:
-    ## Allowed hosts - Agent will reject requests whose Host header's host portion isn't included here
-    allowedHosts:
-        - localhost
-        - 127.0.0.1
     ## http listener port
     port: "8089"
 #    ## a map of Optimizely Projects to one or more SDK keys

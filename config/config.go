@@ -32,7 +32,6 @@ func NewDefaultConfig() *AgentConfig {
 		Name:    "optimizely",
 
 		Admin: AdminConfig{
-			AllowedHosts: make([]string, 0),
 			Auth: ServiceAuthConfig{
 				Clients:            make([]OAuthClientCredentials, 0),
 				HMACSecrets:        make([]string, 0),
@@ -43,7 +42,6 @@ func NewDefaultConfig() *AgentConfig {
 			Port: "8088",
 		},
 		API: APIConfig{
-			AllowedHosts: make([]string, 0),
 			Auth: ServiceAuthConfig{
 				Clients:            make([]OAuthClientCredentials, 0),
 				HMACSecrets:        make([]string, 0),
@@ -80,6 +78,7 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 		},
 		Server: ServerConfig{
+			AllowedHosts:    make([]string, 0),
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
 			HealthCheckPath: "/health",
@@ -88,8 +87,7 @@ func NewDefaultConfig() *AgentConfig {
 			DisabledCiphers: make([]string, 0),
 		},
 		Webhook: WebhookConfig{
-			AllowedHosts: make([]string, 0),
-			Port:         "8085",
+			Port: "8085",
 		},
 	}
 
@@ -151,6 +149,7 @@ type LogConfig struct {
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
+	AllowedHosts    []string      `json:"allowedHosts"`
 	ReadTimeout     time.Duration `json:"readTimeout"`
 	WriteTimeout    time.Duration `json:"writeTimeout"`
 	CertFile        string        `json:"certFile"`
@@ -165,7 +164,6 @@ func (sc *ServerConfig) isHTTPSEnabled() bool {
 
 // APIConfig holds the REST API configuration
 type APIConfig struct {
-	AllowedHosts        []string          `json:"allowedHosts"`
 	Auth                ServiceAuthConfig `json:"-"`
 	CORS                CORSConfig        `json:"cors"`
 	MaxConns            int               `json:"maxConns"`
@@ -186,16 +184,14 @@ type CORSConfig struct {
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	AllowedHosts []string          `json:"allowedHosts"`
-	Auth         ServiceAuthConfig `json:"-"`
-	Port         string            `json:"port"`
+	Auth ServiceAuthConfig `json:"-"`
+	Port string            `json:"port"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
-	AllowedHosts []string                 `json:"allowedHosts"`
-	Port         string                   `json:"port"`
-	Projects     map[int64]WebhookProject `json:"projects"`
+	Port     string                   `json:"port"`
+	Projects map[int64]WebhookProject `json:"projects"`
 }
 
 // WebhookProject holds the configuration for a single Project webhook

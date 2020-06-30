@@ -14,34 +14,18 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package routers //
-package routers
+// Package middleware
+package middleware
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/hostrouter"
-	"github.com/rs/zerolog/log"
 )
 
-func createAllowedHostsRouter(r chi.Router, allowedHosts []string, allowedPort string) http.Handler {
-	hr := hostrouter.New()
-	for _, allowedHost := range allowedHosts {
-		hr.Map(fmt.Sprintf("%v:%v", allowedHost, allowedPort), r)
-	}
-
-	hostCheckFailedRouter := chi.NewRouter()
-	hostCheckFailedRouter.Mount("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
-		http.Error(w, "invalid request host", http.StatusNotFound)
-	}))
-	hr.Map("*", hostCheckFailedRouter)
-	// We map hostCheckFailedRouter to "" because the Routes method of the hostrouter will panic unless "" exists
-	// in the map (see: https://github.com/go-chi/hostrouter/blob/7bff2694dfd99a31a89c62e5f8a2d9ec2d71da8e/hostrouter.go#L44).
-	// The Routes method is part of the chi.Routes interface.
-	hr.Map("", hostCheckFailedRouter)
-
-	return hr
+func InvalidRequestHost(allowedHosts []string, allowedPort string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := GetLogger(r)
+		logger.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
+		RenderError(errors.New("invalid request host"), http.StatusNotFound, w, r)
+	})
 }

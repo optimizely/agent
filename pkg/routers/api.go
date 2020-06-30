@@ -58,7 +58,7 @@ func forbiddenHandler(message string) http.HandlerFunc {
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) *chi.Mux {
 
 	authProvider := middleware.NewAuth(&conf.Auth)
 	if authProvider == nil {
@@ -99,8 +99,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		corsHandler:     corsHandler,
 	}
 
-	apiRouter := NewAPIRouter(spec)
-	return createAllowedHostsRouter(apiRouter, conf.AllowedHosts, conf.Port)
+	return NewAPIRouter(spec)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation

@@ -20,11 +20,11 @@ package server
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"sync"
 
 	"github.com/optimizely/agent/config"
 
+	"github.com/go-chi/chi"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
@@ -54,7 +54,7 @@ func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 // Two goroutines are started. One for the http listener and one
 // to initiate a graceful shutdown. This method blocks on adding the
 // go routines to maintain startup order of each listener.
-func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
+func (g *Group) GoListenAndServe(name, port string, handler chi.Router) {
 
 	if port == "0" {
 		log.Info().Msg(fmt.Sprintf(`"%s" not enabled`, name))

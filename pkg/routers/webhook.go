@@ -18,23 +18,21 @@
 package routers
 
 import (
-	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/handlers"
-	"net/http"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
 
 	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 // NewWebhookRouter returns HTTP API router
-func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) http.Handler {
+func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
 
 	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return createAllowedHostsRouter(r, conf.AllowedHosts, conf.Port)
+	return r
 }

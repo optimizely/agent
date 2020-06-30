@@ -22,15 +22,13 @@ import (
 	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/middleware"
 
-	"net/http"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
 // NewAdminRouter returns HTTP admin router
-func NewAdminRouter(conf config.AgentConfig) http.Handler {
+func NewAdminRouter(conf config.AgentConfig) *chi.Mux {
 	r := chi.NewRouter()
 
 	authProvider := middleware.NewAuth(&conf.Admin.Auth)
@@ -56,5 +54,5 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	r.Post("/oauth/token", tokenHandler.CreateAdminAccessToken)
 
-	return createAllowedHostsRouter(r, conf.Admin.AllowedHosts, conf.Admin.Port)
+	return r
 }
