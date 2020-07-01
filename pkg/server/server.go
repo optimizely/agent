@@ -29,8 +29,6 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/hostrouter"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -49,14 +47,14 @@ type HealthInfo struct {
 
 // NewServer initializes new service.
 // Configuration is pulled from viper configuration.
-func NewServer(name, port string, router chi.Router, conf config.ServerConfig) (Server, error) {
+func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
 
-	if router == nil {
-		return Server{}, fmt.Errorf(`"%s" router is not initialized`, name)
+	if handler == nil {
+		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
-	allowedHostsHandler := createAllowedHostsHandler(router, conf.AllowedHosts, port)
-	withHealthMWhandler := healthMW(allowedHostsHandler, conf.HealthCheckPath)
+	withAllowedHostsHandler := middleware.AllowedHosts(conf.AllowedHosts, port)(handler)
+	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
 	logger := log.With().Str("port", port).Str("name", name).Logger()
 	srv := &http.Server{
 		Addr:         ":" + port,
@@ -174,18 +172,4 @@ func healthMW(next http.Handler, path string) http.Handler {
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
-}
-
-func createAllowedHostsHandler(hostCheckPassedRouter chi.Router, allowedHosts []string, allowedPort string) http.Handler {
-	hr := hostrouter.New()
-	for _, allowedHost := range allowedHosts {
-		hr.Map(fmt.Sprintf("%v:%v", allowedHost, allowedPort), hostCheckPassedRouter)
-	}
-
-	hostCheckFailedRouter := chi.NewRouter()
-	hostCheckFailedRouter.Mount("/", middleware.InvalidRequestHost(allowedHosts, allowedPort))
-	hr.Map("*", hostCheckFailedRouter)
-	hr.Map("", hostCheckFailedRouter)
-
-	return hr
 }
