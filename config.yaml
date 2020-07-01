@@ -48,7 +48,7 @@ api:
     ## the maximum number of concurrent requests handled by the api listener
 #    maxConns: 10000
     ## http listener port
-    port: "8080"
+    port: "9000"
     ## set to true to enable subscribing to notifications via an SSE event-stream
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
@@ -113,4 +113,22 @@ client:
     ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
     datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
     ## URL for dispatching events.
-    eventURL: "https://logx.optimizely.com/v1/events"
+    eventURL: "http://localhost:5555/success"
+
+runtime:
+    ## SetBlockProfileRate controls the fraction of goroutine blocking events
+    ## that are reported in the blocking profile. The profiler aims to sample
+    ## an average of one blocking event per rate nanoseconds spent blocked.
+    ##
+    ## To include every blocking event in the profile, pass rate = 1.
+    ## To turn off profiling entirely, pass rate <= 0.
+    blockProfileRate: 0
+
+    ## mutexProfileFraction controls the fraction of mutex contention events
+    ## that are reported in the mutex profile. On average 1/rate events are
+    ## reported. The previous rate is returned.
+    ##
+    ## To turn off profiling entirely, pass rate 0.
+    ## To just read the current rate, pass rate < 0.
+    ## (For n>1 the details of sampling may change.)
+    mutexProfileFraction: 0

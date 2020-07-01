@@ -218,3 +218,8 @@ type ServiceAuthConfig struct {
 func (sc *ServiceAuthConfig) isAuthorizationEnabled() bool {
 	return len(sc.HMACSecrets) > 0 || sc.JwksURL != ""
 }
+
+type Runtime struct {
+	BlockProfileRate int `json:"blockProfileRate"`
+	MutexProfileFraction
+}
