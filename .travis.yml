@@ -230,21 +230,33 @@ jobs:
 
       language: node_js
       install:
+
+        ###################
+        ###what worked locally:
+        ###############
+        #franc@DESKTOP-5ERJRH3:~/Github/readme-sync$ mkdir docs-repo
+        #cd docs-repo
+        #ln -s ~/Github/agent/docs/readme-sync/ input_dir
+        #cd ~/Github/readme-sync 
+        #npx ts-node sync/index.ts --apiKey 17liL6nGhUFTAE7WfJR0Ip7JAI256Hr1 --version 4.0 --docs docs-repo/input_dir
+        #########################
+
+
+        # make dir $HOME/readme-sync2 & clone readme-sync2 repo to it; install dependencies
+
         - mkdir $HOME/readme-sync2 && pushd $HOME/readme-sync2 && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/readme-sync2.git && popd
         - source ~/.nvm/nvm.sh && cd $HOME/readme-sync2 && nvm install && npm install
-        
-        # this preps the input directory for readme-sync script in readme-sync2
-        - mkdir -p $HOME/readme-sync2/docs-repo
-        - cd $HOME/readme-sync2/docs-repo/
-        #now we clone our docs (inside another cloned repo: yuck); the docs dir is at: $HOME/readme-sync2/docs-repo/agent/docs/readme-sync/
-        - git clone https://github.com/optimizely/agent
 
+        # clone Agent docs into $Home/docs-repo & make a symbolic link to the docs in TRAVIS_BUILD_DIR from $Home/readme-sync2 dir
+        - mkdir $HOME/docs-repo && pushd $HOME/docs-repo && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/agent.git && popd
+        - cd $TRAVIS_BUILD_DIR/docs/readme-sync
+        - ln -s $HOME/docs-repo/agent/docs/readme-sync/input_dir
 
       script:
         # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
         - cd $TRAVIS_BUILD_DIR
-        #- git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ )
-        - cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ 
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ )
+
 
 
         
