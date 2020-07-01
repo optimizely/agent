@@ -248,14 +248,19 @@ jobs:
         - source ~/.nvm/nvm.sh && cd $HOME/readme-sync2 && nvm install && npm install
 
         # clone Agent docs into $Home/docs-repo & make a symbolic link to the docs in TRAVIS_BUILD_DIR from $Home/readme-sync2 dir
-        - mkdir $HOME/docs-repo && pushd $HOME/docs-repo && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/agent.git && popd
+        - mkdir $HOME/readme-sync2/docs-repo && pushd $HOME/readme-sync2/docs-repo && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/agent.git && popd
         - cd $TRAVIS_BUILD_DIR/docs/readme-sync
-        - ln -s $HOME/docs-repo/agent/docs/readme-sync/input_dir
+        - ln -s $HOME/readme-sync2/docs-repo/agent/docs/readme-sync/ input_dir
+
+        # we now have these dir structures for the docs:
+        # $TRAVIS_BUILD_DIR/docs/readme-sync/*input_dir* for the purposees of git diffing, where *input_dir* is a link to ->
+        # $HOME/readme-sync2/docs-repo/agent/docs/readme-sync/ ...which contains our docs category (deploy-as-microservice) and md pages
 
       script:
         # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
+        # F question: so we can do a diff on a symbolic link? $Travis_build_dir/docs/readme-sync/input_dir leads to $HOME/readme-sync2/docs-repo/agent/docs/readme-sync/
         - cd $TRAVIS_BUILD_DIR
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ )
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/)
 
 
 
