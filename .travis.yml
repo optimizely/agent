@@ -243,7 +243,8 @@ jobs:
       script:
         # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
         - cd $TRAVIS_BUILD_DIR
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ )
+        #- git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ )
+        - cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs-repo/agent/docs/readme-sync/ 
 
 
         
