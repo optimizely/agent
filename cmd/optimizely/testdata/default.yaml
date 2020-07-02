@@ -86,3 +86,6 @@ webhook:
         - yyy
         - zzz
       secret: secret-20000
+runtime:
+  blockProfileRate: 1
+  mutexProfileFraction: 2

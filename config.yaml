@@ -48,7 +48,7 @@ api:
     ## the maximum number of concurrent requests handled by the api listener
 #    maxConns: 10000
     ## http listener port
-    port: "9000"
+    port: "8080"
     ## set to true to enable subscribing to notifications via an SSE event-stream
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
@@ -113,8 +113,12 @@ client:
     ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
     datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
     ## URL for dispatching events.
-    eventURL: "http://localhost:5555/success"
+    eventURL: "https://logx.optimizely.com/v1/events"
 
+##
+## optimizely runtime configuration can be used for debugging and profiling the go runtime.
+## These should only be configured when debugging in a non-production environment.
+##
 runtime:
     ## SetBlockProfileRate controls the fraction of goroutine blocking events
     ## that are reported in the blocking profile. The profiler aims to sample
