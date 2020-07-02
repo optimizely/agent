@@ -105,6 +105,7 @@ Below is a comprehensive list of available configuration properties.
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
+|server.allowedHosts|OPTIMIZELY_SERVER_ALLOWEDHOSTS|List of allowed request host values - requests with host values other than these will be rejected with a 404 response|
 |server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
@@ -262,6 +263,10 @@ License (MIT): github.com/go-chi/chi
 chi-render 
 (c) 2016-Present https://github.com/go-chi ‑ authors
 License (MIT): github.com/go-chi/render
+
+hostrouter
+(c) 2016-Present https://github.com/go-chi - authors
+License (MIT): https://github.com/go-chi/hostrouter
 
 go-kit 
 (c) 2015 Peter Bourgon
