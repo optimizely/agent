@@ -29,7 +29,7 @@ import (
 // 1. X-Forwarded-Host header value
 // 2. Forwarded header host= directive value
 // 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
-func AllowedHosts(allowedHosts []string, allowedPort string) func (next http.Handler) http.Handler {
+func AllowedHosts(allowedHosts []string, allowedPort string) func(next http.Handler) http.Handler {
 	allowedMap := make(map[string]bool)
 	for _, allowedHost := range allowedHosts {
 		allowedMap[fmt.Sprintf("%v:%v", allowedHost, allowedPort)] = true
@@ -72,7 +72,7 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+*/
 func requestHost(r *http.Request) (host string) {
 	// not standard, but most popular
 	host = r.Header.Get("X-Forwarded-Host")
