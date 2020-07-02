@@ -78,7 +78,7 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 		},
 		Server: ServerConfig{
-			AllowedHosts:    make([]string, 0),
+			AllowedHosts:    []string{"localhost", "127.0.0.1"},
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
 			HealthCheckPath: "/health",
