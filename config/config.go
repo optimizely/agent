@@ -77,6 +77,11 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 		},
+		Runtime: RuntimeConfig{
+			BlockProfileRate:     0, // 0 is disabled
+			MutexProfileFraction: 0, // 0 is disabled
+		},
+
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
@@ -105,6 +110,7 @@ type AgentConfig struct {
 	API     APIConfig     `json:"api"`
 	Log     LogConfig     `json:"log"`
 	Client  ClientConfig  `json:"client"`
+	Runtime RuntimeConfig `json:"runtime"`
 	Server  ServerConfig  `json:"server"`
 	Webhook WebhookConfig `json:"webhook"`
 }
@@ -217,4 +223,25 @@ type ServiceAuthConfig struct {
 
 func (sc *ServiceAuthConfig) isAuthorizationEnabled() bool {
 	return len(sc.HMACSecrets) > 0 || sc.JwksURL != ""
+}
+
+// RuntimeConfig holds any configuration related to the native runtime package
+// These should only be configured when debugging in a non-production environment.
+type RuntimeConfig struct {
+	// SetBlockProfileRate controls the fraction of goroutine blocking events
+	// that are reported in the blocking profile. The profiler aims to sample
+	// an average of one blocking event per rate nanoseconds spent blocked.
+	//
+	// To include every blocking event in the profile, pass rate = 1.
+	// To turn off profiling entirely, pass rate <= 0.
+	BlockProfileRate int `json:"blockProfileRate"`
+
+	// mutexProfileFraction controls the fraction of mutex contention events
+	// that are reported in the mutex profile. On average 1/rate events are
+	// reported. The previous rate is returned.
+	//
+	// To turn off profiling entirely, pass rate 0.
+	// To just read the current rate, pass rate < 0.
+	// (For n>1 the details of sampling may change.)
+	MutexProfileFraction int `json:"mutexProfileFraction"`
 }

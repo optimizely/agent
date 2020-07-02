@@ -18,11 +18,12 @@
 package routers
 
 import (
+	"net/http"
+	"net/http/pprof"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/middleware"
-
-	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -53,6 +54,12 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
 	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
 	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
+
+	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/*", pprof.Index)
+	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/cmdline", pprof.Cmdline)
+	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/profile", pprof.Profile)
+	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/symbol", pprof.Symbol)
+	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/trace", pprof.Trace)
 
 	r.Post("/oauth/token", tokenHandler.CreateAdminAccessToken)
 	return r

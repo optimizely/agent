@@ -219,6 +219,42 @@ Custom metrics are also provided for the individual service endpoints and follow
 "timers.<metric-name>.responseTimeHist.p99": 0,
 ```
 
+### Profiling
+
+Agent exposes the runtime profiling data in the format expected by the [pprof](https://github.com/google/pprof/blob/master/doc/README.md) visualization tool.
+
+You can use the pprof tool to look at the heap profile:
+
+```
+go tool pprof http://localhost:6060/debug/pprof/heap
+```
+
+Or to look at a 5-second CPU profile: (higher durations require configuring the `server.writeTimeout`)
+
+```
+go tool pprof http://localhost:6060/debug/pprof/profile?seconds=5
+```
+
+Or to look at the goroutine blocking profile, after setting `runtime.blockProfileRate` in the configuration:
+
+```
+go tool pprof http://localhost:8088/debug/pprof/block
+```
+
+Or to collect a 5-second execution trace:
+
+```
+wget "http://localhost:8088/debug/pprof/trace?seconds=5"
+```
+
+Or to look at the holders of contended mutexes, after setting `runtime.mutexProfileFraction` in your configuration:
+
+```
+go tool pprof http://localhost:6060/debug/pprof/mutex
+```
+
+To view all available profiles can be found at [http://localhost:8088/debug/pprof/](http://localhost:8088/debug/pprof/) in your browser.
+
 ## Authorization
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see the [Authorization Guide](./docs/auth.md).
 
