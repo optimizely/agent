@@ -30,14 +30,17 @@ import (
 // 2. Forwarded header host= directive value
 // 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
 func AllowedHosts(allowedHosts []string, allowedPort string) func (next http.Handler) http.Handler {
+	allowedMap := make(map[string]bool)
+	for _, allowedHost := range allowedHosts {
+		allowedMap[fmt.Sprintf("%v:%v", allowedHost, allowedPort)] = true
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			host := requestHost(r)
-			for _, allowedHost := range allowedHosts {
-				if host == fmt.Sprintf("%v:%v", allowedHost, allowedPort) {
-					next.ServeHTTP(w, r)
-					return
-				}
+			if allowedMap[host] {
+				next.ServeHTTP(w, r)
+				return
 			}
 			logger := GetLogger(r)
 			logger.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
