@@ -14,7 +14,7 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package middleware
+// Package middleware //
 package middleware
 
 import (
@@ -24,6 +24,11 @@ import (
 	"strings"
 )
 
+// AllowedHosts returns a middleware function that rejects requests whose host value does not match any host in allowedHosts.
+// Request host is determined in the following priority order:
+// 1. X-Forwarded-Host header value
+// 2. Forwarded header host= directive value
+// 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
 func AllowedHosts(allowedHosts []string, allowedPort string) func (next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

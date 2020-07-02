@@ -28,7 +28,12 @@ log:
 ## http server configuration
 ##
 server:
-    ## Allowed hosts - Agent will reject requests whose Host header's host portion isn't included here
+    ## List of allowed request host values.
+    ## Requests whose host value does not match one of these will be rejected with a 404 response.
+    ## Request host is determined in the following priority order:
+    ## 1. X-Forwarded-Host header value
+    ## 2. Forwarded header host= directive value
+    ## 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
     allowedHosts:
         - localhost
         - 127.0.0.1
