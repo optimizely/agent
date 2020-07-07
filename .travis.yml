@@ -16,12 +16,7 @@ branches:
 
 stages:
   - 'Readme-sync'
-  - 'Tests'
-  - 'Trigger FSC Tests'
-  - 'Test Build using latest tag (no upload)'
-  - 'Build, Upload and Publish (draft)'
-  - 'Test github release assets'
-  - 'Publish (real)'
+
 
 jobs:
 
@@ -281,8 +276,3 @@ jobs:
         #- git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs docs/readme-sync/ )
 
 
-
-before_script:
-  # https://github.com/travis-ci/gimme
-  - eval "$(gimme)"
-  - make -e setup build
