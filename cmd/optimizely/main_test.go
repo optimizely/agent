@@ -34,6 +34,11 @@ func assertRoot(t *testing.T, actual *config.AgentConfig) {
 	assert.Equal(t, []string{"ddd", "eee", "fff"}, actual.SDKKeys)
 }
 
+func assertRuntime(t *testing.T, actual config.RuntimeConfig) {
+	assert.Equal(t, 1, actual.BlockProfileRate)
+	assert.Equal(t, 2, actual.MutexProfileFraction)
+}
+
 func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
@@ -78,7 +83,7 @@ func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
 
 func assertAPI(t *testing.T, actual config.APIConfig) {
 	assert.Equal(t, 100, actual.MaxConns)
-	assert.Equal(t, "127.0.0.1", actual.Addr)
+	assert.Equal(t, "1.2.3.4", actual.Addr)
 	assert.Equal(t, "3000", actual.Port)
 	assert.Equal(t, true, actual.EnableNotifications)
 	assert.Equal(t, true, actual.EnableOverrides)
@@ -120,7 +125,7 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func TestViperYaml(t *testing.T) {
 	v := viper.New()
-	v.Set("config.filename", "../testdata/default.yaml")
+	v.Set("config.filename", "./testdata/default.yaml")
 
 	err := initConfig(v)
 	assert.NoError(t, err)
@@ -137,6 +142,7 @@ func TestViperYaml(t *testing.T) {
 	assertAPIAuth(t, actual.API.Auth)
 	assertAPICORS(t, actual.API.CORS)
 	assertWebhook(t, actual.Webhook)
+	assertRuntime(t, actual.Runtime)
 }
 
 func TestViperProps(t *testing.T) {
@@ -182,7 +188,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("api.maxConns", 100)
 	v.Set("api.enableNotifications", true)
 	v.Set("api.enableOverrides", true)
-	v.Set("api.addr", "127.0.0.1")
+	v.Set("api.addr", "1.2.3.4")
 	v.Set("api.port", "3000")
 	v.Set("api.auth.ttl", "30m")
 
@@ -207,6 +213,9 @@ func TestViperProps(t *testing.T) {
 	v.Set("webhook.projects.20000.sdkKeys", []string{"xxx", "yyy", "zzz"})
 	v.Set("webhook.projects.20000.skipSignatureCheck", false)
 
+	v.Set("runtime.blockProfileRate", 1)
+	v.Set("runtime.mutexProfileFraction", 2)
+
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
 
@@ -219,6 +228,7 @@ func TestViperProps(t *testing.T) {
 	assertAPI(t, actual.API)
 	assertAPIAuth(t, actual.API.Auth)
 	assertWebhook(t, actual.Webhook)
+	assertRuntime(t, actual.Runtime)
 }
 
 func TestViperEnv(t *testing.T) {
@@ -249,7 +259,7 @@ func TestViperEnv(t *testing.T) {
 
 	_ = os.Setenv("OPTIMIZELY_API_MAXCONNS", "100")
 	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")
-	_ = os.Setenv("OPTIMIZELY_API_ADDR", "127.0.0.1")
+	_ = os.Setenv("OPTIMIZELY_API_ADDR", "1.2.3.4")
 	_ = os.Setenv("OPTIMIZELY_API_ENABLENOTIFICATIONS", "true")
 	_ = os.Setenv("OPTIMIZELY_API_ENABLEOVERRIDES", "true")
 
@@ -262,6 +272,9 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SDKKEYS", "xxx,yyy,zzz")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
+	_ = os.Setenv("OPTIMIZELY_RUNTIME_BLOCKPROFILERATE", "1")
+	_ = os.Setenv("OPTIMIZELY_RUNTIME_MUTEXPROFILEFRACTION", "2")
+
 	v := viper.New()
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
@@ -273,4 +286,5 @@ func TestViperEnv(t *testing.T) {
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
+	assertRuntime(t, actual.Runtime)
 }

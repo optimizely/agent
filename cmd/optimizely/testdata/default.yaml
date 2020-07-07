@@ -41,6 +41,7 @@ admin:
 api:
   maxConns: 100
   port: "3000"
+  addr: "1.2.3.4"
   enableNotifications: true
   enableOverrides: true
   cors:
@@ -86,3 +87,6 @@ webhook:
         - yyy
         - zzz
       secret: secret-20000
+runtime:
+  blockProfileRate: 1
+  mutexProfileFraction: 2

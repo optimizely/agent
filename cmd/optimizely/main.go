@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -90,6 +91,18 @@ func initLogging(conf config.LogConfig) {
 	}
 }
 
+func setRuntimeEnvironment(conf config.RuntimeConfig) {
+	if conf.BlockProfileRate != 0 {
+		log.Warn().Msgf("Setting non-zero blockProfileRate is NOT recommended for production")
+		runtime.SetBlockProfileRate(conf.BlockProfileRate)
+	}
+
+	if conf.MutexProfileFraction != 0 {
+		log.Warn().Msgf("Setting non-zero mutexProfileFraction is NOT recommended for production")
+		runtime.SetMutexProfileFraction(conf.MutexProfileFraction)
+	}
+}
+
 func main() {
 	v := viper.New()
 	if err := initConfig(v); err != nil {
@@ -98,6 +111,10 @@ func main() {
 
 	conf := loadConfig(v)
 	initLogging(conf.Log)
+
+	conf.LogConfigWarnings()
+
+	setRuntimeEnvironment(conf.Runtime)
 
 	agentMetricsRegistry := metrics.NewRegistry()
 	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)

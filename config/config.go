@@ -19,6 +19,8 @@ package config
 
 import (
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // NewDefaultConfig returns the default configuration for Optimizely Agent
@@ -77,6 +79,11 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 		},
+		Runtime: RuntimeConfig{
+			BlockProfileRate:     0, // 0 is disabled
+			MutexProfileFraction: 0, // 0 is disabled
+		},
+
 		Server: ServerConfig{
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
@@ -106,8 +113,30 @@ type AgentConfig struct {
 	API     APIConfig     `json:"api"`
 	Log     LogConfig     `json:"log"`
 	Client  ClientConfig  `json:"client"`
+	Runtime RuntimeConfig `json:"runtime"`
 	Server  ServerConfig  `json:"server"`
 	Webhook WebhookConfig `json:"webhook"`
+}
+
+// HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration
+var HTTPSDisabledWarning = "keyfile and certfile not available, so server will use HTTP. For production deployments, it is recommended to either set keyfile and certfile for HTTPS, or run Agent behind a load balancer/reverse proxy that uses HTTPS."
+
+// AuthDisabledWarningTemplate is used to log a warning when auth is disabled for API or Admin endpoints
+var AuthDisabledWarningTemplate = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
+
+// LogConfigWarnings checks this configuration and logs any relevant warnings.
+func (ac *AgentConfig) LogConfigWarnings() {
+	if !ac.Server.isHTTPSEnabled() {
+		log.Warn().Msg(HTTPSDisabledWarning)
+	}
+
+	if !ac.API.Auth.isAuthorizationEnabled() {
+		log.Warn().Msgf(AuthDisabledWarningTemplate, "API")
+	}
+
+	if !ac.Admin.Auth.isAuthorizationEnabled() {
+		log.Warn().Msgf(AuthDisabledWarningTemplate, "Admin")
+	}
 }
 
 // ClientConfig holds the configuration options for the Optimizely Client.
@@ -134,6 +163,10 @@ type ServerConfig struct {
 	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
 	HealthCheckPath string        `json:"healthCheckPath"`
+}
+
+func (sc *ServerConfig) isHTTPSEnabled() bool {
+	return sc.KeyFile != "" && sc.CertFile != ""
 }
 
 // APIConfig holds the REST API configuration
@@ -192,4 +225,29 @@ type ServiceAuthConfig struct {
 	TTL                time.Duration            `yaml:"ttl" json:"-"`
 	JwksURL            string                   `yaml:"jwksURL"`
 	JwksUpdateInterval time.Duration            `yaml:"jwksUpdateInterval"`
+}
+
+func (sc *ServiceAuthConfig) isAuthorizationEnabled() bool {
+	return len(sc.HMACSecrets) > 0 || sc.JwksURL != ""
+}
+
+// RuntimeConfig holds any configuration related to the native runtime package
+// These should only be configured when debugging in a non-production environment.
+type RuntimeConfig struct {
+	// SetBlockProfileRate controls the fraction of goroutine blocking events
+	// that are reported in the blocking profile. The profiler aims to sample
+	// an average of one blocking event per rate nanoseconds spent blocked.
+	//
+	// To include every blocking event in the profile, pass rate = 1.
+	// To turn off profiling entirely, pass rate <= 0.
+	BlockProfileRate int `json:"blockProfileRate"`
+
+	// mutexProfileFraction controls the fraction of mutex contention events
+	// that are reported in the mutex profile. On average 1/rate events are
+	// reported. The previous rate is returned.
+	//
+	// To turn off profiling entirely, pass rate 0.
+	// To just read the current rate, pass rate < 0.
+	// (For n>1 the details of sampling may change.)
+	MutexProfileFraction int `json:"mutexProfileFraction"`
 }
