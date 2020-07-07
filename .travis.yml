@@ -221,10 +221,10 @@ jobs:
     - stage: 'Readme-sync'
       cache: false
       # translation: if we're merging into a test branch...
-      if: type = "push" AND env(TRAVIS_PULL_REQUEST_BRANCH) = "docs-readme-sync-2"
+      # if: type = "push" AND env(TRAVIS_PULL_REQUEST_BRANCH) = "docs-readme-sync-2"
 
 
-      #if: type = push AND branch = docs-readme-sync-2
+      #if: type = push AND branch = master
 
       language: node_js
       install:
