@@ -15,13 +15,13 @@ branches:
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 stages:
+  - 'Readme-sync'
   - 'Tests'
   - 'Trigger FSC Tests'
   - 'Test Build using latest tag (no upload)'
   - 'Build, Upload and Publish (draft)'
   - 'Test github release assets'
   - 'Publish (real)'
-  - 'Readme-sync'
 
 jobs:
 
@@ -219,6 +219,7 @@ jobs:
         - hub release edit --draft=false -m "" ${TRAVIS_TAG}
 
     - stage: 'Readme-sync'
+      before_script: skip
       cache: false
       # translation: if we're merging into a test branch...
       # if: type = "push" AND env(TRAVIS_PULL_REQUEST_BRANCH) = "docs-readme-sync-2"
