@@ -245,9 +245,11 @@ jobs:
         # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
         - cd $TRAVIS_BUILD_DIR
         #add troubleshooting statement:
+        - CHANGED_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE))
+        - echo $CHANGED_FILES
         - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || echo “Difference is found”
-        - changed_files = git diff --name-only
-        - echo $changed_files
+     
+        
         - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
 
 
