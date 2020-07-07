@@ -20,7 +20,6 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
 
@@ -41,15 +40,16 @@ func TestStartAndShutdown(t *testing.T) {
 		return
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	start := make(chan struct{})
+	finish := make(chan error)
 	go func() {
-		wg.Done()
-		srv.ListenAndServe()
+		close(start)
+		finish <- srv.ListenAndServe()
 	}()
 
-	wg.Wait()
+	<-start
 	srv.Shutdown()
+	assert.NoError(t, <-finish)
 }
 
 func TestNoHandler(t *testing.T) {
@@ -69,7 +69,7 @@ func TestFailedStartService(t *testing.T) {
 	ns.ListenAndServe()
 }
 
-func TestFailedTSLStartService(t *testing.T) {
+func TestFailedTLSStartService(t *testing.T) {
 	cfg := config.ServerConfig{
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 8 * time.Second,
@@ -93,7 +93,7 @@ func TestServerConfigs(t *testing.T) {
 	assert.Equal(t, cfg.WriteTimeout, ns.srv.WriteTimeout)
 }
 
-func TestTSLServerConfigs(t *testing.T) {
+func TestTLSServerConfigs(t *testing.T) {
 	cfg := config.ServerConfig{
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 8 * time.Second,
