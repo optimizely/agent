@@ -245,8 +245,8 @@ jobs:
         # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
         - cd $TRAVIS_BUILD_DIR
         #add troubleshooting statement:
-        - CHANGED_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE))
-        - echo $CHANGED_FILES
+        - CHANGED_DOCS_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE -- docs/readme-sync))
+        - echo $CHANGED_DOCS_FILES
         - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || echo “Difference is found”
      
         
