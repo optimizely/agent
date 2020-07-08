@@ -41,7 +41,6 @@ components:
           type: string
       required:
         - revision
-        - origin_url
         - cdn_url
     WebhookRequest:
       properties:

@@ -57,8 +57,11 @@ var testOptlyMiddleware = func(next http.Handler) http.Handler {
 
 type MockCache struct{}
 
-func (m MockCache) GetClient(_ string) (*optimizely.OptlyClient, error) {
+func (m MockCache) GetClient(_ string, _ string) (*optimizely.OptlyClient, error) {
 	return &optimizely.OptlyClient{}, nil
+}
+
+func (m MockCache) UpdateConfigs(_ string) {
 }
 
 var testHandler = func(val string) http.HandlerFunc {

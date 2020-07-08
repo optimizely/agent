@@ -23,7 +23,8 @@ import (
 
 // Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
 type Cache interface {
-	GetClient(sdkKey string) (*OptlyClient, error)
+	GetClient(sdkKey string, datafileAccessToken string) (*OptlyClient, error)
+	UpdateConfigs(sdkKey string)
 }
 
 // SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates

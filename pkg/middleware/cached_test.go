@@ -39,9 +39,12 @@ type MockCache struct {
 	mock.Mock
 }
 
-func (m *MockCache) GetClient(key string) (*optimizely.OptlyClient, error) {
+func (m *MockCache) GetClient(key string, token string) (*optimizely.OptlyClient, error) {
 	args := m.Called(key)
 	return args.Get(0).(*optimizely.OptlyClient), args.Error(1)
+}
+
+func (m MockCache) UpdateConfigs(_ string) {
 }
 
 type OptlyMiddlewareTestSuite struct {
