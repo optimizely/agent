@@ -119,6 +119,7 @@ func (c *OptlyCache) GetClient(sdkKey string, datafileAccessToken string) (*Optl
 func (c *OptlyCache) UpdateConfigs(sdkKey string) {
 	for clientInfo := range c.optlyMap.IterBuffered() {
 		if strings.HasPrefix(clientInfo.Key, sdkKey) {
+			clientInfo.Val.(*OptlyClient).UpdateConfig()
 		}
 	}
 }
@@ -160,7 +161,7 @@ func defaultLoader(
 		clientKeySplit := strings.Split(clientKey, ":")
 
 		// If there is no : then it is a public datafile and we set sdkKey equal to clientKey
-		if len(clientKeySplit) == 0 {
+		if len(clientKeySplit) == 1 {
 			sdkKey = clientKey
 		}
 

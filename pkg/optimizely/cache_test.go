@@ -92,6 +92,12 @@ func (suite *CacheTestSuite) TestInit() {
 	suite.True(suite.cache.optlyMap.Has("three:token2"))
 }
 
+func (suite *CacheTestSuite) TestUpdateConfigs() {
+	_, _ = suite.cache.GetClient("one", "")
+
+	suite.cache.UpdateConfigs("one")
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCacheTestSuite(t *testing.T) {
