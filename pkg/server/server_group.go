@@ -54,14 +54,14 @@ func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 // Two goroutines are started. One for the http listener and one
 // to initiate a graceful shutdown. This method blocks on adding the
 // go routines to maintain startup order of each listener.
-func (g *Group) GoListenAndServe(name, addr, port string, handler http.Handler) {
+func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
 
 	if port == "0" {
 		log.Info().Msg(fmt.Sprintf(`"%s" not enabled`, name))
 		return
 	}
 
-	server, err := NewServer(name, addr, port, handler, g.conf)
+	server, err := NewServer(name, port, handler, g.conf)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed starting server")

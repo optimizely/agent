@@ -40,7 +40,6 @@ func NewDefaultConfig() *AgentConfig {
 				JwksUpdateInterval: 0,
 			},
 			Port: "8088",
-			Addr: "127.0.0.1",
 		},
 		API: APIConfig{
 			Auth: ServiceAuthConfig{
@@ -63,7 +62,6 @@ func NewDefaultConfig() *AgentConfig {
 			},
 			MaxConns:            0,
 			Port:                "8080",
-			Addr:                "127.0.0.1",
 			EnableNotifications: false,
 			EnableOverrides:     false,
 		},
@@ -91,10 +89,10 @@ func NewDefaultConfig() *AgentConfig {
 			CertFile:        "",
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
+			Host:            "127.0.0.1",
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
-			Addr: "127.0.0.1",
 		},
 	}
 
@@ -163,6 +161,7 @@ type ServerConfig struct {
 	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
 	HealthCheckPath string        `json:"healthCheckPath"`
+	Host            string        `json:"host"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
@@ -175,7 +174,6 @@ type APIConfig struct {
 	CORS                CORSConfig        `json:"cors"`
 	MaxConns            int               `json:"maxConns"`
 	Port                string            `json:"port"`
-	Addr                string            `json:"addr"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
 }
@@ -194,14 +192,12 @@ type CORSConfig struct {
 type AdminConfig struct {
 	Auth ServiceAuthConfig `json:"-"`
 	Port string            `json:"port"`
-	Addr string            `json:"addr"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
 	Port     string                   `json:"port"`
 	Projects map[int64]WebhookProject `json:"projects"`
-	Addr     string                   `json:"addr"`
 }
 
 // WebhookProject holds the configuration for a single Project webhook

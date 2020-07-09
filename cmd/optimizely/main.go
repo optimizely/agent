@@ -139,9 +139,9 @@ func main() {
 	adminRouter := routers.NewAdminRouter(*conf)
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
-	sg.GoListenAndServe("api", conf.API.Addr, conf.API.Port, apiRouter)
-	sg.GoListenAndServe("webhook", conf.Webhook.Addr, conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
-	sg.GoListenAndServe("admin", conf.Admin.Addr, conf.Admin.Port, adminRouter) // Admin should be added last.
+	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("admin", conf.Admin.Port, adminRouter) // Admin should be added last.
 
 	// wait for server group to shutdown
 	if err := sg.Wait(); err == nil {

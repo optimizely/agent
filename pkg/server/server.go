@@ -45,16 +45,16 @@ type HealthInfo struct {
 
 // NewServer initializes new service.
 // Configuration is pulled from viper configuration.
-func NewServer(name, addr, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
+func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
 
 	if handler == nil {
 		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
 	handler = healthMW(handler, conf.HealthCheckPath)
-	logger := log.With().Str("port", port).Str("name", name).Str("addr", addr).Logger()
+	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
-		Addr:         addr + ":" + port,
+		Addr:         conf.Host + ":" + port,
 		Handler:      handler,
 		ReadTimeout:  conf.ReadTimeout,
 		WriteTimeout: conf.WriteTimeout,

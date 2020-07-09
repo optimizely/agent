@@ -11,6 +11,7 @@ server:
   healthCheckPath: "/healthcheck"
   keyFile: "keyfile"
   certFile: "certfile"
+  host: "1.2.3.4"
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
@@ -41,7 +42,6 @@ admin:
 api:
   maxConns: 100
   port: "3000"
-  addr: "1.2.3.4"
   enableNotifications: true
   enableOverrides: true
   cors:
