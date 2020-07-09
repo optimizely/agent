@@ -35,9 +35,7 @@ var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 var conf = config.ServerConfig{}
 
 func TestStartAndShutdown(t *testing.T) {
-
 	srv, err := NewServer("valid", "6000", handler, conf)
-
 	if !assert.NoError(t, err) {
 		return
 	}
