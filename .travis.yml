@@ -225,16 +225,6 @@ jobs:
       language: node_js
       install:
 
-        ###################
-        ###what worked locally:
-        ###############
-        #franc@DESKTOP-5ERJRH3:~/Github/readme-sync$ mkdir docs-repo
-        #cd docs-repo
-        #ln -s ~/Github/agent/docs/readme-sync/ input_dir
-        #cd ~/Github/readme-sync 
-        #npx ts-node sync/index.ts --apiKey 17liL6nGhUFTAE7WfJR0Ip7JAI256Hr1 --version 4.0 --docs docs-repo/input_dir
-        #########################
-
 
         # make dir $HOME/readme-sync2 & clone readme-sync2 repo to it; install dependencies
 
@@ -249,7 +239,7 @@ jobs:
         - CHANGED_DOCS_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE -- docs/readme-sync))
         - echo $CHANGED_DOCS_FILES
 
-            
+        #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs    
         - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 1.5 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
 
 
