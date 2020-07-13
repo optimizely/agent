@@ -89,7 +89,7 @@ func NewDefaultConfig() *AgentConfig {
 			CertFile:        "",
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
-			Host:            "127.0.0.1",
+			Host:            "0.0.0.0",
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
