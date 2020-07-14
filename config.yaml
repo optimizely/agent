@@ -114,6 +114,9 @@ client:
     datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
     ## URL for dispatching events.
     eventURL: "https://logx.optimizely.com/v1/events"
+    ## Validation Regex on the request SDK Key
+    ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
+    sdkKeyRegex: "^[[:alnum:]]+$"
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.

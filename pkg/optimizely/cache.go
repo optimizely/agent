@@ -19,6 +19,8 @@ package optimizely
 
 import (
 	"context"
+	"errors"
+	"regexp"
 	"sync"
 
 	"github.com/optimizely/agent/config"
@@ -103,12 +105,24 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
+var errValidationFailure = errors.New("sdkKey failed validation")
+
 func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(sdkKey string) (*OptlyClient, error) {
+	r, err := regexp.Compile(conf.SdkKeyRegex)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("invalid sdkKeyRegex configuration")
+	}
+
 	return func(sdkKey string) (*OptlyClient, error) {
+		if !r.MatchString(sdkKey) {
+			log.Warn().Msgf("failed to validate sdk key: %q", sdkKey)
+			return &OptlyClient{}, errValidationFailure
+		}
+
 		log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
 		configManager := pcFactory(
 			sdkKey,

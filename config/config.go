@@ -76,6 +76,8 @@ func NewDefaultConfig() *AgentConfig {
 			FlushInterval:       30 * time.Second,
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
+			// https://github.com/google/re2/wiki/Syntax
+			SdkKeyRegex: "^[[:alnum:]]+$",
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -144,6 +146,7 @@ type ClientConfig struct {
 	FlushInterval       time.Duration `json:"flushInterval" default:"30s"`
 	DatafileURLTemplate string        `json:"datafileURLTemplate"`
 	EventURL            string        `json:"eventURL"`
+	SdkKeyRegex         string        `json:"sdkKeyRegex"`
 }
 
 // LogConfig holds the log configuration
