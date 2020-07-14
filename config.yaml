@@ -116,6 +116,7 @@ client:
     eventURL: "https://logx.optimizely.com/v1/events"
     ## Validation Regex on the request SDK Key
     ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
+    ## https://github.com/google/re2/wiki/Syntax
     sdkKeyRegex: "^[[:alnum:]]+$"
 
 ##
