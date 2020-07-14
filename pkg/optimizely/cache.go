@@ -107,18 +107,26 @@ func (c *OptlyCache) Wait() {
 
 var errValidationFailure = errors.New("sdkKey failed validation")
 
+func regexValidator(sdkKeyRegex string) func(sdkkey string) bool {
+	r, err := regexp.Compile(sdkKeyRegex)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("invalid sdkKeyRegex configuration")
+	}
+
+	return func(sdkKey string) bool {
+		return r.MatchString(sdkKey)
+	}
+}
+
 func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(sdkKey string) (*OptlyClient, error) {
-	r, err := regexp.Compile(conf.SdkKeyRegex)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("invalid sdkKeyRegex configuration")
-	}
+	validator := regexValidator(conf.SdkKeyRegex)
 
 	return func(sdkKey string) (*OptlyClient, error) {
-		if !r.MatchString(sdkKey) {
+		if !validator(sdkKey) {
 			log.Warn().Msgf("failed to validate sdk key: %q", sdkKey)
 			return &OptlyClient{}, errValidationFailure
 		}
