@@ -17,6 +17,7 @@ branches:
 stages:
   - 'Tests'
   - 'Trigger FSC Tests'
+  - 'Trigger Production Tests'
   - 'Test Build using latest tag (no upload)'
   - 'Build, Upload and Publish (draft)'
   - 'Test github release assets'
@@ -76,7 +77,8 @@ jobs:
       script:
         - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
 
-    - stage: 'Trigger FSC Tests'
+    - &integrationtest
+      stage: 'Trigger FSC Tests'
       if: (branch = master AND type = push) OR type = pull_request OR tag IS present
       env:
         SDK=agent
@@ -87,6 +89,13 @@ jobs:
       install: skip
       script:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
+
+    - <<: *integrationtest
+      stage: 'Trigger Production Tests'
+      env:
+        SDK=agent
+        SDK_BRANCH=$(if [ -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then echo ${TRAVIS_BRANCH}; else echo "$TRAVIS_PULL_REQUEST_BRANCH"; fi)
+        FULLSTACK_TEST_REPO=ProdTesting
 
     - stage: 'Test Build using latest tag (no upload)'
       name: linux
