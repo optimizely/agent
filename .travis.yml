@@ -35,14 +35,15 @@ jobs:
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
 
     - stage: Tests
-      name: codecov.io
+      name: coveralls
       os: linux
       dist: xenial
+      before_script:
+        - go get github.com/mattn/goveralls
       script:
         - make -e cover COVER_FILE=coverage.txt
       after_success:
-        # Replace with coveralls if/when the repo is made public
-        - bash <(curl -s https://codecov.io/bash)
+        - $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
 
     - stage: Tests
       name: sourceclear
