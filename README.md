@@ -127,6 +127,24 @@ identify the context the request should be evaluated. The SDK key maps to a uniq
 [Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
 Environments to be serviced by a single Agent.
 
+### Enabling CORS
+
+CORS can be enabled for the core API service by setting the the appropriate cors properties.
+```yaml
+api:
+  cors:
+    allowedMethods:
+      - "HEAD"
+      - "GET"
+      - "POST"
+      - "OPTIONS"
+```
+
+For more advanced options please refer to the [go-chi/cors](https://github.com/go-chi/cors) middleware documentation.
+
+NOTE: To avoid any potential security issues, and reduce risk to your data it's recommended that [authentication](./docs/auth.md)
+is enabled alongside CORS.
+
 ## Webhooks
 
 The webhook listener used to receive inbound [Webhook](https://docs.developers.optimizely.com/rollouts/docs/webhooks)
@@ -299,6 +317,10 @@ License (MIT): github.com/go-chi/chi
 chi-render 
 (c) 2016-Present https://github.com/go-chi ‑ authors
 License (MIT): github.com/go-chi/render
+
+go-chi/cors
+(c) 2014 Olivier Poitrey
+License (MIT): github.com/go-chi/cors
 
 go-kit 
 (c) 2015 Peter Bourgon

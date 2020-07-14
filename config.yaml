@@ -53,7 +53,7 @@ api:
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
-    ## for details check this out.
+    ## CORS support is provided via chi middleware
     ## https://github.com/go-chi/cors
     # cors:
     #     ## If allowedOrigins is nil or empty, value is set to ["*"].
@@ -64,9 +64,7 @@ api:
     #         - "HEAD"
     #         - "GET"
     #         - "POST"
-    #         - "PUT"
     #         - "OPTIONS"
-    #         - "DELETE"
     #     ## Default value is [] but "Origin" is always appended to the list.
     #     allowedHeaders: []
     #     exposedHeaders: []
