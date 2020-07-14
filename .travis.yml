@@ -38,11 +38,10 @@ jobs:
       name: coveralls
       os: linux
       dist: xenial
-      before_script:
-        - go get github.com/mattn/goveralls
       script:
         - make -e cover COVER_FILE=coverage.txt
       after_success:
+        - go get github.com/mattn/goveralls
         - $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
 
     - stage: Tests
