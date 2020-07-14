@@ -105,7 +105,7 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
-var errValidationFailure = errors.New("sdkKey failed validation")
+var ErrValidationFailure = errors.New("sdkKey failed validation")
 
 func regexValidator(sdkKeyRegex string) func(string) bool {
 	r, err := regexp.Compile(sdkKeyRegex)
@@ -126,7 +126,7 @@ func defaultLoader(
 	return func(sdkKey string) (*OptlyClient, error) {
 		if !validator(sdkKey) {
 			log.Warn().Msgf("failed to validate sdk key: %q", sdkKey)
-			return &OptlyClient{}, errValidationFailure
+			return &OptlyClient{}, ErrValidationFailure
 		}
 
 		log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")

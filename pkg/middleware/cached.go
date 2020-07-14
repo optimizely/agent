@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -63,10 +64,13 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		if err != nil {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 
+			switch {
 			// Check if error indicates a 403 from the CDN. Ideally we'd use errors.Is(), but the go-sdk isn't 1.13
-			if strings.Contains(err.Error(), "403") {
+			case strings.Contains(err.Error(), "403"):
 				RenderError(err, http.StatusForbidden, w, r)
-			} else {
+			case errors.Is(err, optimizely.ErrValidationFailure):
+				RenderError(err, http.StatusBadRequest, w, r)
+			default:
 				RenderError(fmt.Errorf("failed to instantiate Optimizely for SDK Key: %s", sdkKey), http.StatusInternalServerError, w, r)
 			}
 

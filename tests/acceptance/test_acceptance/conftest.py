@@ -37,7 +37,7 @@ def session_override_sdk_key(session_obj):
     :param session_obj: session fixture object
     :return: updated session object
     """
-    session_obj.headers['X-Optimizely-SDK-Key'] = 'xxx_invalid_sdk_key_xxx'
+    session_obj.headers['X-Optimizely-SDK-Key'] = 'xxxinvalidsdkkeyxxx'
     return session_obj
 
 
