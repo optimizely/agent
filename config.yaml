@@ -41,7 +41,7 @@ server:
     ## the location of the TLS certificate file
 #    certFile: <cert-file>
     ## IP of the host
-    host: "0.0.0.0"
+    host: "127.0.0.1"
 
 ##
 ## api service configuration
