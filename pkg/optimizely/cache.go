@@ -105,6 +105,7 @@ func (c *OptlyCache) Wait() {
 	c.wg.Wait()
 }
 
+// ErrValidationFailure is returned when the provided SDK key fails initial validation
 var ErrValidationFailure = errors.New("sdkKey failed validation")
 
 func regexValidator(sdkKeyRegex string) func(string) bool {
