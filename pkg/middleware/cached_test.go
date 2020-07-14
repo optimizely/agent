@@ -54,6 +54,7 @@ func (suite *OptlyMiddlewareTestSuite) SetupTest() {
 	mockCache := new(MockCache)
 	mockCache.On("GetClient", "ERROR").Return(new(optimizely.OptlyClient), fmt.Errorf("error"))
 	mockCache.On("GetClient", "403").Return(new(optimizely.OptlyClient), fmt.Errorf("403 forbidden"))
+	mockCache.On("GetClient", "INVALID").Return(new(optimizely.OptlyClient), optimizely.ErrValidationFailure)
 	mockCache.On("GetClient", "EXPECTED").Return(&expectedClient, nil)
 	suite.mw = &CachedOptlyMiddleware{mockCache}
 
@@ -79,17 +80,27 @@ func (suite *OptlyMiddlewareTestSuite) TestGetError() {
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
+	assertError(suite.T(), rec, "failed to instantiate Optimizely for SDK Key: ERROR", http.StatusInternalServerError)
 }
 
-func (suite *OptlyMiddlewareTestSuite) TestGetInvalid() {
+func (suite *OptlyMiddlewareTestSuite) TestGetForbidden() {
 	handler := suite.mw.ClientCtx(ErrorHandler())
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Add(OptlySDKHeader, "403")
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	suite.Equal(http.StatusForbidden, rec.Code)
+	assertError(suite.T(), rec, "403 forbidden", http.StatusForbidden)
+}
+
+func (suite *OptlyMiddlewareTestSuite) TestGetInvalid() {
+	handler := suite.mw.ClientCtx(ErrorHandler())
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Add(OptlySDKHeader, "INVALID")
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	assertError(suite.T(), rec, "sdkKey failed validation", http.StatusBadRequest)
 }
 
 func (suite *OptlyMiddlewareTestSuite) TestGetClientMissingHeader() {
