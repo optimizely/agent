@@ -107,15 +107,13 @@ func (c *OptlyCache) Wait() {
 
 var errValidationFailure = errors.New("sdkKey failed validation")
 
-func regexValidator(sdkKeyRegex string) func(sdkkey string) bool {
+func regexValidator(sdkKeyRegex string) func(string) bool {
 	r, err := regexp.Compile(sdkKeyRegex)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("invalid sdkKeyRegex configuration")
 	}
 
-	return func(sdkKey string) bool {
-		return r.MatchString(sdkKey)
-	}
+	return r.MatchString
 }
 
 func defaultLoader(
