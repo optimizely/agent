@@ -55,6 +55,7 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, 1*time.Minute, actual.FlushInterval)
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
+	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -163,6 +164,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.flushInterval", 1*time.Minute)
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
+	v.Set("client.sdkKeyRegex", "custom-regex")
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
@@ -244,6 +246,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_FLUSHINTERVAL", "1m")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
