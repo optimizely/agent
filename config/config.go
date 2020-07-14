@@ -77,7 +77,7 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex: "^[[:alnum:]]+$",
+			SdkKeyRegex: "^\\w+$",
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled

@@ -148,9 +148,9 @@ func TestDefaultRegexValidator(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{"1234567890abcdefghijklmnopqrstuzwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", true},
+		{"1234567890abcdefghijklmnopqrstuzwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
 		{"!@#$%^&*()", false},
-		{"abc123_", false},
+		{"abc123!", false},
 		{"", false},
 	}
 
