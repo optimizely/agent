@@ -24,6 +24,8 @@ import (
 	"strings"
 )
 
+var invalidRequestHostError = errors.New("invalid request host")
+
 // AllowedHosts returns a middleware function that rejects requests whose host value does not match any host in allowedHosts.
 // Request host is determined in the following priority order:
 // 1. X-Forwarded-Host header value
@@ -44,7 +46,7 @@ func AllowedHosts(allowedHosts []string, allowedPort string) func(next http.Hand
 			}
 			logger := GetLogger(r)
 			logger.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
-			RenderError(errors.New("invalid request host"), http.StatusNotFound, w, r)
+			RenderError(invalidRequestHostError, http.StatusNotFound, w, r)
 		})
 	}
 }
