@@ -40,6 +40,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "", conf.Server.KeyFile)
 	assert.Equal(t, "", conf.Server.CertFile)
 	assert.Equal(t, []string{}, conf.Server.DisabledCiphers)
+	assert.Equal(t, "127.0.0.1", conf.Server.Host)
 
 	assert.False(t, conf.Log.Pretty)
 	assert.Equal(t, "info", conf.Log.Level)

@@ -91,6 +91,7 @@ func NewDefaultConfig() *AgentConfig {
 			CertFile:        "",
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
+			Host:            "127.0.0.1",
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
@@ -163,6 +164,7 @@ type ServerConfig struct {
 	KeyFile         string        `json:"keyFile"`
 	DisabledCiphers []string      `json:"disabledCiphers"`
 	HealthCheckPath string        `json:"healthCheckPath"`
+	Host            string        `json:"host"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
