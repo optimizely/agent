@@ -98,6 +98,7 @@ Below is a comprehensive list of available configuration properties.
 |client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
 |client.datafileURLTemplate|OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE|Template URL for SDK datafile location. Default: https://cdn.optimizely.com/datafiles/%s.json|
 |client.eventURL|OPTIMIZELY_CLIENT_EVENTURL|URL for dispatching events. Default: https://logx.optimizely.com/v1/events|
+|client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+$|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |keyfile|OPTIMIZELY_KEYFILE|Path to a key file, used to run Agent with HTTPS|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
@@ -126,6 +127,24 @@ Each request made into the API must include a `X-Optimizely-SDK-Key` in the requ
 identify the context the request should be evaluated. The SDK key maps to a unique Optimizely Project and
 [Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
 Environments to be serviced by a single Agent.
+
+### Enabling CORS
+
+CORS can be enabled for the core API service by setting the the appropriate cors properties.
+```yaml
+api:
+  cors:
+    allowedMethods:
+      - "HEAD"
+      - "GET"
+      - "POST"
+      - "OPTIONS"
+```
+
+For more advanced options please refer to the [go-chi/cors](https://github.com/go-chi/cors) middleware documentation.
+
+NOTE: To avoid any potential security issues, and reduce risk to your data it's recommended that [authentication](./docs/auth.md)
+is enabled alongside CORS.
 
 ## Webhooks
 
@@ -220,6 +239,42 @@ Custom metrics are also provided for the individual service endpoints and follow
 "timers.<metric-name>.responseTimeHist.p99": 0,
 ```
 
+### Profiling
+
+Agent exposes the runtime profiling data in the format expected by the [pprof](https://github.com/google/pprof/blob/master/doc/README.md) visualization tool.
+
+You can use the pprof tool to look at the heap profile:
+
+```
+go tool pprof http://localhost:6060/debug/pprof/heap
+```
+
+Or to look at a 5-second CPU profile: (higher durations require configuring the `server.writeTimeout`)
+
+```
+go tool pprof http://localhost:6060/debug/pprof/profile?seconds=5
+```
+
+Or to look at the goroutine blocking profile, after setting `runtime.blockProfileRate` in the configuration:
+
+```
+go tool pprof http://localhost:8088/debug/pprof/block
+```
+
+Or to collect a 5-second execution trace:
+
+```
+wget "http://localhost:8088/debug/pprof/trace?seconds=5"
+```
+
+Or to look at the holders of contended mutexes, after setting `runtime.mutexProfileFraction` in your configuration:
+
+```
+go tool pprof http://localhost:6060/debug/pprof/mutex
+```
+
+To view all available profiles can be found at [http://localhost:8088/debug/pprof/](http://localhost:8088/debug/pprof/) in your browser.
+
 ## Authorization
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see the [Authorization Guide](./docs/auth.md).
 
@@ -267,6 +322,10 @@ License (MIT): github.com/go-chi/render
 hostrouter
 (c) 2016-Present https://github.com/go-chi - authors
 License (MIT): https://github.com/go-chi/hostrouter
+
+go-chi/cors
+(c) 2014 Olivier Poitrey
+License (MIT): github.com/go-chi/cors
 
 go-kit 
 (c) 2015 Peter Bourgon

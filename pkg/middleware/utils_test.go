@@ -20,6 +20,7 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
@@ -128,4 +129,14 @@ func TestCoerceTypeQuoted(t *testing.T) {
 	assert.Equal(t, "1.0a", CoerceType(`"1.0a"`))
 	assert.Equal(t, "True", CoerceType(`"True"`))
 	assert.Equal(t, "False", CoerceType(`"False"`))
+}
+
+func assertError(t *testing.T, rec *httptest.ResponseRecorder, msg string, code int) {
+	assert.Equal(t, code, rec.Code)
+
+	var actual ErrorResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, ErrorResponse{Error: msg}, actual)
 }

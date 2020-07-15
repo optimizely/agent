@@ -126,6 +126,7 @@ func TestDefaultLoader(t *testing.T) {
 		BatchSize:     1234,
 		QueueSize:     5678,
 		EventURL:      "https://localhost/events",
+		SdkKeyRegex:   "sdkkey",
 	}
 
 	loader := defaultLoader(conf, mr, pcFactory, bpFactory)
@@ -136,4 +137,26 @@ func TestDefaultLoader(t *testing.T) {
 	assert.Equal(t, conf.BatchSize, bp.BatchSize)
 	assert.Equal(t, conf.QueueSize, bp.MaxQueueSize)
 	assert.Equal(t, conf.EventURL, bp.EventEndPoint)
+
+	_, err = loader("invalid!")
+	assert.Error(t, err)
+}
+
+func TestDefaultRegexValidator(t *testing.T) {
+
+	scenarios := []struct {
+		input    string
+		expected bool
+	}{
+		{"1234567890abcdefghijklmnopqrstuzwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
+		{"!@#$%^&*()", false},
+		{"abc123!", false},
+		{"", false},
+	}
+
+	conf := config.NewDefaultConfig()
+	validator := regexValidator(conf.Client.SdkKeyRegex)
+	for _, scenario := range scenarios {
+		assert.Equal(t, scenario.expected, validator(scenario.input))
+	}
 }

@@ -40,6 +40,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "", conf.Server.KeyFile)
 	assert.Equal(t, "", conf.Server.CertFile)
 	assert.Equal(t, []string{}, conf.Server.DisabledCiphers)
+	assert.Equal(t, "127.0.0.1", conf.Server.Host)
 	assert.Equal(t, []string{"localhost", "127.0.0.1"}, conf.Server.AllowedHosts)
 
 	assert.False(t, conf.Log.Pretty)
@@ -77,6 +78,10 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 30*time.Second, conf.Client.FlushInterval)
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
+	assert.Equal(t, "^\\w+$", conf.Client.SdkKeyRegex)
+
+	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
+	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
 }
 
 type logObservation struct {

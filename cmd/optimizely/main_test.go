@@ -34,6 +34,11 @@ func assertRoot(t *testing.T, actual *config.AgentConfig) {
 	assert.Equal(t, []string{"ddd", "eee", "fff"}, actual.SDKKeys)
 }
 
+func assertRuntime(t *testing.T, actual config.RuntimeConfig) {
+	assert.Equal(t, 1, actual.BlockProfileRate)
+	assert.Equal(t, 2, actual.MutexProfileFraction)
+}
+
 func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
@@ -41,6 +46,7 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, "keyfile", actual.KeyFile)
 	assert.Equal(t, "certfile", actual.CertFile)
 	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
+	assert.Equal(t, "1.2.3.4", actual.Host)
 }
 
 func assertClient(t *testing.T, actual config.ClientConfig) {
@@ -50,6 +56,7 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, 1*time.Minute, actual.FlushInterval)
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
+	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -117,7 +124,7 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func TestViperYaml(t *testing.T) {
 	v := viper.New()
-	v.Set("config.filename", "../testdata/default.yaml")
+	v.Set("config.filename", "./testdata/default.yaml")
 
 	err := initConfig(v)
 	assert.NoError(t, err)
@@ -134,6 +141,7 @@ func TestViperYaml(t *testing.T) {
 	assertAPIAuth(t, actual.API.Auth)
 	assertAPICORS(t, actual.API.CORS)
 	assertWebhook(t, actual.Webhook)
+	assertRuntime(t, actual.Runtime)
 }
 
 func TestViperProps(t *testing.T) {
@@ -150,6 +158,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.certFile", "certfile")
 	v.Set("server.keyFile", "keyfile")
 	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+	v.Set("server.host", "1.2.3.4")
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
@@ -157,6 +166,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.flushInterval", 1*time.Minute)
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
+	v.Set("client.sdkKeyRegex", "custom-regex")
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
@@ -201,6 +211,9 @@ func TestViperProps(t *testing.T) {
 	v.Set("webhook.projects.20000.sdkKeys", []string{"xxx", "yyy", "zzz"})
 	v.Set("webhook.projects.20000.skipSignatureCheck", false)
 
+	v.Set("runtime.blockProfileRate", 1)
+	v.Set("runtime.mutexProfileFraction", 2)
+
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
 
@@ -213,6 +226,7 @@ func TestViperProps(t *testing.T) {
 	assertAPI(t, actual.API)
 	assertAPIAuth(t, actual.API.Auth)
 	assertWebhook(t, actual.Webhook)
+	assertRuntime(t, actual.Runtime)
 }
 
 func TestViperEnv(t *testing.T) {
@@ -227,6 +241,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_SERVER_CERTFILE", "certfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+	_ = os.Setenv("OPTIMIZELY_SERVER_HOST", "1.2.3.4")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_POLLINGINTERVAL", "10s")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_BATCHSIZE", "1")
@@ -234,6 +249,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_FLUSHINTERVAL", "1m")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
@@ -253,6 +269,9 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SDKKEYS", "xxx,yyy,zzz")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
+	_ = os.Setenv("OPTIMIZELY_RUNTIME_BLOCKPROFILERATE", "1")
+	_ = os.Setenv("OPTIMIZELY_RUNTIME_MUTEXPROFILEFRACTION", "2")
+
 	v := viper.New()
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
@@ -264,4 +283,5 @@ func TestViperEnv(t *testing.T) {
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
+	assertRuntime(t, actual.Runtime)
 }

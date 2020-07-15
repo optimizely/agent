@@ -49,6 +49,8 @@ server:
 #    keyFile: <key-file>
     ## the location of the TLS certificate file
 #    certFile: <cert-file>
+    ## IP of the host
+    host: "127.0.0.1"
 
 ##
 ## api service configuration
@@ -62,7 +64,7 @@ api:
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
-    ## for details check this out.
+    ## CORS support is provided via chi middleware
     ## https://github.com/go-chi/cors
     # cors:
     #     ## If allowedOrigins is nil or empty, value is set to ["*"].
@@ -73,9 +75,7 @@ api:
     #         - "HEAD"
     #         - "GET"
     #         - "POST"
-    #         - "PUT"
     #         - "OPTIONS"
-    #         - "DELETE"
     #     ## Default value is [] but "Origin" is always appended to the list.
     #     allowedHeaders: []
     #     exposedHeaders: []
@@ -123,3 +123,29 @@ client:
     datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
     ## URL for dispatching events.
     eventURL: "https://logx.optimizely.com/v1/events"
+    ## Validation Regex on the request SDK Key
+    ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
+    ## https://github.com/google/re2/wiki/Syntax
+    sdkKeyRegex: "^\\w+$"
+
+##
+## optimizely runtime configuration can be used for debugging and profiling the go runtime.
+## These should only be configured when debugging in a non-production environment.
+##
+runtime:
+    ## SetBlockProfileRate controls the fraction of goroutine blocking events
+    ## that are reported in the blocking profile. The profiler aims to sample
+    ## an average of one blocking event per rate nanoseconds spent blocked.
+    ##
+    ## To include every blocking event in the profile, pass rate = 1.
+    ## To turn off profiling entirely, pass rate <= 0.
+    blockProfileRate: 0
+
+    ## mutexProfileFraction controls the fraction of mutex contention events
+    ## that are reported in the mutex profile. On average 1/rate events are
+    ## reported. The previous rate is returned.
+    ##
+    ## To turn off profiling entirely, pass rate 0.
+    ## To just read the current rate, pass rate < 0.
+    ## (For n>1 the details of sampling may change.)
+    mutexProfileFraction: 0

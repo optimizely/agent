@@ -55,9 +55,9 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 
 	withAllowedHostsHandler := middleware.AllowedHosts(conf.AllowedHosts, port)(handler)
 	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
-	logger := log.With().Str("port", port).Str("name", name).Logger()
+	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         conf.Host + ":" + port,
 		Handler:      withHealthMWhandler,
 		ReadTimeout:  conf.ReadTimeout,
 		WriteTimeout: conf.WriteTimeout,

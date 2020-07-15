@@ -11,6 +11,7 @@ server:
   healthCheckPath: "/healthcheck"
   keyFile: "keyfile"
   certFile: "certfile"
+  host: "1.2.3.4"
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
@@ -24,6 +25,7 @@ client:
   flushInterval: 1m
   datafileURLTemplate: "https://localhost/v1/%s.json"
   eventURL: "https://logx.localhost.com/v1"
+  sdkKeyRegex: "custom-regex"
 admin:
   port: "3002"
   auth:
@@ -86,3 +88,6 @@ webhook:
         - yyy
         - zzz
       secret: secret-20000
+runtime:
+  blockProfileRate: 1
+  mutexProfileFraction: 2
