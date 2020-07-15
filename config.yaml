@@ -55,7 +55,7 @@ api:
     enableNotifications: false
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
-    allowedContentType:
+    allowedContentTypes:
         - "application/json"
     ## CORS support is provided via chi middleware
     ## https://github.com/go-chi/cors
@@ -80,6 +80,8 @@ api:
 admin:
     ## http listener port
     port: "8088"
+    allowedContentTypes:
+        - "application/json"
 ##
 ## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will
 ## trigger an immediate download of the datafile from the CDN
@@ -87,7 +89,7 @@ admin:
 webhook:
     ## http listener port
     port: "8089"
-    allowedContentType:
+    allowedContentTypes:
         - "application/json"
 #    ## a map of Optimizely Projects to one or more SDK keys
 #    projects:
