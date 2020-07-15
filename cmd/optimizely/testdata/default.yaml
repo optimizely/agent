@@ -45,6 +45,8 @@ api:
   port: "3000"
   enableNotifications: true
   enableOverrides: true
+  allowedContentType:
+    - "application/json"
   cors:
     allowedOrigins: 
       - "http://test1.com"
@@ -74,6 +76,8 @@ api:
     jwksUpdateInterval: "25s"
 webhook:
   port: "3001"
+  allowedContentType:
+    - "application/json"
   projects:
     10000:
       sdkKeys:
