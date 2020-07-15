@@ -63,41 +63,27 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 }
 
 // Init takes a slice of sdkKeys to warm the cache upon startup
-func (c *OptlyCache) Init(sdkKeys []string, datafileAccessTokens map[string][]string) {
+func (c *OptlyCache) Init(sdkKeys []string) {
 	for _, sdkKey := range sdkKeys {
-		tokens, exists := datafileAccessTokens[sdkKey]
-		if !exists {
-			if _, err := c.GetClient(sdkKey, ""); err != nil {
-				log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
-			}
-		} else {
-			for _, token := range tokens {
-				if _, err := c.GetClient(sdkKey, token); err != nil {
-					log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client with datafile access token.")
-				}
-			}
+		if _, err := c.GetClient(sdkKey); err != nil {
+			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
 		}
 	}
 }
 
-// GetClient is used to fetch an instance of the OptlyClient when the SDK Key and Datafile Access Token are provided.
-func (c *OptlyCache) GetClient(sdkKey string, datafileAccessToken string) (*OptlyClient, error) {
-	mapKey := sdkKey
-	if datafileAccessToken != "" {
-		mapKey = fmt.Sprintf("%s:%s", sdkKey, datafileAccessToken)
-	}
-
-	val, ok := c.optlyMap.Get(mapKey)
+// GetClient is used to fetch an instance of the OptlyClient when the SDK Key is explicitly supplied.
+func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
+	val, ok := c.optlyMap.Get(sdkKey)
 	if ok {
 		return val.(*OptlyClient), nil
 	}
 
-	oc, err := c.loader(mapKey)
+	oc, err := c.loader(sdkKey)
 	if err != nil {
 		return oc, err
 	}
 
-	set := c.optlyMap.SetIfAbsent(mapKey, oc)
+	set := c.optlyMap.SetIfAbsent(sdkKey, oc)
 	if set {
 		c.wg.Add(1)
 		go func() {
@@ -113,7 +99,7 @@ func (c *OptlyCache) GetClient(sdkKey string, datafileAccessToken string) (*Optl
 
 	// If we didn't "set" the key in this method execution then it was set in another thread.
 	// Recursively lookuping up the SDK key "should" only happen once.
-	return c.GetClient(sdkKey, datafileAccessToken)
+	return c.GetClient(sdkKey)
 }
 
 // UpdateConfigs is used to update config for all clients corresponding to a particular SDK key.
