@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Optimizely Agent microservice - Optimizely Full Stack"
 createdAt: "2020-02-21T20:35:58.387Z"
-updatedAt: "2020-07-11T20:51:52.458Z"
+updatedAt: "2020-07-15T20:51:52.458Z"
 ---
 Optimizely Agent is a stand-alone, open-source, and highly available microservice that provides major benefits over using Optimizely SDKs in certain use cases. The Agent [REST API](https://library.optimizely.com/docs/api/agent/v1/index.html) offers consolidated and simplified endpoints for accessing all the functionality of Optimizely Full Stack SDKs. 
 
@@ -48,10 +48,13 @@ If your use case wouldn't benefit greatly from Optimizely Agent, you should cons
 
 ## 1. Latency
 If time to provide bucketing decisions is a primary concern for you, you may want to use an embedded Full Stack SDK rather than Optimizely Agent. 
+
+
 | Implementation Option | Decision Latency |
 |-----------------------|------------------|
 | Embedded SDK          | microseconds     |
 | Optimizely Agent      | milliseconds     |
+
 ## 2. Monolith
 If your app is constructed as a monolith, embedded SDKs might be easier to install and might be a more natural fit for your application and development practices. 
 
