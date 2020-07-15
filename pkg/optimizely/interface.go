@@ -23,7 +23,7 @@ import (
 
 // Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
 type Cache interface {
-	GetClient(sdkKey string, datafileAccessToken string) (*OptlyClient, error)
+	GetClient(sdkKey string) (*OptlyClient, error)
 	UpdateConfigs(sdkKey string)
 }
 

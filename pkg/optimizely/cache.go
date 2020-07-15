@@ -20,6 +20,7 @@ package optimizely
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 	"sync"

@@ -45,7 +45,7 @@ func NewCache() *TestCache {
 }
 
 // GetClient returns a default OptlyClient for testing
-func (tc *TestCache) GetClient(sdkKey string, datafileToken string) (*optimizely.OptlyClient, error) {
+func (tc *TestCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
 	return &optimizely.OptlyClient{
 		OptimizelyClient: tc.testClient.OptimizelyClient,
 		ConfigManager:    nil,

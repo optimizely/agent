@@ -61,8 +61,8 @@ func (suite *CacheTestSuite) TearDownTest() {
 }
 
 func (suite *CacheTestSuite) TestGetCacheHit() {
-	optltyClient1, err1 := suite.cache.GetClient("one", "")
-	optltyClient2, err2 := suite.cache.GetClient("one", "")
+	optltyClient1, err1 := suite.cache.GetClient("one")
+	optltyClient2, err2 := suite.cache.GetClient("one")
 
 	suite.NoError(err1)
 	suite.NoError(err2)
@@ -70,8 +70,8 @@ func (suite *CacheTestSuite) TestGetCacheHit() {
 }
 
 func (suite *CacheTestSuite) TestGetCacheMiss() {
-	optltyClient1, err1 := suite.cache.GetClient("one", "")
-	optltyClient2, err2 := suite.cache.GetClient("two", "")
+	optltyClient1, err1 := suite.cache.GetClient("one")
+	optltyClient2, err2 := suite.cache.GetClient("two")
 
 	suite.NoError(err1)
 	suite.NoError(err2)
@@ -79,21 +79,19 @@ func (suite *CacheTestSuite) TestGetCacheMiss() {
 }
 
 func (suite *CacheTestSuite) TestGetError() {
-	_, err1 := suite.cache.GetClient("ERROR", "")
+	_, err1 := suite.cache.GetClient("ERROR")
 	suite.Error(err1)
 }
 
 func (suite *CacheTestSuite) TestInit() {
 	// Passing in access token "token1" and "token2" for SDK key "three"
-	suite.cache.Init([]string{"one", "three"}, map[string][]string{"three": {"token1", "token2"}})
+	suite.cache.Init([]string{"one"})
 	suite.True(suite.cache.optlyMap.Has("one"))
 	suite.False(suite.cache.optlyMap.Has("two"))
-	suite.True(suite.cache.optlyMap.Has("three:token1"))
-	suite.True(suite.cache.optlyMap.Has("three:token2"))
 }
 
 func (suite *CacheTestSuite) TestUpdateConfigs() {
-	_, _ = suite.cache.GetClient("one", "")
+	_, _ = suite.cache.GetClient("one")
 
 	suite.cache.UpdateConfigs("one")
 }
