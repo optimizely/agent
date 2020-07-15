@@ -84,7 +84,6 @@ func (suite *CacheTestSuite) TestGetError() {
 }
 
 func (suite *CacheTestSuite) TestInit() {
-	// Passing in access token "token1" and "token2" for SDK key "three"
 	suite.cache.Init([]string{"one"})
 	suite.True(suite.cache.optlyMap.Has("one"))
 	suite.False(suite.cache.optlyMap.Has("two"))

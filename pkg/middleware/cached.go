@@ -44,9 +44,6 @@ const OptlyExperimentKey = contextKey("experimentKey")
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
 
-// OptlyDatafileAccessToken is the token used in requesting datafile for a secure environment
-const OptlyDatafileAccessToken = "X-Optimizely-Datafile-Access-Token"
-
 // CachedOptlyMiddleware implements OptlyMiddleware backed by a cache
 type CachedOptlyMiddleware struct {
 	Cache optimizely.Cache
@@ -63,9 +60,7 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		datafileAccessToken := r.Header.Get(OptlyDatafileAccessToken)
-
-		optlyClient, err := mw.Cache.GetClient(sdkKey, datafileAccessToken)
+		optlyClient, err := mw.Cache.GetClient(sdkKey)
 		if err != nil {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 
