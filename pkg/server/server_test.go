@@ -151,6 +151,7 @@ func TestNewServerHandlerRejectsInvalidHost(t *testing.T) {
 	confWithAllowedHosts := config.ServerConfig{
 		AllowedHosts:    []string{"example.com"},
 		HealthCheckPath: "/health",
+		Host:            "127.0.0.1",
 	}
 	srv, err := NewServer("valid_hosts", "1000", handler, confWithAllowedHosts)
 	assert.NoError(t, err)

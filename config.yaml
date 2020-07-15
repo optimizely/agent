@@ -29,14 +29,14 @@ log:
 ##
 server:
     ## List of allowed request host values.
-    ## Requests whose host value does not match one of these will be rejected with a 404 response.
+    ## Requests whose host value does not match either the configured server.host, or one of these, will be rejected
+    ## with a 404 response.
     ## Request host is determined in the following priority order:
     ## 1. X-Forwarded-Host header value
     ## 2. Forwarded header host= directive value
     ## 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
     allowedHosts:
         - localhost
-        - 127.0.0.1
     ## the maximum duration for reading the entire request, including the body.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
     readTimeout: 5s

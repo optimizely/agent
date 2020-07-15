@@ -106,8 +106,9 @@ Below is a comprehensive list of available configuration properties.
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
-|server.allowedHosts|OPTIMIZELY_SERVER_ALLOWEDHOSTS|List of allowed request host values. Requests whose host value does not match one of these will be rejected with a 404 response. Request host is determined in the following priority order: 1. X-Forwarded-Host header value, 2. Forwarded header host= directive value, 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)|
+|server.allowedHosts|OPTIMIZELY_SERVER_ALLOWEDHOSTS|List of allowed request host values. Requests whose host value does not match either the configured server.host, or one of these, will be rejected with a 404 response. Request host is determined in the following priority order: 1. X-Forwarded-Host header value, 2. Forwarded header host= directive value, 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)|
 |server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
+|server.host|OPTIMIZELY_SERVER_HOST|Host of server. Default: 127.0.0.1|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |server.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|Path for the health status api. Default: /health|
