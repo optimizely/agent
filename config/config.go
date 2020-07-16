@@ -39,7 +39,8 @@ func NewDefaultConfig() *AgentConfig {
 				JwksURL:            "",
 				JwksUpdateInterval: 0,
 			},
-			Port: "8088",
+			Port:                "8088",
+			AllowedContentTypes: []string{"application/json"},
 		},
 		API: APIConfig{
 			AllowedContentTypes: []string{"application/json"},
@@ -196,8 +197,9 @@ type CORSConfig struct {
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Auth ServiceAuthConfig `json:"-"`
-	Port string            `json:"port"`
+	Auth                ServiceAuthConfig `json:"-"`
+	Port                string            `json:"port"`
+	AllowedContentTypes []string          `json:"allowedContentType"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks

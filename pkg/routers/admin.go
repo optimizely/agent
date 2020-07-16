@@ -26,6 +26,7 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 
 	"github.com/go-chi/chi"
+	chimw "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
@@ -49,8 +50,9 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	optlyAdmin := handlers.NewAdmin(conf)
 	r.Use(optlyAdmin.AppInfoHeader)
-
+	r.Use(chimw.AllowContentType(conf.Admin.AllowedContentTypes...))
 	r.Use(render.SetContentType(render.ContentTypeJSON))
+
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
 	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
 	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
