@@ -1,4 +1,13 @@
-# Advanced Configuration Notes
+---
+title: "Advanced configuration"
+excerpt: ""
+slug: "advanced-config-agent"
+hidden: false
+metadata: 
+  title: "advanced config - Agent microservice - Optimizely Full Stack"
+createdAt: "2020-05-21T20:35:58.387Z"
+updatedAt: "2020-07-14T20:51:52.458Z"
+---
 
 ## Setting Configuration Values
 
