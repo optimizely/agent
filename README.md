@@ -6,11 +6,8 @@ a highly available and distributed web application.
 
 Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the [documentation](https://docs.developers.optimizely.com/full-stack/docs).
 
-Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the [documentation](https://docs.developers.optimizely.com/rollouts/docs).
-
 ## Getting Started
-To get started with Optimizely Agent, follow the [getting started guide](./docs/getting-started.md) and view example
-usage in our [examples folder](./examples).
+To get started with Optimizely Agent, follow the [Quickstart guide](https://docs.developers.optimizely.com/full-stack/docs/) and view example usage in our [examples folder](./examples).
 
 ## Prerequisites
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
@@ -275,10 +272,10 @@ go tool pprof http://localhost:6060/debug/pprof/mutex
 To view all available profiles can be found at [http://localhost:8088/debug/pprof/](http://localhost:8088/debug/pprof/) in your browser.
 
 ## Authorization
-Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see the [Authorization Guide](./docs/auth.md).
+Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization).
 
 ## Notifications
-Just as you can use Notification Listeners to subscribe to events of interest with Optimizely SDKs, you can use the Notifications endpoint to subscribe to events in Agent. For more information, see the [Notifications Guide](./docs/notifications.md).
+Just as you can use Notification Listeners to subscribe to events of interest with Optimizely SDKs, you can use the Notifications endpoint to subscribe to events in Agent. For more information, see the [Notifications Guide](https://docs.developers.optimizely.com/full-stack/docs/agent-notifications).
 
 ## Package Structure
 Following best practice for go project layout as defined [here](https://github.com/golang-standards/project-layout)
@@ -353,7 +350,7 @@ License (MIT): github.com/stretchr/testify
 net 
 (c) 2009 The Go Authors
 License (BSD 3-Clause): https://github.com/golang/net
- 
+
 sync 
 (c) 2009 The Go Authors
 License (BSD 3-Clause): https://github.com/golang/sync
@@ -365,7 +362,7 @@ License (Apache 2): github.com/rakyll/statik v0.1.7
 sys 
 (c) 2009 The Go Authors
 License (BSD 3-Clause): https://github.com/golang/sys
- 
+
 ## Apache Copyright Notice
 Copyright 2019-present, Optimizely, Inc. and contributors
 
