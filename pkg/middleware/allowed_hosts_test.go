@@ -98,45 +98,6 @@ func (s *AllowedHostsTestSuite) TestForwardedHostInvalid() {
 	s.Equal(http.StatusNotFound, rec.Code)
 }
 
-func (s *AllowedHostsTestSuite) TestDefaultPortHTTPHostValid() {
-	defaultPortHTTPHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "80")(okHandler)
-	// Req URL omits port. Default port for scheme http is 80. Since allowed port is 80, this request should be allowed
-	req := httptest.NewRequest("GET", "http://76.125.27.44/v1/config", nil)
-	rec := httptest.NewRecorder()
-	defaultPortHTTPHandler.ServeHTTP(rec, req)
-	s.Equal(http.StatusOK, rec.Code)
-}
-
-func (s *AllowedHostsTestSuite) TestDefaultPortHTTPHostInvalid() {
-	defaultPortHTTPHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "9000")(okHandler)
-	// Req URL omits port. Default port for scheme http is 80. Since allowed port is 9000, this request should not be
-	// allowed
-	req := httptest.NewRequest("GET", "http://76.125.27.44/v1/config", nil)
-	rec := httptest.NewRecorder()
-	defaultPortHTTPHandler.ServeHTTP(rec, req)
-	s.Equal(http.StatusNotFound, rec.Code)
-}
-
-func (s *AllowedHostsTestSuite) TestDefaultPortHTTPSHostValid() {
-	defaultPortHTTPSHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "443")(okHandler)
-	// Req URL omits port. Default port for scheme https is 443. Since allowed port is 443, this request should be
-	// allowed
-	req := httptest.NewRequest("GET", "https://76.125.27.44/v1/config", nil)
-	rec := httptest.NewRecorder()
-	defaultPortHTTPSHandler.ServeHTTP(rec, req)
-	s.Equal(http.StatusOK, rec.Code)
-}
-
-func (s *AllowedHostsTestSuite) TestDefaultPortHTTPSHostInvalid() {
-	defaultPortHTTPSHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "9000")(okHandler)
-	// Req URL omits port. Default port for scheme https is 443. Since allowed port is 9000, this request should not be
-	// allowed
-	req := httptest.NewRequest("GET", "https://76.125.27.44/v1/config", nil)
-	rec := httptest.NewRecorder()
-	defaultPortHTTPSHandler.ServeHTTP(rec, req)
-	s.Equal(http.StatusNotFound, rec.Code)
-}
-
 func TestAllowedHostsTestSuite(t *testing.T) {
 	suite.Run(t, new(AllowedHostsTestSuite))
 }

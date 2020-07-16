@@ -21,16 +21,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 )
 
 var errInvalidRequestHost = errors.New("invalid request host")
 
-var hostWithPortRe = regexp.MustCompile(`:[\d]+$`)
-
-// AllowedHosts returns a middleware function that rejects requests whose host value does not match any host in
-// allowedHosts.
+// AllowedHosts returns a middleware function that rejects requests whose host value does not match any host in allowedHosts.
 // Request host is determined in the following priority order:
 // 1. X-Forwarded-Host header value
 // 2. Forwarded header host= directive value
@@ -44,23 +40,10 @@ func AllowedHosts(allowedHosts []string, allowedPort string) func(next http.Hand
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			host := requestHost(r)
-
-			// If running on default port for the request's URL scheme, and port is omitted from the request host, add
-			// the port before looking up whether it's allowed, because all the hosts in allowedMap do include port.
-			hostIncludesPort := hostWithPortRe.MatchString(host)
-			if !hostIncludesPort {
-				if allowedPort == "80" && r.URL.Scheme == "http" {
-					host += ":80"
-				} else if allowedPort == "443" && r.URL.Scheme == "https" {
-					host += ":443"
-				}
-			}
-
 			if allowedMap[host] {
 				next.ServeHTTP(w, r)
 				return
 			}
-
 			logger := GetLogger(r)
 			logger.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
 			RenderError(errInvalidRequestHost, http.StatusNotFound, w, r)
