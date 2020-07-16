@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent)
-[![codecov](https://codecov.io/gh/optimizely/agent/branch/master/graph/badge.svg?token=UabuO3fxyA)](https://codecov.io/gh/optimizely/agent)
+[![Coverage Status](https://coveralls.io/repos/github/optimizely/agent/badge.svg)](https://coveralls.io/github/optimizely/agent)
 # Optimizely Agent
 Optimizely Agent is a service which exposes the functionality of the Full Stack and Rollouts SDKs as
 a highly available and distributed web application.
