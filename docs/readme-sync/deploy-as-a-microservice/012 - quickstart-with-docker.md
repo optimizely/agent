@@ -1,6 +1,15 @@
-# Getting Started Guide
+---
+title: "Quickstart with Docker"
+excerpt: ""
+slug: "quickstart-with-docker"
+hidden: true
+metadata: 
+  title: "Agent Quickstart with Docker - Optimizely Full Stack"
+createdAt: "2020-05-21T20:35:58.387Z"
+updatedAt: "2020-07-14T20:51:52.458Z"
+---
 
-This is a brief guide showing how to run Agent locally via Docker and how to access some of the common API endpoints.
+This is a brief quickstart showing how to run Agent locally via Docker and how to access some of the common API endpoints.
 If Docker is not installed then you can download it [here](https://docs.docker.com/install/).
 
 ## Running locally via Docker
@@ -57,4 +66,4 @@ resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=pay
 print(resp.json())
 ```
 
-The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout.
+The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout. 

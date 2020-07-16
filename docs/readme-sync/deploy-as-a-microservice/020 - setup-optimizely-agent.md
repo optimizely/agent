@@ -1,10 +1,10 @@
 ---
-title: "Set up Optimizely Agent"
+title: "Install Optimizely Agent"
 excerpt: ""
 slug: "setup-optimizely-agent"
 hidden: false
 metadata: 
-  title: "Getting started with Agent - Optimizely Full Stack"
+  title: "Install Agent - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:27.363Z"
 updatedAt: "2020-03-31T23:54:17.841Z"
 ---
