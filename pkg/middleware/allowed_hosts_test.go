@@ -35,7 +35,7 @@ type AllowedHostsTestSuite struct {
 }
 
 func (s *AllowedHostsTestSuite) SetupTest() {
-	s.handler = AllowedHosts([]string{"76.125.27.44", "example.com"}, "8080")(okHandler)
+	s.handler = AllowedHosts([]string{"76.125.27.44", "example.com"}, "8080", true)(okHandler)
 }
 
 func (s *AllowedHostsTestSuite) TestRequestHostMatchesFirstAllowed() {
@@ -96,6 +96,24 @@ func (s *AllowedHostsTestSuite) TestForwardedHostInvalid() {
 	rec := httptest.NewRecorder()
 	s.handler.ServeHTTP(rec, req)
 	s.Equal(http.StatusNotFound, rec.Code)
+}
+
+func (s *AllowedHostsTestSuite) TestDefaultPortNoTLSValid() {
+	noTLSHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "80", false)(okHandler)
+	// URL contains no explicit port. Request should be allowed as server is running on port 80 with no TLS.
+	req := httptest.NewRequest("GET", "http://76.125.27.44/v1/config", nil)
+	rec := httptest.NewRecorder()
+	noTLSHandler.ServeHTTP(rec, req)
+	s.Equal(http.StatusOK, rec.Code)
+}
+
+func (s *AllowedHostsTestSuite) TestDefaultPortWithTLSValid() {
+	noTLSHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "443", true)(okHandler)
+	// URL contains no explicit port. Request should be allowed as server is running on port 443 with TLS.
+	req := httptest.NewRequest("GET", "http://76.125.27.44/v1/config", nil)
+	rec := httptest.NewRecorder()
+	noTLSHandler.ServeHTTP(rec, req)
+	s.Equal(http.StatusOK, rec.Code)
 }
 
 func TestAllowedHostsTestSuite(t *testing.T) {

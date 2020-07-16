@@ -53,7 +53,9 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
-	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts(), port)(handler)
+	usingTLS := conf.KeyFile != "" && conf.CertFile != ""
+
+	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts(), port, usingTLS)(handler)
 	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
 	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
@@ -63,7 +65,7 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		WriteTimeout: conf.WriteTimeout,
 	}
 
-	if conf.KeyFile != "" && conf.CertFile != "" {
+	if usingTLS {
 		cfg, err := makeTLSConfig(conf)
 		if err != nil {
 			return Server{}, err

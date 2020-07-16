@@ -31,10 +31,24 @@ var errInvalidRequestHost = errors.New("invalid request host")
 // 1. X-Forwarded-Host header value
 // 2. Forwarded header host= directive value
 // 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
-func AllowedHosts(allowedHosts []string, allowedPort string) func(next http.Handler) http.Handler {
+func AllowedHosts(allowedHosts []string, allowedPort string, usingTLS bool) func(next http.Handler) http.Handler {
 	allowedMap := make(map[string]bool)
+
+	// We want to allow requests with hosts that don't contain explicit port when the server is running on the  default
+	// port.
+	shouldAllowPortOmitted := false
+	if usingTLS {
+		shouldAllowPortOmitted = allowedPort == "443"
+	} else {
+		shouldAllowPortOmitted = allowedPort == "80"
+	}
+
 	for _, allowedHost := range allowedHosts {
 		allowedMap[fmt.Sprintf("%v:%v", allowedHost, allowedPort)] = true
+		// When appropriate, create entry in allowedMap without explicit port
+		if shouldAllowPortOmitted {
+			allowedMap[allowedHost] = true
+		}
 	}
 
 	return func(next http.Handler) http.Handler {
