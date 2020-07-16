@@ -31,7 +31,7 @@ export OPTIMIZELY_CLIENT_POLLINGINTERVAL=120s
 ```
 
 ## Unsupported Environment Variable Options
-Some options can only be set via config file, and not environment variable (for details on these options, see the Configuration Options table in the [main README](../README.md)):
+Some options can only be set via config file, and not environment variable (for details on these options, see the Configuration Options table in the [main README](https://github.com/optimizely/agent/blob/master/README.md):
 - `admin.auth.clients`
 - `api.auth.clients`
 - Options under`webhook.projects`
