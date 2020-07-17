@@ -24,7 +24,7 @@ Internally, Optimizely Agent uses the [Viper](https://github.com/spf13/viper) li
 
 The default location of the config file is `config.yaml` in the root directory. If you want to specify another location, use the `OPTIMIZELY_CONFIG_FILENAME` environment variable:
 
-```bash
+```
 OPTIMIZELY_CONFIG_FILENAME=/path/to/other_config_file.yaml make run
 ```
 
@@ -34,7 +34,7 @@ When setting the value of "nested" configuration options using environment varia
 
 Set the polling interval in YAML:
 
-```yaml
+```
 # Setting a nested value in a .yaml file:
 client:
     pollingInterval: 120s
@@ -42,8 +42,8 @@ client:
 
 Set the polling interval with a shell script:
 
-```shell script
-// Set environment variable for pollingInterval, nested inside client
+```
+# Set environment variable for pollingInterval, nested inside client
 export OPTIMIZELY_CLIENT_POLLINGINTERVAL=120s
 ```
 

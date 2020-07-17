@@ -16,7 +16,8 @@ For details on the notification types, what causes them to be triggered, and the
 ## Configuration
 
 By default, the notifications endpoint is disabled. To enable it, change config.yaml:
-```yaml
+
+```
 # config.yaml
 api:
     enableNotifications: true
@@ -24,7 +25,8 @@ api:
 
 Or, enable it by setting an environment variable:
 
-```shell script
+```
+# set an env. variable
 export OPTIMIZELY_API_ENABLENOTIFICATIONS=1
 ```
 
@@ -32,7 +34,7 @@ export OPTIMIZELY_API_ENABLENOTIFICATIONS=1
 
 Send a `GET` request to `/v1/notifications/event-stream` to subscribe:
 
-```shell script
+```
 curl -N -H "Accept:text/event-stream" -H "X-Optimizely-Sdk-Key:<YOUR SDK KEY>"\
   http://localhost:8080/v1/notifications/event-stream
 ```
@@ -44,7 +46,8 @@ This connection will remain open, and any notifications triggered by other reque
 
 To subscribe only to a particular category of notifications, add a `filter` query parameter. For example, to subscribe only to Decision notifications:
 
-```shell script
+```
+# filter on decision notifications
 curl -N -H "Accept:text/event-stream" -H "X-Optimizely-Sdk-Key:<YOUR SDK KEY>"\
   http://localhost:8080/v1/notifications/event-stream?filter=decision
 ```
