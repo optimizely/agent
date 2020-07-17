@@ -43,7 +43,7 @@ client:
 Set the polling interval with a shell script:
 
 ```shell script
-// Set environment variable for pollingInterval, nested inside client
+# Set environment variable for pollingInterval, nested inside client
 export OPTIMIZELY_CLIENT_POLLINGINTERVAL=120s
 ```
 
