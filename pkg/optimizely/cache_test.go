@@ -154,10 +154,14 @@ func TestDefaultRegexValidator(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{"1234567890abcdefghijklmnopqrstuzwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
+		{"1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
+		{"12sdkKey:datafileAccessToken89", true},
 		{"!@#$%^&*()", false},
 		{"abc123!", false},
 		{"", false},
+		{":", false},
+		{"abc:def:hij", false},
+		{"abc:", false},
 	}
 
 	conf := config.NewDefaultConfig()
