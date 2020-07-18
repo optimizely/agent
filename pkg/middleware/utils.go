@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/optimizely/agent/pkg/optimizely"
 
@@ -50,7 +51,9 @@ func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 func GetLogger(r *http.Request) *zerolog.Logger {
 	sdkKey := r.Header.Get(OptlySDKHeader)
 	reqID := r.Header.Get(OptlyRequestHeader)
-	logger := log.With().Str("sdkKey", sdkKey).Str("requestId", reqID).Logger()
+
+	sdkKeySplit := strings.Split(sdkKey, ":")
+	logger := log.With().Str("sdkKey", sdkKeySplit[0]).Str("requestId", reqID).Logger()
 	return &logger
 }
 
