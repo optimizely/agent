@@ -247,6 +247,7 @@ jobs:
         #########################################################################################
         # directories/scripts for full SDK-reference-guides, to be implemented after agent docs sync
         #########################################################################################
+        # this commented out code can be used to implement: https://optimizely.atlassian.net/browse/OASIS-6807 
         ## this preps the input directory for readme-sync script
         #- mkdir -p $HOME/readme-sync2/docs/readme-sync/sdk-reference-guides
         ## ${TRAVIS_REPO_SLUG#optimizely/} translates to go-sdk docs/readme-sync/sdk-reference-guides/go-sdk
