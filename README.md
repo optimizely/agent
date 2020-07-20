@@ -95,7 +95,7 @@ Below is a comprehensive list of available configuration properties.
 |client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
 |client.datafileURLTemplate|OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE|Template URL for SDK datafile location. Default: https://cdn.optimizely.com/datafiles/%s.json|
 |client.eventURL|OPTIMIZELY_CLIENT_EVENTURL|URL for dispatching events. Default: https://logx.optimizely.com/v1/events|
-|client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+$|
+|client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+(:\\w+)?$|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |keyfile|OPTIMIZELY_KEYFILE|Path to a key file, used to run Agent with HTTPS|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
@@ -122,7 +122,10 @@ The full API specification is defined in an OpenAPI 3.0 (aka Swagger) [spec](./a
 Each request made into the API must include a `X-Optimizely-SDK-Key` in the request header to
 identify the context the request should be evaluated. The SDK key maps to a unique Optimizely Project and
 [Environment](https://docs.developers.optimizely.com/rollouts/docs/manage-environments) allowing multiple
-Environments to be serviced by a single Agent.
+Environments to be serviced by a single Agent. 
+For a secure environment, this header should include both the SDK key and the datafile access token 
+separated by a colon. For example, if SDK key is `my_key` and datafile access token is `my_token` 
+then set header's value to `my_key:my_token`.  
 
 ### Enabling CORS
 

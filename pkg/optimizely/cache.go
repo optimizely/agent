@@ -105,7 +105,11 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 func (c *OptlyCache) UpdateConfigs(sdkKey string) {
 	for clientInfo := range c.optlyMap.IterBuffered() {
 		if strings.HasPrefix(clientInfo.Key, sdkKey) {
-			clientInfo.Val.(*OptlyClient).UpdateConfig()
+			optlyClient, ok := clientInfo.Val.(*OptlyClient)
+			if !ok {
+				log.Error().Msgf("Value not instance of OptlyClient.")
+			}
+			optlyClient.UpdateConfig()
 		}
 	}
 }
@@ -146,16 +150,11 @@ func defaultLoader(
 
 		clientKeySplit := strings.Split(clientKey, ":")
 
-		// If there is no : then it is a public datafile and we set sdkKey equal to clientKey
-		if len(clientKeySplit) == 1 {
-			sdkKey = clientKey
-		}
-
 		// If there is a : then it is an authenticated datafile.
 		// First part is the sdkKey.
 		// Second part is the datafileAccessToken
+		sdkKey = clientKeySplit[0]
 		if len(clientKeySplit) == 2 {
-			sdkKey = clientKeySplit[0]
 			datafileAccessToken = clientKeySplit[1]
 		}
 

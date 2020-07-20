@@ -84,13 +84,16 @@ func (suite *CacheTestSuite) TestGetError() {
 }
 
 func (suite *CacheTestSuite) TestInit() {
-	suite.cache.Init([]string{"one"})
+	suite.cache.Init([]string{"one", "three:four"})
 	suite.True(suite.cache.optlyMap.Has("one"))
+	suite.True(suite.cache.optlyMap.Has("three:four"))
 	suite.False(suite.cache.optlyMap.Has("two"))
 }
 
 func (suite *CacheTestSuite) TestUpdateConfigs() {
 	_, _ = suite.cache.GetClient("one")
+	_, _ = suite.cache.GetClient("one:two")
+	_, _ = suite.cache.GetClient("one:three")
 
 	suite.cache.UpdateConfigs("one")
 }
