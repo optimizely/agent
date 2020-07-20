@@ -29,7 +29,7 @@ and only use:
 # some code in some unspecified language here  
 ```
 
-- **authoring guardrails ReadMe.io** - If someone doesn't know better, they could edit the Agent docs in dash.readme... but those edits will be overwritten the next time triggers the readme-sync Travis stage. There's no mechanism in dash.readme to warn them not to edit.  Likewise, any suggested edits in ReadMe need to be manually merged to the Github docs rather than merged using ReadMe's mechanism.
+- **no authoring in dash.readme** - If someone doesn't know better, they could edit the Agent docs in dash.readme... but those edits will be overwritten the next time triggers the readme-sync Travis stage. There's no mechanism in dash.readme to warn them not to edit.  Likewise, any suggested edits in ReadMe need to be manually merged to the Github docs rather than merged using ReadMe's mechanism.
 
 
 
@@ -42,8 +42,6 @@ and only use:
 
 
 
-
-### 
 
 
 
