@@ -32,7 +32,7 @@ import (
 func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(chimw.AllowContentType(conf.AllowedContentTypes...))
+	r.Use(chimw.AllowContentType("application/json"))
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
 

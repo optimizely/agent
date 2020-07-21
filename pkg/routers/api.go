@@ -85,7 +85,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
 	corsHandler := createCorsHandler(conf.CORS)
-	allowedContentTypesMiddleware := chimw.AllowContentType(conf.AllowedContentTypes...)
+	allowedContentTypesMiddleware := chimw.AllowContentType("application/json")
 
 	spec := &APIOptions{
 		maxConns:                      conf.MaxConns,

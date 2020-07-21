@@ -28,8 +28,6 @@ client:
   sdkKeyRegex: "custom-regex"
 admin:
   port: "3002"
-  allowedContentTypes:
-    - "application/xml"
   auth:
     ttl: 30m
     hmacSecrets:
@@ -47,8 +45,6 @@ api:
   port: "3000"
   enableNotifications: true
   enableOverrides: true
-  allowedContentTypes:
-    - "application/xml"
   cors:
     allowedOrigins: 
       - "http://test1.com"
@@ -78,8 +74,6 @@ api:
     jwksUpdateInterval: "25s"
 webhook:
   port: "3001"
-  allowedContentTypes:
-    - "application/xml"
   projects:
     10000:
       sdkKeys:

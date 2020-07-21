@@ -39,11 +39,9 @@ func NewDefaultConfig() *AgentConfig {
 				JwksURL:            "",
 				JwksUpdateInterval: 0,
 			},
-			Port:                "8088",
-			AllowedContentTypes: []string{"application/json"},
+			Port: "8088",
 		},
 		API: APIConfig{
-			AllowedContentTypes: []string{"application/json"},
 			Auth: ServiceAuthConfig{
 				Clients:            make([]OAuthClientCredentials, 0),
 				HMACSecrets:        make([]string, 0),
@@ -96,8 +94,7 @@ func NewDefaultConfig() *AgentConfig {
 			Host:            "127.0.0.1",
 		},
 		Webhook: WebhookConfig{
-			Port:                "8085",
-			AllowedContentTypes: []string{"application/json"},
+			Port: "8085",
 		},
 	}
 
@@ -182,7 +179,6 @@ type APIConfig struct {
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
-	AllowedContentTypes []string          `json:"allowedContentType"`
 }
 
 // CORSConfig holds the CORS middleware configuration
@@ -197,16 +193,14 @@ type CORSConfig struct {
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Auth                ServiceAuthConfig `json:"-"`
-	Port                string            `json:"port"`
-	AllowedContentTypes []string          `json:"allowedContentType"`
+	Auth ServiceAuthConfig `json:"-"`
+	Port string            `json:"port"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks
 type WebhookConfig struct {
-	Port                string                   `json:"port"`
-	Projects            map[int64]WebhookProject `json:"projects"`
-	AllowedContentTypes []string                 `json:"allowedContentType"`
+	Port     string                   `json:"port"`
+	Projects map[int64]WebhookProject `json:"projects"`
 }
 
 // WebhookProject holds the configuration for a single Project webhook

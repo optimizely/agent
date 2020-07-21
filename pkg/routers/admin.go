@@ -50,7 +50,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	optlyAdmin := handlers.NewAdmin(conf)
 	r.Use(optlyAdmin.AppInfoHeader)
-	r.Use(chimw.AllowContentType(conf.Admin.AllowedContentTypes...))
+	r.Use(chimw.AllowContentType("application/json"))
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)

@@ -46,7 +46,6 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "info", conf.Log.Level)
 
 	assert.Equal(t, "8088", conf.Admin.Port)
-	assert.Equal(t, []string{"application/json"}, conf.Admin.AllowedContentTypes)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.Admin.Auth.Clients)
 	assert.Equal(t, make([]string, 0), conf.Admin.Auth.HMACSecrets)
 	assert.Equal(t, time.Duration(0), conf.Admin.Auth.TTL)
@@ -55,7 +54,6 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, 0, conf.API.MaxConns)
 	assert.Equal(t, "8080", conf.API.Port)
-	assert.Equal(t, []string{"application/json"}, conf.API.AllowedContentTypes)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.API.Auth.Clients)
 	assert.Equal(t, make([]string, 0), conf.API.Auth.HMACSecrets)
 	assert.Equal(t, time.Duration(0), conf.API.Auth.TTL)
@@ -71,7 +69,6 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 300, conf.API.CORS.MaxAge)
 
 	assert.Equal(t, "8085", conf.Webhook.Port)
-	assert.Equal(t, []string{"application/json"}, conf.Webhook.AllowedContentTypes)
 	assert.Empty(t, conf.Webhook.Projects)
 
 	assert.Equal(t, 1*time.Minute, conf.Client.PollingInterval)

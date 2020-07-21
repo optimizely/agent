@@ -29,9 +29,7 @@ import (
 
 func TestWebhookAllowedContentTypeMiddleware(t *testing.T) {
 
-	conf := config.WebhookConfig{
-		AllowedContentTypes: []string{"application/json"},
-	}
+	conf := config.WebhookConfig{}
 	router := NewWebhookRouter(nil, conf)
 
 	// Testing unsupported content type
