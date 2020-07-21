@@ -85,6 +85,7 @@ func NewDefaultConfig() *AgentConfig {
 		},
 
 		Server: ServerConfig{
+			AllowedHosts:    []string{"localhost"},
 			ReadTimeout:     5 * time.Second,
 			WriteTimeout:    10 * time.Second,
 			HealthCheckPath: "/health",
@@ -158,6 +159,7 @@ type LogConfig struct {
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
+	AllowedHosts    []string      `json:"allowedHosts"`
 	ReadTimeout     time.Duration `json:"readTimeout"`
 	WriteTimeout    time.Duration `json:"writeTimeout"`
 	CertFile        string        `json:"certFile"`
@@ -169,6 +171,12 @@ type ServerConfig struct {
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
 	return sc.KeyFile != "" && sc.CertFile != ""
+}
+
+// GetAllowedHosts returns the allowed hosts for this server. Requests whose host is not found in this slice should be
+// rejected by the server.
+func (sc *ServerConfig) GetAllowedHosts() []string {
+	return append([]string{sc.Host}, sc.AllowedHosts...)
 }
 
 // APIConfig holds the REST API configuration

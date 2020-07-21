@@ -26,8 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/render"
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/middleware"
+
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -51,16 +53,19 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
-	handler = healthMW(handler, conf.HealthCheckPath)
+	usingTLS := conf.KeyFile != "" && conf.CertFile != ""
+
+	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts(), port, usingTLS)(handler)
+	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
 	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
 		Addr:         conf.Host + ":" + port,
-		Handler:      handler,
+		Handler:      withHealthMWhandler,
 		ReadTimeout:  conf.ReadTimeout,
 		WriteTimeout: conf.WriteTimeout,
 	}
 
-	if conf.KeyFile != "" && conf.CertFile != "" {
+	if usingTLS {
 		cfg, err := makeTLSConfig(conf)
 		if err != nil {
 			return Server{}, err

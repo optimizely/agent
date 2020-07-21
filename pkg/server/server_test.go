@@ -146,3 +146,56 @@ func TestHealthMW(t *testing.T) {
 	expected := string(`{"status":"ok"}`)
 	assert.JSONEq(t, expected, rec.Body.String(), "Response body differs")
 }
+
+func TestNewServerHandlerRejectsInvalidHost(t *testing.T) {
+	confWithAllowedHosts := config.ServerConfig{
+		AllowedHosts:    []string{"example.com"},
+		HealthCheckPath: "/health",
+		Host:            "127.0.0.1",
+	}
+	srv, err := NewServer("valid_hosts", "1000", handler, confWithAllowedHosts)
+	assert.NoError(t, err)
+
+	req := httptest.NewRequest("GET", "http://evil.com:1000/v1/config", nil)
+	rec := httptest.NewRecorder()
+
+	srv.srv.Handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestNewServerHandlerAllowsValidHost(t *testing.T) {
+	confWithAllowedHosts := config.ServerConfig{
+		AllowedHosts:    []string{"example.com"},
+		HealthCheckPath: "/health",
+		Host:            "127.0.0.1",
+	}
+	srv, err := NewServer("valid_hosts", "1000", handler, confWithAllowedHosts)
+	assert.NoError(t, err)
+
+	req := httptest.NewRequest("GET", "http://example.com:1000/v1/config", nil)
+	rec := httptest.NewRecorder()
+
+	srv.srv.Handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestNewServerHandlerAllowsValidHostDefaultPort(t *testing.T) {
+	confWithAllowedHosts := config.ServerConfig{
+		AllowedHosts:    []string{"example.com"},
+		HealthCheckPath: "/health",
+		Host:            "127.0.0.1",
+	}
+	// Server running on port 80 with no TLS
+	srv, err := NewServer("valid_hosts", "80", handler, confWithAllowedHosts)
+	assert.NoError(t, err)
+
+	// URL contains no explicit port - request should be allowed since server is running on port 80 with no TLS
+	req := httptest.NewRequest("GET", "http://example.com/v1/config", nil)
+	rec := httptest.NewRecorder()
+
+	srv.srv.Handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+}

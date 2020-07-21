@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+- Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
+
 ## [1.3.0] - July 7th, 2020
 - Upgrade to use go-sdk v1.3.0. This adds support for JSON feature variables
 - Add /debug/pprof endpoints to the admin service
