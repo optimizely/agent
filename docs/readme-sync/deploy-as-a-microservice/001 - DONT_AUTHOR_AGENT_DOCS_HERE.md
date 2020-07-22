@@ -1,7 +1,7 @@
 ---
 title: "CAUTION - DON'T AUTHOR AGENT DOCS IN README"
 excerpt: ""
-slug: "dont-author-agent-docs"
+slug: "author-agent-docs-in-github"
 hidden: true
 createdAt: "2020-02-21T17:44:53.019Z"
 updatedAt: "2020-04-13T23:02:34.056Z"
