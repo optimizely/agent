@@ -1,5 +1,5 @@
 ---
-title: "CAUTION DONT AUTHOR AGENT DOCS IN README"
+title: "CAUTION - DON'T AUTHOR AGENT DOCS IN README"
 excerpt: ""
 slug: "dont-author-agent-docs"
 hidden: true
