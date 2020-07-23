@@ -38,18 +38,17 @@ import (
 
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns                      int
-	sdkMiddleware                 func(next http.Handler) http.Handler
-	metricsRegistry               *metrics.Registry
-	configHandler                 http.HandlerFunc
-	activateHandler               http.HandlerFunc
-	trackHandler                  http.HandlerFunc
-	overrideHandler               http.HandlerFunc
-	nStreamHandler                http.HandlerFunc
-	oAuthHandler                  http.HandlerFunc
-	allowedContentTypesMiddleware func(next http.Handler) http.Handler
-	oAuthMiddleware               func(next http.Handler) http.Handler
-	corsHandler                   func(next http.Handler) http.Handler
+	maxConns        int
+	sdkMiddleware   func(next http.Handler) http.Handler
+	metricsRegistry *metrics.Registry
+	configHandler   http.HandlerFunc
+	activateHandler http.HandlerFunc
+	trackHandler    http.HandlerFunc
+	overrideHandler http.HandlerFunc
+	nStreamHandler  http.HandlerFunc
+	oAuthHandler    http.HandlerFunc
+	oAuthMiddleware func(next http.Handler) http.Handler
+	corsHandler     func(next http.Handler) http.Handler
 }
 
 func forbiddenHandler(message string) http.HandlerFunc {
@@ -85,21 +84,19 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
 	corsHandler := createCorsHandler(conf.CORS)
-	allowedContentTypesMiddleware := chimw.AllowContentType("application/json")
 
 	spec := &APIOptions{
-		maxConns:                      conf.MaxConns,
-		metricsRegistry:               metricsRegistry,
-		configHandler:                 handlers.OptimizelyConfig,
-		activateHandler:               handlers.Activate,
-		overrideHandler:               overrideHandler,
-		trackHandler:                  handlers.TrackEvent,
-		sdkMiddleware:                 mw.ClientCtx,
-		nStreamHandler:                nStreamHandler,
-		oAuthHandler:                  authHandler.CreateAPIAccessToken,
-		oAuthMiddleware:               authProvider.AuthorizeAPI,
-		corsHandler:                   corsHandler,
-		allowedContentTypesMiddleware: allowedContentTypesMiddleware,
+		maxConns:        conf.MaxConns,
+		metricsRegistry: metricsRegistry,
+		configHandler:   handlers.OptimizelyConfig,
+		activateHandler: handlers.Activate,
+		overrideHandler: overrideHandler,
+		trackHandler:    handlers.TrackEvent,
+		sdkMiddleware:   mw.ClientCtx,
+		nStreamHandler:  nStreamHandler,
+		oAuthHandler:    authHandler.CreateAPIAccessToken,
+		oAuthMiddleware: authProvider.AuthorizeAPI,
+		corsHandler:     corsHandler,
 	}
 
 	return NewAPIRouter(spec)
@@ -127,7 +124,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	}
 
 	r.Use(middleware.SetTime)
-	r.Use(opt.allowedContentTypesMiddleware)
+	r.Use(chimw.AllowContentType("application/json"))
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
 	r.Route("/v1", func(r chi.Router) {

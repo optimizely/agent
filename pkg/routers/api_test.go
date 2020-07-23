@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	chimw "github.com/go-chi/chi/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -92,7 +91,6 @@ var corsConfig = config.CORSConfig{
 }
 
 var testCorsHandler = createCorsHandler(corsConfig)
-var testAllowedContentTypesMiddleware = chimw.AllowContentType([]string{"application/json"}...)
 
 type APIV1TestSuite struct {
 	suite.Suite
@@ -105,18 +103,17 @@ func (suite *APIV1TestSuite) SetupTest() {
 	suite.tc = testClient
 
 	opts = &APIOptions{
-		maxConns:                      1,
-		sdkMiddleware:                 testOptlyMiddleware,
-		configHandler:                 testHandler("config"),
-		activateHandler:               testHandler("activate"),
-		overrideHandler:               testHandler("override"),
-		trackHandler:                  testHandler("track"),
-		nStreamHandler:                testHandler("notifications/event-stream"),
-		oAuthHandler:                  testHandler("oauth/token"),
-		oAuthMiddleware:               testAuthMiddleware,
-		metricsRegistry:               metricsRegistry,
-		corsHandler:                   testCorsHandler,
-		allowedContentTypesMiddleware: testAllowedContentTypesMiddleware,
+		maxConns:        1,
+		sdkMiddleware:   testOptlyMiddleware,
+		configHandler:   testHandler("config"),
+		activateHandler: testHandler("activate"),
+		overrideHandler: testHandler("override"),
+		trackHandler:    testHandler("track"),
+		nStreamHandler:  testHandler("notifications/event-stream"),
+		oAuthHandler:    testHandler("oauth/token"),
+		oAuthMiddleware: testAuthMiddleware,
+		metricsRegistry: metricsRegistry,
+		corsHandler:     testCorsHandler,
 	}
 
 	suite.mux = NewAPIRouter(opts)
