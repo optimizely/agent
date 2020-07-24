@@ -384,11 +384,9 @@ func (suite *APIV1TestSuite) TestAllowedContentTypeMiddleware() {
 		method string
 		path   string
 	}{
-		{"GET", "config"},
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
-		{"GET", "notifications/event-stream"},
 	}
 
 	for _, route := range routes {

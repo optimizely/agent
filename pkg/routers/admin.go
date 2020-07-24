@@ -50,7 +50,6 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 
 	optlyAdmin := handlers.NewAdmin(conf)
 	r.Use(optlyAdmin.AppInfoHeader)
-	r.Use(chimw.AllowContentType("application/json"))
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
@@ -63,6 +62,6 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/symbol", pprof.Symbol)
 	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/trace", pprof.Trace)
 
-	r.Post("/oauth/token", tokenHandler.CreateAdminAccessToken)
+	r.With(chimw.AllowContentType("application/json")).Post("/oauth/token", tokenHandler.CreateAdminAccessToken)
 	return r
 }

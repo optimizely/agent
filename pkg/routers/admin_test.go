@@ -32,30 +32,19 @@ func TestAdminAllowedContentTypeMiddleware(t *testing.T) {
 	conf := config.NewDefaultConfig()
 	router := NewAdminRouter(*conf)
 
-	routes := []struct {
-		method string
-		path   string
-	}{
-		{"GET", "/config"},
-		{"GET", "/info"},
-		{"GET", "/metrics"},
-	}
+	// Testing unsupported content type
+	body := "<request> <parameters> <email>test@123.com</email> </parameters> </request>"
+	req := httptest.NewRequest("POST", "/oauth/token", bytes.NewBuffer([]byte(body)))
+	req.Header.Add(contentTypeHeaderKey, "application/xml")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusUnsupportedMediaType, rec.Code)
 
-	for _, route := range routes {
-		// Testing unsupported content type
-		body := "<request> <parameters> <email>test@123.com</email> </parameters> </request>"
-		req := httptest.NewRequest(route.method, route.path, bytes.NewBuffer([]byte(body)))
-		req.Header.Add(contentTypeHeaderKey, "application/xml")
-		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
-		assert.Equal(t, http.StatusUnsupportedMediaType, rec.Code)
-
-		// Testing supported content type
-		body = `{"email":"test@123.com"}`
-		req = httptest.NewRequest(route.method, route.path, bytes.NewBuffer([]byte(body)))
-		req.Header.Add(contentTypeHeaderKey, "application/json")
-		rec = httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
-		assert.Equal(t, http.StatusOK, rec.Code)
-	}
+	// Testing supported content type
+	body = `{"email":"test@123.com"}`
+	req = httptest.NewRequest("POST", "/oauth/token", bytes.NewBuffer([]byte(body)))
+	req.Header.Add(contentTypeHeaderKey, "application/json")
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
