@@ -31,11 +31,10 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
-var updateConfigsCalled bool
-
 // TestCache implements the Cache interface and is used in testing.
 type TestCache struct {
 	testClient *optimizelytest.TestClient
+	updateConfigsCalled bool
 }
 
 // NewCache returns a new implementation of TestCache
@@ -43,6 +42,7 @@ func NewCache() *TestCache {
 	testClient := optimizelytest.NewClient()
 	return &TestCache{
 		testClient: testClient,
+		updateConfigsCalled: false,
 	}
 }
 
@@ -55,8 +55,8 @@ func (tc *TestCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
 }
 
 // UpdateConfigs sets called boolean to true for testing
-func (m TestCache) UpdateConfigs(_ string) {
-	updateConfigsCalled = true
+func (m *TestCache) UpdateConfigs(_ string) {
+	m.updateConfigsCalled = true
 }
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {
@@ -97,7 +97,6 @@ func TestHandleWebhookNoWebhookForProject(t *testing.T) {
 }
 
 func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
-	updateConfigsCalled = false
 	var testWebhookConfigs = map[int64]config.WebhookProject{
 		42: {
 			SDKKeys: []string{"myDatafile"},
@@ -128,12 +127,10 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.Regexp(t, "Computed signature does not match signature in request. Ignoring message.", rec.Body.String())
-	assert.Equal(t, false, updateConfigsCalled)
 }
 
 func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 	testCache := NewCache()
-	updateConfigsCalled = false
 	var testWebhookConfigs = map[int64]config.WebhookProject{
 		42: {
 			SDKKeys:            []string{"myDatafile"},
@@ -165,12 +162,11 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 
 	// Message is processed as usual with invalid signature as check is skipped
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-	assert.Equal(t, true, updateConfigsCalled)
+	assert.Equal(t, true, testCache.updateConfigsCalled)
 }
 
 func TestHandleWebhookValidMessage(t *testing.T) {
 	testCache := NewCache()
-	updateConfigsCalled = false
 	var testWebhookConfigs = map[int64]config.WebhookProject{
 		42: {
 			SDKKeys: []string{"myDatafile"},
@@ -202,5 +198,5 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-	assert.Equal(t, true, updateConfigsCalled)
+	assert.Equal(t, true, testCache.updateConfigsCalled)
 }
