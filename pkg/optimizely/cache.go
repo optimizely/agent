@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/optimizely/agent/config"
@@ -100,6 +101,19 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 	return c.GetClient(sdkKey)
 }
 
+// UpdateConfigs is used to update config for all clients corresponding to a particular SDK key.
+func (c *OptlyCache) UpdateConfigs(sdkKey string) {
+	for clientInfo := range c.optlyMap.IterBuffered() {
+		if strings.HasPrefix(clientInfo.Key, sdkKey) {
+			optlyClient, ok := clientInfo.Val.(*OptlyClient)
+			if !ok {
+				log.Error().Msgf("Value not instance of OptlyClient.")
+			}
+			optlyClient.UpdateConfig()
+		}
+	}
+}
+
 // Wait for all optimizely clients to gracefully shutdown
 func (c *OptlyCache) Wait() {
 	c.wg.Wait()
@@ -121,21 +135,45 @@ func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
-	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(sdkKey string) (*OptlyClient, error) {
+	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
 	validator := regexValidator(conf.SdkKeyRegex)
 
-	return func(sdkKey string) (*OptlyClient, error) {
-		if !validator(sdkKey) {
+	return func(clientKey string) (*OptlyClient, error) {
+		var sdkKey string
+		var datafileAccessToken string
+		var configManager SyncedConfigManager
+
+		if !validator(clientKey) {
 			log.Warn().Msgf("failed to validate sdk key: %q", sdkKey)
 			return &OptlyClient{}, ErrValidationFailure
 		}
 
+		clientKeySplit := strings.Split(clientKey, ":")
+
+		// If there is a : then it is an authenticated datafile.
+		// First part is the sdkKey.
+		// Second part is the datafileAccessToken
+		sdkKey = clientKeySplit[0]
+		if len(clientKeySplit) == 2 {
+			datafileAccessToken = clientKeySplit[1]
+		}
+
 		log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
-		configManager := pcFactory(
-			sdkKey,
-			sdkconfig.WithPollingInterval(conf.PollingInterval),
-			sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
-		)
+
+		if datafileAccessToken != "" {
+			configManager = pcFactory(
+				sdkKey,
+				sdkconfig.WithPollingInterval(conf.PollingInterval),
+				sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
+				sdkconfig.WithDatafileAccessToken(datafileAccessToken),
+			)
+		} else {
+			configManager = pcFactory(
+				sdkKey,
+				sdkconfig.WithPollingInterval(conf.PollingInterval),
+				sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
+			)
+		}
 
 		if _, err := configManager.GetConfig(); err != nil {
 			return &OptlyClient{}, err

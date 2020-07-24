@@ -34,6 +34,7 @@ import (
 // TestCache implements the Cache interface and is used in testing.
 type TestCache struct {
 	testClient *optimizelytest.TestClient
+	updateConfigsCalled bool
 }
 
 // NewCache returns a new implementation of TestCache
@@ -41,6 +42,7 @@ func NewCache() *TestCache {
 	testClient := optimizelytest.NewClient()
 	return &TestCache{
 		testClient: testClient,
+		updateConfigsCalled: false,
 	}
 }
 
@@ -50,6 +52,11 @@ func (tc *TestCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
 		OptimizelyClient: tc.testClient.OptimizelyClient,
 		ConfigManager:    nil,
 	}, nil
+}
+
+// UpdateConfigs sets called boolean to true for testing
+func (m *TestCache) UpdateConfigs(_ string) {
+	m.updateConfigsCalled = true
 }
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {
@@ -155,6 +162,7 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 
 	// Message is processed as usual with invalid signature as check is skipped
 	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, true, testCache.updateConfigsCalled)
 }
 
 func TestHandleWebhookValidMessage(t *testing.T) {
@@ -190,4 +198,5 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, true, testCache.updateConfigsCalled)
 }

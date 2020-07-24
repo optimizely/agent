@@ -139,12 +139,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 
 	// Iterate through all SDK keys and update config
 	for _, sdkKey := range webhookConfig.SDKKeys {
-		optlyClient, err := h.optlyCache.GetClient(sdkKey)
-		if err != nil {
-			log.Error().Str("SDK key", sdkKey).Msg("No client found for SDK key.")
-			continue
-		}
-		optlyClient.UpdateConfig()
+		h.optlyCache.UpdateConfigs(sdkKey)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

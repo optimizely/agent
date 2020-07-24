@@ -84,9 +84,18 @@ func (suite *CacheTestSuite) TestGetError() {
 }
 
 func (suite *CacheTestSuite) TestInit() {
-	suite.cache.Init([]string{"one"})
+	suite.cache.Init([]string{"one", "three:four"})
 	suite.True(suite.cache.optlyMap.Has("one"))
+	suite.True(suite.cache.optlyMap.Has("three:four"))
 	suite.False(suite.cache.optlyMap.Has("two"))
+}
+
+func (suite *CacheTestSuite) TestUpdateConfigs() {
+	_, _ = suite.cache.GetClient("one")
+	_, _ = suite.cache.GetClient("one:two")
+	_, _ = suite.cache.GetClient("one:three")
+
+	suite.cache.UpdateConfigs("one")
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -148,10 +157,14 @@ func TestDefaultRegexValidator(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{"1234567890abcdefghijklmnopqrstuzwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
+		{"1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
+		{"12sdkKey:datafileAccessToken89", true},
 		{"!@#$%^&*()", false},
 		{"abc123!", false},
 		{"", false},
+		{":", false},
+		{"abc:def:hij", false},
+		{"abc:", false},
 	}
 
 	conf := config.NewDefaultConfig()

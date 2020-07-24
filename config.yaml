@@ -126,7 +126,7 @@ client:
     ## Validation Regex on the request SDK Key
     ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
     ## https://github.com/google/re2/wiki/Syntax
-    sdkKeyRegex: "^\\w+$"
+    sdkKeyRegex: "^\\w+(:\\w+)?$"
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.
