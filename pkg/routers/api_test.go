@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -36,6 +37,7 @@ var metricsRegistry = metrics.NewRegistry()
 
 const methodHeaderKey = "X-Method-Header"
 const clientHeaderKey = "X-Client-Header"
+const contentTypeHeaderKey = "Content-Type"
 const originHeaderKey = "Origin"
 const corsOriginHeaderKey = "Access-Control-Allow-Origin"
 const corsRequestMethodHeaderKey = "Access-Control-Request-Method"
@@ -373,5 +375,36 @@ func TestForbiddenRoutes(t *testing.T) {
 
 		response := string(rec.Body.Bytes())
 		assert.Equal(t, route.error, response)
+	}
+}
+
+func (suite *APIV1TestSuite) TestAllowedContentTypeMiddleware() {
+
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"POST", "activate"},
+		{"POST", "track"},
+		{"POST", "override"},
+	}
+
+	for _, route := range routes {
+
+		// Testing unsupported content type
+		body := "<request> <parameters> <email>test@123.com</email> </parameters> </request>"
+		req := httptest.NewRequest(route.method, "/v1/"+route.path, bytes.NewBuffer([]byte(body)))
+		req.Header.Add(contentTypeHeaderKey, "application/xml")
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusUnsupportedMediaType, rec.Code)
+
+		// Testing supported content type
+		body = `{"email":"test@123.com"}`
+		req = httptest.NewRequest(route.method, "/v1/"+route.path, bytes.NewBuffer([]byte(body)))
+		req.Header.Add(contentTypeHeaderKey, "application/json")
+		rec = httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+		suite.Equal(http.StatusOK, rec.Code)
 	}
 }

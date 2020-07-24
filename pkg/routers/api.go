@@ -117,6 +117,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
+	contentTypeMiddleware := chimw.AllowContentType("application/json")
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
@@ -129,13 +130,13 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(opt.corsHandler, opt.sdkMiddleware)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
-		r.With(activateTimer, opt.oAuthMiddleware).Post("/activate", opt.activateHandler)
-		r.With(trackTimer, opt.oAuthMiddleware).Post("/track", opt.trackHandler)
-		r.With(overrideTimer, opt.oAuthMiddleware).Post("/override", opt.overrideHandler)
+		r.With(activateTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/activate", opt.activateHandler)
+		r.With(trackTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/track", opt.trackHandler)
+		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/override", opt.overrideHandler)
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
-	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
+	r.With(createAccesstokenTimer, contentTypeMiddleware).Post("/oauth/token", opt.oAuthHandler)
 
 	statikFS, err := fs.New()
 	if err != nil {

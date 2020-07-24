@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,24 +18,33 @@
 package routers
 
 import (
+	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/handlers"
-
-	"github.com/go-chi/chi"
-	chimw "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
-
-	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/stretchr/testify/assert"
 )
 
-// NewWebhookRouter returns HTTP API router
-func NewWebhookRouter(optlyCache optimizely.Cache, conf config.WebhookConfig) *chi.Mux {
-	r := chi.NewRouter()
+func TestAdminAllowedContentTypeMiddleware(t *testing.T) {
 
-	r.Use(chimw.AllowContentType("application/json"))
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Projects)
+	conf := config.NewDefaultConfig()
+	router := NewAdminRouter(*conf)
 
-	r.Post("/webhooks/optimizely", webhookAPI.HandleWebhook)
-	return r
+	// Testing unsupported content type
+	body := "<request> <parameters> <email>test@123.com</email> </parameters> </request>"
+	req := httptest.NewRequest("POST", "/oauth/token", bytes.NewBuffer([]byte(body)))
+	req.Header.Add(contentTypeHeaderKey, "application/xml")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusUnsupportedMediaType, rec.Code)
+
+	// Testing supported content type
+	body = `{"email":"test@123.com"}`
+	req = httptest.NewRequest("POST", "/oauth/token", bytes.NewBuffer([]byte(body)))
+	req.Header.Add(contentTypeHeaderKey, "application/json")
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
