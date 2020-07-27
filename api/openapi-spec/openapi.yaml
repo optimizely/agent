@@ -210,7 +210,7 @@ components:
     Experiment:
       properties:
         id:
-          type: integer
+          type: string
         key:
           type: string
         variationsMap:
@@ -223,13 +223,13 @@ components:
     Feature:
       properties:
         id:
-          type: integer
+          type: string
         key:
           type: string
         variablesMap:
           type: object
           additionalProperties:
-            type: string
+            type: object
         experimentsMap:
           type: object
           additionalProperties:
@@ -239,8 +239,6 @@ components:
         - key
     Decision:
       properties:
-        #        id:
-        #          type: integer
         featureKey:
           type: string
         experimentKey:
@@ -252,17 +250,14 @@ components:
           enum:
             - feature
             - experiment
+            - ''
         enabled:
           type: boolean
         variables:
           type: object
-          additionalProperties:
-            type: string
+          additionalProperties: true
         error:
           type: string
-      required:
-        #        - id
-        - key
     ActivateContext:
       properties:
         userId:
@@ -285,8 +280,6 @@ components:
           items:
             type: string
     OverrideContext:
-      type: array
-      items:
         type: object
         properties:
           userId:
@@ -335,7 +328,7 @@ components:
         type:
           type: string
         value:
-          type: string
+          type: object
       required:
         - id
         - key
@@ -347,12 +340,12 @@ components:
           type: string
         client_secret:
           type: string
-  securitySchemes:
-    SdkKeyAuth:
-      in: header
-      name: X-Optimizely-SDK-Key
-      type: apiKey
-    TokenAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+# securitySchemes:
+#    SdkKeyAuth:
+#      in: header
+#      name: X-Optimizely-SDK-Key
+#      type: apiKey
+#    TokenAuth:
+#      type: http
+#      scheme: bearer
+#      bearerFormat: JWT

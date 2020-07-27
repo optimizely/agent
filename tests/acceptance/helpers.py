@@ -3,8 +3,16 @@ import os
 import string
 import time
 from random import randint, choice
-
 import requests
+import yaml
+
+from openapi_core import create_spec
+from openapi_core.validation.request.validators import RequestValidator
+from openapi_core.validation.response.validators import ResponseValidator
+from openapi_core.validation.request.datatypes import (OpenAPIRequest, RequestParameters)
+from openapi_core.validation.response.datatypes import OpenAPIResponse
+from werkzeug.datastructures import ImmutableMultiDict
+
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
@@ -12,7 +20,16 @@ ENDPOINT_NOTIFICATIONS = '/v1/notifications/event-stream'
 ENDPOINT_OVERRIDE = '/v1/override'
 ENDPOINT_TRACK = '/v1/track'
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
+
+spec_dict = None
+with open(YAML_FILE_PATH, 'r') as stream:
+    try:
+        spec_dict = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+spec = create_spec(spec_dict)
 
 
 def test_health():
@@ -122,14 +139,15 @@ def sort_response(response_dict, *args):
 # Helper funcitons for overrides
 def activate_experiment(sess):
     """
-    Helper function to activat eexperiment.
+    Helper function to activate experiment.
     :param sess: API request session_object
     :return: response
     """
-    BASE_URL = os.getenv('host')
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}
-    params = {"experimentKey": 'ab_test1'}
-    resp = sess.post(BASE_URL + ENDPOINT_ACTIVATE, params=params, json=payload)
+    payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
+    params = {"experimentKey": "ab_test1"}
+
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', sess, payload=payload, params=params)
+
     return resp
 
 
@@ -140,8 +158,92 @@ def override_variation(sess, override_with):
     :param override_with: provide new variation name as string to override with
     :return: response
     """
-    BASE_URL = os.getenv('host')
     payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"},
                "experimentKey": "ab_test1", "variationKey": f"{override_with}"}
-    resp = sess.post(BASE_URL + ENDPOINT_OVERRIDE, json=payload)
+
+    resp = create_and_validate_request_and_response(
+        ENDPOINT_OVERRIDE, 'post', sess, payload=json.dumps(payload)
+    )
+
     return resp
+
+
+def create_and_validate_request(endpoint, method, payload='', params=[]):
+    """
+    Helper function to create OpenAPIRequest and validate it
+    :param endpoint: API endpoint
+    :param method: API request method
+    :param payload: API request payload
+    :param params: API request payload
+    :return:
+        - request: OpenAPIRequest
+        - request_result: result of request validation
+    """
+    parameters = RequestParameters(
+        query=ImmutableMultiDict(params),
+        path=endpoint
+    )
+
+    request = OpenAPIRequest(
+        full_url_pattern=endpoint,
+        method=method,
+        parameters=parameters,
+        body=payload,
+        mimetype='application/json',
+    )
+
+    validator = RequestValidator(spec)
+    request_result = validator.validate(request)
+
+    return request, request_result
+
+
+def create_and_validate_response(request, response):
+    """
+    Helper function to create OpenAPIResponse and validate it
+    :param request: OpenAPIRequest
+    :param response: API response
+    :return:
+        - result: result of response validation
+    """
+    response = OpenAPIResponse(
+        data=response.content,
+        status_code=response.status_code,
+        mimetype='application/json'
+    )
+
+    validator = ResponseValidator(spec)
+    result = validator.validate(request, response)
+    return result
+
+
+def create_and_validate_request_and_response(endpoint, method, session, bypass_validation=False, payload='', params=[]):
+    """
+    Helper function to create OpenAPIRequest, OpenAPIResponse and validate both
+    :param endpoint: API endpoint
+    :param session: API valid session object
+    :param bypass_validation: Flag to bypass request validation of invalid requests
+    :param method: API request method
+    :param payload: API request payload
+    :param params: API request payload
+    :return:
+        - response: API response object
+    """
+    request, request_result = create_and_validate_request(endpoint, method, payload, params)
+    if not bypass_validation:
+        pass
+        # raise errors if request invalid
+        request_result.raise_for_errors()
+
+    BASE_URL = os.getenv('host')
+
+    if method == 'post':
+        response = session.post(BASE_URL + endpoint, params=params, data=payload)
+    elif method == 'get':
+        response = session.get(BASE_URL + endpoint, params=params, data=payload)
+
+    response_result = create_and_validate_response(request, response)
+    # raise errors if response invalid
+    response_result.raise_for_errors()
+
+    return response

@@ -7,6 +7,10 @@ import requests
 from tests.acceptance.helpers import ENDPOINT_OVERRIDE
 from tests.acceptance.helpers import activate_experiment
 from tests.acceptance.helpers import override_variation
+from tests.acceptance.helpers import create_and_validate_request
+from tests.acceptance.helpers import create_and_validate_response
+from tests.acceptance.helpers import create_and_validate_request_and_response
+
 
 BASE_URL = os.getenv('host')
 
@@ -36,12 +40,11 @@ def test_overrides(session_obj):
     3. activate experiment and assert forced variation is now in place
     4. Try overriding with the same variation again. Should not be possible.
     """
-    # Confirm deafult variation is "variation_1" (activate)
+    # Confirm default variation is "variation_1" (activate)
     activating = activate_experiment(session_obj)
     default_variation = activating.json()[0]['variationKey']
     assert activating.status_code == 200, activating.text
     assert default_variation == 'variation_1', activating.text
-#     assert activating.json()[0]['error'] == ''
 
     # Override with "variation_2"
     resp_over = override_variation(session_obj, override_with='variation_2')
@@ -97,22 +100,22 @@ expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",
 
 
 @pytest.mark.parametrize(
-    "userId, experimentKey, variationKey, expected_status_code, expected_response", [
-        ("", "ab_test1", "variation_2", 400, expected_empty_user),
-        ("matjaz", "", "variation_2", 400, expected_empty_experiment_key),
-        ("matjaz", "ab_test1", "", 200, expected_empty_variation_key),
-        ("invalid_user", "ab_test1", "variation_2", 200, expected_invalid_user),
+    "userId, experimentKey, variationKey, expected_status_code, expected_response, bypass_validation", [
+        ("", "ab_test1", "variation_2", 400, expected_empty_user, True),
+        ("matjaz", "", "variation_2", 400, expected_empty_experiment_key, True),
+        ("matjaz", "ab_test1", "", 200, expected_empty_variation_key, False),
+        ("invalid_user", "ab_test1", "variation_2", 200, expected_invalid_user, False),
         ("matjaz", "invalid_experimentKey", "variation_2", 200,
-         expected_invalid_experiment_key),
-        ("matjaz", "ab_test1", "invalid_variation", 200, expected_invalid_variation_key),
+         expected_invalid_experiment_key, False),
+        ("matjaz", "ab_test1", "invalid_variation", 200, expected_invalid_variation_key, False),
     ], ids=["empty_userId", "empty_experiment_key", "empty_variationKey",
             "invalid_userId", "invalid_experimentKey", "invalid_variationKey"])
 def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variationKey,
-                                      expected_status_code, expected_response):
-    payload = f'{{"userId": "{userId}", "userAttributes": {{"attr_1": "hola"}}, ' \
+                                      expected_status_code, expected_response, bypass_validation):
+    payload = f'{{"userId": "{userId}", ' \
         f'"experimentKey": "{experimentKey}", "variationKey": "{variationKey}"}}'
 
-    resp = session_obj.post(BASE_URL + ENDPOINT_OVERRIDE, json=json.loads(payload))
+    resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_obj, bypass_validation, payload=payload)
 
     assert resp.status_code == expected_status_code, resp.text
     assert resp.text == expected_response
@@ -123,11 +126,21 @@ def test_overrides_403(session_override_sdk_key):
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param : session_override_sdk_key
     """
-    payload = {"userId": "matjaz", "userAttributes": {"attr_1": "hola"},
-               "experimentKey": "ab_test1", "variationKey": "my_new_variation"}
+    payload = '{"userId": "matjaz",'\
+               '"experimentKey": "ab_test1", "variationKey": "my_new_variation"}'
+
+    request, request_result = create_and_validate_request(ENDPOINT_OVERRIDE, 'post', payload= payload)
+
+    # raise errors if request invalid
+    request_result.raise_for_errors()
 
     with pytest.raises(requests.exceptions.HTTPError):
         resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_OVERRIDE, json=payload)
+
+        response_result = create_and_validate_response(request, resp)
+
+        # raise errors if response invalid
+        response_result.raise_for_errors()
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \
