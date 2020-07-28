@@ -54,19 +54,9 @@ def test_track_403(session_override_sdk_key):
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"eventKey": "myevent"}
 
-    request, request_result = create_and_validate_request(ENDPOINT_TRACK, 'post', payload=payload, params=params)
-
-    # raise errors if request invalid
-    request_result.raise_for_errors()
-
     with pytest.raises(requests.exceptions.HTTPError):
-        resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_TRACK, params=params,
-                                             json=json.loads(payload))
-
-        response_result = create_and_validate_response(request, resp)
-
-        # raise errors if response invalid
-        response_result.raise_for_errors()
+        resp = create_and_validate_request_and_response(ENDPOINT_TRACK, 'post', session_override_sdk_key,
+                                                        payload=payload, params=params)
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \

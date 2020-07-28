@@ -150,15 +150,9 @@ def test_config_403(session_override_sdk_key):
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param : session_obj
     """
-    request, request_result = create_and_validate_request(ENDPOINT_CONFIG, 'get')
 
     with pytest.raises(requests.exceptions.HTTPError):
-        resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_CONFIG)
-
-        response_result = create_and_validate_response(request, resp)
-
-        # raise errors if response invalid
-        response_result.raise_for_errors()
+        resp = create_and_validate_request_and_response(ENDPOINT_CONFIG, 'get', session_override_sdk_key)
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \

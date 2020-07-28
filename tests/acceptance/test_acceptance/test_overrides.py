@@ -129,18 +129,9 @@ def test_overrides_403(session_override_sdk_key):
     payload = '{"userId": "matjaz",'\
                '"experimentKey": "ab_test1", "variationKey": "my_new_variation"}'
 
-    request, request_result = create_and_validate_request(ENDPOINT_OVERRIDE, 'post', payload= payload)
-
-    # raise errors if request invalid
-    request_result.raise_for_errors()
-
     with pytest.raises(requests.exceptions.HTTPError):
-        resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_OVERRIDE, json=payload)
-
-        response_result = create_and_validate_response(request, resp)
-
-        # raise errors if response invalid
-        response_result.raise_for_errors()
+        resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_override_sdk_key,
+                                                        payload=payload)
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \
