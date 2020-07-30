@@ -25,9 +25,8 @@ def session_obj():
     :return: session object
     """
     s = requests.Session()
-    s.custom_headers = {'Content-Type': 'application/json',
-                      'X-Optimizely-SDK-Key': sdk_key}
-    s.headers.update(s.custom_headers)
+    s.headers.update({'Content-Type': 'application/json',
+                      'X-Optimizely-SDK-Key': sdk_key})
     return s
 
 

@@ -232,7 +232,7 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
         - response: API response object
     """
     request, request_result = create_and_validate_request(
-        endpoint, method, payload, params, session.custom_headers
+        endpoint, method, payload, params, dict(session.headers)
     )
 
     if not bypass_validation:
