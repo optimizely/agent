@@ -1,14 +1,11 @@
 import json
-
 import os
-
 import pytest
 import requests
 
-from tests.acceptance.helpers import ENDPOINT_TRACK
-from tests.acceptance.helpers import create_and_validate_request
-from tests.acceptance.helpers import create_and_validate_response
 from tests.acceptance.helpers import create_and_validate_request_and_response
+from tests.acceptance.helpers import ENDPOINT_TRACK
+
 
 BASE_URL = os.getenv('host')
 

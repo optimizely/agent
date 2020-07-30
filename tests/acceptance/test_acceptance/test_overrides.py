@@ -1,15 +1,12 @@
 import json
-
 import os
-
 import pytest
 import requests
-from tests.acceptance.helpers import ENDPOINT_OVERRIDE
+
 from tests.acceptance.helpers import activate_experiment
-from tests.acceptance.helpers import override_variation
-from tests.acceptance.helpers import create_and_validate_request
-from tests.acceptance.helpers import create_and_validate_response
 from tests.acceptance.helpers import create_and_validate_request_and_response
+from tests.acceptance.helpers import ENDPOINT_OVERRIDE
+from tests.acceptance.helpers import override_variation
 
 
 BASE_URL = os.getenv('host')
