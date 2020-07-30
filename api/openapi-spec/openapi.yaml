@@ -340,12 +340,12 @@ components:
           type: string
         client_secret:
           type: string
-# securitySchemes:
-#    SdkKeyAuth:
-#      in: header
-#      name: X-Optimizely-SDK-Key
-#      type: apiKey
-#    TokenAuth:
-#      type: http
-#      scheme: bearer
-#      bearerFormat: JWT
+  securitySchemes:
+     SdkKeyAuth:
+       in: header
+       name: X-Optimizely-SDK-Key
+       type: apiKey
+     TokenAuth:
+       type: http
+       scheme: bearer
+       bearerFormat: JWT

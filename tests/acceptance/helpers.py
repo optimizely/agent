@@ -168,20 +168,22 @@ def override_variation(sess, override_with):
     return resp
 
 
-def create_and_validate_request(endpoint, method, payload='', params=[]):
+def create_and_validate_request(endpoint, method, payload='', params=[], headers=[]):
     """
     Helper function to create OpenAPIRequest and validate it
     :param endpoint: API endpoint
     :param method: API request method
     :param payload: API request payload
     :param params: API request payload
+    :param headers: API request headers
     :return:
         - request: OpenAPIRequest
         - request_result: result of request validation
     """
     parameters = RequestParameters(
         query=ImmutableMultiDict(params),
-        path=endpoint
+        path=endpoint,
+        header=headers
     )
 
     request = OpenAPIRequest(
@@ -229,7 +231,10 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
     :return:
         - response: API response object
     """
-    request, request_result = create_and_validate_request(endpoint, method, payload, params)
+    request, request_result = create_and_validate_request(
+        endpoint, method, payload, params, session.custom_headers
+    )
+
     if not bypass_validation:
         pass
         # raise errors if request invalid
