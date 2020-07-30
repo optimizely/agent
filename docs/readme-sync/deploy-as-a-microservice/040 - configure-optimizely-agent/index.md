@@ -47,7 +47,7 @@ Below is a comprehensive list of available configuration properties.
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
-|sdkKeys|OPTIMIZELY_SDK_KEYS|List of SDK keys used to initialize on startup|
+|sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
