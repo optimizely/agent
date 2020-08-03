@@ -4,6 +4,7 @@ import pytest
 import requests
 
 from tests.acceptance.helpers import ENDPOINT_CONFIG
+from tests.acceptance.helpers import create_and_validate_request_and_response
 
 BASE_URL = os.getenv('host')
 
@@ -136,19 +137,20 @@ def test_config(session_obj):
     as well.
     :param session_obj: session object
     """
-    resp = session_obj.get(BASE_URL + ENDPOINT_CONFIG)
+    resp = create_and_validate_request_and_response(ENDPOINT_CONFIG, 'get', session_obj)
     assert resp.status_code == 200
     resp.raise_for_status()
     assert json.loads(expected_config) == resp.json()
 
 
-def test_activate_403(session_override_sdk_key):
+def test_config_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param : session_obj
     """
+
     with pytest.raises(requests.exceptions.HTTPError):
-        resp = session_override_sdk_key.post(BASE_URL + ENDPOINT_CONFIG)
+        resp = create_and_validate_request_and_response(ENDPOINT_CONFIG, 'get', session_override_sdk_key)
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \

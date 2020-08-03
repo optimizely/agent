@@ -77,7 +77,7 @@ def pytest_addoption(parser):
     Adding CLI option to specify host URL to run tests on.
     :param parser: parser
     """
-    parser.addoption("--host", action="store", default="http//:localhost:8080",
+    parser.addoption("--host", action="store", default="http://localhost:8080",
                      help="Specify host URL to run tests on.")
 
 
