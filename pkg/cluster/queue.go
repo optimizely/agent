@@ -1,8 +1,10 @@
 package cluster
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/optimizely/agent/config"
 
@@ -16,6 +18,7 @@ import (
 var (
 	ml    *memberlist.Memberlist
 	queue *memberlist.TransmitLimitedQueue
+	lock  = sync.RWMutex{}
 )
 
 // Init intializes the cluster via the cluster config
@@ -51,10 +54,14 @@ func Init(conf config.ClusterConfig) error {
 	return nil
 }
 
-// Broadcast message to all members of the cluster.
-func Broadcast(header []byte, buf []byte) error {
+// addToQueue message to all members of the cluster.
+func addToQueue(header []byte, buf []byte) error {
 	if len(header) != headerLen {
 		return fmt.Errorf("invalid header, must be of length %d not %d", headerLen, len(header))
+	}
+
+	if queue == nil {
+		return errors.New("cluster not configured")
 	}
 
 	queue.QueueBroadcast(&broadcast{
@@ -63,9 +70,4 @@ func Broadcast(header []byte, buf []byte) error {
 	})
 
 	return nil
-}
-
-// Listen registers listener functions on broadcast messages.
-func Listen(header []byte, listener func([]byte)) {
-
 }

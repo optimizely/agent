@@ -23,6 +23,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/rs/zerolog/log"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -36,6 +37,7 @@ type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    SyncedConfigManager
 	ForcedVariations *decision.MapExperimentOverridesStore
+	SDKKey           string
 }
 
 // Decision Model
@@ -132,6 +134,9 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 		override.Messages = messages
 	}
 
+	if err := BroadcastSetForcedVariation(c.SDKKey, userID, experimentKey, variationKey); err != nil {
+		log.Warn().Err(err).Msg("error broadcasting setForcedVariation")
+	}
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
 	return &override, nil
 }
@@ -160,8 +165,11 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 	} else {
 		messages = append(messages, "no pre-existing override")
 	}
-
 	override.Messages = messages
+
+	if err := BroadcastRemoveForcedVariation(c.SDKKey, userID, experimentKey); err != nil {
+		log.Warn().Err(err).Msg("error broadcasting removeForcedVariation")
+	}
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
 
 	return &override, nil

@@ -23,10 +23,11 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/optimizely/agent/config"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/optimizely/agent/config"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"

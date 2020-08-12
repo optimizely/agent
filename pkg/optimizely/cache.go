@@ -43,6 +43,8 @@ type OptlyCache struct {
 	wg       sync.WaitGroup
 }
 
+var optlyCache *OptlyCache
+
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
 func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 
@@ -51,14 +53,14 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 		return sdkconfig.NewPollingProjectConfigManager(sdkkey, options...)
 	}
 
-	cache := &OptlyCache{
+	optlyCache = &OptlyCache{
 		ctx:      ctx,
 		wg:       sync.WaitGroup{},
 		loader:   defaultLoader(conf, metricsRegistry, cmLoader, event.NewBatchEventProcessor),
 		optlyMap: cmap.New(),
 	}
 
-	return cache
+	return optlyCache
 }
 
 // Init takes a slice of sdkKeys to warm the cache upon startup
@@ -103,6 +105,9 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 
 // UpdateConfigs is used to update config for all clients corresponding to a particular SDK key.
 func (c *OptlyCache) UpdateConfigs(sdkKey string) {
+	if err := BroadcastUpdateConfig(sdkKey); err != nil {
+		log.Warn().Err(err).Msg("unable to broadcast update config")
+	}
 	for clientInfo := range c.optlyMap.IterBuffered() {
 		if strings.HasPrefix(clientInfo.Key, sdkKey) {
 			optlyClient, ok := clientInfo.Val.(*OptlyClient)
@@ -198,6 +203,13 @@ func defaultLoader(
 			client.WithEventProcessor(ep),
 		)
 
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
+		optlyClient := &OptlyClient{
+			OptimizelyClient: optimizelyClient,
+			ConfigManager:    configManager,
+			ForcedVariations: forcedVariations,
+			SDKKey:           sdkKey,
+		}
+
+		return optlyClient, err
 	}
 }

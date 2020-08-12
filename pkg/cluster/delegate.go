@@ -1,11 +1,29 @@
 package cluster
 
+import "github.com/rs/zerolog/log"
+
 // Delegate is the interface that clients must implement if they want to hook
 // into the gossip layer of Memberlist. All the methods must be thread-safe,
 // as they can and generally will be called concurrently.
 type delegate struct{}
 
 const headerLen = 1
+
+type listener = func([]byte)
+
+var listeners = make(map[string]listener)
+
+// Listen registers listener functions on broadcast messages.
+func Listen(header string, listener func([]byte)) {
+	if len(header) != headerLen {
+		log.Warn().Msgf("Invalid message header %s. Should be length %d", header, headerLen)
+		return
+	}
+
+	lock.Lock()
+	defer lock.Unlock()
+	listeners[header] = listener
+}
 
 // NodeMeta is used to retrieve meta-data about the current node
 // when broadcasting an alive message. It's length is limited to
@@ -23,8 +41,8 @@ func (d *delegate) NotifyMsg(b []byte) {
 		return
 	}
 
-	switch b[:headerLen] {
-
+	if fun, ok := listeners[string(b[:headerLen])]; ok {
+		fun(b[headerLen:])
 	}
 }
 
