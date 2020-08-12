@@ -31,6 +31,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/cluster"
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
@@ -118,6 +119,10 @@ func main() {
 
 	agentMetricsRegistry := metrics.NewRegistry()
 	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)
+
+	if err := cluster.Init(conf.Cluster); err != nil {
+		log.Fatal().Err(err).Msg("Failed to start cluster.")
+	}
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners

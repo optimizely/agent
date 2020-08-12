@@ -69,6 +69,10 @@ func NewDefaultConfig() *AgentConfig {
 			Pretty: false,
 			Level:  "info",
 		},
+		Cluster: ClusterConfig{
+			Port: 7896,
+			Host: "127.0.0.1",
+		},
 		Client: ClientConfig{
 			PollingInterval:     1 * time.Minute,
 			BatchSize:           10,
@@ -114,6 +118,7 @@ type AgentConfig struct {
 	API     APIConfig     `json:"api"`
 	Log     LogConfig     `json:"log"`
 	Client  ClientConfig  `json:"client"`
+	Cluster ClusterConfig `json:"cluster"`
 	Runtime RuntimeConfig `json:"runtime"`
 	Server  ServerConfig  `json:"server"`
 	Webhook WebhookConfig `json:"webhook"`
@@ -149,6 +154,13 @@ type ClientConfig struct {
 	DatafileURLTemplate string        `json:"datafileURLTemplate"`
 	EventURL            string        `json:"eventURL"`
 	SdkKeyRegex         string        `json:"sdkKeyRegex"`
+}
+
+// ClusterConfig holds the configuration for a cluster aware deployment
+type ClusterConfig struct {
+	Nodes []string `json:"nodes"`
+	Port int `json:"port"`
+	Host string `json:"host"`
 }
 
 // LogConfig holds the log configuration
