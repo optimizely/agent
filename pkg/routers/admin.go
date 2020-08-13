@@ -18,6 +18,7 @@
 package routers
 
 import (
+	"html/template"
 	"net/http"
 	"net/http/pprof"
 
@@ -52,17 +53,65 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.Use(optlyAdmin.AppInfoHeader)
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
-	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
-	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
-	r.With(authProvider.AuthorizeAdmin).Get("/cluster", handlers.GetClusterInfo)
+	routes := []Route{
+		{"/config", optlyAdmin.AppConfig, "Get application configuration.", true},
+		{"/info", optlyAdmin.AppInfo, "Get application info.", true},
+		{"/metrics", optlyAdmin.Metrics, "Get application metrics (e.g. expvar).", true},
+		{"/cluster", handlers.GetClusterInfo, "Get current cluster state.", true},
+		{"/debug/pprof/*", pprof.Index, "Get current cluster state.", false},
+		{"/debug/pprof/cmdline", pprof.Cmdline, "Get current cluster state.", false},
+		{"/debug/pprof/profile", pprof.Profile, "Get current cluster state.", false},
+		{"/debug/pprof/symbol", pprof.Symbol, "Get current cluster state.", false},
+		{"/debug/pprof/trace", pprof.Trace, "Get current cluster state.", false},
+	}
 
-	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/*", pprof.Index)
-	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/cmdline", pprof.Cmdline)
-	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/profile", pprof.Profile)
-	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/symbol", pprof.Symbol)
-	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/trace", pprof.Trace)
+	index := Index(routes)
+	routes = append(routes, Route{"/", index, "index", false})
+
+	for _, route := range routes {
+		r.With(authProvider.AuthorizeAdmin).Get(route.Pattern, route.Handler)
+	}
 
 	r.With(chimw.AllowContentType("application/json")).Post("/oauth/token", tokenHandler.CreateAdminAccessToken)
 	return r
 }
+
+type Route struct {
+	Pattern string
+	Handler http.HandlerFunc
+	Desc    string
+	Index   bool
+}
+
+func Index(routes []Route) func(w http.ResponseWriter, r *http.Request) {
+	index := make([]Route, 0, len(routes))
+	for _, route := range routes {
+		if route.Index {
+			index = append(index, route)
+		}
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := indexTmpl.Execute(w, index); err != nil {
+			log.Print(err)
+		}
+	}
+}
+
+var indexTmpl = template.Must(template.New("index").Parse(`<html>
+<head>
+<title>Agent Admin</title>
+</head>
+<body>
+<br>
+<p>
+Admin Routes:
+<ul>
+{{range .}}
+<li><a href={{.Pattern}}>{{.Pattern}}</a>: {{.Desc}}</li>
+{{end}}
+</ul>
+</p>
+</body>
+</html>
+`))
