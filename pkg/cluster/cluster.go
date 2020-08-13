@@ -22,14 +22,33 @@ var (
 	lock  = sync.RWMutex{}
 )
 
+func getNodeMeta(conf *config.AgentConfig) NodeMeta {
+	meta := NodeMeta{
+		Servers: make(map[string]string),
+	}
+
+	scheme := "http://"
+	if conf.Server.KeyFile != "" && conf.Server.CertFile != "" {
+		scheme = "https://"
+	}
+	host := scheme + conf.Server.Host + ":"
+
+	meta.Servers["api"] = host + conf.API.Port
+	meta.Servers["admin"] = host + conf.Admin.Port
+	meta.Servers["webhook"] = host + conf.Webhook.Port
+
+	return meta
+}
+
 // Init intializes the cluster via the cluster config
-func Init(conf config.ClusterConfig) error {
+func Init(conf *config.AgentConfig) error {
 	hostname, _ := os.Hostname()
 	c := memberlist.DefaultLocalConfig()
 	c.Events = &eventDelegate{}
-	c.Delegate = &delegate{}
-	c.BindAddr = conf.Host
-	c.BindPort = conf.Port
+
+	c.Delegate = &delegate{getNodeMeta(conf)}
+	c.BindAddr = conf.Cluster.Host
+	c.BindPort = conf.Cluster.Port
 	c.Name = hostname + "-" + uuid.New().String()
 	c.LogOutput = ioutil.Discard
 
@@ -40,7 +59,7 @@ func Init(conf config.ClusterConfig) error {
 	}
 
 	// Attempt to connect to other nodes in the cluster
-	if _, err := ml.Join(conf.Nodes); err != nil {
+	if _, err := ml.Join(conf.Cluster.Nodes); err != nil {
 		log.Warn().Err(err).Msg("No nodes were joined. This is likely the first node in the cluster.")
 	}
 
@@ -71,4 +90,8 @@ func addToQueue(header []byte, buf []byte) error {
 	})
 
 	return nil
+}
+
+func ListNodes() []*memberlist.Node {
+	return ml.Members()
 }

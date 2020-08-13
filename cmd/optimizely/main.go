@@ -120,7 +120,7 @@ func main() {
 	agentMetricsRegistry := metrics.NewRegistry()
 	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)
 
-	if err := cluster.Init(conf.Cluster); err != nil {
+	if err := cluster.Init(conf); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start cluster.")
 	}
 

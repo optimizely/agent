@@ -55,6 +55,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.With(authProvider.AuthorizeAdmin).Get("/config", optlyAdmin.AppConfig)
 	r.With(authProvider.AuthorizeAdmin).Get("/info", optlyAdmin.AppInfo)
 	r.With(authProvider.AuthorizeAdmin).Get("/metrics", optlyAdmin.Metrics)
+	r.With(authProvider.AuthorizeAdmin).Get("/cluster", handlers.GetClusterInfo)
 
 	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/*", pprof.Index)
 	r.With(authProvider.AuthorizeAdmin).Get("/debug/pprof/cmdline", pprof.Cmdline)

@@ -1,11 +1,21 @@
 package cluster
 
-import "github.com/rs/zerolog/log"
+import (
+	"encoding/json"
+
+	"github.com/rs/zerolog/log"
+)
 
 // Delegate is the interface that clients must implement if they want to hook
 // into the gossip layer of Memberlist. All the methods must be thread-safe,
 // as they can and generally will be called concurrently.
-type delegate struct{}
+type delegate struct {
+	meta NodeMeta
+}
+
+type NodeMeta struct {
+	Servers map[string]string `json:"servers"`
+}
 
 const headerLen = 1
 
@@ -30,7 +40,11 @@ func Listen(header string, listener func([]byte)) {
 // when broadcasting an alive message. It's length is limited to
 // the given byte size. This metadata is available in the Node structure.
 func (d delegate) NodeMeta(limit int) []byte {
-	return []byte{}
+	meta, err := json.Marshal(d.meta)
+	if err != nil {
+		return []byte(err.Error())
+	}
+	return meta
 }
 
 // NotifyMsg is called when a user-data message is received.
