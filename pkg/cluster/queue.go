@@ -3,6 +3,7 @@ package cluster
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sync"
 
@@ -30,7 +31,7 @@ func Init(conf config.ClusterConfig) error {
 	c.BindAddr = conf.Host
 	c.BindPort = conf.Port
 	c.Name = hostname + "-" + uuid.New().String()
-	//c.LogOutput = log.Logger
+	c.LogOutput = ioutil.Discard
 
 	var err error
 	ml, err = memberlist.Create(c)
@@ -38,16 +39,16 @@ func Init(conf config.ClusterConfig) error {
 		return err
 	}
 
-	_, err = ml.Join(conf.Nodes)
-	if err != nil {
-		return err
+	// Attempt to connect to other nodes in the cluster
+	if _, err := ml.Join(conf.Nodes); err != nil {
+		log.Warn().Err(err).Msg("No nodes were joined. This is likely the first node in the cluster.")
 	}
 
 	queue = &memberlist.TransmitLimitedQueue{
 		NumNodes: func() int {
 			return ml.NumMembers()
 		},
-		RetransmitMult: 3,
+		RetransmitMult: 1,
 	}
 	node := ml.LocalNode()
 	log.Info().Msgf("Local member %s:%d", node.Addr, node.Port)

@@ -33,6 +33,7 @@ func (b *broadcast) Finished() {
 	}
 }
 
+// Broadcast... should be replaced with NamedBroadcast
 func Broadcast(header string, request interface{}) error {
 	payload, err := json.Marshal(request)
 	if err != nil {

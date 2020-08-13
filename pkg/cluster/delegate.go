@@ -22,6 +22,7 @@ func Listen(header string, listener func([]byte)) {
 
 	lock.Lock()
 	defer lock.Unlock()
+	log.Info().Msgf("Adding broadcast listener with header: %s", header)
 	listeners[header] = listener
 }
 

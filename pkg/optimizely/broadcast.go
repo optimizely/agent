@@ -34,6 +34,7 @@ func BroadcastSetForcedVariation(sdkKey, userID, experimentKey, variationKey str
 		VariationKey:  variationKey,
 	}
 
+	log.Info().Msgf("Broadcast SET override for userID: %s", request.UserID)
 	return cluster.Broadcast(setForcedVariationHeader, request)
 }
 
@@ -43,6 +44,7 @@ func setForcedVariation(payload []byte) {
 		log.Warn().Err(err).Msg("Error parsing setForcedVariation request")
 	}
 
+	log.Info().Msgf("Received broadcast to SET override for userID: %s", request.UserID)
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        request.UserID,
 		ExperimentKey: request.ExperimentKey,
@@ -58,6 +60,7 @@ func BroadcastRemoveForcedVariation(sdkKey, userID, experimentKey string) error 
 		ExperimentKey: experimentKey,
 	}
 
+	log.Info().Msgf("Broadcast REMOVE override for userID: %s", request.UserID)
 	return cluster.Broadcast(setForcedVariationHeader, request)
 }
 
@@ -67,6 +70,7 @@ func removeForcedVariation(payload []byte) {
 		log.Warn().Err(err).Msg("Error parsing setForcedVariation request")
 	}
 
+	log.Info().Msgf("Received broadcast to REMOVE override for userID: %s", request.UserID)
 	forcedVariationKey := decision.ExperimentOverrideKey{
 		UserID:        request.UserID,
 		ExperimentKey: request.ExperimentKey,
@@ -95,5 +99,6 @@ func BroadcastUpdateConfig(sdkKey string) error {
 
 func updateConfig(payload []byte) {
 	sdkKey := string(payload)
+	log.Info().Msgf("Received broadbast to update config for SDK Key: %s", sdkKey)
 	optlyCache.UpdateConfigs(sdkKey)
 }
