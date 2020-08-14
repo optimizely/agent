@@ -18,5 +18,8 @@ export OPTIMIZELY_CLUSTER_NODES=127.0.0.1:$cluster
 export OPTIMIZELY_LOG_PRETTY=true
 export OPTIMIZELY_API_ENABLEOVERRIDES=true
 
-../bin/optimizely
+nohup ../bin/optimizely &>/dev/null &
+#../bin/optimizely
 
+
+open http://localhost:$((begin + 1))
