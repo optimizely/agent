@@ -67,7 +67,7 @@ func Init(conf *config.AgentConfig) error {
 		NumNodes: func() int {
 			return ml.NumMembers()
 		},
-		RetransmitMult: 1,
+		RetransmitMult: 3,
 	}
 	node := ml.LocalNode()
 	log.Info().Msgf("Local member %s:%d", node.Addr, node.Port)
