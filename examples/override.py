@@ -22,5 +22,4 @@ payload = {
 }
 
 resp = s.post('http://localhost:8080/v1/override', json=payload)
-print(resp)
-
+print(json.dumps(resp.json(), indent=4, sort_keys=True))

@@ -19,7 +19,6 @@ export OPTIMIZELY_LOG_PRETTY=true
 export OPTIMIZELY_API_ENABLEOVERRIDES=true
 
 nohup ../bin/optimizely &>/dev/null &
-#../bin/optimizely
 
-
+sleep 1
 open http://localhost:$((begin + 1))
