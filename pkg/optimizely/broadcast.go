@@ -145,11 +145,21 @@ func updateConfig(payload []byte) {
 }
 
 type State struct {
-	Configs   []configBroadcast
-	Overrides []overrideBroadcast
+	Configs   []configBroadcast   `json:"configs"`
+	Overrides []overrideBroadcast `json:"overrides"`
 }
 
 func localState() []byte {
+	state := LocalState()
+	if payload, err := json.Marshal(state); err == nil {
+		return payload
+	} else {
+		log.Warn().Err(err).Msg("failed to serialize local state.")
+		return []byte{}
+	}
+}
+
+func LocalState() State {
 	cb := make([]configBroadcast, 0)
 	ob := make([]overrideBroadcast, 0)
 
@@ -172,20 +182,14 @@ func localState() []byte {
 		}
 	}
 
-	state := &State{
+	return State{
 		Configs:   cb,
 		Overrides: ob,
-	}
-
-	if payload, err := json.Marshal(state); err == nil {
-		return payload
-	} else {
-		log.Warn().Err(err).Msg("failed to serialize local state.")
-		return []byte{}
 	}
 }
 
 func mergeState(payload []byte) {
+	log.Info().Msg("merging cluster state")
 	state := &State{}
 	if err := json.Unmarshal(payload, state); err != nil {
 		log.Warn().Err(err).Msg("unable to parse remote state")

@@ -8,10 +8,12 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/agent/pkg/cluster"
+	"github.com/optimizely/agent/pkg/optimizely"
 )
 
 type ClusterInfo struct {
-	Nodes []NodeInfo `json:"nodes"`
+	Nodes []NodeInfo       `json:"nodes"`
+	State optimizely.State `json:"state"`
 }
 
 type NodeInfo struct {
@@ -41,5 +43,5 @@ func GetClusterInfo(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	render.JSON(w, r, &ClusterInfo{Nodes: nodeInfo})
+	render.JSON(w, r, &ClusterInfo{Nodes: nodeInfo, State: optimizely.LocalState()})
 }
