@@ -24,6 +24,8 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/rs/zerolog/log"
+
+	decision2 "github.com/optimizely/agent/pkg/optimizely/decision"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -36,7 +38,7 @@ var ErrForcedVariationsUninitialized = errors.New("client forced variations stor
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager    SyncedConfigManager
-	ForcedVariations *decision.MapExperimentOverridesStore
+	ForcedVariations *decision2.MapExperimentOverridesStore
 	SDKKey           string
 }
 

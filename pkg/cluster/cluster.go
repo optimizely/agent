@@ -95,3 +95,7 @@ func addToQueue(header []byte, buf []byte) error {
 func ListNodes() []*memberlist.Node {
 	return ml.Members()
 }
+
+func LocalNode() *memberlist.Node {
+	return ml.LocalNode()
+}

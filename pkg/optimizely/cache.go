@@ -24,11 +24,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/optimizely/agent/config"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
+
+	"github.com/optimizely/agent/config"
+	decision2 "github.com/optimizely/agent/pkg/optimizely/decision"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -41,6 +42,7 @@ type OptlyCache struct {
 	optlyMap cmap.ConcurrentMap
 	ctx      context.Context
 	wg       sync.WaitGroup
+	lock     sync.RWMutex
 }
 
 var optlyCache *OptlyCache
@@ -195,7 +197,7 @@ func defaultLoader(
 			event.WithEventDispatcherMetrics(metricsRegistry),
 		)
 
-		forcedVariations := decision.NewMapExperimentOverridesStore()
+		forcedVariations := decision2.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 		optimizelyClient, err := optimizelyFactory.Client(
 			client.WithConfigManager(configManager),
@@ -210,6 +212,9 @@ func defaultLoader(
 			SDKKey:           sdkKey,
 		}
 
+		if err := BroadcastInitConfig(clientKey); err != nil {
+			log.Warn().Err(err).Msg("Failed to broadcast config init")
+		}
 		return optlyClient, err
 	}
 }

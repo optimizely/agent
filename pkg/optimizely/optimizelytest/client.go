@@ -20,10 +20,11 @@ package optimizelytest
 import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
+
+	decision2 "github.com/optimizely/agent/pkg/optimizely/decision"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
@@ -31,14 +32,14 @@ type TestClient struct {
 	EventProcessor   *TestEventProcessor
 	ProjectConfig    *TestProjectConfig
 	OptimizelyClient *client.OptimizelyClient
-	ForcedVariations *decision.MapExperimentOverridesStore
+	ForcedVariations *decision2.MapExperimentOverridesStore
 }
 
 // NewClient provides an instance of OptimizelyClient backed by a TestProjectConfig
 func NewClient() *TestClient {
 	projectConfig := NewConfig()
 	eventProcessor := new(TestEventProcessor)
-	forcedVariations := decision.NewMapExperimentOverridesStore()
+	forcedVariations := decision2.NewMapExperimentOverridesStore()
 
 	factory := client.OptimizelyFactory{}
 	optlyClient, _ := factory.Client(
