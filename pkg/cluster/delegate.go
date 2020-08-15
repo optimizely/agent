@@ -104,7 +104,7 @@ func (d delegate) GetBroadcasts(overhead, limit int) [][]byte {
 // data can be sent here. See MergeRemoteState as well. The `join`
 // boolean indicates this is for a join instead of a push/pull.
 func (d *delegate) LocalState(join bool) []byte {
-	log.Debug().Msgf("calling localState from: %s, Join: %b", ml.LocalNode().Name, join)
+	log.Debug().Msgf("calling localState from: %s, Join: %t", ml.LocalNode().Name, join)
 	return LocalStateFun()
 }
 
@@ -114,7 +114,7 @@ func (d *delegate) LocalState(join bool) []byte {
 // boolean indicates this is for a join instead of a push/pull.
 func (d *delegate) MergeRemoteState(buf []byte, join bool) {
 	str := string(buf)
-	log.Debug().Str("buf", str).Msgf("calling MergeRemoteState from: %s, Join: %b", ml.LocalNode().Name, join)
+	log.Debug().Str("buf", str).Msgf("calling MergeRemoteState from: %s, Join: %t", ml.LocalNode().Name, join)
 	if join {
 		MergeStateFun(buf)
 	}
