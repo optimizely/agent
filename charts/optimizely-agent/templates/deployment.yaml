@@ -33,20 +33,25 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
+          ports: |-
+            {{- range .Values.service.ports }}
+              - port: {{ .port }}
+                protocol: {{ .protocol }}
+                name: {{ .name }}
+            {{- end }}
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /health
+              port: api
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /health
+              port: api
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+        # volumeMounts: do we want to possibly put config.yaml here? 
+        #   - mountPath: /config.yaml
+        #     name: config-data-volume
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
