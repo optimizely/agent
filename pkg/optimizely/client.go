@@ -136,7 +136,7 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 		override.Messages = messages
 	}
 
-	if err := BroadcastSetForcedVariation(c.SDKKey, userID, experimentKey, variationKey); err != nil {
+	if err := broadcastSetForcedVariation(c.SDKKey, userID, experimentKey, variationKey); err != nil {
 		log.Warn().Err(err).Msg("error broadcasting setForcedVariation")
 	}
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
@@ -169,7 +169,7 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 	}
 	override.Messages = messages
 
-	if err := BroadcastRemoveForcedVariation(c.SDKKey, userID, experimentKey); err != nil {
+	if err := broadcastRemoveForcedVariation(c.SDKKey, userID, experimentKey); err != nil {
 		log.Warn().Err(err).Msg("error broadcasting removeForcedVariation")
 	}
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)

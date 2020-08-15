@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package cluster provides basic cluster functionality
 package cluster
 
 import (
@@ -13,8 +30,6 @@ import (
 	"github.com/hashicorp/memberlist"
 	"github.com/rs/zerolog/log"
 )
-
-// Reference https://github.com/asim/memberlist/blob/master/memberlist.go
 
 var (
 	ml    *memberlist.Memberlist
@@ -64,9 +79,7 @@ func Init(conf *config.AgentConfig) error {
 	}
 
 	queue = &memberlist.TransmitLimitedQueue{
-		NumNodes: func() int {
-			return ml.NumMembers()
-		},
+		NumNodes:       ml.NumMembers,
 		RetransmitMult: 3,
 	}
 	node := ml.LocalNode()
@@ -75,7 +88,7 @@ func Init(conf *config.AgentConfig) error {
 }
 
 // addToQueue message to all members of the cluster.
-func addToQueue(header []byte, buf []byte) error {
+func addToQueue(header, buf []byte) error {
 	if len(header) != headerLen {
 		return fmt.Errorf("invalid header, must be of length %d not %d", headerLen, len(header))
 	}
@@ -92,10 +105,12 @@ func addToQueue(header []byte, buf []byte) error {
 	return nil
 }
 
+// ListNodes returns an array of all the nodes in the cluster
 func ListNodes() []*memberlist.Node {
 	return ml.Members()
 }
 
+// LocalNode returns the Node detail for the local node
 func LocalNode() *memberlist.Node {
 	return ml.LocalNode()
 }

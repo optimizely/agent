@@ -53,7 +53,7 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	r.Use(optlyAdmin.AppInfoHeader)
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	routes := []Route{
+	routes := []route{
 		{"/config", optlyAdmin.AppConfig, "Get application configuration.", true},
 		{"/info", optlyAdmin.AppInfo, "Get application info.", true},
 		{"/metrics", optlyAdmin.Metrics, "Get application metrics (e.g. expvar).", true},
@@ -65,8 +65,8 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 		{"/debug/pprof/trace", pprof.Trace, "Get current cluster state.", false},
 	}
 
-	index := Index(routes)
-	routes = append(routes, Route{"/", index, "index", false})
+	index := index(routes)
+	routes = append(routes, route{"/", index, "index", false})
 
 	for _, route := range routes {
 		r.With(authProvider.AuthorizeAdmin).Get(route.Pattern, route.Handler)
@@ -76,15 +76,15 @@ func NewAdminRouter(conf config.AgentConfig) http.Handler {
 	return r
 }
 
-type Route struct {
+type route struct {
 	Pattern string
 	Handler http.HandlerFunc
 	Desc    string
 	Index   bool
 }
 
-func Index(routes []Route) func(w http.ResponseWriter, r *http.Request) {
-	index := make([]Route, 0, len(routes))
+func index(routes []route) func(w http.ResponseWriter, r *http.Request) {
+	index := make([]route, 0, len(routes))
 	for _, route := range routes {
 		if route.Index {
 			index = append(index, route)

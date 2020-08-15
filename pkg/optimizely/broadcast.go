@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package optimizely wraps the Optimizely SDK
 package optimizely
 
 import (
@@ -37,7 +54,7 @@ type configBroadcast struct {
 	Type   bool   `json:"t"`
 }
 
-func BroadcastSetForcedVariation(sdkKey, userID, experimentKey, variationKey string) error {
+func broadcastSetForcedVariation(sdkKey, userID, experimentKey, variationKey string) error {
 	request := overrideBroadcast{
 		SDKKey:        sdkKey,
 		UserID:        userID,
@@ -64,7 +81,7 @@ func setForcedVariation(payload []byte) {
 	overrides.SetVariation(forcedVariationKey, request.VariationKey)
 }
 
-func BroadcastRemoveForcedVariation(sdkKey, userID, experimentKey string) error {
+func broadcastRemoveForcedVariation(sdkKey, userID, experimentKey string) error {
 	request := overrideBroadcast{
 		SDKKey:        sdkKey,
 		UserID:        userID,
@@ -104,7 +121,7 @@ func parseOverride(payload []byte) (overrideBroadcast, *decision2.MapExperimentO
 	return request, client.ForcedVariations, nil
 }
 
-func BroadcastInitConfig(sdkKey string) error {
+func broadcastInitConfig(sdkKey string) error {
 	log.Info().Msgf("Broadcast init config for SDK Key: %s", sdkKey)
 	request := configBroadcast{
 		SDKKey: sdkKey,
@@ -125,7 +142,7 @@ func initConfig(payload []byte) {
 	}
 }
 
-func BroadcastUpdateConfig(sdkKey string) error {
+func broadcastUpdateConfig(sdkKey string) error {
 	log.Info().Msgf("Broadcast update config for SDK Key: %s", sdkKey)
 	request := configBroadcast{
 		SDKKey: sdkKey,
@@ -144,6 +161,7 @@ func updateConfig(payload []byte) {
 	optlyCache.UpdateConfigs(request.SDKKey)
 }
 
+// State encapsulates the current state of the node
 type State struct {
 	Configs   []configBroadcast   `json:"configs"`
 	Overrides []overrideBroadcast `json:"overrides"`
@@ -151,14 +169,16 @@ type State struct {
 
 func localState() []byte {
 	state := LocalState()
-	if payload, err := json.Marshal(state); err == nil {
-		return payload
-	} else {
+	payload, err := json.Marshal(state)
+	if err != nil {
 		log.Warn().Err(err).Msg("failed to serialize local state.")
 		return []byte{}
 	}
+
+	return payload
 }
 
+// LocalState returns the local state of the this node
 func LocalState() State {
 	cb := make([]configBroadcast, 0)
 	ob := make([]overrideBroadcast, 0)

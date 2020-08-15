@@ -42,7 +42,6 @@ type OptlyCache struct {
 	optlyMap cmap.ConcurrentMap
 	ctx      context.Context
 	wg       sync.WaitGroup
-	lock     sync.RWMutex
 }
 
 var optlyCache *OptlyCache
@@ -107,7 +106,7 @@ func (c *OptlyCache) GetClient(sdkKey string) (*OptlyClient, error) {
 
 // UpdateConfigs is used to update config for all clients corresponding to a particular SDK key.
 func (c *OptlyCache) UpdateConfigs(sdkKey string) {
-	if err := BroadcastUpdateConfig(sdkKey); err != nil {
+	if err := broadcastUpdateConfig(sdkKey); err != nil {
 		log.Warn().Err(err).Msg("unable to broadcast update config")
 	}
 	for clientInfo := range c.optlyMap.IterBuffered() {
@@ -205,6 +204,10 @@ func defaultLoader(
 			client.WithEventProcessor(ep),
 		)
 
+		if err != nil {
+			return &OptlyClient{}, err
+		}
+
 		optlyClient := &OptlyClient{
 			OptimizelyClient: optimizelyClient,
 			ConfigManager:    configManager,
@@ -212,9 +215,9 @@ func defaultLoader(
 			SDKKey:           sdkKey,
 		}
 
-		if err := BroadcastInitConfig(clientKey); err != nil {
+		if err := broadcastInitConfig(clientKey); err != nil {
 			log.Warn().Err(err).Msg("Failed to broadcast config init")
 		}
-		return optlyClient, err
+		return optlyClient, nil
 	}
 }

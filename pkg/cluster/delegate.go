@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2020, Optimizely, Inc. and contributors                        *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package cluster provides basic cluster functionality
 package cluster
 
 import (
@@ -13,6 +30,7 @@ type delegate struct {
 	meta NodeMeta
 }
 
+// NodeMeta contains the detail of the servers running on this node.
 type NodeMeta struct {
 	Servers map[string]string `json:"servers"`
 }
@@ -22,7 +40,11 @@ const headerLen = 1
 type listener = func([]byte)
 
 var listeners = make(map[string]listener)
+
+// LocalStateFun is an overridable function to provide local cluster state
 var LocalStateFun = func() []byte { return []byte{} }
+
+// MergeStateFun is an overrideable function to provide merge logic when a node joins the cluster
 var MergeStateFun = func([]byte) {}
 
 // Listen registers listener functions on broadcast messages.
