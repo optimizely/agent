@@ -118,5 +118,4 @@ func (d *delegate) MergeRemoteState(buf []byte, join bool) {
 	if join {
 		MergeStateFun(buf)
 	}
-	// TODO implement me
 }
