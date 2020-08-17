@@ -1,18 +1,30 @@
 ---
-title: "Quickstart with Docker"
+title: "Quickstart for Agent"
 excerpt: ""
-slug: "quickstart-with-docker"
+slug: "quickstart-for-agent"
 hidden: false
 metadata: 
-  title: "Agent Quickstart with Docker - Optimizely Full Stack"
+  title: "Quickstart for Agent - Optimizely Full Stack"
 createdAt: "2020-05-21T20:35:58.387Z"
-updatedAt: "2020-07-14T20:51:52.458Z"
+updatedAt: "2020-08-17T20:51:52.458Z"
 ---
 
-This is a brief quickstart showing how to run Agent locally via Docker and how to access some of the common API endpoints.
-If Docker is not installed then you can download it [here](https://docs.docker.com/install/).
+This is a brief quickstart showing how to run Agent. This quickstart describes two options:
+
+- To get started using Docker, see (Running locally via Docker)[https://docs.developers.optimizely.com/full-stack/docs/quickstart-with-docker#section-running-locally-via-docker].
+
+- To get started using example Node microservices, see the following resource:
+
+| Resource                                                     | Description                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| (Implementing feature flags across microservices with Optimizely Agent)[https://www.youtube.com/watch?v=kwNVdSXMGX8&t=20s] | 4-minute video on implementing Optimizely Agent with example microservices |
+
+
 
 ## Running locally via Docker
+
+Follow these steps to deploy Optimizely Agent locally via Docker and access some of the common API endpoints.
+If Docker is not installed then you can download it [here](https://docs.docker.com/install/).
 
 First pull the Docker image with:
 
