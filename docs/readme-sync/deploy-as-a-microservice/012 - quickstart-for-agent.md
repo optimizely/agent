@@ -13,13 +13,14 @@ This is a brief quickstart showing how to run Agent. This quickstart describes t
 
 - To get started using Docker, see (Running locally via Docker)[https://docs.developers.optimizely.com/full-stack/docs/quickstart-with-docker#section-running-locally-via-docker].
 
-- To get started using example Node microservices, see the following resource:
+- To get started using example Node microservices, see the following resource.
 
+
+
+## Running locally via Node
 | Resource                                                     | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| (Implementing feature flags across microservices with Optimizely Agent)[https://www.youtube.com/watch?v=kwNVdSXMGX8&t=20s] | 4-minute video on implementing Optimizely Agent with example microservices |
-
-
+| [Implementing feature flags across microservices with Optimizely Agent](https://www.youtube.com/watch?v=kwNVdSXMGX8&t=20s) | 4-minute video on implementing Optimizely Agent with example microservices |
 
 ## Running locally via Docker
 
