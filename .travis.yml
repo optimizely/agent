@@ -220,6 +220,8 @@ jobs:
         - hub release edit --draft=false -m "" ${TRAVIS_TAG}
 
     - stage: 'Readme-sync-preview'
+      # publishes changes in your docs pull request (ie, contains changes to /docs/readme-sync directory) to https://rollouts-sandbox-doc-test.readme.io/ for previewing before 
+      # committing to master
       before_script: skip
       cache: false
       # translation: if we're committing to a pull request...
