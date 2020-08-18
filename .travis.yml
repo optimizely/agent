@@ -243,7 +243,7 @@ jobs:
         - echo $CHANGED_DOCS_FILES
 
         #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs    
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
         
 
 
@@ -271,7 +271,7 @@ jobs:
         - echo $CHANGED_DOCS_FILES
 
         #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs    
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
         
         #########################################################################################
         # directories/scripts for full SDK-reference-guides, to be implemented after agent docs sync
