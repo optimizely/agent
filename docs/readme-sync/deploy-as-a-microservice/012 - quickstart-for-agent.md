@@ -9,7 +9,7 @@ createdAt: "2020-05-21T20:35:58.387Z"
 updatedAt: "2020-08-17T20:51:52.458Z"
 ---
 
-This brief quickstart describes how to run Agent. This quickstart describes two options:
+This brief quickstart describes how to run Agent, using two examples:
 
 - To get started using Docker, see [Running locally via Docker](https://docs.developers.optimizely.com/full-stack/docs/quickstart-with-docker#section-running-locally-via-docker).
 
