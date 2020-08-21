@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 - Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
 
+## [1.4.0-beta] - August 21, 2020
+- Add SDK key validation configuration
+- Add Host as a configurable item
+- Reject request with invalid host
+- Block content type other than application/json 
+- Introducing support for authenticated datafiles
+
 ## [1.3.0] - July 7th, 2020
 - Upgrade to use go-sdk v1.3.0. This adds support for JSON feature variables
 - Add /debug/pprof endpoints to the admin service
