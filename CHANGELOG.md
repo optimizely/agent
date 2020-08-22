@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add Host as a configurable item
   - Previously, Agent was listening on all interfaces, and did not allow configuring the network interface that it listens on. NewServer allowed specification of a port to listen on, but not an address.
   - Now, we have added configurable HOST, with the default value set to the localhost (127.0.0.1)
-  - If there is a need to deploy it in docker, then the Host needs to be set to 0.0.0.0. This can be achieved by setting variable `OPTIMIZELY_SERVER_HOST=0.0.0.0`, or setting `server.host` to 0.0.0.0 in config file.
+  - If there is a need to deploy Agent in docker, then the Host needs to be set to 0.0.0.0. This can be achieved by setting variable `OPTIMIZELY_SERVER_HOST=0.0.0.0`, or setting `server.host` to 0.0.0.0 in config file.
 
 ## [1.3.0] - July 7th, 2020
 - Upgrade to use go-sdk v1.3.0. This adds support for JSON feature variables
