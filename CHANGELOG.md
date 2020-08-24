@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 - Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
 
-## [2.0.0-beta] - August 21, 2020
+## [2.0.0-beta] - August 24, 2020
 - Add SDK key validation configuration
 - Reject request with invalid host
 - Block content type other than application/json 
