@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Introducing support for authenticated datafiles
 
 ### Breaking Changes
+- Agent will now reject the request if the content-type is not specified from the clients
 - Add Host as a configurable item
   - Previously, Agent was listening on all interfaces, and did not allow configuring the network interface that it listens on. NewServer allowed specification of a port to listen on, but not an address.
   - Now, we have added configurable HOST, with the default value set to the localhost (127.0.0.1)
