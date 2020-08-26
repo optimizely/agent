@@ -35,6 +35,7 @@ server:
     ## 1. X-Forwarded-Host header value
     ## 2. Forwarded header host= directive value
     ## 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
+    ## Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.
     allowedHosts:
         - localhost
     ## the maximum duration for reading the entire request, including the body.

@@ -19,9 +19,10 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 var errInvalidRequestHost = errors.New("invalid request host")
@@ -31,41 +32,26 @@ var errInvalidRequestHost = errors.New("invalid request host")
 // 1. X-Forwarded-Host header value
 // 2. Forwarded header host= directive value
 // 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
-func AllowedHosts(allowedHosts []string, allowedPort string, usingTLS bool) func(next http.Handler) http.Handler {
+func AllowedHosts(allowedHosts []string) func(next http.Handler) http.Handler {
 	allowedMap := make(map[string]bool)
-
-	// We want to allow requests with hosts that don't contain explicit port when the server is running on the  default
-	// port.
-	shouldAllowPortOmitted := false
-	if usingTLS {
-		shouldAllowPortOmitted = allowedPort == "443"
-	} else {
-		shouldAllowPortOmitted = allowedPort == "80"
-	}
-
 	for _, allowedHost := range allowedHosts {
-		allowedMap[fmt.Sprintf("%v:%v", allowedHost, allowedPort)] = true
-		// When appropriate, create entry in allowedMap without explicit port
-		if shouldAllowPortOmitted {
-			allowedMap[allowedHost] = true
-		}
+		allowedMap[allowedHost] = true
 	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			host := requestHost(r)
+			host := strings.Split(requestHost(r), ":")[0]
+			log.Debug().Strs("allowedHosts", allowedHosts).Str("host", host).Msg("After stripping port, checking final host value against allowedHosts")
 			if allowedMap[host] {
 				next.ServeHTTP(w, r)
 				return
 			}
-			logger := GetLogger(r)
-			logger.Debug().Strs("allowedHosts", allowedHosts).Str("allowedPort", allowedPort).Str("Host", r.Host).Str("X-Forwarded-Host", r.Header.Get("X-Forwarded-Host")).Str("Forwarded", r.Header.Get("Forwarded")).Msg("Request failed allowed hosts check")
 			RenderError(errInvalidRequestHost, http.StatusNotFound, w, r)
 		})
 	}
 }
 
-// requestHost and parseForwarded are taken from https://github.com/go-chi/hostrouter
+// requestHost and parseForwarded are originally taken from https://github.com/go-chi/hostrouter
 // (permanent link: https://github.com/go-chi/hostrouter/blob/7bff2694dfd99a31a89c62e5f8a2d9ec2d71da8e/hostrouter.go)
 /*
 Copyright (c) 2016-Present https://github.com/go-chi authors
@@ -93,6 +79,7 @@ func requestHost(r *http.Request) (host string) {
 	// not standard, but most popular
 	host = r.Header.Get("X-Forwarded-Host")
 	if host != "" {
+		log.Debug().Str("X-Forwarded-Host", host).Msg("Allowed hosts check using host from X-Forwarded-Host header")
 		return
 	}
 
@@ -100,11 +87,13 @@ func requestHost(r *http.Request) (host string) {
 	host = r.Header.Get("Forwarded")
 	_, _, host = parseForwarded(host)
 	if host != "" {
+		log.Debug().Str("Forwarded", host).Msg("Allowed hosts check using host from Forwarded header")
 		return
 	}
 
 	// if all else fails fall back to request host
 	host = r.Host
+	log.Debug().Str("request.Host", host).Msg("Allowed hosts check using host from request struct")
 	return
 }
 

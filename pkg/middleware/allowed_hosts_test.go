@@ -35,22 +35,25 @@ type AllowedHostsTestSuite struct {
 }
 
 func (s *AllowedHostsTestSuite) SetupTest() {
-	s.handler = AllowedHosts([]string{"76.125.27.44", "example.com"}, "8080", true)(okHandler)
+	s.handler = AllowedHosts([]string{"76.125.27.44", "example.com"})(okHandler)
 }
 
-func (s *AllowedHostsTestSuite) TestURLHostAndPort() {
+func (s *AllowedHostsTestSuite) TestURLHost() {
 	scenarios := []struct {
 		inputUrl       string
 		expectedStatus int
 	}{
 		// matches first allowedHost, expect StatusOK
 		{"https://76.125.27.44:8080/v1/config", http.StatusOK},
+		{"https://76.125.27.44/v1/config", http.StatusOK},
+
 		// matches second allowedHost, expect StatusOK
 		{"https://example.com:8080/v1/config", http.StatusOK},
-		// wrong URL port, expect http.StatusNotFound
-		{"https://76.125.27.44:1000/v1/config", http.StatusNotFound},
+		{"https://example.com/v1/config", http.StatusOK},
+
 		// wrong URL host, expect http.StatusNotFound
 		{ "https://evil.com:8080/v1/config", http.StatusNotFound},
+		{ "https://evil.com/v1/config", http.StatusNotFound},
 	}
 
 	for _, scenario := range scenarios {
@@ -69,12 +72,19 @@ func (s *AllowedHostsTestSuite) TestCustomHeaders() {
 	} {
 		// X-Forwarded-Host is valid, expect http.statusOK
 		{"X-Forwarded-Host", "example.com:8080", http.StatusOK},
+		{"X-Forwarded-Host", "example.com", http.StatusOK},
+
 		// X-Forwarded-Host is invalid, expect http.statusNotFound
 		{"X-Forwarded-Host", "evil.com:8080", http.StatusNotFound},
+		{"X-Forwarded-Host", "evil.com", http.StatusNotFound},
+
 		// Forwarded is valid, expect http.statusOK
 		{"Forwarded", "host=76.125.27.44:8080", http.StatusOK},
+		{"Forwarded", "host=76.125.27.44", http.StatusOK},
+
 		// Forwarded is invalid, expect http.statusOK
 		{"Forwarded", "host=77.125.26.44:8080", http.StatusNotFound},
+		{"Forwarded", "host=77.125.26.44", http.StatusNotFound},
 	}
 
 	for _, scenario := range scenarios {
@@ -84,24 +94,6 @@ func (s *AllowedHostsTestSuite) TestCustomHeaders() {
 		s.handler.ServeHTTP(rec, req)
 		s.Equal(scenario.expectedStatus, rec.Code)
 	}
-}
-
-func (s *AllowedHostsTestSuite) TestDefaultPortNoTLSValid() {
-	noTLSHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "80", false)(okHandler)
-	// URL contains no explicit port. Request should be allowed as server is running on port 80 with no TLS.
-	req := httptest.NewRequest("GET", "http://76.125.27.44/v1/config", nil)
-	rec := httptest.NewRecorder()
-	noTLSHandler.ServeHTTP(rec, req)
-	s.Equal(http.StatusOK, rec.Code)
-}
-
-func (s *AllowedHostsTestSuite) TestDefaultPortWithTLSValid() {
-	noTLSHandler := AllowedHosts([]string{"76.125.27.44", "example.com"}, "443", true)(okHandler)
-	// URL contains no explicit port. Request should be allowed as server is running on port 443 with TLS.
-	req := httptest.NewRequest("GET", "http://76.125.27.44/v1/config", nil)
-	rec := httptest.NewRecorder()
-	noTLSHandler.ServeHTTP(rec, req)
-	s.Equal(http.StatusOK, rec.Code)
 }
 
 func TestAllowedHostsTestSuite(t *testing.T) {
