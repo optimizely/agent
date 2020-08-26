@@ -20,6 +20,7 @@ stages:
   - 'Test Build using latest tag (no upload)'
   - 'Build, Upload and Publish (draft)'
   - 'Test github release assets'
+  - 'Publish (beta)'
   - 'Publish (real)'
   - 'Readme-sync-preview'
   - 'Readme-sync'
