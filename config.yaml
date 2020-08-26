@@ -150,4 +150,3 @@ runtime:
     ## To just read the current rate, pass rate < 0.
     ## (For n>1 the details of sampling may change.)
     mutexProfileFraction: 0
-
