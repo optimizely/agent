@@ -55,7 +55,7 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 
 	usingTLS := conf.KeyFile != "" && conf.CertFile != ""
 
-	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts(), port, usingTLS)(handler)
+	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts())(handler)
 	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
 	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
