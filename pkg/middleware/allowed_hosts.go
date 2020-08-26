@@ -40,14 +40,8 @@ func AllowedHosts(allowedHosts []string) func(next http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			host := requestHost(r)
-
-			hostPortSplit := strings.Split(host, ":")
-			if len(hostPortSplit) == 2 {
-				host = hostPortSplit[0]
-			}
+			host := strings.Split(requestHost(r), ":")[0]
 			log.Debug().Strs("allowedHosts", allowedHosts).Str("host", host).Msg("After stripping port, checking final host value against allowedHosts")
-
 			if allowedMap[host] {
 				next.ServeHTTP(w, r)
 				return
