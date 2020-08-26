@@ -219,6 +219,26 @@ jobs:
         # how to use hub: https://hub.github.com/hub.1.html
         - hub release edit --draft=false -m "" ${TRAVIS_TAG}
 
+    - stage: 'Publish (beta)'
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+\-beta+[0-9]?$/
+      name: publish beta
+      os: linux
+      env: APP_VERSION=${TRAVIS_TAG#v}
+
+      before_install:
+        - ./scripts/pull_travis_ci_tools.sh
+
+      install:
+        # installs hub to ~/bin
+        - $HOME/travisci-tools/release_github/install_hub.sh
+        - export PATH=$HOME/bin:$HOME/travisci-tools/slack:$PATH
+
+      before_script: skip
+
+      script:
+        # how to use hub: https://hub.github.com/hub.1.html
+        - hub release edit --draft=true -m "" ${TRAVIS_TAG}
+
     - stage: 'Readme-sync-preview'
       # publishes changes in your docs pull request (ie, contains changes to /docs/readme-sync directory) to https://rollouts-sandbox-doc-test.readme.io/ for previewing before 
       # committing to master
