@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.0.0-beta] - August 24, 2020
 - Add SDK key validation configuration
-- Reject request with invalid host
+- Reject request with invalid host (excluding port)
 - Block content type other than application/json 
 - Introducing support for authenticated datafiles
 
