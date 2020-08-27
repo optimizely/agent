@@ -101,7 +101,7 @@ jobs:
         - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh
 
     - stage: 'Build, Upload and Publish (draft)'
-      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+(\-beta)?[0-9]*$/
       name: linux
       os: linux
       dist: xenial
@@ -127,7 +127,7 @@ jobs:
         - $TRAVIS_BUILD_DIR/scripts/ci_build_generate_secret.sh && $TRAVIS_BUILD_DIR/scripts/ci_attach_generate_secret.sh
 
     - stage: 'Test github release assets'
-      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+(\-beta)?[0-9]*$/
       name: linux
       os: linux
       env: APP_VERSION=${TRAVIS_TAG#v}
@@ -151,7 +151,7 @@ jobs:
         - SLACK_TEXT="${APP_VERSION} $TRAVIS_OS_NAME assets failed verification." send_to_slack.sh
 
     - stage: 'Test github release assets'
-      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+(\-beta)?[0-9]*$/
       name: darwin
       os: osx
       env: APP_VERSION=${TRAVIS_TAG#v}
@@ -176,7 +176,7 @@ jobs:
         - SLACK_TEXT="${APP_VERSION} $TRAVIS_OS_NAME assets failed verification." send_to_slack.sh
 
     - stage: 'Test github release assets'
-      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+(\-beta)?[0-9]*$/
       name: windows
       os: windows
       env: APP_VERSION=${TRAVIS_TAG#v}
@@ -200,7 +200,7 @@ jobs:
         - SLACK_TEXT="${APP_VERSION} $TRAVIS_OS_NAME assets failed verification." send_to_slack.sh
 
     - stage: 'Publish (real)'
-      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+(\-beta)?[0-9]*$/
       name: publish and notify in slack
       os: linux
       env: APP_VERSION=${TRAVIS_TAG#v}
@@ -221,7 +221,7 @@ jobs:
         - hub release edit --draft=false -m "" ${TRAVIS_TAG}
 
     - stage: 'Publish (beta)'
-      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+\-beta+[0-9]?$/
+      if: type = push AND tag IS present AND tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+(\-beta)?[0-9]*$/
       name: publish beta
       os: linux
       env: APP_VERSION=${TRAVIS_TAG#v}
