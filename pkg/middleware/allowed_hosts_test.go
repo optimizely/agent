@@ -18,10 +18,12 @@
 package middleware
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
+	"net/http"
+	"net/http/httptest"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -52,8 +54,8 @@ func (s *AllowedHostsTestSuite) TestURLHost() {
 		{"https://example.com/v1/config", http.StatusOK},
 
 		// wrong URL host, expect http.StatusNotFound
-		{ "https://evil.com:8080/v1/config", http.StatusNotFound},
-		{ "https://evil.com/v1/config", http.StatusNotFound},
+		{"https://evil.com:8080/v1/config", http.StatusNotFound},
+		{"https://evil.com/v1/config", http.StatusNotFound},
 	}
 
 	for _, scenario := range scenarios {
@@ -69,7 +71,7 @@ func (s *AllowedHostsTestSuite) TestCustomHeaders() {
 		inputHeaderKey string
 		inputHeaderVal string
 		expectedStatus int
-	} {
+	}{
 		// X-Forwarded-Host is valid, expect http.statusOK
 		{"X-Forwarded-Host", "example.com:8080", http.StatusOK},
 		{"X-Forwarded-Host", "example.com", http.StatusOK},
@@ -96,6 +98,54 @@ func (s *AllowedHostsTestSuite) TestCustomHeaders() {
 	}
 }
 
+func (s *AllowedHostsTestSuite) TestPartialSubdomainMatch() {
+}
+
 func TestAllowedHostsTestSuite(t *testing.T) {
 	suite.Run(t, new(AllowedHostsTestSuite))
+}
+
+func TestAllowedHostsSubdomainMatching(t *testing.T) {
+	handler := AllowedHosts([]string{".125.27.44", ".mydomain.example.com"})(okHandler)
+	scenarios := []struct {
+		inputUrl       string
+		expectedStatus int
+	}{
+		// subdomains of .125.27.44 should be allowed
+		{"https://76.125.27.44:8080/v1/config", http.StatusOK},
+		{"https://123.86.125.27.44/v1/config", http.StatusOK},
+
+		// subdomains of .mydomain.example.com should be allowed
+		{"https://hello.mydomain.example.com:8080/v1/config", http.StatusOK},
+		{"https://opti.mizely.mydomain.example.com/v1/config", http.StatusOK},
+
+		// Non-matches should be rejected
+		{"https://evil.com:8080/v1/config", http.StatusNotFound},
+		{"https://hello.evil.com/v1/config", http.StatusNotFound},
+		{"https://123.86.125.28.44/v1/config", http.StatusNotFound},
+		{"https://opti.mydomain.example.com.biz", http.StatusNotFound},
+	}
+	for _, scenario := range scenarios {
+		req := httptest.NewRequest("GET", scenario.inputUrl, nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, scenario.expectedStatus, rec.Code)
+	}
+}
+
+func TestAllowedHostsAllowAll(t *testing.T) {
+	handler := AllowedHosts([]string{"."})(okHandler)
+	urls := []string{
+		"https://opti.example.com/v1/config",
+		"https://heyyo.some.domain/v1/config",
+		"https://evil.com:8080/v1/config",
+		"https://hello.evil.com/v1/config",
+		"https://76.125.27.44:8080/v1/config",
+	}
+	for _, url := range urls {
+		req := httptest.NewRequest("GET", url, nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
+	}
 }
