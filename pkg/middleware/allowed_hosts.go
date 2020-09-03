@@ -33,8 +33,7 @@ var errInvalidRequestHost = errors.New("invalid request host")
 // 2. Forwarded header host= directive value
 // 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
 func AllowedHosts(allowedHosts []string) func(next http.Handler) http.Handler {
-	allowedExactMatches := make(map[string]bool)
-	allowedSubdomainMatches := []string{}
+	allowedMap := make(map[string]bool)
 	for _, allowedHost := range allowedHosts {
 		if allowedHost == "." {
 			// All hosts are allowed - no need to perform any checking
@@ -46,11 +45,7 @@ func AllowedHosts(allowedHosts []string) func(next http.Handler) http.Handler {
 			}
 		}
 
-		if strings.Index(allowedHost, ".") == 0 {
-			allowedSubdomainMatches = append(allowedSubdomainMatches, allowedHost)
-		} else {
-			allowedExactMatches[allowedHost] = true
-		}
+		allowedMap[allowedHost] = true
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -58,18 +53,19 @@ func AllowedHosts(allowedHosts []string) func(next http.Handler) http.Handler {
 			host := strings.Split(requestHost(r), ":")[0]
 			log.Debug().Strs("allowedHosts", allowedHosts).Str("host", host).Msg("After stripping port, checking final host value against allowedHosts")
 
-			if allowedExactMatches[host] {
-				log.Debug().Str("host", host).Msg("Exact match found in allowedHosts, allowing request through")
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			for _, allowedSubdomain := range allowedSubdomainMatches {
-				if strings.HasSuffix(host, allowedSubdomain) {
-					log.Debug().Str("host", host).Str("allowed suffix", allowedSubdomain).Msg("Suffix match found in allowedHosts, allowing request through")
+			for currentMatchPrefix := host; currentMatchPrefix != ""; {
+				if allowedMap[currentMatchPrefix] {
 					next.ServeHTTP(w, r)
 					return
 				}
+				dotIndex := strings.Index(currentMatchPrefix, ".")
+				if dotIndex == 0 {
+					dotIndex = strings.Index(currentMatchPrefix[1:], ".")
+				}
+				if dotIndex == -1 {
+					break
+				}
+				currentMatchPrefix = currentMatchPrefix[dotIndex:]
 			}
 
 			RenderError(errInvalidRequestHost, http.StatusNotFound, w, r)
