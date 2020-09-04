@@ -5,7 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
+
+- Add support for subdomain matching in `server.allowedHosts` configuration property.
 
 ## [2.0.0] - August 27, 2020
 - Add SDK key validation configuration
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Previously, Agent was listening on all interfaces, and did not allow configuring the network interface that it listens on. NewServer allowed specification of a port to listen on, but not an address.
   - Now, we have added configurable HOST, with the default value set to the localhost (127.0.0.1)
   - If there is a need to deploy Agent in docker, then the Host needs to be set to 0.0.0.0. This can be achieved by setting variable `OPTIMIZELY_SERVER_HOST=0.0.0.0`, or setting `server.host` to 0.0.0.0 in config file.
+- Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
 
 ## [1.3.0] - July 7th, 2020
 - Upgrade to use go-sdk v1.3.0. This adds support for JSON feature variables
