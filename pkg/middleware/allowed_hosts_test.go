@@ -98,9 +98,6 @@ func (s *AllowedHostsTestSuite) TestCustomHeaders() {
 	}
 }
 
-func (s *AllowedHostsTestSuite) TestPartialSubdomainMatch() {
-}
-
 func TestAllowedHostsTestSuite(t *testing.T) {
 	suite.Run(t, new(AllowedHostsTestSuite))
 }
