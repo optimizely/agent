@@ -68,7 +68,12 @@ func (rec *BatchWriter) Write(b []byte) (int, error) {
 	if rec.statusCode != http.StatusOK {
 		rec.BResponse.ErrorCount++
 	}
-	bri := BatchResposeItem{Status: rec.statusCode, OrigResponse: data, Method: rec.method, URL: rec.url, RequestID: rec.headerMap["X-Request-Id"][0]}
+	requestID := ""
+	if header, ok := rec.headerMap["X-Request-Id"]; ok {
+		requestID = header[0]
+
+	}
+	bri := BatchResposeItem{Status: rec.statusCode, OrigResponse: data, Method: rec.method, URL: rec.url, RequestID: requestID}
 	rec.BResponse.Response = append(rec.BResponse.Response, bri)
 	rec.BResponse.EndedAt = time.Now()
 	return 0, nil
