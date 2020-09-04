@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Introducing support for authenticated datafiles
 
 ### Breaking Changes
+- Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
 - Agent will now reject the request if the content-type is not specified from the clients
 - Add Host as a configurable item
   - Previously, Agent was listening on all interfaces, and did not allow configuring the network interface that it listens on. NewServer allowed specification of a port to listen on, but not an address.
