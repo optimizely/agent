@@ -105,7 +105,7 @@ func TestAllowedHostsTestSuite(t *testing.T) {
 	suite.Run(t, new(AllowedHostsTestSuite))
 }
 
-func TestAllowedHostsSubdomainMatching(t *testing.T) {
+func TestAllowedHostsSuffixMatching(t *testing.T) {
 	handler := AllowedHosts([]string{".125.27.44", ".mydomain.example.com"})(okHandler)
 	scenarios := []struct {
 		inputUrl       string
@@ -130,6 +130,15 @@ func TestAllowedHostsSubdomainMatching(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 		assert.Equal(t, scenario.expectedStatus, rec.Code)
+	}
+
+	handler = AllowedHosts([]string{".example.com", ".net"})(okHandler)
+	urls := []string{"http://ab.cd.ef.g.example.com", "http://example.net", "http://my.example.net"}
+	for _, url := range urls {
+		req := httptest.NewRequest("GET", url, nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
 
