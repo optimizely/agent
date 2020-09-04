@@ -18,10 +18,9 @@
 package middleware
 
 import (
-	"testing"
-
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -130,6 +129,7 @@ func TestAllowedHostsSuffixMatching(t *testing.T) {
 	}
 
 	handler = AllowedHosts([]string{".example.com", ".net"})(okHandler)
+	// Subdomains of .net and .example.com should be allowed
 	urls := []string{"http://ab.cd.ef.g.example.com", "http://example.net", "http://my.example.net"}
 	for _, url := range urls {
 		req := httptest.NewRequest("GET", url, nil)
@@ -141,6 +141,7 @@ func TestAllowedHostsSuffixMatching(t *testing.T) {
 
 func TestAllowedHostsAllowAll(t *testing.T) {
 	handler := AllowedHosts([]string{"."})(okHandler)
+	// Any host should be allowed
 	urls := []string{
 		"https://opti.example.com/v1/config",
 		"https://heyyo.some.domain/v1/config",
