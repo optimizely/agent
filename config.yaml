@@ -31,6 +31,7 @@ server:
     ## List of allowed request host values.
     ## Requests whose host value does not match either the configured server.host, or one of these, will be rejected
     ## with a 404 response.
+    ## To match all subdomains, you can use a leading dot (for example .example.com matches my.example.com, hello.world.example.com, etc.).
     ## Request host is determined in the following priority order:
     ## 1. X-Forwarded-Host header value
     ## 2. Forwarded header host= directive value
