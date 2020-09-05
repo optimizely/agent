@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-- Add support for subdomain matching in `server.allowedHosts` configuration property.
+- For `server.allowedHosts` configuration property, add support for matching all subdomains of a host, or all hosts
 
 ## [2.0.0] - August 27, 2020
 - Add SDK key validation configuration
