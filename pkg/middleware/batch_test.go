@@ -55,7 +55,7 @@ func (suite *RequestHeader) TestBatchRouter() {
 		}
 	}]}`
 
-	request := Request{}
+	request := BatchRequest{}
 	err := json.Unmarshal([]byte(operations), &request)
 	suite.NoError(err)
 
@@ -76,12 +76,12 @@ func (suite *RequestHeader) TestBatchRouter() {
 	suite.False(response.StartedAt.IsZero())
 	suite.False(response.EndedAt.IsZero())
 
-	responseItem := response.Response[0]
+	responseItem := response.ResponseItems[0]
 	suite.Equal("/v1/config", responseItem.URL)
 	suite.Equal("GET", responseItem.Method)
 	suite.Equal("request1", responseItem.RequestID)
 	suite.Equal(403, responseItem.Status)
-	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.OrigResponse)
+	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.Body)
 }
 
 func TestTestBatchRouterSuite(t *testing.T) {

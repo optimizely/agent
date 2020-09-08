@@ -28,64 +28,73 @@ import (
 
 // BatchResposeItem holds the structure for each item
 type BatchResposeItem struct {
-	Status       int         `json:"status"`
-	RequestID    string      `json:"requestID"`
-	Method       string      `json:"method"`
-	URL          string      `json:"url"`
-	OrigResponse interface{} `json:"origResponse"`
+	Status    int         `json:"status"`
+	RequestID string      `json:"requestID"`
+	Method    string      `json:"method"`
+	URL       string      `json:"url"`
+	Body      interface{} `json:"body"`
 }
 
 // BatchResponse has the structure for the final response
 type BatchResponse struct {
-	StartedAt  time.Time          `json:"startedAt"`
-	EndedAt    time.Time          `json:"endedAt"`
-	ErrorCount int                `json:"errorCount"`
-	Response   []BatchResposeItem `json:"response"`
+	StartedAt     time.Time          `json:"startedAt"`
+	EndedAt       time.Time          `json:"endedAt"`
+	ErrorCount    int                `json:"errorCount"`
+	ResponseItems []BatchResposeItem `json:"response"`
 }
 
 // BatchWriter implements http.ResponseWriter
 type BatchWriter struct {
-	statusCode int
-	headerMap  http.Header
-	method     string
-	url        string
-
 	BResponse BatchResponse
 }
 
+func (br *BatchWriter) append(rec *ResponseCollector) {
+	br.BResponse.EndedAt = time.Now()
+	if rec.BResponse.Status != http.StatusOK {
+		br.BResponse.ErrorCount++
+	}
+
+	br.BResponse.ResponseItems = append(br.BResponse.ResponseItems, rec.BResponse)
+	br.BResponse.EndedAt = time.Now()
+}
+
+// ResponseCollector collects responses for the writer
+type ResponseCollector struct {
+	headerMap http.Header
+
+	BResponse BatchResposeItem
+}
+
 // WriteHeader sets the status code
-func (rec *BatchWriter) WriteHeader(code int) {
-	rec.statusCode = code
+func (rec *ResponseCollector) WriteHeader(code int) {
+	rec.BResponse.Status = code
 }
 
 // Write is just the collector for BatchResponse
-func (rec *BatchWriter) Write(b []byte) (int, error) {
+func (rec *ResponseCollector) Write(b []byte) (int, error) {
 
 	var data interface{}
 	if err := json.Unmarshal(b, &data); err != nil {
 		return 0, err
 	}
-	if rec.statusCode != http.StatusOK {
-		rec.BResponse.ErrorCount++
-	}
+
 	requestID := ""
 	if header, ok := rec.headerMap["X-Request-Id"]; ok {
 		requestID = header[0]
 
 	}
-	bri := BatchResposeItem{Status: rec.statusCode, OrigResponse: data, Method: rec.method, URL: rec.url, RequestID: requestID}
-	rec.BResponse.Response = append(rec.BResponse.Response, bri)
-	rec.BResponse.EndedAt = time.Now()
+	rec.BResponse.Body = data
+	rec.BResponse.RequestID = requestID
 	return 0, nil
 }
 
 // Header returns header map
-func (rec *BatchWriter) Header() http.Header {
+func (rec *ResponseCollector) Header() http.Header {
 	return rec.headerMap
 }
 
-// Request is the original request that is used for batching
-type Request struct {
+// BatchRequest is the original request that is used for batching
+type BatchRequest struct {
 	Operations []struct {
 		Method      string                 `json:"method"`
 		URL         string                 `json:"url"`
@@ -102,43 +111,45 @@ func BatchRouter(next http.Handler) http.Handler {
 		if r.Method == "POST" && strings.HasSuffix(strings.ToLower(r.URL.Path), "/batch") {
 
 			decoder := json.NewDecoder(r.Body)
-			var req Request
+			var req BatchRequest
 			err := decoder.Decode(&req)
 			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
 				render.JSON(w, r, `{"error": "cannot decode the operation body"}`)
 				return
 			}
-			batchWriter := BatchWriter{200, make(http.Header), "", "",
-				BatchResponse{StartedAt: time.Now(), Response: []BatchResposeItem{}}}
+			batchWriter := BatchWriter{BatchResponse{StartedAt: time.Now(), ResponseItems: []BatchResposeItem{}}}
 
 			for _, op := range req.Operations {
+
 				bytesBody, e := json.Marshal(op.Body)
 				if err != nil {
 					GetLogger(r).Error().Err(e).Msg("cannot convert operation body to bytes for operation id " + op.OperationID)
 					continue
 				}
 				reader := bytes.NewReader(bytesBody)
-				newReq, e := http.NewRequest(op.Method, op.URL, reader)
+				opReq, e := http.NewRequest(op.Method, op.URL, reader)
 				if e != nil {
 					GetLogger(r).Error().Err(e).Msg("cannot make a new request for operation id: " + op.OperationID)
 					continue
 				}
 
+				col := ResponseCollector{make(http.Header), BatchResposeItem{Status: 200, Method: op.Method, URL: op.URL}}
+
 				for headerKey, headerValue := range op.Headers {
-					newReq.Header.Add(headerKey, headerValue)
-					batchWriter.headerMap[headerKey] = []string{headerValue}
+					opReq.Header.Add(headerKey, headerValue)
+					col.headerMap[headerKey] = []string{headerValue}
 				}
 
 				for paramKey, paramValue := range op.Params {
-					values := newReq.URL.Query()
+					values := opReq.URL.Query()
 					values.Add(paramKey, paramValue)
-					newReq.URL.RawQuery = values.Encode()
+					opReq.URL.RawQuery = values.Encode()
 				}
 
-				batchWriter.method = op.Method
-				batchWriter.url = op.URL
-
-				next.ServeHTTP(&batchWriter, newReq)
+				next.ServeHTTP(&col, opReq)
+				// Append response item
+				batchWriter.append(&col)
 			}
 
 			render.JSON(w, r, batchWriter.BResponse)
