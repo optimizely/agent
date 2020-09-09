@@ -53,6 +53,18 @@ func (suite *RequestBatch) TestBatchRouter() {
 			"X-Optimizely-SDK-Key": "sdk_key",
             "X-Request-Id": "request1"
 		}
+	},
+    {
+		"method": "POST",
+		"url": "/v1/activate",
+		"operation_id": "2",
+		"body": {
+		},
+		"params": {"paramKey": "paramValue"},
+		"headers": {
+			"X-Optimizely-SDK-Key": "sdk_key",
+            "X-Request-Id": "request2"
+		}
 	}]}`
 
 	request := BatchRequest{}
@@ -72,16 +84,23 @@ func (suite *RequestBatch) TestBatchRouter() {
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	suite.NoError(err)
 
-	suite.Equal(1, response.ErrorCount)
+	suite.Equal(2, response.ErrorCount)
 	suite.False(response.StartedAt.IsZero())
 	suite.False(response.EndedAt.IsZero())
 
-	responseItem := response.ResponseItems[0]
-	suite.Equal("/v1/config", responseItem.URL)
-	suite.Equal("GET", responseItem.Method)
-	suite.Equal("request1", responseItem.RequestID)
-	suite.Equal(403, responseItem.Status)
-	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.Body)
+	responseItem1 := response.ResponseItems[0]
+	suite.Equal("/v1/config", responseItem1.URL)
+	suite.Equal("GET", responseItem1.Method)
+	suite.Equal("request1", responseItem1.RequestID)
+	suite.Equal(403, responseItem1.Status)
+	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem1.Body)
+
+	responseItem2 := response.ResponseItems[1]
+	suite.Equal("/v1/activate", responseItem2.URL)
+	suite.Equal("POST", responseItem2.Method)
+	suite.Equal("request2", responseItem2.RequestID)
+	suite.Equal(403, responseItem2.Status)
+	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem2.Body)
 }
 
 func TestTestBatchRouterSuite(t *testing.T) {
