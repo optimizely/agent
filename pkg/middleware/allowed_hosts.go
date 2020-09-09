@@ -33,19 +33,37 @@ var errInvalidRequestHost = errors.New("invalid request host")
 // 2. Forwarded header host= directive value
 // 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
 func AllowedHosts(allowedHosts []string) func(next http.Handler) http.Handler {
-	allowedMap := make(map[string]bool)
-	for _, allowedHost := range allowedHosts {
-		allowedMap[allowedHost] = true
-	}
-
 	return func(next http.Handler) http.Handler {
+		allowedMap := make(map[string]bool)
+		for _, allowedHost := range allowedHosts {
+			if allowedHost == "." {
+				// All hosts are allowed - no need to perform any checking
+				log.Warn().Msg("Allowed hosts checking disabled because \".\" was included in allowedHosts")
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					next.ServeHTTP(w, r)
+				})
+			}
+
+			allowedMap[allowedHost] = true
+		}
+
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			host := strings.Split(requestHost(r), ":")[0]
 			log.Debug().Strs("allowedHosts", allowedHosts).Str("host", host).Msg("After stripping port, checking final host value against allowedHosts")
-			if allowedMap[host] {
-				next.ServeHTTP(w, r)
-				return
+
+			for currentHostSuffix := host; len(currentHostSuffix) > 0; {
+				if allowedMap[currentHostSuffix] {
+					next.ServeHTTP(w, r)
+					return
+				}
+				currentHostSuffix = strings.TrimPrefix(currentHostSuffix, ".")
+				nextDotIndex := strings.Index(currentHostSuffix, ".")
+				if nextDotIndex == -1 {
+					break
+				}
+				currentHostSuffix = currentHostSuffix[nextDotIndex:]
 			}
+
 			RenderError(errInvalidRequestHost, http.StatusNotFound, w, r)
 		})
 	}
