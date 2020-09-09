@@ -38,3 +38,5 @@ exclude (
 	github.com/coreos/etcd v3.3.21+incompatible
 	github.com/gorilla/websocket v1.4.0
 )
+
+replace github.com/coreos/etcd v3.3.22+incompatible => github.com/etcd-io/etcd v3.3.25+incompatible
