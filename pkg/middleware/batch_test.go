@@ -39,7 +39,7 @@ var getBatchHandler = func() http.HandlerFunc {
 	})
 }
 
-func (suite *RequestHeader) TestBatchRouter() {
+func (suite *RequestBatch) TestBatchRouter() {
 
 	operations := `{"operations": [
 	{
