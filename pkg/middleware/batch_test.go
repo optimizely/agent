@@ -86,5 +86,4 @@ func (suite *RequestBatch) TestBatchRouter() {
 
 func TestTestBatchRouterSuite(t *testing.T) {
 	suite.Run(t, new(RequestBatch))
-
 }
