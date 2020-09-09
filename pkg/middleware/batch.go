@@ -20,12 +20,14 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-chi/render"
+	"golang.org/x/sync/errgroup"
 )
 
 // BatchResponse has the structure for the final response
@@ -34,6 +36,8 @@ type BatchResponse struct {
 	EndedAt       time.Time           `json:"endedAt"`
 	ErrorCount    int                 `json:"errorCount"`
 	ResponseItems []ResponseCollector `json:"response"`
+
+	lock sync.Mutex
 }
 
 // NewBatchResponse constructs a BatchResponse with default values
@@ -45,10 +49,12 @@ func NewBatchResponse() *BatchResponse {
 }
 
 func (br *BatchResponse) append(col ResponseCollector) {
+	br.lock.Lock()
+	defer br.lock.Unlock()
 	if col.Status != http.StatusOK {
 		br.ErrorCount++
 	}
-
+	col.EndedAt = time.Now()
 	br.ResponseItems = append(br.ResponseItems, col)
 	br.EndedAt = time.Now()
 }
@@ -119,6 +125,36 @@ type BatchRequest struct {
 	Operations []BatchOperation `json:"operations"`
 }
 
+func makeRequest(next http.Handler, op BatchOperation) (col ResponseCollector, err error) {
+
+	bytesBody, e := json.Marshal(op.Body)
+	if e != nil {
+		return col, fmt.Errorf("cannot convert operation body to bytes for operation id: %s with error: %v", op.OperationID, e)
+	}
+	reader := bytes.NewReader(bytesBody)
+	opReq, e := http.NewRequest(op.Method, op.URL, reader)
+	if e != nil {
+		return col, fmt.Errorf("cannot make a new request for operation id: %s, with error: %v", op.OperationID, e)
+	}
+
+	col = NewResponseCollector(op)
+
+	for headerKey, headerValue := range op.Headers {
+		opReq.Header.Add(headerKey, headerValue)
+		col.headerMap[headerKey] = []string{headerValue}
+	}
+
+	for paramKey, paramValue := range op.Params {
+		values := opReq.URL.Query()
+		values.Add(paramKey, paramValue)
+		opReq.URL.RawQuery = values.Encode()
+	}
+
+	next.ServeHTTP(&col, opReq)
+	col.EndedAt = time.Now()
+	return col, nil
+}
+
 // BatchRouter intercepts requests for the given url to return a StatusOK.
 func BatchRouter(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -134,55 +170,20 @@ func BatchRouter(next http.Handler) http.Handler {
 			}
 
 			batchRes := NewBatchResponse()
-			var wg sync.WaitGroup
-			var batchRespLock sync.Mutex
+			var eg errgroup.Group
 
 			for _, op := range req.Operations {
-				wg.Add(1)
-				opFunc := func() error {
-					defer wg.Done()
-
-					next := next
-					bytesBody, e := json.Marshal(op.Body)
-					if e != nil {
-						GetLogger(r).Error().Err(e).Msg("cannot convert operation body to bytes for operation id " + op.OperationID)
-						return e
-					}
-					reader := bytes.NewReader(bytesBody)
-					opReq, e := http.NewRequest(op.Method, op.URL, reader)
-					if e != nil {
-						GetLogger(r).Error().Err(e).Msg("cannot make a new request for operation id: " + op.OperationID)
-						return e
-					}
-
-					col := NewResponseCollector(op)
-
-					for headerKey, headerValue := range op.Headers {
-						opReq.Header.Add(headerKey, headerValue)
-						col.headerMap[headerKey] = []string{headerValue} // Not sure this is needed
-					}
-
-					for paramKey, paramValue := range op.Params {
-						values := opReq.URL.Query()
-						values.Add(paramKey, paramValue)
-						opReq.URL.RawQuery = values.Encode()
-					}
-
-					next.ServeHTTP(&col, opReq)
-					col.EndedAt = time.Now()
-
+				op := op
+				eg.Go(func() error {
+					col, e := makeRequest(next, op)
 					// Append response item
-					batchRespLock.Lock()
 					batchRes.append(col)
-					batchRespLock.Unlock()
-					return nil
-				}
-
-				if e := opFunc(); e != nil {
-					continue
-				}
+					return e
+				})
 			}
-			wg.Wait()
+			if err := eg.Wait(); err != nil {
+				GetLogger(r).Error().Err(err).Msg("Problem with making a request")
+			}
 			render.JSON(w, r, batchRes)
 			return
 		}

@@ -88,19 +88,23 @@ func (suite *RequestBatch) TestBatchRouter() {
 	suite.False(response.StartedAt.IsZero())
 	suite.False(response.EndedAt.IsZero())
 
-	responseItem1 := response.ResponseItems[0]
-	suite.Equal("/v1/config", responseItem1.URL)
-	suite.Equal("GET", responseItem1.Method)
-	suite.Equal("request1", responseItem1.RequestID)
-	suite.Equal(403, responseItem1.Status)
-	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem1.Body)
+	for _, responseItem := range response.ResponseItems {
+		switch responseItem.URL {
+		case "/v1/config":
+			suite.Equal("GET", responseItem.Method)
+			suite.Equal("request1", responseItem.RequestID)
+			suite.Equal(403, responseItem.Status)
+			suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.Body)
 
-	responseItem2 := response.ResponseItems[1]
-	suite.Equal("/v1/activate", responseItem2.URL)
-	suite.Equal("POST", responseItem2.Method)
-	suite.Equal("request2", responseItem2.RequestID)
-	suite.Equal(403, responseItem2.Status)
-	suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem2.Body)
+		case "/v1/activate":
+			suite.Equal("POST", responseItem.Method)
+			suite.Equal("request2", responseItem.RequestID)
+			suite.Equal(403, responseItem.Status)
+			suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.Body)
+		default:
+			suite.Fail("unsupported case")
+		}
+	}
 }
 
 func TestTestBatchRouterSuite(t *testing.T) {
