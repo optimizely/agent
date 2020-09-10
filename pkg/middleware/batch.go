@@ -61,11 +61,12 @@ func (br *BatchResponse) append(col ResponseCollector) {
 
 // ResponseCollector collects responses for the writer
 type ResponseCollector struct {
-	Status    int         `json:"status"`
-	RequestID string      `json:"requestID"`
-	Method    string      `json:"method"`
-	URL       string      `json:"url"`
-	Body      interface{} `json:"body"`
+	Status      int         `json:"status"`
+	RequestID   string      `json:"requestID"`
+	OperationID string      `json:"operationID"`
+	Method      string      `json:"method"`
+	URL         string      `json:"url"`
+	Body        interface{} `json:"body"`
 
 	StartedAt time.Time `json:"startedAt"`
 	EndedAt   time.Time `json:"endedAt"`
@@ -76,11 +77,12 @@ type ResponseCollector struct {
 // NewResponseCollector constructs a ResponseCollector with default values
 func NewResponseCollector(op BatchOperation) ResponseCollector {
 	return ResponseCollector{
-		headerMap: make(http.Header),
-		Method:    op.Method,
-		URL:       op.URL,
-		StartedAt: time.Now(),
-		Status:    http.StatusOK,
+		headerMap:   make(http.Header),
+		Method:      op.Method,
+		URL:         op.URL,
+		OperationID: op.OperationID,
+		StartedAt:   time.Now(),
+		Status:      http.StatusOK,
 	}
 }
 
@@ -127,17 +129,20 @@ type BatchRequest struct {
 
 func makeRequest(next http.Handler, op BatchOperation) (col ResponseCollector, err error) {
 
+	col = NewResponseCollector(op)
+
 	bytesBody, e := json.Marshal(op.Body)
 	if e != nil {
+		col.Status = http.StatusBadRequest
 		return col, fmt.Errorf("cannot convert operation body to bytes for operation id: %s with error: %v", op.OperationID, e)
 	}
 	reader := bytes.NewReader(bytesBody)
 	opReq, e := http.NewRequest(op.Method, op.URL, reader)
+
 	if e != nil {
+		col.Status = http.StatusBadRequest
 		return col, fmt.Errorf("cannot make a new request for operation id: %s, with error: %v", op.OperationID, e)
 	}
-
-	col = NewResponseCollector(op)
 
 	for headerKey, headerValue := range op.Headers {
 		opReq.Header.Add(headerKey, headerValue)

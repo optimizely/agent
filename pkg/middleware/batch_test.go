@@ -45,7 +45,7 @@ func (suite *RequestBatch) TestBatchRouter() {
 	{
 		"method": "GET",
 		"url": "/v1/config",
-		"operation_id": "1",
+		"operationID": "1",
 		"body": {
 		},
 		"params": {"paramKey": "paramValue"},
@@ -57,13 +57,25 @@ func (suite *RequestBatch) TestBatchRouter() {
     {
 		"method": "POST",
 		"url": "/v1/activate",
-		"operation_id": "2",
+		"operationID": "2",
 		"body": {
 		},
 		"params": {"paramKey": "paramValue"},
 		"headers": {
 			"X-Optimizely-SDK-Key": "sdk_key",
             "X-Request-Id": "request2"
+		}
+	},
+    {
+		"method": "bad_request",
+		"url": "/v1/#%",
+		"operationID": "3",
+		"body": {
+		},
+		"params": {"paramKey": "paramValue"},
+		"headers": {
+			"X-Optimizely-SDK-Key": "sdk_key",
+            "X-Request-Id": "request3"
 		}
 	}]}`
 
@@ -84,7 +96,7 @@ func (suite *RequestBatch) TestBatchRouter() {
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	suite.NoError(err)
 
-	suite.Equal(2, response.ErrorCount)
+	suite.Equal(3, response.ErrorCount)
 	suite.False(response.StartedAt.IsZero())
 	suite.False(response.EndedAt.IsZero())
 
@@ -93,14 +105,23 @@ func (suite *RequestBatch) TestBatchRouter() {
 		case "/v1/config":
 			suite.Equal("GET", responseItem.Method)
 			suite.Equal("request1", responseItem.RequestID)
+			suite.Equal("1", responseItem.OperationID)
 			suite.Equal(403, responseItem.Status)
 			suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.Body)
 
 		case "/v1/activate":
 			suite.Equal("POST", responseItem.Method)
 			suite.Equal("request2", responseItem.RequestID)
+			suite.Equal("2", responseItem.OperationID)
 			suite.Equal(403, responseItem.Status)
 			suite.Equal(map[string]interface{}{"error": "unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}, responseItem.Body)
+
+		case "/v1/#%":
+			suite.Equal("bad_request", responseItem.Method)
+			suite.Equal(400, responseItem.Status)
+			suite.Equal("3", responseItem.OperationID)
+			suite.Equal(nil, responseItem.Body)
+
 		default:
 			suite.Fail("unsupported case")
 		}
