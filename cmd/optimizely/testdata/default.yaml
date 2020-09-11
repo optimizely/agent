@@ -12,6 +12,9 @@ server:
   keyFile: "keyfile"
   certFile: "certfile"
   host: "1.2.3.4"
+  batchRequests:
+    parallelRequests: 10
+    operationsLimit: 100
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"

@@ -53,7 +53,7 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
-	withBatchHandler := middleware.BatchRouter(handler)
+	withBatchHandler := middleware.BatchRouter(conf.BatchRequests)(handler)
 	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts())(withBatchHandler)
 	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
 	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()

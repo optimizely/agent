@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/optimizely/agent/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,12 +33,10 @@ type RequestBatch struct {
 	suite.Suite
 }
 
-var getBatchHandler = func() http.HandlerFunc {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusForbidden)
-		fmt.Fprintln(rw, `{"error":"unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}`)
-	})
-}
+var batchHandler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	rw.WriteHeader(http.StatusForbidden)
+	fmt.Fprintln(rw, `{"error":"unable to fetch fresh datafile (consider rechecking SDK key), status code: 403 Forbidden"}`)
+})
 
 func (suite *RequestBatch) TestBatchRouter() {
 
@@ -89,7 +88,8 @@ func (suite *RequestBatch) TestBatchRouter() {
 
 	req := httptest.NewRequest("POST", "/batch", reader)
 	rec := httptest.NewRecorder()
-	handler := http.Handler(BatchRouter(getBatchHandler()))
+	handler := BatchRouter(config.BatchRequestsConfig{OperationsLimit: 3, ParallelRequests: 1})(batchHandler)
+
 	handler.ServeHTTP(rec, req)
 
 	response := BatchResponse{}

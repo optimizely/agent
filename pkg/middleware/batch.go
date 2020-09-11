@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/optimizely/agent/config"
+
 	"github.com/go-chi/render"
 	"golang.org/x/sync/errgroup"
 )
@@ -54,7 +56,6 @@ func (br *BatchResponse) append(col ResponseCollector) {
 	if col.Status != http.StatusOK {
 		br.ErrorCount++
 	}
-	col.EndedAt = time.Now()
 	br.ResponseItems = append(br.ResponseItems, col)
 	br.EndedAt = time.Now()
 }
@@ -127,21 +128,20 @@ type BatchRequest struct {
 	Operations []BatchOperation `json:"operations"`
 }
 
-func makeRequest(next http.Handler, op BatchOperation) (col ResponseCollector, err error) {
+func makeRequest(next http.Handler, op BatchOperation) (ResponseCollector, error) {
 
-	col = NewResponseCollector(op)
+	col := NewResponseCollector(op)
 
-	bytesBody, e := json.Marshal(op.Body)
-	if e != nil {
+	bytesBody, err := json.Marshal(op.Body)
+	if err != nil {
 		col.Status = http.StatusBadRequest
-		return col, fmt.Errorf("cannot convert operation body to bytes for operation id: %s with error: %v", op.OperationID, e)
+		return col, fmt.Errorf("cannot convert operation body to bytes for operation id: %s with error: %v", op.OperationID, err)
 	}
 	reader := bytes.NewReader(bytesBody)
-	opReq, e := http.NewRequest(op.Method, op.URL, reader)
-
-	if e != nil {
+	opReq, err := http.NewRequest(op.Method, op.URL, reader)
+	if err != nil {
 		col.Status = http.StatusBadRequest
-		return col, fmt.Errorf("cannot make a new request for operation id: %s, with error: %v", op.OperationID, e)
+		return col, fmt.Errorf("cannot make a new request for operation id: %s, with error: %v", op.OperationID, err)
 	}
 
 	for headerKey, headerValue := range op.Headers {
@@ -161,38 +161,53 @@ func makeRequest(next http.Handler, op BatchOperation) (col ResponseCollector, e
 }
 
 // BatchRouter intercepts requests for the given url to return a StatusOK.
-func BatchRouter(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "POST" && strings.HasSuffix(strings.ToLower(r.URL.Path), "/batch") {
+func BatchRouter(batchRequests config.BatchRequestsConfig) func(http.Handler) http.Handler {
 
-			decoder := json.NewDecoder(r.Body)
-			var req BatchRequest
-			err := decoder.Decode(&req)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, `{"error": "cannot decode the operation body"}`)
+	f := func(next http.Handler) http.Handler {
+
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == "POST" && strings.HasSuffix(strings.ToLower(r.URL.Path), "/batch") {
+
+				decoder := json.NewDecoder(r.Body)
+				var req BatchRequest
+				err := decoder.Decode(&req)
+				if err != nil {
+					w.WriteHeader(http.StatusBadRequest)
+					render.JSON(w, r, `{"error": "cannot decode the operation body"}`)
+					return
+				}
+
+				if len(req.Operations) > batchRequests.OperationsLimit {
+					GetLogger(r).Info().Msg(fmt.Sprintf("Too many operations, setting to the first %d operations", batchRequests.OperationsLimit))
+					req.Operations = req.Operations[:batchRequests.OperationsLimit]
+				}
+
+				batchRes := NewBatchResponse()
+				var eg errgroup.Group
+
+				ch := make(chan struct{}, batchRequests.ParallelRequests)
+
+				for _, op := range req.Operations {
+					op := op
+					eg.Go(func() error {
+						ch <- struct{}{}
+						defer func() { <-ch }()
+
+						col, e := makeRequest(next, op)
+						// Append response item
+						batchRes.append(col)
+						return e
+					})
+				}
+				if err := eg.Wait(); err != nil {
+					GetLogger(r).Error().Err(err).Msg("Problem with making a request")
+				}
+				render.JSON(w, r, batchRes)
 				return
 			}
-
-			batchRes := NewBatchResponse()
-			var eg errgroup.Group
-
-			for _, op := range req.Operations {
-				op := op
-				eg.Go(func() error {
-					col, e := makeRequest(next, op)
-					// Append response item
-					batchRes.append(col)
-					return e
-				})
-			}
-			if err := eg.Wait(); err != nil {
-				GetLogger(r).Error().Err(err).Msg("Problem with making a request")
-			}
-			render.JSON(w, r, batchRes)
-			return
+			next.ServeHTTP(w, r)
 		}
-		next.ServeHTTP(w, r)
+		return http.HandlerFunc(fn)
 	}
-	return http.HandlerFunc(fn)
+	return f
 }
