@@ -21,10 +21,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/optimizely/agent/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/optimizely/agent/config"
 
 	"github.com/stretchr/testify/suite"
 )
