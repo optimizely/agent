@@ -94,8 +94,8 @@ func NewDefaultConfig() *AgentConfig {
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
 			BatchRequests: BatchRequestsConfig{
-				ParallelRequests: 1,
-				OperationsLimit:  3,
+				ParallelRequests: 10,
+				OperationsLimit:  500,
 			},
 		},
 		Webhook: WebhookConfig{
