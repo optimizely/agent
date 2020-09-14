@@ -207,7 +207,8 @@ func BatchRouter(batchRequests config.BatchRequestsConfig) func(http.Handler) ht
 					})
 				}
 				if err := eg.Wait(); err != nil {
-					GetLogger(r).Error().Err(err).Msg("Problem with making a request")
+					http.Error(w, `{"error": "problem with making operation requests"}`, http.StatusBadRequest)
+					return
 				}
 				render.JSON(w, r, batchRes)
 				return
