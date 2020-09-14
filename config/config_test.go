@@ -42,7 +42,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, []string{}, conf.Server.DisabledCiphers)
 	assert.Equal(t, "127.0.0.1", conf.Server.Host)
 	assert.Equal(t, []string{"localhost"}, conf.Server.AllowedHosts)
-	assert.Equal(t, 5, conf.Server.BatchRequests.ParallelRequests)
+	assert.Equal(t, 10, conf.Server.BatchRequests.ParallelRequests)
 	assert.Equal(t, 500, conf.Server.BatchRequests.OperationsLimit)
 
 	assert.False(t, conf.Log.Pretty)
