@@ -89,7 +89,7 @@ func (suite *RequestBatch) TestBatchRouter() {
 
 	req := httptest.NewRequest("POST", "/batch", reader)
 	rec := httptest.NewRecorder()
-	handler := BatchRouter(config.BatchRequestsConfig{OperationsLimit: 3, ParallelRequests: 1})(batchHandler)
+	handler := BatchRouter(config.BatchRequestsConfig{OperationsLimit: 3, MaxConcurrency: 1})(batchHandler)
 
 	handler.ServeHTTP(rec, req)
 

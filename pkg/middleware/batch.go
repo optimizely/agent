@@ -128,20 +128,22 @@ type BatchRequest struct {
 	Operations []BatchOperation `json:"operations"`
 }
 
-func makeRequest(next http.Handler, op BatchOperation) (ResponseCollector, error) {
+func makeRequest(next http.Handler, r *http.Request, op BatchOperation) ResponseCollector {
 
 	col := NewResponseCollector(op)
 
 	bytesBody, err := json.Marshal(op.Body)
 	if err != nil {
-		col.Status = http.StatusBadRequest
-		return col, fmt.Errorf("cannot convert operation body to bytes for operation id: %s with error: %v", op.OperationID, err)
+		col.Status = http.StatusNotFound
+		GetLogger(r).Error().Err(err).Msg("cannot convert operation body to bytes for operation id: " + op.OperationID)
+		return col
 	}
 	reader := bytes.NewReader(bytesBody)
 	opReq, err := http.NewRequest(op.Method, op.URL, reader)
 	if err != nil {
 		col.Status = http.StatusBadRequest
-		return col, fmt.Errorf("cannot make a new request for operation id: %s, with error: %v", op.OperationID, err)
+		GetLogger(r).Error().Err(err).Msg("cannot make a new request for operation id: " + op.OperationID)
+		return col
 	}
 
 	for headerKey, headerValue := range op.Headers {
@@ -157,7 +159,7 @@ func makeRequest(next http.Handler, op BatchOperation) (ResponseCollector, error
 
 	next.ServeHTTP(&col, opReq)
 	col.EndedAt = time.Now()
-	return col, nil
+	return col
 }
 
 // BatchRouter intercepts requests for the given url to return a StatusOK.
@@ -172,31 +174,36 @@ func BatchRouter(batchRequests config.BatchRequestsConfig) func(http.Handler) ht
 				var req BatchRequest
 				err := decoder.Decode(&req)
 				if err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					render.JSON(w, r, `{"error": "cannot decode the operation body"}`)
+					http.Error(w, `{"error": "cannot decode the operation body"}`, http.StatusBadRequest)
 					return
 				}
 
 				if len(req.Operations) > batchRequests.OperationsLimit {
-					GetLogger(r).Info().Msg(fmt.Sprintf("Too many operations, setting to the first %d operations", batchRequests.OperationsLimit))
-					req.Operations = req.Operations[:batchRequests.OperationsLimit]
+					http.Error(w, fmt.Sprintf(`{"error": "too many operations, exceeding %d operations"}`, batchRequests.OperationsLimit), http.StatusUnprocessableEntity)
+					return
 				}
 
 				batchRes := NewBatchResponse()
-				var eg errgroup.Group
+				var eg, ctx = errgroup.WithContext(r.Context())
 
-				ch := make(chan struct{}, batchRequests.ParallelRequests)
+				ch := make(chan struct{}, batchRequests.MaxConcurrency)
 
 				for _, op := range req.Operations {
 					op := op
-					eg.Go(func() error {
-						ch <- struct{}{}
-						defer func() { <-ch }()
 
-						col, e := makeRequest(next, op)
-						// Append response item
-						batchRes.append(col)
-						return e
+					ch <- struct{}{}
+					eg.Go(func() error {
+						defer func() { <-ch }()
+						select {
+						case <-ctx.Done():
+							GetLogger(r).Error().Err(ctx.Err()).Msg("terminating request")
+							return ctx.Err()
+						default:
+							col := makeRequest(next, r, op)
+							// Append response item
+							batchRes.append(col)
+						}
+						return nil
 					})
 				}
 				if err := eg.Wait(); err != nil {

@@ -94,8 +94,8 @@ func NewDefaultConfig() *AgentConfig {
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
 			BatchRequests: BatchRequestsConfig{
-				ParallelRequests: 10,
-				OperationsLimit:  500,
+				MaxConcurrency:  10,
+				OperationsLimit: 500,
 			},
 		},
 		Webhook: WebhookConfig{
@@ -196,8 +196,8 @@ type APIConfig struct {
 
 // BatchRequestsConfig holds the configuration for batching
 type BatchRequestsConfig struct {
-	ParallelRequests int `json:"parallelRequests"`
-	OperationsLimit  int `json:"operationsLimit"`
+	MaxConcurrency  int `json:"maxConcurrency"`
+	OperationsLimit int `json:"operationsLimit"`
 }
 
 // CORSConfig holds the CORS middleware configuration
