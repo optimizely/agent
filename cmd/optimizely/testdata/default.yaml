@@ -13,7 +13,7 @@ server:
   certFile: "certfile"
   host: "1.2.3.4"
   batchRequests:
-    maxConcurrency: 10
+    maxConcurrency: 5
     operationsLimit: 100
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
