@@ -109,8 +109,8 @@ Below is a comprehensive list of available configuration properties.
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |server.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|Path for the health status api. Default: /health|
-|server.batchRequests.parallelRequests|OPTIMIZELY_SERVER_BATCHREQUESTS_PARALLELREQUESTS|Number of requests running in parallel. Default: 10|
-|server.batchRequests.operationsLimit|OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT|Number of allowed operations. (it will take the first operations if the mumber of operations exeeds this parameter) Default: 500|
+|server.batchRequests.maxConcurrency|OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY|Number of requests running in parallel. Default: 10|
+|server.batchRequests.operationsLimit|OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT|Number of allowed operations. ( will flag an error if the number of operations exeeds this parameter) Default: 500|
 
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
