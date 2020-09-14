@@ -162,7 +162,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 	v.Set("server.host", "1.2.3.4")
 	v.Set("server.batchRequests.operationsLimit", "100")
-	v.Set("server.batchRequests.parallelRequests", "10")
+	v.Set("server.batchRequests.maxConcurrency", "10")
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
