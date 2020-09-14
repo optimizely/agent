@@ -93,6 +93,10 @@ func NewDefaultConfig() *AgentConfig {
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
+			BatchRequests: BatchRequestsConfig{
+				MaxConcurrency:  10,
+				OperationsLimit: 500,
+			},
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
@@ -159,14 +163,15 @@ type LogConfig struct {
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
-	AllowedHosts    []string      `json:"allowedHosts"`
-	ReadTimeout     time.Duration `json:"readTimeout"`
-	WriteTimeout    time.Duration `json:"writeTimeout"`
-	CertFile        string        `json:"certFile"`
-	KeyFile         string        `json:"keyFile"`
-	DisabledCiphers []string      `json:"disabledCiphers"`
-	HealthCheckPath string        `json:"healthCheckPath"`
-	Host            string        `json:"host"`
+	AllowedHosts    []string            `json:"allowedHosts"`
+	ReadTimeout     time.Duration       `json:"readTimeout"`
+	WriteTimeout    time.Duration       `json:"writeTimeout"`
+	CertFile        string              `json:"certFile"`
+	KeyFile         string              `json:"keyFile"`
+	DisabledCiphers []string            `json:"disabledCiphers"`
+	HealthCheckPath string              `json:"healthCheckPath"`
+	Host            string              `json:"host"`
+	BatchRequests   BatchRequestsConfig `json:"batchRequests"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
@@ -187,6 +192,12 @@ type APIConfig struct {
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
+}
+
+// BatchRequestsConfig holds the configuration for batching
+type BatchRequestsConfig struct {
+	MaxConcurrency  int `json:"maxConcurrency"`
+	OperationsLimit int `json:"operationsLimit"`
 }
 
 // CORSConfig holds the CORS middleware configuration

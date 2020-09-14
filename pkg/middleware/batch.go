@@ -20,10 +20,16 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-chi/render"
+	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/optimizely/agent/config"
+
+	"github.com/go-chi/render"
+	"golang.org/x/sync/errgroup"
 )
 
 // BatchResponse has the structure for the final response
@@ -32,6 +38,8 @@ type BatchResponse struct {
 	EndedAt       time.Time           `json:"endedAt"`
 	ErrorCount    int                 `json:"errorCount"`
 	ResponseItems []ResponseCollector `json:"response"`
+
+	lock sync.Mutex
 }
 
 // NewBatchResponse constructs a BatchResponse with default values
@@ -43,21 +51,23 @@ func NewBatchResponse() *BatchResponse {
 }
 
 func (br *BatchResponse) append(col ResponseCollector) {
+	br.lock.Lock()
+	defer br.lock.Unlock()
 	if col.Status != http.StatusOK {
 		br.ErrorCount++
 	}
-
 	br.ResponseItems = append(br.ResponseItems, col)
 	br.EndedAt = time.Now()
 }
 
 // ResponseCollector collects responses for the writer
 type ResponseCollector struct {
-	Status    int         `json:"status"`
-	RequestID string      `json:"requestID"`
-	Method    string      `json:"method"`
-	URL       string      `json:"url"`
-	Body      interface{} `json:"body"`
+	Status      int         `json:"status"`
+	RequestID   string      `json:"requestID"`
+	OperationID string      `json:"operationID"`
+	Method      string      `json:"method"`
+	URL         string      `json:"url"`
+	Body        interface{} `json:"body"`
 
 	StartedAt time.Time `json:"startedAt"`
 	EndedAt   time.Time `json:"endedAt"`
@@ -68,11 +78,12 @@ type ResponseCollector struct {
 // NewResponseCollector constructs a ResponseCollector with default values
 func NewResponseCollector(op BatchOperation) ResponseCollector {
 	return ResponseCollector{
-		headerMap: make(http.Header),
-		Method:    op.Method,
-		URL:       op.URL,
-		StartedAt: time.Now(),
-		Status:    http.StatusOK,
+		headerMap:   make(http.Header),
+		Method:      op.Method,
+		URL:         op.URL,
+		OperationID: op.OperationID,
+		StartedAt:   time.Now(),
+		Status:      http.StatusOK,
 	}
 }
 
@@ -117,59 +128,94 @@ type BatchRequest struct {
 	Operations []BatchOperation `json:"operations"`
 }
 
-// BatchRouter intercepts requests for the given url to return a StatusOK.
-func BatchRouter(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "POST" && strings.HasSuffix(strings.ToLower(r.URL.Path), "/batch") {
+func makeRequest(next http.Handler, r *http.Request, op BatchOperation) ResponseCollector {
 
-			decoder := json.NewDecoder(r.Body)
-			var req BatchRequest
-			err := decoder.Decode(&req)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, `{"error": "cannot decode the operation body"}`)
+	col := NewResponseCollector(op)
+
+	bytesBody, err := json.Marshal(op.Body)
+	if err != nil {
+		col.Status = http.StatusNotFound
+		GetLogger(r).Error().Err(err).Msg("cannot convert operation body to bytes for operation id: " + op.OperationID)
+		return col
+	}
+	reader := bytes.NewReader(bytesBody)
+	opReq, err := http.NewRequest(op.Method, op.URL, reader)
+	if err != nil {
+		col.Status = http.StatusBadRequest
+		GetLogger(r).Error().Err(err).Msg("cannot make a new request for operation id: " + op.OperationID)
+		return col
+	}
+
+	for headerKey, headerValue := range op.Headers {
+		opReq.Header.Add(headerKey, headerValue)
+		col.headerMap[headerKey] = []string{headerValue}
+	}
+
+	for paramKey, paramValue := range op.Params {
+		values := opReq.URL.Query()
+		values.Add(paramKey, paramValue)
+		opReq.URL.RawQuery = values.Encode()
+	}
+
+	next.ServeHTTP(&col, opReq)
+	col.EndedAt = time.Now()
+	return col
+}
+
+// BatchRouter intercepts requests for the given url to return a StatusOK.
+func BatchRouter(batchRequests config.BatchRequestsConfig) func(http.Handler) http.Handler {
+
+	f := func(next http.Handler) http.Handler {
+
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == "POST" && strings.HasSuffix(strings.ToLower(r.URL.Path), "/batch") {
+
+				decoder := json.NewDecoder(r.Body)
+				var req BatchRequest
+				err := decoder.Decode(&req)
+				if err != nil {
+					http.Error(w, `{"error": "cannot decode the operation body"}`, http.StatusBadRequest)
+					return
+				}
+
+				if len(req.Operations) > batchRequests.OperationsLimit {
+					http.Error(w, fmt.Sprintf(`{"error": "too many operations, exceeding %d operations"}`, batchRequests.OperationsLimit), http.StatusUnprocessableEntity)
+					return
+				}
+
+				batchRes := NewBatchResponse()
+				var eg, ctx = errgroup.WithContext(r.Context())
+
+				ch := make(chan struct{}, batchRequests.MaxConcurrency)
+
+				for _, op := range req.Operations {
+					op := op
+
+					ch <- struct{}{}
+					eg.Go(func() error {
+						defer func() { <-ch }()
+						select {
+						case <-ctx.Done():
+							GetLogger(r).Error().Err(ctx.Err()).Msg("terminating request")
+							return ctx.Err()
+						default:
+							col := makeRequest(next, r, op)
+							// Append response item
+							batchRes.append(col)
+						}
+						return nil
+					})
+				}
+				if err := eg.Wait(); err != nil {
+					http.Error(w, `{"error": "problem with making operation requests"}`, http.StatusBadRequest)
+					return
+				}
+				render.JSON(w, r, batchRes)
 				return
 			}
-
-			batchRes := NewBatchResponse()
-			for _, op := range req.Operations {
-
-				bytesBody, e := json.Marshal(op.Body)
-				if e != nil {
-					GetLogger(r).Error().Err(e).Msg("cannot convert operation body to bytes for operation id " + op.OperationID)
-					continue
-				}
-				reader := bytes.NewReader(bytesBody)
-				opReq, e := http.NewRequest(op.Method, op.URL, reader)
-				if e != nil {
-					GetLogger(r).Error().Err(e).Msg("cannot make a new request for operation id: " + op.OperationID)
-					continue
-				}
-
-				col := NewResponseCollector(op)
-
-				for headerKey, headerValue := range op.Headers {
-					opReq.Header.Add(headerKey, headerValue)
-					col.headerMap[headerKey] = []string{headerValue} // Not sure this is needed
-				}
-
-				for paramKey, paramValue := range op.Params {
-					values := opReq.URL.Query()
-					values.Add(paramKey, paramValue)
-					opReq.URL.RawQuery = values.Encode()
-				}
-
-				next.ServeHTTP(&col, opReq)
-				col.EndedAt = time.Now()
-
-				// Append response item
-				batchRes.append(col)
-			}
-
-			render.JSON(w, r, batchRes)
-			return
+			next.ServeHTTP(w, r)
 		}
-		next.ServeHTTP(w, r)
+		return http.HandlerFunc(fn)
 	}
-	return http.HandlerFunc(fn)
+	return f
 }

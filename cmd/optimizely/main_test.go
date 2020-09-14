@@ -47,6 +47,8 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, "certfile", actual.CertFile)
 	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
 	assert.Equal(t, "1.2.3.4", actual.Host)
+	assert.Equal(t, 100, actual.BatchRequests.OperationsLimit)
+	assert.Equal(t, 5, actual.BatchRequests.MaxConcurrency)
 }
 
 func assertClient(t *testing.T, actual config.ClientConfig) {
@@ -159,6 +161,8 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.keyFile", "keyfile")
 	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 	v.Set("server.host", "1.2.3.4")
+	v.Set("server.batchRequests.operationsLimit", "100")
+	v.Set("server.batchRequests.maxConcurrency", "5")
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
@@ -242,6 +246,8 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 	_ = os.Setenv("OPTIMIZELY_SERVER_HOST", "1.2.3.4")
+	_ = os.Setenv("OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY", "5")
+	_ = os.Setenv("OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT", "100")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_POLLINGINTERVAL", "10s")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_BATCHSIZE", "1")
