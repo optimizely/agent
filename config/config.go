@@ -194,6 +194,7 @@ type APIConfig struct {
 	EnableOverrides     bool              `json:"enableOverrides"`
 }
 
+// BatchRequestsConfig holds the configuration for batching
 type BatchRequestsConfig struct {
 	ParallelRequests int `json:"parallelRequests"`
 	OperationsLimit  int `json:"operationsLimit"`
