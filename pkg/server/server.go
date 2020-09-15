@@ -58,11 +58,9 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 	handler = middleware.BatchRouter(conf.BatchRequests)(handler)
 	handler = middleware.AllowedHosts(conf.GetAllowedHosts())(handler)
 	handler = healthMW(handler, conf.HealthCheckPath)
-	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
-	if plugins, ok := conf.Plugins.(map[string]interface{}); ok {
-		handler = wrapHandler(handler, plugins)
-	}
+	handler = wrapHandler(handler, conf.Plugins)
 
+	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
 		Addr:         conf.Host + ":" + port,
 		Handler:      handler,

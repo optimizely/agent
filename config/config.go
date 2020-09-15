@@ -175,7 +175,7 @@ type ServerConfig struct {
 	HealthCheckPath string              `json:"healthCheckPath"`
 	Host            string              `json:"host"`
 	BatchRequests   BatchRequestsConfig `json:"batchRequests"`
-	Plugins         interface{}         `json:"plugins",mapstructure:"plugins"`
+	Plugins         PluginConfigs       `json:"plugins"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
@@ -226,7 +226,7 @@ type AdminConfig struct {
 type WebhookConfig struct {
 	Port     string                   `json:"port"`
 	Projects map[int64]WebhookProject `json:"projects"`
-	Plugins  []string                 `json:"plugins"`
+	Plugins  PluginConfigs            `json:"plugins"`
 }
 
 // WebhookProject holds the configuration for a single Project webhook

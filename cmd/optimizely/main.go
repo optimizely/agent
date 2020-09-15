@@ -77,7 +77,9 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	}
 
 	// https://github.com/spf13/viper/issues/406
-	conf.Server.Plugins = v.Get("server.plugins")
+	if plugins, ok := v.Get("server.plugins").(map[string]interface{}); ok {
+		conf.Server.Plugins = plugins
+	}
 
 	return conf
 }
