@@ -93,7 +93,7 @@ func NewDefaultConfig() *AgentConfig {
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
-			Plugins:         make(map[string]interface{}, 0),
+			Plugins:         make(map[string]interface{}),
 			BatchRequests: BatchRequestsConfig{
 				MaxConcurrency:  10,
 				OperationsLimit: 500,
@@ -162,6 +162,7 @@ type LogConfig struct {
 	Level  string `json:"level"`
 }
 
+// PluginConfigs defines the generic mapping of middleware plugins
 type PluginConfigs map[string]interface{}
 
 // ServerConfig holds the global http server configs

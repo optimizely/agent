@@ -30,6 +30,8 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	plugins "github.com/optimizely/agent/plugins/middleware"
+
+	// Initiate the loading of the plugin middleware
 	_ "github.com/optimizely/agent/plugins/middleware/all"
 
 	"github.com/go-chi/render"
@@ -110,7 +112,7 @@ func (s Server) Shutdown() {
 
 func wrapHandler(handler http.Handler, conf config.PluginConfigs) http.Handler {
 	for name, conf := range conf {
-		creator, ok := plugins.Middlewares[name]
+		creator, ok := plugins.MiddlewareRegistry[name]
 		if !ok {
 			log.Warn().Msgf("Plugin not found: %q", name)
 			continue
@@ -119,7 +121,7 @@ func wrapHandler(handler http.Handler, conf config.PluginConfigs) http.Handler {
 		log.Info().Str("plugin", name).Msg("Adding plugin.")
 		pInstance := creator()
 		if pConfig, err := json.Marshal(conf); err != nil {
-			log.Warn().Err(err).Msg("Error marshalling plugin config")
+			log.Warn().Err(err).Msg("Error marshaling plugin config")
 			continue
 		} else if err := json.Unmarshal(pConfig, pInstance); err != nil {
 			log.Warn().Err(err).Msg("Error unmarshalling plugin config")
