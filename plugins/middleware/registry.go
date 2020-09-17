@@ -17,20 +17,22 @@
 // Package middleware //
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+)
 
-// Creator type defines a function for creating an instance of a PluginMiddleware
-type Creator func() Middleware
-
-// MiddlewareRegistry stores the mapping of Middleware Creators
-var MiddlewareRegistry = map[string]Creator{}
-
-// Middleware interface for defining a middleware plugin
-type Middleware interface {
+// Plugin interface for defining a middleware plugin
+type Plugin interface {
 	Handler() func(http.Handler) http.Handler
 }
 
+// Creator type defines a function for creating an instance of a PluginMiddleware
+type Creator func() Plugin
+
+// Plugins stores the mapping of Middleware Creators
+var Plugins = map[string]Creator{}
+
 // Add function registers a Middleware Creator
 func Add(name string, creator Creator) {
-	MiddlewareRegistry[name] = creator
+	Plugins[name] = creator
 }

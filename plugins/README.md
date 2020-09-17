@@ -16,7 +16,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/optimizely/agent/plugins/middleware"
+	"github.com/optimizely/agent/pkg/middleware"
 )
 
 type MiddlewarePlugin struct {
@@ -45,7 +45,7 @@ func (p *MiddlewarePlugin) Handler() func(next http.Handler) http.Handler {
 
 // Register our middleware as "example".
 func init() {
-	middleware.Add("example", func() middleware.Middleware {
+	middleware.Add("example", func() middleware.Plugin {
 		return &MiddlewarePlugin{}
 	})
 }

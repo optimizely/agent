@@ -29,7 +29,7 @@ import (
 
 func TestInit(t *testing.T) {
 	name := "httplog"
-	if mw, ok := middleware.MiddlewareRegistry[name]; !ok {
+	if mw, ok := middleware.Plugins[name]; !ok {
 		assert.Failf(t, "Plugin not registered", "%s DNE in registry", name)
 	} else {
 		expected := &httpLog{}

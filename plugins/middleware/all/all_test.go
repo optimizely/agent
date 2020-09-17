@@ -29,7 +29,7 @@ func TestAnonImports(t *testing.T) {
 	plugins := []string{"httplog"}
 
 	for _, plugin := range plugins {
-		actual := middleware.MiddlewareRegistry[plugin]
+		actual := middleware.Plugins[plugin]
 		assert.NotNil(t, actual)
 	}
 }

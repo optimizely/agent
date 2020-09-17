@@ -34,8 +34,8 @@ func (m *testMiddleware) Handler() func(http.Handler) http.Handler {
 }
 
 func TestAdd(t *testing.T) {
-	Add("test", func() Middleware { return &testMiddleware{} })
-	mw := MiddlewareRegistry["test"]()
+	Add("test", func() Plugin { return &testMiddleware{} })
+	mw := Plugins["test"]()
 	mw.Handler()
 	if tmw, ok := mw.(*testMiddleware); ok {
 		assert.True(t, tmw.called)
@@ -45,6 +45,6 @@ func TestAdd(t *testing.T) {
 }
 
 func TestDoesNotExist(t *testing.T) {
-	dne := MiddlewareRegistry["DNE"]
+	dne := Plugins["DNE"]
 	assert.Nil(t, dne)
 }

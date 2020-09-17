@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/plugins/middleware"
+	plugins "github.com/optimizely/agent/plugins/middleware"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -213,7 +213,7 @@ func TestWrapHandler(t *testing.T) {
 	}
 
 	conf := config.PluginConfigs{}
-	creator := func() middleware.Middleware {
+	creator := func() plugins.Plugin {
 		return &mockHandler{wg: wg}
 	}
 
@@ -221,7 +221,7 @@ func TestWrapHandler(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		name := fmt.Sprintf("mock%d", i)
-		middleware.Add(name, creator)
+		plugins.Add(name, creator)
 		conf[name] = map[string]interface{}{}
 	}
 
@@ -229,11 +229,11 @@ func TestWrapHandler(t *testing.T) {
 	conf["DNE"] = map[string]interface{}{}
 
 	// Test failed unmarshalling
-	middleware.Add("badConf", creator)
+	plugins.Add("badConf", creator)
 	conf["badConf"] = false
 
 	// Test failed marshalling
-	middleware.Add("notJSON", creator)
+	plugins.Add("notJSON", creator)
 	conf["notJSON"] = make(chan struct{})
 
 	next := wrapHandler(http.HandlerFunc(handler), conf)

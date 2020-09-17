@@ -31,9 +31,6 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 	plugins "github.com/optimizely/agent/plugins/middleware"
 
-	// Initiate the loading of the plugin middleware
-	_ "github.com/optimizely/agent/plugins/middleware/all"
-
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -112,7 +109,7 @@ func (s Server) Shutdown() {
 
 func wrapHandler(handler http.Handler, conf config.PluginConfigs) http.Handler {
 	for name, conf := range conf {
-		creator, ok := plugins.MiddlewareRegistry[name]
+		creator, ok := plugins.Plugins[name]
 		if !ok {
 			log.Warn().Msgf("Plugin not found: %q", name)
 			continue

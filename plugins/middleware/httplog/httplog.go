@@ -33,7 +33,7 @@ func (h *httpLog) Handler() func(http.Handler) http.Handler {
 }
 
 func init() {
-	middleware.Add("httplog", func() middleware.Middleware {
+	middleware.Add("httplog", func() middleware.Plugin {
 		return &httpLog{}
 	})
 }
