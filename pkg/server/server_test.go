@@ -18,12 +18,15 @@ package server
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/middleware"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -185,4 +188,58 @@ func TestNewServerHandlerAllowsValidHost(t *testing.T) {
 	rec = httptest.NewRecorder()
 	srv.srv.Handler.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+type mockHandler struct {
+	wg *sync.WaitGroup
+}
+
+func (m *mockHandler) Handler() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			m.wg.Done()
+			next.ServeHTTP(w, r)
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func TestWrapHandler(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		wg.Done()
+	}
+
+	conf := config.PluginConfigs{}
+	creator := func() middleware.Middleware {
+		return &mockHandler{wg: wg}
+	}
+
+	// Add valid plugins
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		name := fmt.Sprintf("mock%d", i)
+		middleware.Add(name, creator)
+		conf[name] = map[string]interface{}{}
+	}
+
+	// Test missing plugin
+	conf["DNE"] = map[string]interface{}{}
+
+	// Test failed unmarshalling
+	middleware.Add("badConf", creator)
+	conf["badConf"] = false
+
+	// Test failed marshalling
+	middleware.Add("notJSON", creator)
+	conf["notJSON"] = make(chan struct{})
+
+	next := wrapHandler(http.HandlerFunc(handler), conf)
+
+	next.ServeHTTP(nil, nil)
+
+	// Ensure all VALID plugins were executed.
+	wg.Wait()
 }
