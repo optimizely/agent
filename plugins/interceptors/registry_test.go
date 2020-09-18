@@ -44,6 +44,18 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestDuplicateKeys(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			assert.Fail(t, "Should have recovered")
+		}
+	}()
+
+	Add("dupe", func() Interceptor { return &testMiddleware{} })
+	Add("dupe", func() Interceptor { return &testMiddleware{} })
+	assert.Fail(t, "Should have panicked")
+}
+
 func TestDoesNotExist(t *testing.T) {
 	dne := Interceptors["DNE"]
 	assert.Nil(t, dne)

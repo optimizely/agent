@@ -18,6 +18,7 @@
 package interceptors
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -34,5 +35,8 @@ var Interceptors = map[string]Creator{}
 
 // Add function registers a Middleware Creator
 func Add(name string, creator Creator) {
+	if _, ok := Interceptors[name]; ok {
+		panic(fmt.Sprintf("Interceptor with name %q already exists", name))
+	}
 	Interceptors[name] = creator
 }
