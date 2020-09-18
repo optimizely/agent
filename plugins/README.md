@@ -19,6 +19,7 @@ import (
 	"github.com/optimizely/agent/plugins/interceptors"
 )
 
+// Example implements the Interceptor plugin interface
 type Example struct {
 	// set of configuration fields
 	RequestHeader  string
@@ -51,21 +52,20 @@ func init() {
 }
 ```
 
-To make the interceptor available, add the plugin as an anonymous import into [all.go](./interceptors/all/all.go).
-This will register the plugin with Agent. 
+To make the interceptor available to Agent, add the plugin as an anonymous import into [all.go](./interceptors/all/all.go).
 ```go
 package all
 
 // Add imports here to trigger the plugin `init()` function
 import (
-    _ "github.com/optimizely/agent/plugins/middleware/example"
+    _ "github.com/optimizely/agent/plugins/interceptors/example"
 )
 ```
 
-Example Middleware configuration:
+Example Interceptor configuration:
 ```yaml
 server:
-  plugins:
+  interceptors:
     example:
       requestHeader: "example-request"
       responseHeader: "example-response"

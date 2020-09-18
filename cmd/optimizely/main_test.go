@@ -51,7 +51,7 @@ func assertServer(t *testing.T, actual config.ServerConfig, assertPlugins bool) 
 	assert.Equal(t, 5, actual.BatchRequests.MaxConcurrency)
 
 	if assertPlugins {
-		assert.Equal(t, config.PluginConfigs{"plugin": map[string]interface{}{}}, actual.Plugins)
+		assert.Equal(t, config.PluginConfigs{"plugin": map[string]interface{}{}}, actual.Interceptors)
 	}
 }
 
@@ -167,7 +167,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.host", "1.2.3.4")
 	v.Set("server.batchRequests.operationsLimit", "100")
 	v.Set("server.batchRequests.maxConcurrency", "5")
-	v.Set("server.plugins", config.PluginConfigs{"plugin": map[string]interface{}{}})
+	v.Set("server.interceptors", config.PluginConfigs{"plugin": map[string]interface{}{}})
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
