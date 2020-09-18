@@ -14,22 +14,25 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package all //
-package all
+// Package interceptors //
+package interceptors
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/optimizely/agent/plugins/middleware"
+	"net/http"
 )
 
-func TestAnonImports(t *testing.T) {
-	plugins := []string{"httplog"}
+// Interceptor interface for defining a middleware-style plugin
+type Interceptor interface {
+	Handler() func(http.Handler) http.Handler
+}
 
-	for _, plugin := range plugins {
-		actual := middleware.Plugins[plugin]
-		assert.NotNil(t, actual)
-	}
+// Creator type defines a function for creating an instance of a Interceptor
+type Creator func() Interceptor
+
+// Interceptors stores the mapping of  Creators
+var Interceptors = map[string]Creator{}
+
+// Add function registers a Middleware Creator
+func Add(name string, creator Creator) {
+	Interceptors[name] = creator
 }

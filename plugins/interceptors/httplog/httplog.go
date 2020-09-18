@@ -14,10 +14,26 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package all //
-package all
+// Package httplog //
+package httplog
 
 import (
-	// Register the plugin middleware
-	_ "github.com/optimizely/agent/plugins/middleware/httplog"
+	"net/http"
+
+	"github.com/go-chi/httplog"
+	"github.com/rs/zerolog/log"
+
+	"github.com/optimizely/agent/plugins/interceptors"
 )
+
+type httpLog struct{}
+
+func (h *httpLog) Handler() func(http.Handler) http.Handler {
+	return httplog.Handler(log.Logger)
+}
+
+func init() {
+	interceptors.Add("httplog", func() interceptors.Interceptor {
+		return &httpLog{}
+	})
+}

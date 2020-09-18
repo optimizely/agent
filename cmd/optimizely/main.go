@@ -36,8 +36,8 @@ import (
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
 
-	// Initiate the loading of the plugin middleware
-	_ "github.com/optimizely/agent/plugins/middleware/all"
+	// Initiate the loading of the interceptor plugins
+	_ "github.com/optimizely/agent/plugins/interceptors/all"
 )
 
 // Version holds the admin version

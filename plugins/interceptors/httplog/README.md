@@ -1,4 +1,4 @@
-## HTTPLog Middleware Plugin
+## HTTPLog Interceptor Plugin
 
 The HTTPLog plugin provides HTTP request logging for Agent through the use of the [go-chi/httplog](https://github.com/go-chi/httplog) middleware.
 

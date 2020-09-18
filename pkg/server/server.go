@@ -29,7 +29,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
-	plugins "github.com/optimizely/agent/plugins/middleware"
+	"github.com/optimizely/agent/plugins/interceptors"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
@@ -109,7 +109,7 @@ func (s Server) Shutdown() {
 
 func wrapHandler(handler http.Handler, conf config.PluginConfigs) http.Handler {
 	for name, conf := range conf {
-		creator, ok := plugins.Plugins[name]
+		creator, ok := interceptors.Interceptors[name]
 		if !ok {
 			log.Warn().Msgf("Plugin not found: %q", name)
 			continue

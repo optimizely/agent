@@ -14,34 +14,37 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package httplog //
-package httplog
+// Package middleware //
+package interceptors
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/optimizely/agent/plugins/middleware"
 )
 
-func TestInit(t *testing.T) {
-	name := "httplog"
-	if mw, ok := middleware.Plugins[name]; !ok {
-		assert.Failf(t, "Plugin not registered", "%s DNE in registry", name)
+type testMiddleware struct {
+	called bool
+}
+
+func (m *testMiddleware) Handler() func(http.Handler) http.Handler {
+	m.called = true
+	return nil
+}
+
+func TestAdd(t *testing.T) {
+	Add("test", func() Interceptor { return &testMiddleware{} })
+	mw := Interceptors["test"]()
+	mw.Handler()
+	if tmw, ok := mw.(*testMiddleware); ok {
+		assert.True(t, tmw.called)
 	} else {
-		expected := &httpLog{}
-		assert.Equal(t, expected, mw())
+		assert.Fail(t, "Cannot convert to type testMiddleware")
 	}
 }
 
-func TestHandler(t *testing.T) {
-	httpLog := &httpLog{}
-	handler := httpLog.Handler()
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
-	handler(http.NotFoundHandler()).ServeHTTP(w, r)
+func TestDoesNotExist(t *testing.T) {
+	dne := Interceptors["DNE"]
+	assert.Nil(t, dne)
 }

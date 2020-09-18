@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/optimizely/agent/config"
-	plugins "github.com/optimizely/agent/plugins/middleware"
+	"github.com/optimizely/agent/plugins/interceptors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -190,11 +190,11 @@ func TestNewServerHandlerAllowsValidHost(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
-type mockHandler struct {
+type mockInterceptor struct {
 	wg *sync.WaitGroup
 }
 
-func (m *mockHandler) Handler() func(next http.Handler) http.Handler {
+func (m *mockInterceptor) Handler() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			m.wg.Done()
@@ -213,15 +213,15 @@ func TestWrapHandler(t *testing.T) {
 	}
 
 	conf := config.PluginConfigs{}
-	creator := func() plugins.Plugin {
-		return &mockHandler{wg: wg}
+	creator := func() interceptors.Interceptor {
+		return &mockInterceptor{wg: wg}
 	}
 
 	// Add valid plugins
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		name := fmt.Sprintf("mock%d", i)
-		plugins.Add(name, creator)
+		interceptors.Add(name, creator)
 		conf[name] = map[string]interface{}{}
 	}
 
@@ -229,11 +229,11 @@ func TestWrapHandler(t *testing.T) {
 	conf["DNE"] = map[string]interface{}{}
 
 	// Test failed unmarshalling
-	plugins.Add("badConf", creator)
+	interceptors.Add("badConf", creator)
 	conf["badConf"] = false
 
 	// Test failed marshalling
-	plugins.Add("notJSON", creator)
+	interceptors.Add("notJSON", creator)
 	conf["notJSON"] = make(chan struct{})
 
 	next := wrapHandler(http.HandlerFunc(handler), conf)
