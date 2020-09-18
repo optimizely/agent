@@ -72,17 +72,17 @@ Below is a comprehensive list of available configuration properties.
 
 |Property Name|Env Variable|Description|
 |---|---|---|
-|admin.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.jwksUpdateInterval|OPTIMIZELY_ADMIN_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|admin.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|admin.auth.jwksUpdateInterval|OPTIMIZELY_ADMIN_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|admin.auth.hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
-|api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.jwksUpdateInterval|OPTIMIZELY_API_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](./docs/auth.md)|
-|api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](./docs/auth.md)|
+|api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|api.auth.jwksUpdateInterval|OPTIMIZELY_API_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.enableNotifications|OPTIMIZELY_API_ENABLENOTIFICATIONS|Enable streaming notification endpoint. Default: false|
 |api.enableOverrides|OPTIMIZELY_API_ENABLEOVERRIDES|Enable bucketing overrides endpoint. Default: false|
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
@@ -104,20 +104,20 @@ Below is a comprehensive list of available configuration properties.
 |version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
 |server.allowedHosts|OPTIMIZELY_SERVER_ALLOWEDHOSTS|List of allowed request host values. Requests whose host value does not match either the configured server.host, or one of these, will be rejected with a 404 response. To match all subdomains, you can use a leading dot (for example `.example.com` matches `my.example.com`, `hello.world.example.com`, etc.). You can use the value `.` to disable allowed host checking, allowing requests with any host. Request host is determined in the following priority order: 1. X-Forwarded-Host header value, 2. Forwarded header host= directive value, 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request). Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.|
-|server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
-|server.host|OPTIMIZELY_SERVER_HOST|Host of server. Default: 127.0.0.1|
-|server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
-|server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
-|server.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|Path for the health status api. Default: /health|
 |server.batchRequests.maxConcurrency|OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY|Number of requests running in parallel. Default: 10|
 |server.batchRequests.operationsLimit|OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT|Number of allowed operations. ( will flag an error if the number of operations exeeds this parameter) Default: 500|
-
+|server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
+|server.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|Path for the health status api. Default: /health|
+|server.host|OPTIMIZELY_SERVER_HOST|Host of server. Default: 127.0.0.1|
+|server.interceptors|N/A|Property used to enable and set [Interceptor](./plugins/interceptors/README.md) plugins|
+|server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
+|server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
 |webhook.projects.<*projectId*>.skipSignatureCheck|N/A|Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.|
 
-More information about configuring Agent can be found in the [Advanced Configuration Notes](./docs/advanced-configuration.md).
+More information about configuring Agent can be found in the [Advanced Configuration Notes](https://docs.developers.optimizely.com/full-stack/docs/advanced-configuration).
 
 ## API
 
@@ -147,7 +147,7 @@ api:
 
 For more advanced options please refer to the [go-chi/cors](https://github.com/go-chi/cors) middleware documentation.
 
-NOTE: To avoid any potential security issues, and reduce risk to your data it's recommended that [authentication](./docs/auth.md)
+NOTE: To avoid any potential security issues, and reduce risk to your data it's recommended that [authentication](https://docs.developers.optimizely.com/full-stack/docs/authorization)
 is enabled alongside CORS.
 
 ## Webhooks

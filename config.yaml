@@ -54,8 +54,8 @@ server:
 #    certFile: <cert-file>
     ## IP of the host
     host: "127.0.0.1"
-    plugins:
-        httplog: {}
+#    interceptors:
+#        httplog: {}
 
 ##
 ## api service configuration
