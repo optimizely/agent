@@ -109,6 +109,24 @@ paths:
           $ref: '#/components/responses/UnauthorizedToken'
       requestBody:
         $ref: '#/components/requestBodies/TokenContext'
+  /v1/batch:
+    post:
+      summary: Batch multiple API endpoints into one request.
+      description:  |
+                      You can use the Batch endpoint to do things like   
+                      1. Make activate decisions for a batch of users in a short timeframe for testing purposes
+                      2. Gather responses from a bunch of activate calls into one response for comparison or analysis
+      responses:  
+
+        '200':
+          $ref: '#/components/responses/BatchResponse'
+        '400':
+          description: Bad request, invalid parameters.
+        '422':
+          description: Unprocessable Entity, too many operations
+      requestBody:
+        $ref: '#/components/requestBodies/BatchContext'
+
 components:
   parameters:
     disableTrackingParam:
@@ -183,6 +201,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenContext'
+    BatchContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BatchContext'           
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -196,6 +220,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenError'
+    BatchResponse:
+      description: responses for each endpoint called in the batch request
+      content:
+        application/json:
+         schema:
+          $ref: '#/components/schemas/BatchResponse'    
   schemas:
     Error:
       properties:
@@ -340,6 +370,116 @@ components:
           type: string
         client_secret:
           type: string
+    BatchContext:
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchOperation'
+      required:
+        - operations
+
+    BatchOperation:
+      properties:
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+        url:
+          type: string
+        operationID:   
+          type: string
+        body:
+          type: object
+        parameters:
+          type: object
+        headers:
+          type: object
+      example:   
+        method: "GET"
+        url: "/v1/config"
+        operationID: 1
+        body: {}
+        parameters: {}
+        headers: {"X-Optimizely-SDK-Key": "<sdk_key>"}  
+
+    BatchResponse:
+      properties:
+        startedAt:
+          type: string
+        endedAt:
+          type: string 
+        errorCount:
+          type: integer
+        response:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchResponseItem'  
+
+    BatchResponseItem:
+      properties:
+        status:
+          type: integer
+          enum:
+            - 200 
+            - 400
+        requestID:
+          type: string
+        operationID:
+          type: string
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+        url:
+          type: string
+        body:
+          type: object
+        startedAt:
+          type: string
+        endedAt:
+          type: string
+
+      example: 
+        status: 200
+        requestID: "abee6bdf-6d14-4fac-8357-769f5fd07e7c"
+        operationID: "1"
+        method: POST
+        url: "/v1/activate"
+        body:  [
+        {
+          "enabled": true,
+          "experimentKey": "new_feature_test",
+          "featureKey": "new_feature",
+          "type": "feature",
+          "userId": "user1",
+          "variables": {
+            "bool_var": true,
+            "double_var": 5.6,
+            "int_var": 1,
+          },
+          "variationKey": "variation_2"
+        },
+
+        {
+          "enabled": false,
+          "experimentKey": "flag_test_2",
+          "featureKey": "test_feature",
+          "type": "feature",
+          "userId": "user1",
+          "variables": {
+            "double": 0,
+            "json_key": {}
+          },
+          "variationKey": ""
+        }
+        ]
+
+        startedAt: "2020-09-10T10:50:37.466121-07:00"
+        endedAt: "2020-09-10T10:50:37.466192-07:00"
+
   securitySchemes:
      SdkKeyAuth:
        in: header
