@@ -121,7 +121,9 @@ paths:
         '200':
           $ref: '#/components/responses/BatchResponse'
         '400':
-          description: Bad request, invalid parameters. TODO pawel please fill in error respones
+          description: Bad request, invalid parameters.
+        '422':
+          description: Unprocessable Entity, too many operations
       requestBody:
         $ref: '#/components/requestBodies/BatchContext'
 
@@ -419,10 +421,9 @@ components:
       properties:
         status:
           type: integer
-          #TODO: PAWEL please add whatever codes are necessary
           enum:
             - 200 
-            - 401
+            - 400
         requestID:
           type: string
         operationID:
