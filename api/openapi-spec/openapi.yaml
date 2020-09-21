@@ -415,12 +415,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BatchResponseItem'  
-  
+
     BatchResponseItem:
       properties:
         status:
-          type: int
-          enums:
+          type: integer
+          enum:
             - 200
             - 401
         requestID:
@@ -440,14 +440,42 @@ components:
         startedAt:
           type: string
         endedAt:
+          type: string
 
       example: 
         status: 200
-        requestID: "asdf"
-        operationID: "asdf"
+        requestID: "abee6bdf-6d14-4fac-8357-769f5fd07e7c"
+        operationID: "1"
         method: POST
         url: "/v1/activate"
-        body: {}
+        body:  [
+        {
+          "enabled": true,
+          "experimentKey": "new_feature_test",
+          "featureKey": "new_feature",
+          "type": "feature",
+          "userId": "user1",
+          "variables": {
+            "flag": true,
+            "variable_key": "{\"var\": 34, \"var1\": 100.23}"
+          },
+          "variationKey": "variation_2"
+        },
+
+        {
+          "enabled": false,
+          "experimentKey": "",
+          "featureKey": "jira_feature",
+          "type": "feature",
+          "userId": "user1",
+          "variables": {
+            "double": 0,
+            "json_key": {}
+          },
+          "variationKey": ""
+        }
+        ]
+
         startedAt: "2020-09-10T10:50:37.466121-07:00"
         endedAt: "2020-09-10T10:50:37.466192-07:00"
 
