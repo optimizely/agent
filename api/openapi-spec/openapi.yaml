@@ -113,18 +113,18 @@ paths:
     post:
       summary: Batch multiple API endpoints into one request.
       operationId: TODO
-      description: 
-      responses: |
-                   You can use the Batch endpoint to do things like:  
-                   - Make activate decisions for a batch of users in a short timeframe for testing purposes
-                   - Gather responses from a bunch of activate calls into one response for comparison or analysis
+      description:  |
+                      You can use the Batch endpoint to do things like  
+                      Make activate decisions for a batch of users in a short timeframe for testing purposes
+                      Gather responses from a bunch of activate calls into one response for comparison or analysis
+      responses:  
 
         '200':
           description: Generates a valid token. TODO
         '400':
           description: Bad request, invalid parameters. TODO
       requestBody:
-        $ref: '#/components/requestBodies/Batch'
+        $ref: '#/components/requestBodies/BatchContext'
 
 components:
   parameters:
@@ -200,6 +200,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenContext'
+    BatchContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BatchContext'           
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -213,6 +219,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenError'
+    BatchResponse:
+      description: responses for each endpoint called in the batch request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BatchResponse'        
   schemas:
     Error:
       properties:
@@ -357,25 +369,52 @@ components:
           type: string
         client_secret:
           type: string
-    Batch:
+    BatchContext:
       properties:
-         operations: 
-          method:
-            type: string
-            enum:
-              - GET
-              - POST
-          url:
-            type: string
-          operationID:   
-            type: string
-          body:
+         operations:
             type: object
-          parameters:
-            type: object
-          headers:
-             type: string                  
+            additionalProperties:
+              method:
+                type: string
+                enum:
+                  - GET
+                  - POST
+              url:
+                type: string
+              operationID:   
+                type: string
+              body:
+                type: object
+              parameters:
+                type: object
+              headers:
+                 type: string                  
+    BatchResponse:
+      properties:
 
+          response:
+            type: object
+            additionalProperties:
+              status:
+                type: string
+              requestID:
+                type: string
+              operationID:
+                type: string
+              method:
+                type: string
+                enum:
+                  - GET
+                  - POST
+                  - wrong_method
+              url:
+                type: string
+              body:
+                type: object
+              startedAt:
+                type: string
+              endedAt:
+                type: string  
   securitySchemes:
      SdkKeyAuth:
        in: header
