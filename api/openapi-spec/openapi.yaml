@@ -114,13 +114,13 @@ paths:
       summary: Batch multiple API endpoints into one request.
       operationId: TODO
       description:  |
-                      You can use the Batch endpoint to do things like  
-                      Make activate decisions for a batch of users in a short timeframe for testing purposes
-                      Gather responses from a bunch of activate calls into one response for comparison or analysis
+                      You can use the Batch endpoint to do things like   
+                      1. Make activate decisions for a batch of users in a short timeframe for testing purposes
+                      2. Gather responses from a bunch of activate calls into one response for comparison or analysis
       responses:  
 
         '200':
-          description: Generates a valid token. TODO
+          $ref: '#/components/responses/BatchResponse'
         '400':
           description: Bad request, invalid parameters. TODO
       requestBody:
@@ -223,8 +223,8 @@ components:
       description: responses for each endpoint called in the batch request
       content:
         application/json:
-          schema:
-            $ref: '#/components/schemas/BatchResponse'        
+         schema:
+          $ref: '#/components/schemas/BatchResponse'    
   schemas:
     Error:
       properties:
@@ -372,49 +372,85 @@ components:
     BatchContext:
       properties:
          operations:
-            type: object
-            additionalProperties:
-              method:
-                type: string
-                enum:
-                  - GET
-                  - POST
-              url:
-                type: string
-              operationID:   
-                type: string
-              body:
-                type: object
-              parameters:
-                type: object
-              headers:
-                 type: string                  
+            type: array
+            items:
+              $ref: '#/components/schemas/BatchOperation'
+      required:
+        - operations
+
+    BatchOperation:
+      properties:
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+        url:
+          type: string
+        operationID:   
+          type: string
+        body:
+          type: object
+        parameters:
+          type: object
+        headers:
+          type: object
+      example:   
+        method: "GET"
+        url: "/v1/config"
+        operationID: 1
+        body: {}
+        parameters: {}
+        headers: {"X-Optimizely-SDK-Key": "<sdk_key>"}  
+
     BatchResponse:
       properties:
+        startedAt:
+          type: string
+        endedAt:
+          type: string 
+        errorCount:
+          type: integer
+        response:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchResponseItem'  
+  
+    BatchResponseItem:
+      properties:
+        status:
+          type: int
+          enums:
+            - 200
+            - 401
+        requestID:
+          type: string
+        operationID:
+          type: string
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+            - wrong_method
+        url:
+          type: string
+        body:
+          type: object
+        startedAt:
+          type: string
+        endedAt:
 
-          response:
-            type: object
-            additionalProperties:
-              status:
-                type: string
-              requestID:
-                type: string
-              operationID:
-                type: string
-              method:
-                type: string
-                enum:
-                  - GET
-                  - POST
-                  - wrong_method
-              url:
-                type: string
-              body:
-                type: object
-              startedAt:
-                type: string
-              endedAt:
-                type: string  
+      example: 
+        status: 200
+        requestID: "asdf"
+        operationID: "asdf"
+        method: POST
+        url: "/v1/activate"
+        body: {}
+        startedAt: "2020-09-10T10:50:37.466121-07:00"
+        endedAt: "2020-09-10T10:50:37.466192-07:00"
+
   securitySchemes:
      SdkKeyAuth:
        in: header
