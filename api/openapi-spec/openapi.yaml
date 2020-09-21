@@ -103,12 +103,29 @@ paths:
       description: Generates valid JWT token for grant_type, client_id, and client_secret, using the values you pass in the request body.  Configure expiration time and SDK keys (to which the token grants access) in Optimizely config. 
       responses:
         '200':
-          description: Generates a valid token
+          description: Valid response
         '401':
           description: Unauthorized, invalid values for parameter(s)
           $ref: '#/components/responses/UnauthorizedToken'
       requestBody:
         $ref: '#/components/requestBodies/TokenContext'
+  /v1/batch:
+    post:
+      summary: Batch multiple API endpoints into one request.
+      operationId: TODO
+      description: 
+      responses: |
+                   You can use the Batch endpoint to do things like:  
+                   - Make activate decisions for a batch of users in a short timeframe for testing purposes
+                   - Gather responses from a bunch of activate calls into one response for comparison or analysis
+
+        '200':
+          description: Generates a valid token. TODO
+        '400':
+          description: Bad request, invalid parameters. TODO
+      requestBody:
+        $ref: '#/components/requestBodies/Batch'
+
 components:
   parameters:
     disableTrackingParam:
@@ -340,6 +357,25 @@ components:
           type: string
         client_secret:
           type: string
+    Batch:
+      properties:
+         operations: 
+          method:
+            type: string
+            enum:
+              - GET
+              - POST
+          url:
+            type: string
+          operationID:   
+            type: string
+          body:
+            type: object
+          parameters:
+            type: object
+          headers:
+             type: string                  
+
   securitySchemes:
      SdkKeyAuth:
        in: header
