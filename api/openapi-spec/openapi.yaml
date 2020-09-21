@@ -456,16 +456,17 @@ components:
           "type": "feature",
           "userId": "user1",
           "variables": {
-            "flag": true,
-            "variable_key": "{\"var\": 34, \"var1\": 100.23}"
+            "bool_var": true,
+            "double_var": 5.6,
+            "int_var": 1,
           },
           "variationKey": "variation_2"
         },
 
         {
           "enabled": false,
-          "experimentKey": "",
-          "featureKey": "jira_feature",
+          "experimentKey": "flag_test_2",
+          "featureKey": "test_feature",
           "type": "feature",
           "userId": "user1",
           "variables": {
