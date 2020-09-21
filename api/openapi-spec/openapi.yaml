@@ -18,7 +18,7 @@ paths:
       description: Return all available experiment and features definitions for this environment.
       responses:
         '200':
-          description: Generates a valid token
+          description: Valid response
           content:
             application/json:
               schema:
@@ -103,7 +103,7 @@ paths:
       description: Generates valid JWT token for grant_type, client_id, and client_secret, using the values you pass in the request body.  Configure expiration time and SDK keys (to which the token grants access) in Optimizely config. 
       responses:
         '200':
-          description: Valid response
+          description: Generates a valid token
         '401':
           description: Unauthorized, invalid values for parameter(s)
           $ref: '#/components/responses/UnauthorizedToken'
