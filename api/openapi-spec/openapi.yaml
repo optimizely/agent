@@ -18,7 +18,7 @@ paths:
       description: Return all available experiment and features definitions for this environment.
       responses:
         '200':
-          description: Valid response
+          description: Generates a valid token
           content:
             application/json:
               schema:
@@ -112,7 +112,6 @@ paths:
   /v1/batch:
     post:
       summary: Batch multiple API endpoints into one request.
-      operationId: TODO
       description:  |
                       You can use the Batch endpoint to do things like   
                       1. Make activate decisions for a batch of users in a short timeframe for testing purposes
@@ -122,7 +121,7 @@ paths:
         '200':
           $ref: '#/components/responses/BatchResponse'
         '400':
-          description: Bad request, invalid parameters. TODO
+          description: Bad request, invalid parameters. TODO pawel please fill in error respones
       requestBody:
         $ref: '#/components/requestBodies/BatchContext'
 
@@ -371,10 +370,10 @@ components:
           type: string
     BatchContext:
       properties:
-         operations:
-            type: array
-            items:
-              $ref: '#/components/schemas/BatchOperation'
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchOperation'
       required:
         - operations
 
