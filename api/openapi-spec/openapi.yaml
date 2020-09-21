@@ -433,7 +433,6 @@ components:
           enum:
             - GET
             - POST
-            - wrong_method
         url:
           type: string
         body:
