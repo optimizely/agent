@@ -419,8 +419,9 @@ components:
       properties:
         status:
           type: integer
+          #TODO: PAWEL please add whatever codes are necessary
           enum:
-            - 200
+            - 200 
             - 401
         requestID:
           type: string
