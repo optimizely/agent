@@ -205,7 +205,7 @@ func (m *mockInterceptor) Handler() func(next http.Handler) http.Handler {
 	}
 }
 
-func TestWrapHandler(t *testing.T) {
+func TestWrapWithInterceptors(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +236,7 @@ func TestWrapHandler(t *testing.T) {
 	interceptors.Add("notJSON", creator)
 	conf["notJSON"] = make(chan struct{})
 
-	next := wrapHandler(http.HandlerFunc(handler), conf)
+	next := wrapWithInterceptors(http.HandlerFunc(handler), conf)
 
 	next.ServeHTTP(nil, nil)
 

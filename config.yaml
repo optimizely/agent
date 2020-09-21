@@ -54,6 +54,7 @@ server:
 #    certFile: <cert-file>
     ## IP of the host
     host: "127.0.0.1"
+    ## configure optional Agent interceptors
 #    interceptors:
 #        httplog: {}
 

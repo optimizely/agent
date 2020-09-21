@@ -57,7 +57,7 @@ func NewServer(name, port string, handler http.Handler, conf config.ServerConfig
 	handler = middleware.BatchRouter(conf.BatchRequests)(handler)
 	handler = middleware.AllowedHosts(conf.GetAllowedHosts())(handler)
 	handler = healthMW(handler, conf.HealthCheckPath)
-	handler = wrapHandler(handler, conf.Interceptors)
+	handler = wrapWithInterceptors(handler, conf.Interceptors)
 
 	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
@@ -107,7 +107,7 @@ func (s Server) Shutdown() {
 	}
 }
 
-func wrapHandler(handler http.Handler, conf config.PluginConfigs) http.Handler {
+func wrapWithInterceptors(handler http.Handler, conf config.PluginConfigs) http.Handler {
 	for name, conf := range conf {
 		creator, ok := interceptors.Interceptors[name]
 		if !ok {
