@@ -279,6 +279,13 @@ go tool pprof http://localhost:6060/debug/pprof/mutex
 
 To view all available profiles can be found at [http://localhost:8088/debug/pprof/](http://localhost:8088/debug/pprof/) in your browser.
 
+## Agent Plugins
+Optimizely Agent can be extended through the use of [plugins](https://docs.developers.optimizely.com/full-stack/docs/agent-plugins). Plugins are distinct from the standard Agent packages
+to provide a namespaced environment for custom logic. Plugins must be compiled as part of the Agent distribution and are enabled through configuration.
+
+### Interceptor Plugins
+* [httplog](./plugins/interceptors/httplog) - Adds HTTP request logging based on [go-chi/httplog](https://github.com/go-chi/httplog).
+
 ## Authorization
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization).
 
@@ -294,6 +301,7 @@ Following best practice for go project layout as defined [here](https://github.c
 * **config** - Application configuration.
 * **docs** - User documentation files.
 * **pkg** - Library code that can be used by other applications.
+* **plugins** - Plugin libraries for extending Agent functionality.
 * **scripts** - Scripts to perform various build, install, analysis, etc operations.
 
 ## Make targets

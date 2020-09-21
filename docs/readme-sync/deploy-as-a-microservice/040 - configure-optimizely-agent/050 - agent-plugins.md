@@ -1,12 +1,26 @@
+---
+title: "Agent plugins"
+excerpt: ""
+slug: "agent-plugins"
+hidden: false
+metadata:
+  title: "Agent plugins - Optimizely Full Stack"
+createdAt: "2020-09-21T20:30:00.000Z"
+updatedAt: "2020-09-21T20:30:00.000Z"
+---
+
 ## Agent Plugins
 
-Plugins allow developers to extend the functionality of Agent through the use of middleware.
+Optimizely Agent can be extended through the use of [plugins](https://docs.developers.optimizely.com/full-stack/docs/agent-plugins). Plugins are distinct from the standard Agent packages
+to provide a namespaced environment for custom logic. Plugins must be compiled as part of the Agent distribution and are enabled through configuration.
 
 ### Interceptor Plugins
 
-Interceptors can be added to agent to customize the request and/or response by implementing the [Interceptor](./interceptors/registry.go) interface.
-This interface needs to define a `Handler()` method that returns a standard net/http middleware handler based on [http.Handler](https://golang.org/pkg/net/http/#Handler).
-The custom structure can also include a set of fields that can be configured via `config.yaml`.
+Interceptors can be added to Agent to customize the request and/or response by implementing the [Interceptor](https://github.com/optimizely/agent/tree/master/plugins/interceptors/registry.go) interface.
+This interface defines a `Handler()` method that returns a standard net/http middleware handler based on [http.Handler](https://golang.org/pkg/net/http/#Handler).
+The interceptor struct can also include a set of fields that can be configured via `config.yaml`.
+
+* [httplog](https://github.com/optimizely/agent/tree/master/plugins/interceptors/httplog) - Adds HTTP request logging based on [go-chi/httplog](https://github.com/go-chi/httplog).
 
 ### Example Interceptor definition
 ```go
@@ -62,7 +76,8 @@ import (
 )
 ```
 
-Example Interceptor configuration:
+Enable the example interceptor by adding to `server.interceptors` within your `config.yaml`. Note that the yaml fields
+should match the struct definition of your plugin.
 ```yaml
 server:
   interceptors:
