@@ -404,7 +404,7 @@ components:
           description: The headers for the request as JSON
           type: object
       example:   
-        method: "GET"
+        method: "POST"
         url: "/v1/activate"
         operationID: 1
         body: {"userId": "user1"}
