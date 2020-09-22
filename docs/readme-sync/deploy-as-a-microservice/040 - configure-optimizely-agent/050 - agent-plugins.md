@@ -11,8 +11,7 @@ updatedAt: "2020-09-21T20:30:00.000Z"
 
 ## Agent Plugins
 
-Optimizely Agent can be extended through the use of [plugins](https://docs.developers.optimizely.com/full-stack/docs/agent-plugins). Plugins are distinct from the standard Agent packages
-to provide a namespaced environment for custom logic. Plugins must be compiled as part of the Agent distribution and are enabled through configuration.
+Optimizely Agent can be extended through the use of plugins. Plugins are distinct from the standard Agent packages that provide a namespaced environment for custom logic. Plugins must be compiled as part of the Agent distribution and are enabled through configuration.
 
 ### Interceptor Plugins
 
@@ -76,8 +75,7 @@ import (
 )
 ```
 
-Enable the example interceptor by adding to `server.interceptors` within your `config.yaml`. Note that the yaml fields
-should match the struct definition of your plugin.
+Enable the example interceptor by adding to `server.interceptors` within your `config.yaml`. Note that the yaml fields should match the struct definition of your plugin.
 ```yaml
 server:
   interceptors:

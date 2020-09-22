@@ -109,7 +109,7 @@ Below is a comprehensive list of available configuration properties.
 |server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
 |server.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|Path for the health status api. Default: /health|
 |server.host|OPTIMIZELY_SERVER_HOST|Host of server. Default: 127.0.0.1|
-|server.interceptors|N/A|Property used to enable and set [Interceptor](./plugins/interceptors/README.md) plugins|
+|server.interceptors|N/A|Property used to enable and set [Interceptor](https://docs.developers.optimizely.com/full-stack/docs/agent-plugins#section-interceptor-plugins) plugins|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
