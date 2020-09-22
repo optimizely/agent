@@ -373,6 +373,7 @@ components:
     BatchContext:
       properties:
         operations:
+          description: Array of requests to Agent endpoints, batched into one request
           type: array
           items:
             $ref: '#/components/schemas/BatchOperation'
@@ -382,27 +383,37 @@ components:
     BatchOperation:
       properties:
         method:
+          description: The REST request method
           type: string
           enum:
             - GET
             - POST
         url:
+          description: The base and endpoint components of the API request's path
           type: string
-        operationID:   
+        operationID: 
+          description: Index of the request in the batch  
           type: string
         body:
+          description: The body for the request as JSON
           type: object
         parameters:
+          description: The parameters for the request as JSON
           type: object
         headers:
+          description: The headers for the request as JSON
           type: object
       example:   
-        method: "GET"
-        url: "/v1/config"
+        method: "POST"
+        url: "/v1/activate"
         operationID: 1
-        body: {}
-        parameters: {}
-        headers: {"X-Optimizely-SDK-Key": "<sdk_key>"}  
+        body: {"userId": "user1"}
+        parameters: {
+          "type": "feature",
+          "experimentKey": "ab_test_experiment"}
+        headers: {
+          "X-Optimizely-SDK-Key": "<sdk_key>",
+          "Content-Type": "application/json"}  
 
     BatchResponse:
       properties:
