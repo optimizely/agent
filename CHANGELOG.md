@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [2.1.0] - September 23, 2020
 - For `server.allowedHosts` configuration property, add support for matching all subdomains of a host, or all hosts
+- Adding batching for agent (/v1/batch endpoint), including requests in parallel
+- Removed vulnerable version coreos/etcd 
 
 ## [2.0.0] - August 27, 2020
 - Add SDK key validation configuration
