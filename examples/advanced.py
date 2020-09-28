@@ -14,7 +14,7 @@ sdk_key = sys.argv[1]
 s = requests.Session()
 s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 
-# Making a request to /config to generically pull the set of features and experiments.
+# Making a request to /config to generically pull the set of flag rules (deliveries and experiments).
 # In production, making this initial request to build the set of keys would not be recommended.
 # Instead the keys would already be known by the application, or we'd use the type= parameter illustrated below.
 resp = s.get('http://localhost:8080/v1/config')

@@ -129,7 +129,7 @@ expected_config = """{
 
 def test_config(session_obj):
     """
-    Test validates all returned available experiment and features definitions
+    Test validates all returned available flag rule definitions (deliveries and experiments) 
     for this environment.
 
     Note: Test will fail as soon as anything in the response body is modified.
