@@ -118,7 +118,7 @@ func (c *TestProjectConfig) GetAttributeByKey(key string) (entities.Attribute, e
 	return entities.Attribute{}, errors.New(errMessage)
 }
 
-// GetFeatureList returns an array of all the features
+// GetFeatureList returns an array of all the flags
 func (c *TestProjectConfig) GetFeatureList() (featureList []entities.Feature) {
 	for _, feature := range c.FeatureMap {
 		featureList = append(featureList, feature)

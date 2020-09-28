@@ -40,7 +40,7 @@ payload = {
     }
 }
 
-# Activate features and experiments - these will trigger notifications that will be sent to notification event stream
+# Activate flag rules (deliveries and experiments) - these will trigger notifications that will be sent to notification event stream
 # subscribers
 
 for key in env['featuresMap']:

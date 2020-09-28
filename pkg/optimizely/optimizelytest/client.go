@@ -60,7 +60,7 @@ func (t *TestClient) AddEvent(e entities.Event) {
 	t.ProjectConfig.AddEvent(e)
 }
 
-// AddFeature is a helper method for adding features to the ProjectConfig to facilitate testing.
+// AddFeature is a helper method for adding flags to the ProjectConfig to facilitate testing.
 func (t TestClient) AddFeature(f entities.Feature) {
 	t.ProjectConfig.AddFeature(f)
 }

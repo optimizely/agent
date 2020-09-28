@@ -11,7 +11,7 @@ updatedAt: "2020-04-08T21:26:30.308Z"
 
 Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable experimentation and feature management. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk). In some cases, however, we’ve updated our APIs to simplify key use cases.
 
-### Manage features
+### Manage flags
 
  Optimizely Agent simplifies the core feature management of our [SDK APIs](doc:sdk-reference-guides).  It consolidates the following endpoints:
 
