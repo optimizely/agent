@@ -35,14 +35,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - If there is a need to deploy Agent in docker, then the Host needs to be set to 0.0.0.0. This can be achieved by setting variable `OPTIMIZELY_SERVER_HOST=0.0.0.0`, or setting `server.host` to 0.0.0.0 in config file.
 
 ## [1.3.0] - July 7th, 2020
-- Upgrade to use go-sdk v1.3.0. This adds support for JSON feature variables
+- Upgrade to use go-sdk v1.3.0. This adds support for JSON flag variables
 - Add /debug/pprof endpoints to the admin service
 - Run docker container as non root user
 - Log warnings when HTTPS and authorization are not enabled via configuration
 
 ## [1.2.0] - June 18th, 2020
 - Expose event dispatch URL as a config parameter
-- Return experimentKey and variationKey with feature test decisions
+- Return experimentKey and variationKey with experiment decisions
 - Expose health endpoint for all listeners
 - Update API docs
 - Streamline CI stages
@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improve build tooling
 - Add standard metrics registry
 - Update documentation
-- Return 404 when feature or experiment are not found
+- Return 404 when flag or experiment are not found
 - Update event payloads to include Agent name and version
 
 ## [0.10.0] - January 9th, 2020
@@ -109,9 +109,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add metric visibility into event dispatcher
 - Miscellaneous clean-up and of docs and openapi spec
 - Add top level config package to consolidate configuration
-- Incorporate OptimizelyConfig into feature and experiment models
+- Incorporate OptimizelyConfig into flag and experiment models
 - Add get experiment and list experiment endpoints
-- Add user features endpoint for batched decision responses
+- Add user flag endpoint for batched decision responses
 - Add windows tooling
 - Add credit section to README
 - Improve service shutdown
@@ -142,8 +142,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Actually enable the impression tracking endpoint in the router
 
 ## [0.5.0] - October 24th, 2019
-- Adds GET endpoint for user-based features
-- Adds impression tracking for Feature Tests
+- Adds GET endpoint for user-based flag
+- Adds impression tracking for Feature Tests (referred to as "A/B tests" after Nov 2020)
 
 ## [0.4.0] - October 23rd, 2019
 - Adds admin endpoints for health, info and metrics
@@ -161,7 +161,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.2.0] - October 3rd, 2019
 - Adds Optimizely webhook support
-- Adds full Feature MGMT support
+- Adds full flag MGMT support
 - Adds NSQ for UserEvent message transport
 - Adds support for multiple concurrent SDK keys
 
