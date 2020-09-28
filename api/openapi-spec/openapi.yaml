@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Optimizely Agent API
-  description: Optimizely Agent is a stand-alone, open-source microservice that provides major benefits over using Optimizely SDKs in certain use cases. Its REST API offers consolidated and simplified endpoints for accessing all the functionality of Optimizely Full Stack SDKs. Use this API the control experiments (such as a feature tests). For more info, see https://docs.developers.optimizely.com/full-stack/docs/optimizely-agent. 
+  description: Optimizely Agent is a stand-alone, open-source microservice that provides major benefits over using Optimizely SDKs in certain use cases. Its REST API offers consolidated and simplified endpoints for accessing all the functionality of Optimizely Full Stack SDKs. Use this API the control experiments (such as a A/B tests). For more info, see https://docs.developers.optimizely.com/full-stack/docs/optimizely-agent. 
   termsOfService: http://optimizely.com/terms/
   license:
     name: Apache 2.0
@@ -15,7 +15,7 @@ paths:
     get:
       summary: Return the Optimizely config for the given environment
       operationId: getConfig
-      description: Return all available experiment and features definitions for this environment.
+      description: Return all available flag rules and their configurations for this environment.
       responses:
         '200':
           description: Valid response
@@ -54,9 +54,9 @@ paths:
       - $ref: '#/components/parameters/typeParam'
       - $ref: '#/components/parameters/enabledParam'
     post:
-      summary: Activate selected features and experiments for the given user.
+      summary: Activate selected flag rules for the given user.
       operationId: activate
-      description: Returns Optimizely's decision about which features and experiments a given user is exposed to. Optionally sends an impression event to the Optimizely analytics backend for any decision made for an experiment. This endpoint consolidates key functionality from the Full Stack SDKs into one convenient call.
+      description: Returns Optimizely's decision about which flag rules a given user is exposed to. Optionally sends an impression event to the Optimizely analytics backend for any decision made for an experiment. This endpoint consolidates key functionality from the Full Stack SDKs into one convenient call.
       responses:
         '200':
           description: Valid response
@@ -161,7 +161,7 @@ components:
     featureKeyParam:
       in: query
       name: featureKey
-      description: Key for the Optimizely Feature
+      description: Key for the Optimizely flag
       schema:
         type: array
         items:
@@ -170,7 +170,7 @@ components:
       in: query
       name: type
       required: false
-      description: Limit the decisions to either experiment or features
+      description: Limit the decisions to a type of flag rule -- either experiments or deliveries ("features")
       schema:
         type: string
         enum:
@@ -462,8 +462,8 @@ components:
         body:  [
         {
           "enabled": true,
-          "experimentKey": "new_feature_test",
-          "featureKey": "new_feature",
+          "experimentKey": "new_ab_test",
+          "featureKey": "new_flag",
           "type": "feature",
           "userId": "user1",
           "variables": {
@@ -477,7 +477,7 @@ components:
         {
           "enabled": false,
           "experimentKey": "flag_test_2",
-          "featureKey": "test_feature",
+          "featureKey": "test_flag",
           "type": "feature",
           "userId": "user1",
           "variables": {

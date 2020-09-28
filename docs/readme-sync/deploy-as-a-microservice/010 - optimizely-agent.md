@@ -32,7 +32,7 @@ Now *with* Agent, instead of installing the SDK six times, you create just one O
 ## 2. Standardize Access Across Teams
 If you want to deploy Optimizely Full Stack once, then roll out the single implementation across a large number of teams, we recommend using Optimizely Agent. 
 
-By standardizing your teams' access to the Optimizely service, you can better enforce processes and implement governance around feature management and experimentation as a practice.
+By standardizing your teams' access to the Optimizely service, you can better enforce processes and implement governance around flag management and experimentation as a practice.
 
 !["A diagram showing the central and standardized access to the Optimizely Agent service across an arbitrary number of teams.\n(Click to Enlarge)"](https://raw.githubusercontent.com/optimizely/agent/master/docs/images/agent-standardized-access.png)
 
@@ -59,7 +59,7 @@ If time to provide bucketing decisions is a primary concern for you, you may wan
 If your app is constructed as a monolith, embedded SDKs might be easier to install and might be a more natural fit for your application and development practices. 
 
 ## 3. Velocity
-If you’re looking for the fastest way to get a single team up and running with deploying feature management and experimentation, embedding an SDK is the best option for you at first. You can always start using Optimizely Agent later, and it can even be used alongside Optimizely Full Stack SDKs running in another part of your stack.
+If you’re looking for the fastest way to get a single team up and running with deploying flag management and experimentation, embedding an SDK is the best option for you at first. You can always start using Optimizely Agent later, and it can even be used alongside Optimizely Full Stack SDKs running in another part of your stack.
 
 # Best Practices
 While every implementation is different, you can review this section of best practices for tips on these commonly discussed topics.
