@@ -19,6 +19,7 @@ ENDPOINT_CONFIG = '/v1/config'
 ENDPOINT_NOTIFICATIONS = '/v1/notifications/event-stream'
 ENDPOINT_OVERRIDE = '/v1/override'
 ENDPOINT_TRACK = '/v1/track'
+ENDPOINT_BATCH = '/v1/batch'
 
 YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
 
