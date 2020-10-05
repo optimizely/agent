@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [2.2.0] - October 5, 2020
+- Update to Optimizely Go SDK 1.4.0 with version audience condition evaluation based on semantic versioning as well as support for number 'greater than or equal to' and 'less than or equal to'.
+
 ## [2.1.0] - September 23, 2020
 - For `server.allowedHosts` configuration property, add support for matching all subdomains of a host, or all hosts
 - Adding batching for agent (/v1/batch endpoint), including requests in parallel
