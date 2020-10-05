@@ -45,6 +45,10 @@ type TestProjectConfig struct {
 	nextID               int
 }
 
+// GetDatafile returns a string representation of the environment's datafile
+func (c *TestProjectConfig) GetDatafile() string {
+	return ""
+}
 // GetProjectID returns projectID
 func (c *TestProjectConfig) GetProjectID() string {
 	return c.ProjectID
