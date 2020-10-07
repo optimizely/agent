@@ -20,6 +20,7 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,6 +29,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/plugins/interceptors"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
@@ -46,20 +48,21 @@ type HealthInfo struct {
 }
 
 // NewServer initializes new service.
-// Configuration is pulled from viper configuration.
 func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
 
 	if handler == nil {
 		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
 	}
 
-	withBatchHandler := middleware.BatchRouter(conf.BatchRequests)(handler)
-	withAllowedHostsHandler := middleware.AllowedHosts(conf.GetAllowedHosts())(withBatchHandler)
-	withHealthMWhandler := healthMW(withAllowedHostsHandler, conf.HealthCheckPath)
+	handler = middleware.BatchRouter(conf.BatchRequests)(handler)
+	handler = middleware.AllowedHosts(conf.GetAllowedHosts())(handler)
+	handler = healthMW(handler, conf.HealthCheckPath)
+	handler = wrapWithInterceptors(handler, conf.Interceptors)
+
 	logger := log.With().Str("port", port).Str("name", name).Str("host", conf.Host).Logger()
 	srv := &http.Server{
 		Addr:         conf.Host + ":" + port,
-		Handler:      withHealthMWhandler,
+		Handler:      handler,
 		ReadTimeout:  conf.ReadTimeout,
 		WriteTimeout: conf.WriteTimeout,
 	}
@@ -102,6 +105,29 @@ func (s Server) Shutdown() {
 	if err := s.srv.Shutdown(ctx); err != nil {
 		s.logger.Error().Err(err).Msg("Failed shutdown.")
 	}
+}
+
+func wrapWithInterceptors(handler http.Handler, conf config.PluginConfigs) http.Handler {
+	for name, conf := range conf {
+		creator, ok := interceptors.Interceptors[name]
+		if !ok {
+			log.Warn().Msgf("Plugin not found: %q", name)
+			continue
+		}
+
+		log.Info().Str("plugin", name).Msg("Adding plugin.")
+		pInstance := creator()
+		if pConfig, err := json.Marshal(conf); err != nil {
+			log.Warn().Err(err).Msg("Error marshaling plugin config")
+			continue
+		} else if err := json.Unmarshal(pConfig, pInstance); err != nil {
+			log.Warn().Err(err).Msg("Error unmarshalling plugin config")
+			continue
+		}
+		handler = pInstance.Handler()(handler)
+	}
+
+	return handler
 }
 
 func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {

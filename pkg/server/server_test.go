@@ -18,12 +18,15 @@ package server
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/interceptors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -185,4 +188,58 @@ func TestNewServerHandlerAllowsValidHost(t *testing.T) {
 	rec = httptest.NewRecorder()
 	srv.srv.Handler.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+type mockInterceptor struct {
+	wg *sync.WaitGroup
+}
+
+func (m *mockInterceptor) Handler() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			m.wg.Done()
+			next.ServeHTTP(w, r)
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
+func TestWrapWithInterceptors(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		wg.Done()
+	}
+
+	conf := config.PluginConfigs{}
+	creator := func() interceptors.Interceptor {
+		return &mockInterceptor{wg: wg}
+	}
+
+	// Add valid plugins
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		name := fmt.Sprintf("mock%d", i)
+		interceptors.Add(name, creator)
+		conf[name] = map[string]interface{}{}
+	}
+
+	// Test missing plugin
+	conf["DNE"] = map[string]interface{}{}
+
+	// Test failed unmarshalling
+	interceptors.Add("badConf", creator)
+	conf["badConf"] = false
+
+	// Test failed marshalling
+	interceptors.Add("notJSON", creator)
+	conf["notJSON"] = make(chan struct{})
+
+	next := wrapWithInterceptors(http.HandlerFunc(handler), conf)
+
+	next.ServeHTTP(nil, nil)
+
+	// Ensure all VALID plugins were executed.
+	wg.Wait()
 }
