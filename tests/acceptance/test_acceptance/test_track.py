@@ -10,6 +10,7 @@ from tests.acceptance.helpers import ENDPOINT_TRACK
 BASE_URL = os.getenv('host')
 
 
+@pytest.mark.usefixtures('agent_server')
 @pytest.mark.parametrize("event_key, status_code, bypass_validation", [
     ("myevent", 200, False),
     ("", 400, True),
