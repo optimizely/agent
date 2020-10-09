@@ -76,7 +76,8 @@ jobs:
       install:
         - pip install -r tests/acceptance/requirements.txt
       script:
-        - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080
+        - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080 -k "not test_batch_422"
+        - pytest -vv --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080 -k "test_batch_422"
 
     - stage: 'Trigger FSC Tests'
       if: (branch = master AND type = push) OR type = pull_request OR tag IS present

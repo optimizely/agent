@@ -447,7 +447,11 @@ components:
         url:
           type: string
         body:
-          type: object
+          oneOf:
+            - type: array
+              items:
+                type: object
+            - type: object
         startedAt:
           type: string
         endedAt:
