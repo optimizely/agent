@@ -35,6 +35,9 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
+
+	// Initiate the loading of the interceptor plugins
+	_ "github.com/optimizely/agent/plugins/interceptors/all"
 )
 
 // Version holds the admin version
@@ -74,6 +77,11 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	conf := &config.AgentConfig{}
 	if err := v.Unmarshal(conf); err != nil {
 		log.Info().Err(err).Msg("Unable to marshal configuration.")
+	}
+
+	// https://github.com/spf13/viper/issues/406
+	if interceptors, ok := v.Get("server.interceptors").(map[string]interface{}); ok {
+		conf.Server.Interceptors = interceptors
 	}
 
 	return conf

@@ -93,6 +93,7 @@ func NewDefaultConfig() *AgentConfig {
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
+			Interceptors:    make(map[string]interface{}),
 			BatchRequests: BatchRequestsConfig{
 				MaxConcurrency:  10,
 				OperationsLimit: 500,
@@ -161,6 +162,9 @@ type LogConfig struct {
 	Level  string `json:"level"`
 }
 
+// PluginConfigs defines the generic mapping of middleware plugins
+type PluginConfigs map[string]interface{}
+
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
 	AllowedHosts    []string            `json:"allowedHosts"`
@@ -172,6 +176,7 @@ type ServerConfig struct {
 	HealthCheckPath string              `json:"healthCheckPath"`
 	Host            string              `json:"host"`
 	BatchRequests   BatchRequestsConfig `json:"batchRequests"`
+	Interceptors    PluginConfigs       `json:"interceptors"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {

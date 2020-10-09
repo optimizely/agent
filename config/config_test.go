@@ -44,6 +44,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, []string{"localhost"}, conf.Server.AllowedHosts)
 	assert.Equal(t, 10, conf.Server.BatchRequests.MaxConcurrency)
 	assert.Equal(t, 500, conf.Server.BatchRequests.OperationsLimit)
+	assert.Equal(t, PluginConfigs{}, conf.Server.Interceptors)
 
 	assert.False(t, conf.Log.Pretty)
 	assert.Equal(t, "info", conf.Log.Level)

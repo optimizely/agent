@@ -39,7 +39,7 @@ func assertRuntime(t *testing.T, actual config.RuntimeConfig) {
 	assert.Equal(t, 2, actual.MutexProfileFraction)
 }
 
-func assertServer(t *testing.T, actual config.ServerConfig) {
+func assertServer(t *testing.T, actual config.ServerConfig, assertPlugins bool) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
 	assert.Equal(t, "/healthcheck", actual.HealthCheckPath)
@@ -49,6 +49,10 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, "1.2.3.4", actual.Host)
 	assert.Equal(t, 100, actual.BatchRequests.OperationsLimit)
 	assert.Equal(t, 5, actual.BatchRequests.MaxConcurrency)
+
+	if assertPlugins {
+		assert.Equal(t, config.PluginConfigs{"plugin": map[string]interface{}{}}, actual.Interceptors)
+	}
 }
 
 func assertClient(t *testing.T, actual config.ClientConfig) {
@@ -134,7 +138,7 @@ func TestViperYaml(t *testing.T) {
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
-	assertServer(t, actual.Server)
+	assertServer(t, actual.Server, true)
 	assertClient(t, actual.Client)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
@@ -163,6 +167,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.host", "1.2.3.4")
 	v.Set("server.batchRequests.operationsLimit", "100")
 	v.Set("server.batchRequests.maxConcurrency", "5")
+	v.Set("server.interceptors", config.PluginConfigs{"plugin": map[string]interface{}{}})
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
@@ -222,7 +227,7 @@ func TestViperProps(t *testing.T) {
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
-	assertServer(t, actual.Server)
+	assertServer(t, actual.Server, true)
 	assertClient(t, actual.Client)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
@@ -283,7 +288,7 @@ func TestViperEnv(t *testing.T) {
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
-	assertServer(t, actual.Server)
+	assertServer(t, actual.Server, false)
 	assertClient(t, actual.Client)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
