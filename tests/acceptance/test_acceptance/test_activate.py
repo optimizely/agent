@@ -51,7 +51,7 @@ expected_activate_ab_invalid_experimentKey = """[
     ("", expected_activate_ab_empty_experimentKey, 200),
     ("invalid exper key", expected_activate_ab_invalid_experimentKey, 200),
 ], ids=["valid case", "empty exper key", "invalid exper key"])
-def test_activate__experiment(agent_server, session_obj, experiment_key, expected_response,
+def test_activate__experiment(session_obj, experiment_key, expected_response,
                               expected_status_code):
     """
     Test validates:
@@ -125,7 +125,7 @@ expected_activate_feat_invalid_featureKey = """[
     ("", expected_activate_feat_empty_featureKey, 200),
     ("invalid feat key", expected_activate_feat_invalid_featureKey, 200),
 ], ids=["valid case", "empty feat key", "invalid feat key"])
-def test_activate__feature(agent_server, session_obj, feature_key, expected_response,
+def test_activate__feature(session_obj, feature_key, expected_response,
                            expected_status_code):
     """
     Test validates:
@@ -230,7 +230,7 @@ expected_activate_type_feat = """[
     ("", {'error': 'type "" not supported'}, 400, True)
 ], ids=["experiment decision type", "feature decision type", "invalid decision type",
         "empty decision type"])
-def test_activate__type(agent_server, session_obj, decision_type, expected_response,
+def test_activate__type(session_obj, decision_type, expected_response,
                         expected_status_code, bypass_validation):
     """
     Test cases:
@@ -259,7 +259,7 @@ def test_activate__type(agent_server, session_obj, decision_type, expected_respo
             resp.raise_for_status()
 
 
-def test_activate_403(agent_server, session_override_sdk_key):
+def test_activate_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param agent_server: starts agent server with default config
@@ -289,7 +289,7 @@ def test_activate_403(agent_server, session_override_sdk_key):
         "feature test and decision_tr true",
         "feature test and decision_tr false", "empty disableTracking",
         "invalid disableTracking"])
-def test_activate__disable_tracking(agent_server, session_obj, experiment, disableTracking,
+def test_activate__disable_tracking(session_obj, experiment, disableTracking,
                                     expected_status_code, bypass_validation):
     """
     Setting to true will disable impression tracking for ab experiments and feature tests.
@@ -428,7 +428,7 @@ expected_enabled_invalid = """[
             "enabled false, feature on",
             "enabled false, feature off", "empty value for enabled",
             "invalid value for enabled"])
-def test_activate__enabled(agent_server, session_obj, enabled, experimentKey, featureKey,
+def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
                            expected_response, expected_status_code, bypass_validation):
     """
     Filter the activation response to return only enabled decisions.
@@ -527,7 +527,7 @@ expected_activate_with_config = """[
 ]"""
 
 
-def test_activate_with_config(agent_server, session_obj):
+def test_activate_with_config(session_obj):
     """
     Tests experimentKeys, featureKeys, variables and variations because it
     validates against the whole response body.

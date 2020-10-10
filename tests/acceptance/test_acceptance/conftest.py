@@ -39,37 +39,17 @@ def session_override_sdk_key(session_obj):
     return session_obj
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='session', autouse=True)
 def agent_server():
     """
     Starts Agent server. Runs tests. Stops Agent server.
     """
     host = os.getenv('host')
+    os.environ['OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT'] = '3'
 
     if host == 'http://localhost:8080':
         # start server
         subprocess.Popen(["make", "run"], shell=False)
-        wait_for_agent_to_start()
-        yield
-        # Stop server
-        stop_server('optimizely')
-    else:
-        yield
-
-
-@pytest.fixture(scope='session')
-def operations_limit():
-    """
-    Starts Agent server. Runs tests. Stops Agent server.
-    For custom operations limit setting.
-    """
-    host = os.getenv('host')
-
-    cmd = 'OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT=2 make run'
-
-    if host == 'http://localhost:8080':
-        # start server
-        subprocess.Popen(cmd, shell=True)
         wait_for_agent_to_start()
         yield
         # Stop server

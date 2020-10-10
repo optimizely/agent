@@ -127,7 +127,7 @@ expected_config = """{
 }"""
 
 
-def test_config(agent_server, session_obj):
+def test_config(session_obj):
     """
     Test validates all returned available experiment and features definitions
     for this environment.
@@ -144,7 +144,7 @@ def test_config(agent_server, session_obj):
     assert json.loads(expected_config) == resp.json()
 
 
-def test_config_403(agent_server, session_override_sdk_key):
+def test_config_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
     :param agent_server: starts agent server with default config
