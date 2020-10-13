@@ -124,6 +124,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.Use(chimw.Throttle(opt.maxConns))
 	}
 
+	r.Use(chimw.Logger)
 	r.Use(middleware.SetTime)
 	r.Use(render.SetContentType(render.ContentTypeJSON), middleware.SetRequestID)
 
