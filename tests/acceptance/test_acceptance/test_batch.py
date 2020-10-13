@@ -6,7 +6,7 @@ from tests.acceptance.helpers import sort_response
 from tests.acceptance.test_acceptance.conftest import sdk_key
 
 
-def test_batch_valid_reponse(agent_server, session_obj):
+def test_batch_valid_reponse(session_obj):
     # TODO - parameterize to feed in different values in the payload: valid SDK string, invalid sdk string,
     #  empty string, integer, boolean, double
     """
@@ -81,7 +81,7 @@ expected_body_of_operationid_2 = """{
 }"""
 
 
-def test_batch_valid_response__multiple_operations(agent_server, session_obj):
+def test_batch_valid_response__multiple_operations(session_obj):
     """
     Verify that operations with different sdk keys can be sent in a batch.
     :param agent_server: starts agent server with default config
@@ -155,7 +155,7 @@ def test_batch_valid_response__multiple_operations(agent_server, session_obj):
     resp.raise_for_status()
 
 
-def test_batch_400(agent_server, session_obj):
+def test_batch_400(session_obj):
     """
     Invalid JSON, no SDK key in the operations' header.
     :param agent_server: starts agent server with default config
@@ -189,10 +189,10 @@ def test_batch_400(agent_server, session_obj):
     resp.raise_for_status()
 
 
-def test_batch_422(operations_limit, session_obj):
+def test_batch_422(session_obj):
     """
-    Set env variable OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT to 2.
-        Then send 3 operaions, should fail with code 422
+    Set env variable OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT to 3 (already set to 3 for all tests)
+    Then send 4 operaions, should fail with code 422
     :param operations_limit: starts agent server with custome set operations limit env var
     :param session_obj: session object
     """
@@ -233,7 +233,23 @@ def test_batch_422(operations_limit, session_obj):
           "operationID": "3",
           "url": "/v1/activate",
           "params": {
-            "type": "feature",
+            "type": "experiment",
+            "experimentKey": "ab_test1"
+          },
+          "headers": {
+            "X-Optimizely-SDK-Key": "%s",
+            "Content-Type": "application/json"
+            }
+          },
+          {
+          "body": {
+            "userId": "user2"
+          },
+          "method": "POST",
+          "operationID": "4",
+          "url": "/v1/activate",
+          "params": {
+            "type": "experiment",
             "experimentKey": "ab_test1"
           },
           "headers": {
@@ -241,7 +257,7 @@ def test_batch_422(operations_limit, session_obj):
             "Content-Type": "application/json"
           }
         }]
-        }""" % (sdk_key, sdk_key)
+        }""" % (sdk_key, sdk_key, sdk_key)
 
     resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload,
                                                     bypass_validation=False)

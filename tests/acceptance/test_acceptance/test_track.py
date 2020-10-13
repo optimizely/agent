@@ -15,7 +15,7 @@ BASE_URL = os.getenv('host')
     ("", 400, True),
     ("invalid_event_key", 200, False)
 ], ids=["Valid event key", "Empty event key", "Invalid event key"])
-def test_track(agent_server, session_obj, event_key, status_code,bypass_validation):
+def test_track(session_obj, event_key, status_code,bypass_validation):
     """
     Track event for the given user.
     Track sends event and user details to Optimizely’s analytics backend
