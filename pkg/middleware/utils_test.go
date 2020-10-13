@@ -55,14 +55,11 @@ func TestGetLogger(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 
 	req.Header.Set(OptlyRequestHeader, "12345")
-	req.Header.Set(OptlySDKHeader, "some_key")
 	logger := GetLogger(req)
 	newLogger := logger.Output(out)
 	newLogger.Info().Msg("some_message")
 
 	assert.Contains(t, out.String(), `"requestId":"12345"`)
-	assert.Contains(t, out.String(), `"sdkKey":"some_key"`)
-
 }
 
 func TestGetFeature(t *testing.T) {
