@@ -134,7 +134,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.5.0] - October 24th, 2019
 - Adds GET endpoint for user-based flag
-- Adds impression tracking for Feature Tests (referred to as "A/B tests" after Nov 2020)
+- Adds impression tracking for feature tests (referred to as "A/B tests" after Nov 2020)
 
 ## [0.4.0] - October 23rd, 2019
 - Adds admin endpoints for health, info and metrics
