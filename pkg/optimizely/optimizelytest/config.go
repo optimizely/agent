@@ -40,9 +40,9 @@ type TestProjectConfig struct {
 	FeatureMap           map[string]entities.Feature
 	GroupMap             map[string]entities.Group
 	RolloutMap           map[string]entities.Rollout
+	nextID               int
 	AnonymizeIP          bool
 	BotFiltering         bool
-	nextID               int
 	sendFlagDecisions    bool
 }
 
