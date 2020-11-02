@@ -43,12 +43,14 @@ type TestProjectConfig struct {
 	AnonymizeIP          bool
 	BotFiltering         bool
 	nextID               int
+	sendFlagDecisions    bool
 }
 
 // GetDatafile returns a string representation of the environment's datafile
 func (c *TestProjectConfig) GetDatafile() string {
 	return ""
 }
+
 // GetProjectID returns projectID
 func (c *TestProjectConfig) GetProjectID() string {
 	return c.ProjectID
@@ -422,6 +424,11 @@ func (c *TestProjectConfig) AddMultiVariationABTest(experimentKey, variationAKey
 func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
+}
+
+// SendFlagDecisions returns the value of sendFlagDecisions
+func (c *TestProjectConfig) SendFlagDecisions() bool {
+	return c.sendFlagDecisions
 }
 
 // NewConfig initializes a new datafile from a json byte array using the default JSON datafile parser
