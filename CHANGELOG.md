@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 ## [2.3.0] - November 2, 2020
 - Introduce Agent interceptor plugins
-- Add support for sending flag decisions along with decision metadata
+- Adding support for upcoming application-controlled introduction of tracking for non-experiment Flag decisions
 
 ## [2.2.0] - October 5, 2020
 - Update to Optimizely Go SDK 1.4.0 with version audience condition evaluation based on semantic versioning as well as support for number 'greater than or equal to' and 'less than or equal to'.
