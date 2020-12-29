@@ -43,6 +43,7 @@ type APIOptions struct {
 	metricsRegistry *metrics.Registry
 	configHandler   http.HandlerFunc
 	activateHandler http.HandlerFunc
+	decideHandler   http.HandlerFunc
 	trackHandler    http.HandlerFunc
 	overrideHandler http.HandlerFunc
 	nStreamHandler  http.HandlerFunc
@@ -90,6 +91,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		metricsRegistry: metricsRegistry,
 		configHandler:   handlers.OptimizelyConfig,
 		activateHandler: handlers.Activate,
+		decideHandler:   handlers.Decide,
 		overrideHandler: overrideHandler,
 		trackHandler:    handlers.TrackEvent,
 		sdkMiddleware:   mw.ClientCtx,
@@ -114,6 +116,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
+	decideTimer := middleware.Metricize("decide", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
@@ -131,6 +134,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.Use(opt.corsHandler, opt.sdkMiddleware)
 		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
 		r.With(activateTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/activate", opt.activateHandler)
+		r.With(decideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/decide", opt.decideHandler)
 		r.With(trackTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/track", opt.trackHandler)
 		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/override", opt.overrideHandler)
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
