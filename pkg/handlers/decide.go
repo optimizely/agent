@@ -38,8 +38,8 @@ type DecideBody struct {
 
 // DecideOut defines the response
 type DecideOut struct {
-	client.OptimizelyDecision `json:",inline"`
-	Variables                 map[string]interface{} `json:"variables"`
+	client.OptimizelyDecision
+	Variables map[string]interface{} `json:"variables,omitempty"`
 }
 
 // Decide makes feature decisions for the selected query parameters
@@ -75,13 +75,13 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decideOut := []DecideOut{}
+	decideOuts := []DecideOut{}
 	decides := optimizelyUserContext.DecideAll(decideOptions)
 	for _, d := range decides {
-		decideInner := DecideOut{d, d.Variables.ToMap()}
-		decideOut = append(decideOut, decideInner)
+		decideOut := DecideOut{d, d.Variables.ToMap()}
+		decideOuts = append(decideOuts, decideOut)
 	}
-	render.JSON(w, r, decideOut)
+	render.JSON(w, r, decideOuts)
 }
 
 func getUserContextWithOptions(r *http.Request) (DecideBody, error) {
