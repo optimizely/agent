@@ -28,6 +28,30 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/decide:
+    parameters:
+      - $ref: '#/components/parameters/decideKeyParam'
+    post:
+      summary: Decide makes feature decisions for the selected query parameters.
+      operationId: decide
+      description: Returns a decision result for a flag key for a user. The decision result is returned in an OptimizelyDecision object, and contains all data required to deliver the flag rule. If no flag key is provided, decision is made for all flag keys and result is returned in an array.
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OptimizelyDecision'
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      requestBody:
+        $ref: '#/components/requestBodies/DecideContext'
   /v1/track:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
@@ -150,6 +174,13 @@ components:
       description: Key of the event we're tracking
       schema:
         type: string
+    decideKeyParam:
+      in: query
+      name: key
+      required: false
+      description: Flag key for decision
+      schema:
+        type: string
     experimentKeyParam:
       in: query
       name: experimentKey
@@ -195,6 +226,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
+    DecideContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DecideContext'
     TokenContext:
       required: true
       content:
@@ -288,6 +325,30 @@ components:
           additionalProperties: true
         error:
           type: string
+    OptimizelyDecision:
+      properties:
+        variationKey:
+          type: string
+        enabled:
+          type: boolean
+        ruleKey:
+          type: string
+        flagKey:
+          type: string
+        userContext:
+          type: object
+          properties:
+            userId:
+              type: string
+            attributes:
+              type: object
+              additionalProperties: true
+          required:
+            - userId
+        reasons:
+          type: array
+          items:
+            type: string
     ActivateContext:
       properties:
         userId:
@@ -340,6 +401,21 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
+    DecideContext:
+      properties:
+        decideOptions:
+          type: array
+          items:
+                type: string
+          example:
+            [DISABLE_DECISION_EVENT,ENABLED_FLAGS_ONLY,IGNORE_USER_PROFILE_SERVICE,EXCLUDE_VARIABLES,INCLUDE_REASONS]
+        userId:
+          type: string
+        userAttributes:
+          type: object
+          additionalProperties: true
+      required:
+        - userId
     Variation:
       properties:
         id:
