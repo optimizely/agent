@@ -327,6 +327,8 @@ components:
           type: string
     OptimizelyDecision:
       properties:
+        variables:
+          type: object
         variationKey:
           type: string
         enabled:
