@@ -40,7 +40,7 @@ paths:
             application/json:
               schema:
                 description: Optimizely Datafile
-                $ref: '#/components/schemas/Datafile'
+                type: object
         '401':
           description: Unauthorized, invalid JWT
         '403':
@@ -347,32 +347,6 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Feature'
-    Datafile:
-      properties:
-        accountId:
-          type: string
-        anonymizeIP:
-          type: boolean
-        botFiltering:
-          type: string
-        projectId:
-          type: string
-        revision:
-          type: string
-        version:
-          type: string
-        experiments:
-          type: array
-          items:
-                type: object
-        featureFlags:
-          type: array
-          items:
-                type: object
-        events:
-          type: array
-          items:
-                type: object
     TrackContext:
       properties:
         eventTags:
