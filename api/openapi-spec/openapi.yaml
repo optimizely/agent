@@ -30,28 +30,35 @@ paths:
           $ref: '#/components/responses/Forbidden'
   /v1/decide:
     parameters:
-      - $ref: '#/components/parameters/decideKeyParam'
+      - $ref: '#/components/parameters/decideKeysParam'
     post:
       summary: Decide makes feature decisions for the selected query parameters.
       operationId: decide
-      description: Returns a decision result for a flag key for a user. The decision result is returned in an OptimizelyDecision object, and contains all data required to deliver the flag rule. If no flag key is provided, decision is made for all flag keys and result is returned in an array.
+      description: >-
+        Returns decision results for flag keys for a user.
+        The result for a single key is returned as an
+        OptimizelyDecision object whereas the result for multiple keys is returned as an array of OptimizelyDecision objects. If no flag key is
+        provided, decision is made for all flag keys. OptimizelyDecision object
+        contains all data required to deliver the flag rule.
+      requestBody:
+        $ref: '#/components/requestBodies/DecideContext'
       responses:
         '200':
           description: Valid response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OptimizelyDecision'
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/OptimizelyDecision'
+                  - $ref: '#/components/schemas/OptimizelyDecision'
         '400':
           description: Missing required parameters
         '401':
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
-      requestBody:
-        $ref: '#/components/requestBodies/DecideContext'
   /v1/track:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
@@ -174,11 +181,11 @@ components:
       description: Key of the event we're tracking
       schema:
         type: string
-    decideKeyParam:
+    decideKeysParam:
       in: query
-      name: key
+      name: keys
       required: false
-      description: Flag key for decision
+      description: Flag keys for decision
       schema:
         type: string
     experimentKeyParam:
@@ -351,6 +358,10 @@ components:
           type: array
           items:
             type: string
+      required:
+        - ruleKey
+        - flagKey
+        - userContext
     ActivateContext:
       properties:
         userId:
@@ -408,9 +419,13 @@ components:
         decideOptions:
           type: array
           items:
-                type: string
-          example:
-            [DISABLE_DECISION_EVENT,ENABLED_FLAGS_ONLY,IGNORE_USER_PROFILE_SERVICE,EXCLUDE_VARIABLES,INCLUDE_REASONS]
+            type: string
+            enum:
+              - DISABLE_DECISION_EVENT
+              - ENABLED_FLAGS_ONLY
+              - IGNORE_USER_PROFILE_SERVICE
+              - EXCLUDE_VARIABLES
+              - INCLUDE_REASONS
         userId:
           type: string
         userAttributes:

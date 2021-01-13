@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2021, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -63,20 +63,30 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := r.URL.Query().Get("key")
-
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
 
-	if key != "" {
+	r.ParseForm()
+	keys := r.Form["keys"]
+
+	decides := map[string]client.OptimizelyDecision{}
+	switch len(keys) {
+	case 0:
+		// Decide All
+		decides = optimizelyUserContext.DecideAll(decideOptions)
+	case 1:
+		// Decide
+		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		render.JSON(w, r, decideOut)
 		return
+	default:
+		// Decide for Keys
+		decides = optimizelyUserContext.DecideForKeys(keys, decideOptions)
 	}
 
 	decideOuts := []DecideOut{}
-	decides := optimizelyUserContext.DecideAll(decideOptions)
 	for _, d := range decides {
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		decideOuts = append(decideOuts, decideOut)

@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2021, Optimizely, Inc. and contributors                        *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package handlers //
 package handlers
 
 import (
@@ -90,7 +107,7 @@ func (suite *DecideTestSuite) TestGetFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
-	req := httptest.NewRequest("POST", "/decide?key=one", bytes.NewBuffer(suite.body))
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -118,7 +135,7 @@ func (suite *DecideTestSuite) TestTrackFeatureWithFeatureRollout() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
-	req := httptest.NewRequest("POST", "/decide?key=one", bytes.NewBuffer(suite.body))
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -146,7 +163,7 @@ func (suite *DecideTestSuite) TestTrackFeatureWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
-	req := httptest.NewRequest("POST", "/decide?key=one", bytes.NewBuffer(suite.bodyEvent))
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.bodyEvent))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
@@ -176,7 +193,7 @@ func (suite *DecideTestSuite) TestTrackFeatureWithFeatureTest() {
 }
 
 func (suite *DecideTestSuite) TestGetFeatureMissingFeature() {
-	req := httptest.NewRequest("POST", "/decide?key=feature-missing", bytes.NewBuffer(suite.body))
+	req := httptest.NewRequest("POST", "/decide?keys=feature-missing", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
@@ -199,7 +216,7 @@ func (suite *DecideTestSuite) TestGetFeatureMissingFeature() {
 	suite.Equal(expected, actual)
 }
 
-func (suite *DecideTestSuite) TestActivateFeatures() {
+func (suite *DecideTestSuite) TestActivateMultipleFeatures() {
 	// 100% enabled rollout
 	feature := entities.Feature{Key: "featureA"}
 	suite.tc.AddFeatureRollout(feature)
@@ -213,30 +230,98 @@ func (suite *DecideTestSuite) TestActivateFeatures() {
 	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
 	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
 
-	expected := []client.OptimizelyDecision{
+	expected := []DecideOut{
 		{
-			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-			FlagKey:      "featureA",
-			RuleKey:      "1",
-			Enabled:      true,
-			VariationKey: "3",
-			Reasons:      []string{},
+			OptimizelyDecision: client.OptimizelyDecision{
+				UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+				FlagKey:      "featureA",
+				RuleKey:      "1",
+				Enabled:      true,
+				VariationKey: "3",
+				Reasons:      []string{},
+			},
+			Variables: nil,
 		},
 		{
-			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-			FlagKey:      "featureB",
-			RuleKey:      "5",
-			Enabled:      true,
-			VariationKey: "6",
-			Reasons:      []string{},
+			OptimizelyDecision: client.OptimizelyDecision{
+				UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+				FlagKey:      "featureB",
+				RuleKey:      "5",
+				Enabled:      true,
+				VariationKey: "6",
+				Reasons:      []string{},
+			},
+			Variables: nil,
+		},
+	}
+
+	// Toggle between tracking and no tracking.
+	for _, body := range [][]byte{suite.body, suite.bodyEvent} {
+		req := httptest.NewRequest("POST", "/decide?keys=featureA&keys=featureB", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+		suite.mux.ServeHTTP(rec, req)
+
+		suite.Equal(http.StatusOK, rec.Code)
+
+		// Unmarshal response
+		var actual []DecideOut
+		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+
+		suite.NoError(err)
+		suite.ElementsMatch(expected, actual)
+	}
+
+	// 1 for the feature test
+	suite.Equal(1, len(suite.tc.GetProcessedEvents()))
+}
+
+func (suite *DecideTestSuite) TestActivateAllFeatures() {
+	// 100% enabled rollout
+	feature := entities.Feature{Key: "featureA"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// 100% enabled feature test
+	featureB := entities.Feature{Key: "featureB"}
+	suite.tc.AddFeatureTest(featureB)
+
+	// Feature test 100% enabled variation 100% with variation variable value
+	variable := entities.Variable{DefaultValue: "default", ID: "123", Key: "strvar", Type: "string"}
+	featureC := entities.Feature{Key: "featureC", VariableMap: map[string]entities.Variable{"strvar": variable}}
+	suite.tc.AddFeatureTestWithCustomVariableValue(featureC, variable, "abc_notdef")
+
+	expected := []DecideOut{
+		{
+			OptimizelyDecision: client.OptimizelyDecision{
+				UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+				FlagKey:      "featureA",
+				RuleKey:      "1",
+				Enabled:      true,
+				VariationKey: "3",
+				Reasons:      []string{},
+			},
+			Variables: nil,
 		},
 		{
-			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-			FlagKey:      "featureC",
-			RuleKey:      "12",
-			Enabled:      true,
-			VariationKey: "13",
-			Reasons:      []string{},
+			OptimizelyDecision: client.OptimizelyDecision{
+				UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+				FlagKey:      "featureB",
+				RuleKey:      "5",
+				Enabled:      true,
+				VariationKey: "6",
+				Reasons:      []string{},
+			},
+			Variables: nil,
+		},
+		{
+			OptimizelyDecision: client.OptimizelyDecision{
+				UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+				FlagKey:      "featureC",
+				RuleKey:      "12",
+				Enabled:      true,
+				VariationKey: "13",
+				Reasons:      []string{},
+			},
+			Variables: map[string]interface{}{"strvar": "abc_notdef"},
 		},
 	}
 
@@ -249,7 +334,7 @@ func (suite *DecideTestSuite) TestActivateFeatures() {
 		suite.Equal(http.StatusOK, rec.Code)
 
 		// Unmarshal response
-		var actual []client.OptimizelyDecision
+		var actual []DecideOut
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
 
 		suite.NoError(err)
