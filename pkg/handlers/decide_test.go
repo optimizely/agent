@@ -103,7 +103,7 @@ func (suite *DecideTestSuite) SetupTest() {
 	suite.oc = optlyClient
 }
 
-func (suite *DecideTestSuite) TestGetFeatureWithFeatureTest() {
+func (suite *DecideTestSuite) TestDecideWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -131,7 +131,7 @@ func (suite *DecideTestSuite) TestGetFeatureWithFeatureTest() {
 	suite.Equal(expected, actual)
 }
 
-func (suite *DecideTestSuite) TestTrackFeatureWithFeatureRollout() {
+func (suite *DecideTestSuite) TestTrackWithFeatureRollout() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureRollout(feature)
 
@@ -159,7 +159,7 @@ func (suite *DecideTestSuite) TestTrackFeatureWithFeatureRollout() {
 	suite.Equal(expected, actual)
 }
 
-func (suite *DecideTestSuite) TestTrackFeatureWithFeatureTest() {
+func (suite *DecideTestSuite) TestTrackWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -192,7 +192,7 @@ func (suite *DecideTestSuite) TestTrackFeatureWithFeatureTest() {
 	suite.Equal("testUser", impression.VisitorID)
 }
 
-func (suite *DecideTestSuite) TestGetFeatureMissingFeature() {
+func (suite *DecideTestSuite) TestDecideMissingFlag() {
 	req := httptest.NewRequest("POST", "/decide?keys=feature-missing", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
@@ -216,7 +216,7 @@ func (suite *DecideTestSuite) TestGetFeatureMissingFeature() {
 	suite.Equal(expected, actual)
 }
 
-func (suite *DecideTestSuite) TestActivateMultipleFeatures() {
+func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 	// 100% enabled rollout
 	feature := entities.Feature{Key: "featureA"}
 	suite.tc.AddFeatureRollout(feature)
@@ -275,7 +275,7 @@ func (suite *DecideTestSuite) TestActivateMultipleFeatures() {
 	suite.Equal(1, len(suite.tc.GetProcessedEvents()))
 }
 
-func (suite *DecideTestSuite) TestActivateAllFeatures() {
+func (suite *DecideTestSuite) TestDecideAllFlags() {
 	// 100% enabled rollout
 	feature := entities.Feature{Key: "featureA"}
 	suite.tc.AddFeatureRollout(feature)
