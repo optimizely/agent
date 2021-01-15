@@ -65,10 +65,12 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
 
-	r.ParseForm()
-	keys := r.Form["keys"]
+	keys := []string{}
+	if err := r.ParseForm(); err == nil {
+		keys = r.Form["keys"]
+	}
 
-	decides := map[string]client.OptimizelyDecision{}
+	var decides map[string]client.OptimizelyDecision
 	switch len(keys) {
 	case 0:
 		// Decide All
