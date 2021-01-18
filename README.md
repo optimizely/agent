@@ -3,6 +3,7 @@
 # Optimizely Agent
 Optimizely Agent is a service which exposes the functionality of the Full Stack and Rollouts SDKs as
 a highly available and distributed web application.
+testing coveralls.
 
 Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the [documentation](https://docs.developers.optimizely.com/full-stack/docs).
 
