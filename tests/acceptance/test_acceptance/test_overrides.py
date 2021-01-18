@@ -30,6 +30,7 @@ def test_overrides(session_obj):
         '403':
           $ref: '#/components/responses/Forbidden'
 
+    :param agent_server: starts agent server with default config
     :param session_obj: session fixture
 
     1. activate experiment and assert "default" variation
@@ -109,6 +110,10 @@ expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",
             "invalid_userId", "invalid_experimentKey", "invalid_variationKey"])
 def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variationKey,
                                       expected_status_code, expected_response, bypass_validation):
+    """
+    :param agent_server: starts agent server with default config
+    :param : session_override_sdk_key
+    """
     payload = f'{{"userId": "{userId}", ' \
         f'"experimentKey": "{experimentKey}", "variationKey": "{variationKey}"}}'
 
@@ -121,6 +126,7 @@ def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variat
 def test_overrides_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
+    :param agent_server: starts agent server with default config
     :param : session_override_sdk_key
     """
     payload = '{"userId": "matjaz",'\

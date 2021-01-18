@@ -20,6 +20,7 @@ def test_track(session_obj, event_key, status_code,bypass_validation):
     Track event for the given user.
     Track sends event and user details to Optimizely’s analytics backend
     for the analysis of a feature test or experiment.
+    :param agent_server: starts agent server with default config
     :param session_obj: session fixture
     :param event_key: parameterized param
     :param status_code: parameterized param

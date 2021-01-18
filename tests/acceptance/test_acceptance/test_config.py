@@ -135,6 +135,7 @@ def test_config(session_obj):
     Note: Test will fail as soon as anything in the response body is modified.
     If someone updates any of the fields, the expected_response will need to be updated
     as well.
+    :param agent_server: starts agent server with default config
     :param session_obj: session object
     """
     resp = create_and_validate_request_and_response(ENDPOINT_CONFIG, 'get', session_obj)
@@ -146,6 +147,7 @@ def test_config(session_obj):
 def test_config_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
+    :param agent_server: starts agent server with default config
     :param : session_obj
     """
 

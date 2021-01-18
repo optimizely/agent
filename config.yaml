@@ -54,6 +54,9 @@ server:
 #    certFile: <cert-file>
     ## IP of the host
     host: "127.0.0.1"
+    ## configure optional Agent interceptors
+#    interceptors:
+#        httplog: {}
 
 ##
 ## api service configuration
@@ -69,21 +72,21 @@ api:
     enableOverrides: true
     ## CORS support is provided via chi middleware
     ## https://github.com/go-chi/cors
-    # cors:
-    #     ## If allowedOrigins is nil or empty, value is set to ["*"].
-    #     allowedOrigins: 
-    #         - ["*"]
-    #     ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
-    #     allowedMethods:
-    #         - "HEAD"
-    #         - "GET"
-    #         - "POST"
-    #         - "OPTIONS"
-    #     ## Default value is [] but "Origin" is always appended to the list.
-    #     allowedHeaders: []
-    #     exposedHeaders: []
-    #     allowedCredentials: false
-    #     maxAge: 300
+#    cors:
+#      ## If allowedOrigins is nil or empty, value is set to ["*"].
+#      allowedOrigins: ["*"]
+#      ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
+#      allowedMethods:
+#      - "HEAD"
+#      - "GET"
+#      - "POST"
+#      - "OPTIONS"
+#      ## Default value is [] but "Origin" is always appended to the list.
+#      allowedHeaders: ["*"]
+#      exposedHeaders: []
+#      allowedCredentials: false
+#      maxAge: 300
+
 ##
 ## admin service configuration
 ##

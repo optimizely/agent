@@ -61,6 +61,7 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     This is to add extra robustness to the test.
 
     Sort the reponses because dictionaries shuffle order.
+    :param agent_server: starts agent server with default config
     :param session_obj: session object
     :param experiment_key: experiment_key
     :param expected_response: expected_response
@@ -134,6 +135,7 @@ def test_activate__feature(session_obj, feature_key, expected_response,
     This is to add extra robustness to the test.
 
     Sort the reponses because dictionaries shuffle order.
+    :param agent_server: starts agent server with default config
     :param session_obj: session object
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
@@ -235,6 +237,7 @@ def test_activate__type(session_obj, decision_type, expected_response,
     1. Get decisions with "experiment" type
     2. Get decisions with "feature" type
     3. Get empty list when non-existent decision type -> bug OASIS-6031
+    :param agent_server: starts agent server with default config
     :param session_obj: session object
     :param decision_type: parameterized decision type
     :param expected_response: expected response
@@ -259,6 +262,7 @@ def test_activate__type(session_obj, decision_type, expected_response,
 def test_activate_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
+    :param agent_server: starts agent server with default config
     :param : session_obj
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
@@ -293,6 +297,7 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
     Can not test it in acceptance tests. Just testing basic status code.
     FS compatibility test suite uses proxy event displatcher where they test this by
     validating that event was not sent.
+    :param agent_server: starts agent server with default config
     :param session_obj: session fixture
     :param experiment: ab experiment or feature test
     :param disableTracking: true or false
@@ -431,6 +436,7 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
 
     - feature_1 feature is enabled - should not appear in response when enabled is set to False
     - featur_3 feature is not enabled in the project - should not appear in the project when enabled is True
+    :param agent_server: starts agent server with default config
     :param session_obj: session fixture
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
@@ -545,6 +551,7 @@ def test_activate_with_config(session_obj):
     Whereas featureKey response has featureKey field populated and experimentKey empty.
     When we sort on both then the responses are properly sorted and ready for being
     asserted on.
+    :param agent_server: starts agent server with default config
     :param session_obj: session object
     """
     # config

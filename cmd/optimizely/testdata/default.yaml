@@ -18,6 +18,8 @@ server:
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  interceptors:
+    plugin: {}
 log:
   pretty: true
   level: debug

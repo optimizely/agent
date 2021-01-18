@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+## [2.3.1] - November 17, 2020
+- Add "enabled" field to decision metadata structure
+
+## [2.3.0] - November 2, 2020
+- Introduce Agent interceptor plugins
+- Adding support for upcoming application-controlled introduction of tracking for non-experiment Flag decisions
+
+## [2.2.0] - October 5, 2020
+- Update to Optimizely Go SDK 1.4.0 with version audience condition evaluation based on semantic versioning as well as support for number 'greater than or equal to' and 'less than or equal to'.
 
 ## [2.1.0] - September 23, 2020
 - For `server.allowedHosts` configuration property, add support for matching all subdomains of a host, or all hosts
