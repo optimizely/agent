@@ -15,14 +15,15 @@ branches:
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 stages:
+  - 'Readme-sync-preview'
+  - 'Readme-sync'
   - 'Tests'
   - 'Trigger FSC Tests'
   - 'Test Build using latest tag (no upload)'
   - 'Build, Upload and Publish (draft)'
   - 'Test github release assets'
   - 'Publish (real)'
-  - 'Readme-sync-preview'
-  - 'Readme-sync'
+
 
 jobs:
 
