@@ -248,10 +248,10 @@ jobs:
         # to staging readme project at https://rollouts-sandbox-doc-test.readme.io/docs
 
 
-        # build v3.1 docs    
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v3.1 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v3.1)
-        # build v4.0 docs
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v4.0 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v4.0)
+        # build v3.1 docs  to v 1.0 of readme staging  project
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v3.1 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 1.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v3.1)
+        # build v4.0 docs to v 1.5 of staging project
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v4.0 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 1.5 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v4.0)
 
     - stage: 'Readme-sync'
       before_script: skip
