@@ -15,14 +15,15 @@ branches:
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 stages:
+  - 'Readme-sync-preview'
+  - 'Readme-sync'
   - 'Tests'
   - 'Trigger FSC Tests'
   - 'Test Build using latest tag (no upload)'
   - 'Build, Upload and Publish (draft)'
   - 'Test github release assets'
   - 'Publish (real)'
-  - 'Readme-sync-preview'
-  - 'Readme-sync'
+
 
 jobs:
 
@@ -240,14 +241,18 @@ jobs:
         # we need to be in $TRAVIS_BUILD_DIR in order to run the following git diff properly
         - cd $TRAVIS_BUILD_DIR
         
-        #print which docs changed in this Pull Request (and which therefore we expect to be updated by readme-sync-2 tool):
+        # print which docs changed in this Pull Request (and which therefore we expect to be updated by readme-sync-2 tool):
         - CHANGED_DOCS_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE -- docs/readme-sync))
         - echo $CHANGED_DOCS_FILES
 
-        #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs    
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
-        
+        # only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs
+        # to staging readme project at https://rollouts-sandbox-doc-test.readme.io/docs
 
+
+        # build v3.1 docs  to v 1.0 of readme staging  project
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v3.1 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 1.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v3.1)
+        # build v4.0 docs to v 1.5 of staging project
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v4.0 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY_PREVIEW --version 1.5 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v4.0)
 
     - stage: 'Readme-sync'
       before_script: skip
@@ -272,9 +277,11 @@ jobs:
         - CHANGED_DOCS_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE -- docs/readme-sync))
         - echo $CHANGED_DOCS_FILES
 
-        #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs    
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
-        
+        #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs  
+        # sync v3.1 docs folder to readme project v 3.1  
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v3.1 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v3.1
+        # sync v4.0 docs folder to readme project v 4.0  
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v4.0 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v4.0
         #########################################################################################
         # directories/scripts for full SDK-reference-guides, to be implemented after agent docs sync
         #########################################################################################
