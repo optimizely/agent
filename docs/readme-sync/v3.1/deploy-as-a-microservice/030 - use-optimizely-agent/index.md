@@ -9,45 +9,45 @@ createdAt: "2020-02-21T17:44:28.054Z"
 updatedAt: "2020-04-08T21:26:30.308Z"
 ---
 
-Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable experimentation and feature management. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk). In some cases, however, we’ve updated our APIs to simplify key use cases.
+Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable feature flag-based A/B tests and feature flag delivery. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk). 
 
-### Manage features
-
- Optimizely Agent simplifies the core feature management of our [SDK APIs](doc:sdk-reference-guides).  It consolidates the following endpoints:
-
-- [isFeatureEnabled](doc:is-feature-enabled-go)
-- [getFeatureVariableBoolean](doc:get-feature-variable-go#section-boolean)
-- [getFeatureVariableDouble](doc:get-feature-variable-go#section-double)
-- [getFeatureVariableInteger](doc:get-feature-variable-go#section-integer)
-- [getFeatureVariableString](doc:get-feature-variable-go#section-string) 
-- [getEnabledFeatures](doc:get-enabled-features-go)
+### Decide flags
 
 
-... into one, convenient endpoint:
+The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide):
 
-`POST /v1/activate?featureKey={featureKey}`
+`POST /v1/decide?keys={flagKey}`
 
-This [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/activate) returns:
+returns an array of OptimizelyDecision objects that contain information such as:
 
-- the decision for this feature for this user
-- any corresponding feature variable values. 
+- the decision for this flag for this user
+- any corresponding feature flag variable values. 
 
 For example: 
 
 ```json
 {
-	"featureKey": "feature-key-1",
+	"userContext": {
+        "UserId": "test-user",
+        "Attributes": {
+            "logged-in": true,
+            "location": "usa"
+        }
+    },
+    "flagKey": "my-feature-flag",
+    "ruleKey": "my-a-b-test",
 	"enabled": true,
 	"variables": {
 		"my-var-1": "cust-val-1",
 		"my-var-2": "cust-va1-2"
-	}
+	},
+    "reasons": [""]
 }
 ```
 
-The response is determined by the [feature tests](doc:run-feature-tests) and [feature rollouts](doc:use-feature-flags) defined for the supplied feature key, following the same rules as any Full Stack SDK. 
+The response is determined by the [A/B tests](https://docs.developers.optimizely.com/full-stack/v4.0/docs/run-a-b-tests) and [deliveries](https://docs.developers.optimizely.com/full-stack/v4.0/docs/run-flag-deliveries) defined for the supplied feature key, following the same rules as any Full Stack SDK. 
 
-Note: If the user is assigned to a feature test, this API will dispatch an impression.
+Note: If the user is assigned to an A/B test, this API will dispatch a decision event.
 
 ### Authentication
 
