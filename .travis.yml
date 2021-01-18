@@ -277,9 +277,11 @@ jobs:
         - CHANGED_DOCS_FILES=($(git diff --name-only $TRAVIS_COMMIT_RANGE -- docs/readme-sync))
         - echo $CHANGED_DOCS_FILES
 
-        #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs    
-        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/)
-        
+        #only if changes were made in the docs/readme-sync repo, trigger this readme-sync stage and sync the docs  
+        # sync v3.1 docs folder to readme project v 3.1  
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v3.1 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 3.1 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v3.1
+        # sync v4.0 docs folder to readme project v 4.0  
+        - git diff --quiet $TRAVIS_COMMIT_RANGE -- docs/readme-sync/v4.0 || ( cd $HOME/readme-sync2 && npx ts-node sync/index.ts --apiKey $README_SYNC_API_KEY --version 4.0 --docs $TRAVIS_BUILD_DIR/docs/readme-sync/v4.0
         #########################################################################################
         # directories/scripts for full SDK-reference-guides, to be implemented after agent docs sync
         #########################################################################################
