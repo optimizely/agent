@@ -33,27 +33,28 @@ for key in env['featuresMap']:
     print(key)
 ```
 
-## Run flag rules
-The `POST /v1/decide?keys={flagKey}` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user to make the relative bucketing decision. In this case we'll provide a `userId` via the request body. The `userId` will be used to determine how the feature will be evaluated. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature available to the selected audience.
+## Run a feature flag rule
 
-From an API standpoint the presence of a Feature Test or Rollout is abstracted away from the response and only the resulting variation or enabled feature is returned.
+The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide) buckets a user into a feature flag variation (choosing between multiple enabled variations or one disabled variation) as part of a flag rule. Flag rules let you:
+- experiment using A/B tests
+- roll out feature flags progressively to a selected audience using targeted feature flag deliveries. 
 
+To run a flag rule, use
 
 ```python
-# single feature activate
-params = { "featureKey": "my-feature" }
+# decide 1 flag. 
+params = { "keys": "my-feature-flag" }
 payload = { "userId": "test-user" }
-resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
+resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
 
 print(resp.json())
 
 
-# multiple (bulk) feature activate
-params = {
-    "featureKey": [key for key in env['featuresMap']],
-    "experimentKey": [key for key in env['experimentsMap']]
-}
-resp2 = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
+# multiple (bulk) feature flag decisions for specified flags.
+# To decide ALL flags, simply omit keys params
+payload = { "userId": "test-user" }
+params = {"keys":"flag_1", "keys":"flag_2"}
+resp2 = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
 print(json.dumps(resp.json(), indent=4, sort_keys=True))
 ```
-The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout.
+The decide API is a POST to signal to the caller that there are side-effects. Namely, the decision results in a "decision" event sent to Optimizely analytics for the purpose of analyzing A/B test results. A decision event will NOT be sent by default if the flag is simply part of a delivery.

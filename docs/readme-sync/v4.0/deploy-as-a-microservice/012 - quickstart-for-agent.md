@@ -71,18 +71,18 @@ for key in env['featuresMap']:
     print(key)
 ```
 
-### Activate Feature
+### Run a feature flag rule
 
-The `/activate?featureKey={key}` endpoint activates the feature for a given user. In Optimizely, activation is in the context of a given user to make the relative bucketing decision. In this case we'll provide a `userId` via the request body. The `userId` will be used to determine how the feature will be evaluated. Features can either be part of a Feature Test in which variations of feature variables are being measured against one another or a feature rollout, which progressively make the feature available to the selected audience.
+The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user.  We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule and flag variation the user buckets into.  Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience.
 
-From an API standpoint the presence of a Feature Test or Rollout is abstracted away from the response and only the resulting variation or enabled feature is returned.
+This endpoint returns an array of `OptimizelyDecision` objects, which contains information about the flag and rule the user bucketed into.
 
 ```python
-params = { "featureKey": "my-feature" }
+params = { "keys": "my-feature-flag" }
 payload = { "userId": "test-user" }
-resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
+resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
 
 print(resp.json())
 ```
 
-The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout. 
+The decide API is a POST to signal to the caller that there are side-effects. Namely, this endpoint results in a "decision" event sent to Optimizely analytics for the purpose of analyzing A/B test results. By default a "decision"  is not sent if the feature flag is simply part of a delivery. 
