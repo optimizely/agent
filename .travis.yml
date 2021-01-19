@@ -36,15 +36,16 @@ jobs:
         - make -e lint
         - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
 
-    - stage: Tests
-      name: coveralls
-      os: linux
-      dist: xenial
-      script:
-        - make -e cover COVER_FILE=coverage.txt
-      after_success:
-        - go get github.com/mattn/goveralls
-        - $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
+# TODO: Fix coveralls.io integration, then uncomment this block
+#    - stage: Tests
+#      name: coveralls
+#      os: linux
+#      dist: xenial
+#      script:
+#        - make -e cover COVER_FILE=coverage.txt
+#      after_success:
+#        - go get github.com/mattn/goveralls
+#        - $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
 
     - stage: Tests
       name: sourceclear
