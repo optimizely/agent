@@ -11,10 +11,10 @@ updatedAt: "2020-04-08T21:26:30.308Z"
 
 Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable running feature flag rules, such as A/B tests and targeted flag deliveries. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk). 
 
-### Running flag rules
+### Running feature flag rules
 
 
-The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide) lets you run flag rules, such as A/B tests or targeted feature flag deliveries. To run a flag rule, use:
+The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide) buckets a user into a feature flag variation (choosing between multiple enabled or one disabled variation) as part of a flag rule. Flag rules include A/B tests and targeted feature flag deliveries. To run a flag rule, use:
 
 `POST /v1/decide?keys={flagKey}`
 
@@ -77,8 +77,10 @@ To authenticate,  [pass your SDK key](https://docs.developers.optimizely.com/ful
 ### Get All Decisions
 - To get all feature flag decisions for a visitor in a single request, omit the feature flag parameter:
   `POST /v1/decide`
-- To get decisions for multiple keys, specify multiple keys parameters:
-  `keys={flag_key_1}&keys={flag_key_2}`
+- To get decisions for multiple keys, specify multiple keys parameters, for example:
+  `keys=flag_key_1&keys=flag_key_2`
+  
+  TODO: is above example right?
 
 - To receive only the enabled feature flags for a visitor use a decide option in the `application/json` request body: 
 

@@ -71,9 +71,9 @@ for key in env['featuresMap']:
     print(key)
 ```
 
-### Decide a feature flag
+### Run a feature flag rule
 
-The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user.  We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule the user buckets into.  Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience.
+The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user.  We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule and flag variation the user buckets into.  Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience.
 
 This endpoint returns an array of `OptimizelyDecision` objects, which contains information about the flag and rule the user bucketed into.
 
@@ -85,4 +85,4 @@ resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=paylo
 print(resp.json())
 ```
 
-The decide API is a POST to signal to the caller that there are side-effects. Namely, this endpoint results in a "decision" event sent to Optimizely analytics for the purpose of analyzing A/B test results. A "decision" will NOT be sent if the feature flag is simply part of a delivery. 
+The decide API is a POST to signal to the caller that there are side-effects. Namely, this endpoint results in a "decision" event sent to Optimizely analytics for the purpose of analyzing A/B test results. By default a "decision"  is not sent if the feature flag is simply part of a delivery. 
