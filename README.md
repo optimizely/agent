@@ -45,7 +45,7 @@ docker pull optimizely/agent:X.Y.Z
 
 Then run the docker container with:
 ```bash
-docker run -p 8080:8080 optimizely/agent
+docker run -p 8080:8080 --env OPTIMIZELY_LOG_PRETTY=true --env OPTIMIZELY_SERVER_HOST=0.0.0.0 --env OPTIMIZELY_SERVER_ALLOWEDHOSTS=127.0.0.1 optimizely/agent
 ```
 
 This will start Agent in the foreground and expose the container API port 8080 to the host.
