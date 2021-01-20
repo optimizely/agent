@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2021, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,6 +28,7 @@ import (
 
 // TestProjectConfig is a project config backed by a datafile
 type TestProjectConfig struct {
+	Datafile             string
 	AccountID            string
 	ProjectID            string
 	Revision             string
@@ -48,7 +49,7 @@ type TestProjectConfig struct {
 
 // GetDatafile returns a string representation of the environment's datafile
 func (c *TestProjectConfig) GetDatafile() string {
-	return ""
+	return c.Datafile
 }
 
 // GetProjectID returns projectID
