@@ -3,16 +3,15 @@ import os
 import string
 import time
 from random import randint, choice
+
 import requests
 import yaml
-
 from openapi_core import create_spec
-from openapi_core.validation.request.validators import RequestValidator
-from openapi_core.validation.response.validators import ResponseValidator
 from openapi_core.validation.request.datatypes import (OpenAPIRequest, RequestParameters)
+from openapi_core.validation.request.validators import RequestValidator
 from openapi_core.validation.response.datatypes import OpenAPIResponse
+from openapi_core.validation.response.validators import ResponseValidator
 from werkzeug.datastructures import ImmutableMultiDict
-
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
@@ -20,6 +19,7 @@ ENDPOINT_NOTIFICATIONS = '/v1/notifications/event-stream'
 ENDPOINT_OVERRIDE = '/v1/override'
 ENDPOINT_TRACK = '/v1/track'
 ENDPOINT_BATCH = '/v1/batch'
+ENDPOINT_DECIDE = '/v1/decide'
 
 YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
 
@@ -126,15 +126,16 @@ def get_pretty_json(dictionary, spaces=4):
 
 def sort_response(response_dict, *args):
     """
-    Used in tests to sort responses byt tw or more fields.
-    For example if rersponse includes experimentKey and FeatureKey, the function
+    Used in tests to sort responses by two or more keys.
+    For example if response includes experimentKey and FeatureKey, the function
     will sort by primary and secondary key, depending which one you put first.
     The first param will be primary sorted, second secondary.
+    Can handle arbitrary number of arguments.
     :param response_dict: response
     :param args: usually experimentKey and featureKey
     :return: sorted response
     """
-    return sorted(response_dict, key=lambda k: (k[args[0]], k[args[1]]))
+    return sorted(response_dict, key=lambda k: tuple(map(k.__getitem__, args)))
 
 
 # Helper funcitons for overrides
@@ -248,7 +249,12 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
     elif method == 'get':
         response = session.get(BASE_URL + endpoint, params=params, data=payload)
 
+    # print('-- REQUEST: ', request)
+    # print('-- REQUEST RESULT: ', request_result)
+
     response_result = create_and_validate_response(request, response)
+    # print('-- RESPONSE: ', response)
+
     # raise errors if response invalid
     response_result.raise_for_errors()
 

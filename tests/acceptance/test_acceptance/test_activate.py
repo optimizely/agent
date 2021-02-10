@@ -1,11 +1,12 @@
 import json
 import os
+
 import pytest
 import requests
 
-from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import ENDPOINT_ACTIVATE
 from tests.acceptance.helpers import ENDPOINT_CONFIG
+from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
 
 BASE_URL = os.getenv('host')
@@ -61,7 +62,6 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     This is to add extra robustness to the test.
 
     Sort the reponses because dictionaries shuffle order.
-    :param agent_server: starts agent server with default config
     :param session_obj: session object
     :param experiment_key: experiment_key
     :param expected_response: expected_response
@@ -70,7 +70,8 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"experimentKey": experiment_key}
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload, params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload,
+                                                    params=params)
 
     assert json.loads(expected_response) == resp.json()
     assert resp.status_code == expected_status_code, resp.text
@@ -106,7 +107,6 @@ expected_activate_feat_empty_featureKey = """[
   }
 ]"""
 
-
 expected_activate_feat_invalid_featureKey = """[
   {
     "userId": "matjaz",
@@ -135,13 +135,16 @@ def test_activate__feature(session_obj, feature_key, expected_response,
     This is to add extra robustness to the test.
 
     Sort the reponses because dictionaries shuffle order.
-    :param agent_server: starts agent server with default config
     :param session_obj: session object
+    :param feature_key: API request feature key
+    :param expected_response: API expected response
+    :param expected_status_code: API response expected status code
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"featureKey": feature_key}
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload, params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload,
+                                                    params=params)
 
     if isinstance(resp.json(), dict) and resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
@@ -225,11 +228,9 @@ expected_activate_type_feat = """[
 @pytest.mark.parametrize("decision_type, expected_response, expected_status_code, bypass_validation", [
     ("experiment", expected_activate_type_exper, 200, False),
     ("feature", expected_activate_type_feat, 200, False),
-    ("invalid decision type", {'error': 'type "invalid decision type" not supported'},
-     400, True),
+    ("invalid decision type", {'error': 'type "invalid decision type" not supported'}, 400, True),
     ("", {'error': 'type "" not supported'}, 400, True)
-], ids=["experiment decision type", "feature decision type", "invalid decision type",
-        "empty decision type"])
+], ids=["experiment decision type", "feature decision type", "invalid decision type", "empty decision type"])
 def test_activate__type(session_obj, decision_type, expected_response,
                         expected_status_code, bypass_validation):
     """
@@ -237,15 +238,16 @@ def test_activate__type(session_obj, decision_type, expected_response,
     1. Get decisions with "experiment" type
     2. Get decisions with "feature" type
     3. Get empty list when non-existent decision type -> bug OASIS-6031
-    :param agent_server: starts agent server with default config
     :param session_obj: session object
     :param decision_type: parameterized decision type
     :param expected_response: expected response
+    :param bypass_validation: option to bypass schema validation
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"type": decision_type}
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation, payload=payload, params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation,
+                                                    payload=payload, params=params)
 
     if decision_type in ['experiment', 'feature']:
         sorted_actual = sort_response(
@@ -262,14 +264,14 @@ def test_activate__type(session_obj, decision_type, expected_response,
 def test_activate_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
-    :param agent_server: starts agent server with default config
-    :param : session_obj
+    :param session_override_sdk_key: sdk key to override the session using invalid sdk key
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"type": "experiment"}
 
     with pytest.raises(requests.exceptions.HTTPError):
-        resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_override_sdk_key,payload=payload, params=params)
+        resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_override_sdk_key,
+                                                        payload=payload, params=params)
 
         assert resp.status_code == 403
         assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \
@@ -297,11 +299,11 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
     Can not test it in acceptance tests. Just testing basic status code.
     FS compatibility test suite uses proxy event displatcher where they test this by
     validating that event was not sent.
-    :param agent_server: starts agent server with default config
     :param session_obj: session fixture
     :param experiment: ab experiment or feature test
     :param disableTracking: true or false
     :param expected_status_code
+    :param bypass_validation: option to bypass schema validation
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {
@@ -309,7 +311,8 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
         "disableTracking": disableTracking
     }
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation, payload=payload, params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation,
+                                                    payload=payload, params=params)
 
     resp.raise_for_status()
     assert resp.status_code == expected_status_code
@@ -435,9 +438,14 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
     Value for enabled key needs to be a string: "true" or "false"
 
     - feature_1 feature is enabled - should not appear in response when enabled is set to False
-    - featur_3 feature is not enabled in the project - should not appear in the project when enabled is True
-    :param agent_server: starts agent server with default config
+    - feature_3 feature is not enabled in the project - should not appear in the project when enabled is True
     :param session_obj: session fixture
+    :param enabled: boolean is feature enabled
+    :param experimentKey: experiment key
+    :param featureKey: feature key
+    :param expected_response: API expected response
+    :param expected_status_code: expected status code
+    :param bypass_validation: option to bypass schema validation
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {
@@ -446,7 +454,8 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
         "enabled": enabled
     }
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation, payload=payload, params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation,
+                                                    payload=payload, params=params)
 
     actual_response = sort_response(resp.json(), 'experimentKey', 'featureKey')
     expected_response = sort_response(json.loads(expected_response), 'experimentKey',
@@ -551,7 +560,6 @@ def test_activate_with_config(session_obj):
     Whereas featureKey response has featureKey field populated and experimentKey empty.
     When we sort on both then the responses are properly sorted and ready for being
     asserted on.
-    :param agent_server: starts agent server with default config
     :param session_obj: session object
     """
     # config
@@ -568,7 +576,8 @@ def test_activate_with_config(session_obj):
         "experimentKey": exp
     }
 
-    resp_activate = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload, params=params)
+    resp_activate = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload,
+                                                             params=params)
 
     sorted_actual = sort_response(resp_activate.json(), 'experimentKey', 'featureKey')
     sorted_expected = sort_response(json.loads(expected_activate_with_config),
