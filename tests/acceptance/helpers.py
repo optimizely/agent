@@ -249,12 +249,7 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
     elif method == 'get':
         response = session.get(BASE_URL + endpoint, params=params, data=payload)
 
-    # print('-- REQUEST: ', request)
-    # print('-- REQUEST RESULT: ', request_result)
-
     response_result = create_and_validate_response(request, response)
-    # print('-- RESPONSE: ', response)
-
     # raise errors if response invalid
     response_result.raise_for_errors()
 
