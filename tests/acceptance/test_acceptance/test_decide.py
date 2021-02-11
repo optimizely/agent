@@ -54,6 +54,7 @@ expected_invalid_flag_key = r"""
 def test_decide__feature(session_obj, flag_key, expected_response, expected_status_code):
     """
     Test validates:
+    Correct response when valid and invalid flag key are passed as parameters.
     ...
     :param session_obj:
     :param flag_key:
