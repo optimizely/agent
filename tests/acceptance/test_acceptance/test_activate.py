@@ -70,8 +70,7 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"experimentKey": experiment_key}
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload,
-                                                    params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload, params=params)
 
     assert json.loads(expected_response) == resp.json()
     assert resp.status_code == expected_status_code, resp.text
