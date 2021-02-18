@@ -248,9 +248,11 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
         response = session.post(BASE_URL + endpoint, params=params, data=payload)
     elif method == 'get':
         response = session.get(BASE_URL + endpoint, params=params, data=payload)
-
     response_result = create_and_validate_response(request, response)
-    # raise errors if response invalid
-    response_result.raise_for_errors()
+
+    if not bypass_validation:
+        pass
+        # raise errors if response invalid
+        response_result.raise_for_errors()
 
     return response
