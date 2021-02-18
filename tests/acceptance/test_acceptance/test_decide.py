@@ -1,5 +1,4 @@
 import json
-import os
 
 import pytest
 import requests
@@ -8,7 +7,6 @@ from tests.acceptance.helpers import ENDPOINT_DECIDE
 from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
 
-BASE_URL = os.getenv('host')
 
 expected_single_flag_key = """
     {
@@ -157,13 +155,13 @@ expected_flag_keys = r"""
 
 
 @pytest.mark.parametrize(
-    "parameters, expected_response, expected_status_code", [
-        ({}, expected_flag_keys, 200),
-        ({"keys": []}, expected_flag_keys, 200),
-        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200),
+    "parameters, expected_response, expected_status_code, bypass_validation", [
+        ({}, expected_flag_keys, 200, True),
+        ({"keys": []}, expected_flag_keys, 200, True),
+        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200, True),
     ],
     ids=["missig_flagkey_parameter", "no flag key specified", "multiple flag keys"])
-def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code):
+def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code, bypass_validation):
     """
     Test validates:
     That no required parameter, empty param and all parameters return identical response.
@@ -171,10 +169,10 @@ def test_decide__flag_key_parameter(session_obj, parameters, expected_response, 
     for missing reuired parameter, even though when no flagKey parameter is supplied to the request,
     Agent still responds with all decisions and status 200.
     That is consistent with the behavior of activate and other api-s
-    :param session_obj:
-    :param parameters:
-    :param expected_response:
-    :param expected_status_code:
+    :param session_obj: session obj
+    :param parameters:  sesison obj, params, expected, expected status code
+    :param expected_response: expected_flag_keys
+    :param expected_status_code: 200
     """
     payload = """
         {
