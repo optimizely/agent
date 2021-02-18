@@ -187,10 +187,11 @@ def test_decide__flag_key_parameter(session_obj, parameters, expected_response, 
 
     params = parameters
     resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, payload=payload,
-                                                    params=params)
+                                                    params=params, bypass_validation=bypass_validation)
 
     sorted_actual = sort_response(resp.json(), 'flagKey')
     sorted_expected = sort_response(json.loads(expected_response), 'flagKey')
+
     assert sorted_actual == sorted_expected
 
 
