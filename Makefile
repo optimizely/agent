@@ -63,6 +63,9 @@ lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml`
 run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)
 
+stop:	## stops TARGET binary process
+	pkill -f "$(GOBIN)/$(TARGET)"
+
 static: check-go
 	$(GOPATH)/bin/statik -src=web/static -f
 
@@ -85,3 +88,12 @@ generate_secret: $(GEN_SECRET_TARGET) ## builds and executes the GEN_SECRET_TARG
 
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+test-acceptance:
+	export OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT='3' && \
+	make clean && \
+	make setup && \
+	make run & \
+	sh scripts/wait_for_agent_to_start.sh && \
+	pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host "$(MYHOST)" && \
+	make stop

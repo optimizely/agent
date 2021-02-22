@@ -9,8 +9,6 @@ from tests.acceptance.helpers import ENDPOINT_CONFIG
 from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
 
-BASE_URL = os.getenv('host')
-
 expected_activate_ab = """[
     {
         "userId": "matjaz",
@@ -70,7 +68,8 @@ def test_activate__experiment(session_obj, experiment_key, expected_response,
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"experimentKey": experiment_key}
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload, params=params)
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload,
+                                                    params=params)
 
     assert json.loads(expected_response) == resp.json()
     assert resp.status_code == expected_status_code, resp.text
@@ -562,6 +561,7 @@ def test_activate_with_config(session_obj):
     :param session_obj: session object
     """
     # config
+    BASE_URL = os.getenv('host')
     resp = session_obj.get(BASE_URL + ENDPOINT_CONFIG)
     resp_config = resp.json()
 

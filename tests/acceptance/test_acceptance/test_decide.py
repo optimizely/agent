@@ -7,7 +7,6 @@ from tests.acceptance.helpers import ENDPOINT_DECIDE
 from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
 
-
 expected_single_flag_key = """
     {
       "variationKey": "variation_1",
@@ -161,7 +160,8 @@ expected_flag_keys = r"""
         ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200, True),
     ],
     ids=["missig_flagkey_parameter", "no flag key specified", "multiple flag keys"])
-def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code, bypass_validation):
+def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,
+                                    bypass_validation):
     """
     Test validates:
     That no required parameter, empty param and all parameters return identical response.
@@ -186,7 +186,8 @@ def test_decide__flag_key_parameter(session_obj, parameters, expected_response, 
     """
 
     params = parameters
-    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, bypass_validation, payload=payload,
+    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, bypass_validation,
+                                                    payload=payload,
                                                     params=params)
 
     sorted_actual = sort_response(resp.json(), 'flagKey')

@@ -30,7 +30,7 @@ def test_batch_valid_reponse(session_obj):
             "X-Request-Id": "matjaz_1"
         }
     }]
-    }"""% sdk_key
+    }""" % sdk_key
 
     resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload,
                                                     bypass_validation=False)

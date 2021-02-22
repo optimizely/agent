@@ -1,12 +1,8 @@
-import os
-
 import pytest
 import requests
 
 from tests.acceptance.helpers import ENDPOINT_TRACK
 from tests.acceptance.helpers import create_and_validate_request_and_response
-
-BASE_URL = os.getenv('host')
 
 
 @pytest.mark.parametrize("event_key, status_code, bypass_validation", [
