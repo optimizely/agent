@@ -94,6 +94,6 @@ test-acceptance:
 	make clean && \
 	make setup && \
 	make run & \
-	sh scripts/wait_for_agent_to_start.sh && \
+	bash scripts/wait_for_agent_to_start.sh && \
 	pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host "$(MYHOST)" && \
 	make stop
