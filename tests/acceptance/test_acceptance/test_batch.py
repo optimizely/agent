@@ -32,8 +32,7 @@ def test_batch_valid_reponse(session_obj):
     }]
     }""" % sdk_key
 
-    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload,
-                                                    bypass_validation=False)
+    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload)
 
     actual_response = resp.json()
     assert 200 == resp.status_code
@@ -134,8 +133,7 @@ def test_batch_valid_response__multiple_operations(session_obj):
     }]
     }""" % (sdk_key, sdk_key)
 
-    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload,
-                                                    bypass_validation=False)
+    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload)
 
     actual_response = resp.json()
 
@@ -178,8 +176,7 @@ def test_batch_400(session_obj):
     }]
     }"""
 
-    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload,
-                                                    bypass_validation=False)
+    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload)
 
     actual_response = resp.json()
     assert 200 == resp.status_code
@@ -259,8 +256,7 @@ def test_batch_422(session_obj):
         }]
         }""" % (sdk_key, sdk_key, sdk_key)
 
-    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload,
-                                                    bypass_validation=False)
+    resp = create_and_validate_request_and_response(ENDPOINT_BATCH, 'post', session_obj, payload=payload)
 
     assert 422 == resp.status_code
     assert resp.json()['error'].startswith('too many operations')

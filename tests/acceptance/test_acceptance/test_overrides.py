@@ -93,7 +93,7 @@ expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",
 
 
 @pytest.mark.parametrize(
-    "userId, experimentKey, variationKey, expected_status_code, expected_response, bypass_validation", [
+    "userId, experimentKey, variationKey, expected_status_code, expected_response, bypass_validation_request", [
         ("", "ab_test1", "variation_2", 400, expected_empty_user, True),
         ("matjaz", "", "variation_2", 400, expected_empty_experiment_key, True),
         ("matjaz", "ab_test1", "", 200, expected_empty_variation_key, False),
@@ -104,7 +104,7 @@ expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",
     ], ids=["empty_userId", "empty_experiment_key", "empty_variationKey",
             "invalid_userId", "invalid_experimentKey", "invalid_variationKey"])
 def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variationKey,
-                                      expected_status_code, expected_response, bypass_validation):
+                                      expected_status_code, expected_response, bypass_validation_request):
     """
     :param session_obj: session object
     :param userId: user id
@@ -117,7 +117,7 @@ def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variat
     payload = f'{{"userId": "{userId}", ' \
         f'"experimentKey": "{experimentKey}", "variationKey": "{variationKey}"}}'
 
-    resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_obj, bypass_validation,
+    resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_obj, bypass_validation_request,
                                                     payload=payload)
 
     assert resp.status_code == expected_status_code, resp.text

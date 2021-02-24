@@ -223,14 +223,14 @@ expected_activate_type_feat = """[
 ]"""
 
 
-@pytest.mark.parametrize("decision_type, expected_response, expected_status_code, bypass_validation", [
+@pytest.mark.parametrize("decision_type, expected_response, expected_status_code, bypass_validation_request", [
     ("experiment", expected_activate_type_exper, 200, False),
     ("feature", expected_activate_type_feat, 200, False),
     ("invalid decision type", {'error': 'type "invalid decision type" not supported'}, 400, True),
     ("", {'error': 'type "" not supported'}, 400, True)
 ], ids=["experiment decision type", "feature decision type", "invalid decision type", "empty decision type"])
 def test_activate__type(session_obj, decision_type, expected_response,
-                        expected_status_code, bypass_validation):
+                        expected_status_code, bypass_validation_request):
     """
     Test cases:
     1. Get decisions with "experiment" type
@@ -244,7 +244,7 @@ def test_activate__type(session_obj, decision_type, expected_response,
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
     params = {"type": decision_type}
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation,
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation_request,
                                                     payload=payload, params=params)
 
     if decision_type in ['experiment', 'feature']:
@@ -278,19 +278,20 @@ def test_activate_403(session_override_sdk_key):
         resp.raise_for_status()
 
 
-@pytest.mark.parametrize("experiment, disableTracking, expected_status_code, bypass_validation", [
-    ("ab_test1", "true", 200, False),
-    ("ab_test1", "false", 200, False),
-    ("feature_2_test", "true", 200, False),
-    ("feature_2_test", "false", 200, False),
-    ("ab_test1", "", 200, True),
-    ("ab_test1", "invalid_boolean", 200, True),
-], ids=["ab_experiment and decision_tr true", "ab_experiment and decision_tr false",
-        "feature test and decision_tr true",
-        "feature test and decision_tr false", "empty disableTracking",
-        "invalid disableTracking"])
+@pytest.mark.parametrize(
+    "experiment, disableTracking, expected_status_code, bypass_validation_request", [
+        ("ab_test1", "true", 200, False),
+        ("ab_test1", "false", 200, False),
+        ("feature_2_test", "true", 200, False),
+        ("feature_2_test", "false", 200, False),
+        ("ab_test1", "", 200, True),
+        ("ab_test1", "invalid_boolean", 200, True),
+    ], ids=["ab_experiment and decision_tr true", "ab_experiment and decision_tr false",
+            "feature test and decision_tr true",
+            "feature test and decision_tr false", "empty disableTracking",
+            "invalid disableTracking"])
 def test_activate__disable_tracking(session_obj, experiment, disableTracking,
-                                    expected_status_code, bypass_validation):
+                                    expected_status_code, bypass_validation_request):
     """
     Setting to true will disable impression tracking for ab experiments and feature tests.
     It's equivalent to previous "get_variation".
@@ -309,7 +310,7 @@ def test_activate__disable_tracking(session_obj, experiment, disableTracking,
         "disableTracking": disableTracking
     }
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation,
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation_request,
                                                     payload=payload, params=params)
 
     resp.raise_for_status()
@@ -417,7 +418,7 @@ expected_enabled_invalid = """[
 
 
 @pytest.mark.parametrize(
-    "enabled, experimentKey, featureKey, expected_response, expected_status_code, bypass_validation", [
+    "enabled, experimentKey, featureKey, expected_response, expected_status_code, bypass_validation_request", [
         ("true", "ab_test1", "feature_1", expected_enabled_true_all_true, 200, False),
         ("true", "ab_test1", "feature_3", expected_enabled_true_feature_off, 200, False),
         ("false", "ab_test1", "feature_1", expected_enabled_false_feature_on, 200, False),
@@ -430,7 +431,7 @@ expected_enabled_invalid = """[
             "enabled false, feature off", "empty value for enabled",
             "invalid value for enabled"])
 def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
-                           expected_response, expected_status_code, bypass_validation):
+                           expected_response, expected_status_code, bypass_validation_request):
     """
     Filter the activation response to return only enabled decisions.
     Value for enabled key needs to be a string: "true" or "false"
@@ -452,7 +453,7 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
         "enabled": enabled
     }
 
-    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation,
+    resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation_request,
                                                     payload=payload, params=params)
 
     actual_response = sort_response(resp.json(), 'experimentKey', 'featureKey')
