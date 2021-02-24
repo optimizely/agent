@@ -154,13 +154,14 @@ expected_flag_keys = r"""
 
 
 @pytest.mark.parametrize(
-    "parameters, expected_response, expected_status_code, bypass_validation_response", [
-        ({}, expected_flag_keys, 200, True),
-        ({"keys": []}, expected_flag_keys, 200, True),
-        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200, True),
+    "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
+        ({}, expected_flag_keys, 200, True, True),
+        ({"keys": []}, expected_flag_keys, 200, True, True),
+        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200, True, True),
     ],
     ids=["missig_flagkey_parameter", "no flag key specified", "multiple flag keys"])
 def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,
+                                    bypass_validation_request,
                                     bypass_validation_response):
     """
     Test validates:
@@ -186,7 +187,8 @@ def test_decide__flag_key_parameter(session_obj, parameters, expected_response, 
     """
 
     params = parameters
-    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, bypass_validation_response,
+    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, bypass_validation_request,
+                                                    bypass_validation_response,
                                                     payload=payload,
                                                     params=params)
 
