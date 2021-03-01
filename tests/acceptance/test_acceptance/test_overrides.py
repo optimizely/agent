@@ -1,15 +1,10 @@
-import json
-import os
 import pytest
 import requests
 
+from tests.acceptance.helpers import ENDPOINT_OVERRIDE
 from tests.acceptance.helpers import activate_experiment
 from tests.acceptance.helpers import create_and_validate_request_and_response
-from tests.acceptance.helpers import ENDPOINT_OVERRIDE
 from tests.acceptance.helpers import override_variation
-
-
-BASE_URL = os.getenv('host')
 
 
 def test_overrides(session_obj):
@@ -98,7 +93,7 @@ expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",
 
 
 @pytest.mark.parametrize(
-    "userId, experimentKey, variationKey, expected_status_code, expected_response, bypass_validation", [
+    "userId, experimentKey, variationKey, expected_status_code, expected_response, bypass_validation_request", [
         ("", "ab_test1", "variation_2", 400, expected_empty_user, True),
         ("matjaz", "", "variation_2", 400, expected_empty_experiment_key, True),
         ("matjaz", "ab_test1", "", 200, expected_empty_variation_key, False),
@@ -109,15 +104,21 @@ expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",
     ], ids=["empty_userId", "empty_experiment_key", "empty_variationKey",
             "invalid_userId", "invalid_experimentKey", "invalid_variationKey"])
 def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variationKey,
-                                      expected_status_code, expected_response, bypass_validation):
+                                      expected_status_code, expected_response, bypass_validation_request):
     """
-    :param agent_server: starts agent server with default config
-    :param : session_override_sdk_key
+    :param session_obj: session object
+    :param userId: user id
+    :param experimentKey: experiment key
+    :param variationKey: variation key
+    :param expected_status_code: expected status code in response
+    :param expected_response: body of expected response
+    :param bypass_validation: option to enable or disable schema validation
     """
     payload = f'{{"userId": "{userId}", ' \
         f'"experimentKey": "{experimentKey}", "variationKey": "{variationKey}"}}'
 
-    resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_obj, bypass_validation, payload=payload)
+    resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_obj, bypass_validation_request,
+                                                    payload=payload)
 
     assert resp.status_code == expected_status_code, resp.text
     assert resp.text == expected_response
@@ -126,11 +127,10 @@ def test_overrides__invalid_arguments(session_obj, userId, experimentKey, variat
 def test_overrides_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
-    :param agent_server: starts agent server with default config
-    :param : session_override_sdk_key
+    :param session_override_sdk_key: sdk key to override the session using invalid sdk key
     """
-    payload = '{"userId": "matjaz",'\
-               '"experimentKey": "ab_test1", "variationKey": "my_new_variation"}'
+    payload = '{"userId": "matjaz",' \
+              '"experimentKey": "ab_test1", "variationKey": "my_new_variation"}'
 
     with pytest.raises(requests.exceptions.HTTPError):
         resp = create_and_validate_request_and_response(ENDPOINT_OVERRIDE, 'post', session_override_sdk_key,
