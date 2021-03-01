@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+## [2.4.0] - March 1, 2021
+## New Features
+Introduce `/decide` endpoint as a new primary interface for retrieving feature flag status, configuration and associated experiment decisions for users ([#292](https://github.com/optimizely/agent/pull/292)). The new `OptimizelyUserContext` class is instantiated with `CreateUserContext` and exposes the following APIs to get `OptimizelyDecision`:
+
+    - SetAttribute
+    - Decide
+    - DecideAll
+    - DecideForKeys
+    - TrackEvent
+
+For details, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.
+
 ## [2.3.1] - November 17, 2020
 - Add "enabled" field to decision metadata structure
 
