@@ -36,7 +36,7 @@ expected_invalid_flag_key = r"""
         }
       },
       "reasons": [
-        "No flag was found for key \"[invalid_flag_key]\"."
+        "No flag was found for key \"invalid_flag_key\"."
       ]
     }
 """

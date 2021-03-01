@@ -209,7 +209,7 @@ func (suite *DecideTestSuite) TestDecideMissingFlag() {
 		RuleKey:      "",
 		Enabled:      false,
 		VariationKey: "",
-		Reasons:      []string{"No flag was found for key \"[feature-missing]\"."},
+		Reasons:      []string{"No flag was found for key \"feature-missing\"."},
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
