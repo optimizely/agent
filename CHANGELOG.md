@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 Introduce `/decide` endpoint as a new primary interface for Decide APIs, that is for retrieving feature flag status, configuration and associated experiment decisions for users ([#292](https://github.com/optimizely/agent/pull/292)).   
 
 For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.  
-Under the hood Agent uses Go SDK which implements Decide APIs. If interested to learn more about them see [Go SDK v1.6.0](https://github.com/optimizely/go-sdk/tree/v1.6.0).
+Upgrade to use [Go SDK v1.6.0](https://github.com/optimizely/go-sdk/tree/v1.6.0). This adds support for OptimizelyDecision.
 
 ## [2.3.1] - November 17, 2020
 - Add "enabled" field to decision metadata structure
@@ -174,4 +174,3 @@ Under the hood Agent uses Go SDK which implements Decide APIs. If interested to 
 
 ## [0.1.0] - September 4th, 2019
 This is the initial release which supported a basic web application and go-sdk integration.
-
