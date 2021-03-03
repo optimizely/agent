@@ -30,7 +30,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
   /v1/datafile:
     get:
-      summary: Return the datafile for the given environment. This allows you more control over which datafiles and versions are served than fetching the datafile from the Optimizely CDN.
+      summary: Return the datafile for the given environment. This endpoint gives you more control over datafiles and versions than fetching the datafile from the Optimizely CDN.
       operationId: getDatafile
       description: Returns the json datafile for the given environment.
       responses:
