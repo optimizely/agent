@@ -30,7 +30,9 @@ paths:
           $ref: '#/components/responses/Forbidden'
   /v1/datafile:
     get:
-      summary: Return the datafile for the given environment. This endpoint gives you more control over datafiles and versions than fetching the datafile from the Optimizely CDN.
+      summary: >-
+        Return the datafile for the given environment. If you need strict consistency, you can pass the datafile to other Optimizely instances. 
+        so that all initialize from exactly the same datafile version (rather than each fetching the datafile separately from the Optimizely CDN).  
       operationId: getDatafile
       description: Returns the json datafile for the given environment.
       responses:
