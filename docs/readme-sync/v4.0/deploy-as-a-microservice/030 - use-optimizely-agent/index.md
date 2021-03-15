@@ -82,7 +82,6 @@ To authenticate,  [pass your SDK key](https://docs.developers.optimizely.com/ful
 - To get decisions for multiple keys, specify multiple keys parameters, for example:
   `keys=flag_key_1&keys=flag_key_2`
   
-  TODO: is above example right?
 
 - To receive only the enabled feature flags for a visitor use a decide option in the `application/json` request body: 
 
