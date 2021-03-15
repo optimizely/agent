@@ -73,6 +73,7 @@ for key in env['featuresMap']:
 
 ### Run a feature flag rule
 
+The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user. You can decide multiple flags with this syntax:  `/v1/decide?keys=flagA&keys=flagB`.  We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule and flag variation the user buckets into.  Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience. 
 
 This endpoint returns an array of `OptimizelyDecision` objects, which contains information about the flag and rule the user bucketed into.
 
