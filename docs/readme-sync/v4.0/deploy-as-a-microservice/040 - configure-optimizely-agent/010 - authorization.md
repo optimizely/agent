@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Agent Authorization - Optimizely Full Stack"
 createdAt: "2020-03-11T20:58:11.777Z"
-updatedAt: "2020-03-31T19:44:52.119Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces.
 

@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "advanced config - Agent microservice - Optimizely Full Stack"
 createdAt: "2020-05-21T20:35:58.387Z"
-updatedAt: "2020-07-14T20:51:52.458Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 
 ## Setting Configuration Values

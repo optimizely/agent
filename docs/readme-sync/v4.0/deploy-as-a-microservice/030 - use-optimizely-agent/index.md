@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "How to use Optimizely Agent - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:28.054Z"
-updatedAt: "2020-04-08T21:26:30.308Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 
 Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable running feature flag rules, such as A/B tests and targeted flag deliveries. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk). 
@@ -18,22 +18,24 @@ The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.htm
 
 `POST /v1/decide?keys={flagKey}`
 
-In the request `application/json` body, include the `userID` and any `decideOptions`. The full request looks like this:
+In the request `application/json` body, include the `userId` and any `decideOptions`. The full request looks like this:
 
 ```curl
-curl --request POST 'http://localhost:8080/v1/decide' \
---header 'Content-Type: application/json' \
---header 'X-Optimizely-SDK-Key: <YOUR_SDK_KEY>' \
---header 'Content-Type: application/json' \
+curl --location --request POST 'http://localhost:8080/v1/decide?keys=YOUR_FLAG_1&keys=YOUR_FLAG_2'
+--header 'X-Optimizely-SDK-Key: YOUR_SDK_KEY'
+--header 'Accept: text/event-stream'
+--header 'Content-Type: application/json'
 --data-raw '{
-"userId": "test-user"
 "decideOptions": [
-   "INCLUDE_REASONS"
-]
+],
+"userId": "string",
+"userAttributes": {
+"additionalProp1": {}
+}
 }'
 ```
 
-TODO: please review above and below request/response examples, I didn't test them, just looked at the Pull request for decide and made some guesses!! -FE
+
 
 
 

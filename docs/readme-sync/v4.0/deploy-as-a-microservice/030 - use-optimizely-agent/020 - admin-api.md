@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Admin APIs - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:28.054Z"
-updatedAt: "2020-02-21T23:09:19.274Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 The Admin API provides system information about the running process. This can be used to check the availability of the service, runtime information and operational metrics. By default the admin listener is configured on port 8088.
 

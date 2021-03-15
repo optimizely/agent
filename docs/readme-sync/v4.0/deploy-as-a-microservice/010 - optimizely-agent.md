@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Optimizely Agent microservice - Optimizely Full Stack"
 createdAt: "2020-02-21T20:35:58.387Z"
-updatedAt: "2020-07-14T20:51:52.458Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 Optimizely Agent is a standalone, open-source, and highly available microservice that provides major benefits over using Optimizely SDKs in certain use cases. The [Agent REST API](https://library.optimizely.com/docs/api/agent/v1/index.html) offers consolidated and simplified endpoints for accessing all the functionality of Optimizely Full Stack SDKs. 
 

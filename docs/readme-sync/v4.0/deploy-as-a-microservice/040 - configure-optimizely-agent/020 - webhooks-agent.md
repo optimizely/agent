@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Agent microservice webhooks - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:26.981Z"
-updatedAt: "2020-05-05T17:03:48.045Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 Optimizely Agent implements a  webhook listener used to receive inbound [Webhook](doc:configure-webhooks) requests from optimizely.com. These webhooks enable PUSH style notifications triggering immediate project configuration updates.
 The webhook listener is configured on its own port (default: 8085) since it can be configured to select traffic from the internet.

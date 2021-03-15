@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Agent notifications - Optimizely Full Stack"
 createdAt: "2020-05-21T20:35:58.387Z"
-updatedAt: "2020-07-14T20:51:52.458Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 
 Agent provides an endpoint that sends notifications to subscribers via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events). This is Agent's equivalent of Notification Listeners found in Optimizely SDKs.

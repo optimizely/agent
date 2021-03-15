@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Configure Agent microservice - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:27.173Z"
-updatedAt: "2020-04-08T21:42:08.698Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 By default Optimizely Agent uses the configuration file in the current active directory, e.g.,  `./config.yaml`. You can override the [default configuration](https://github.com/optimizely/agent/blob/master/config.yaml) by providing a yaml configuration file at runtime.
 

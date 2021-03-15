@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Install Agent - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:27.363Z"
-updatedAt: "2020-03-31T23:54:17.841Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 ## Running Agent from source (Linux / OSX)
 

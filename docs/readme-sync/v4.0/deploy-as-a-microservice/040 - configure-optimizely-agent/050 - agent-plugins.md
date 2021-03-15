@@ -6,7 +6,7 @@ hidden: false
 metadata:
   title: "Agent plugins - Optimizely Full Stack"
 createdAt: "2020-09-21T20:30:00.000Z"
-updatedAt: "2020-09-21T20:30:00.000Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 
 ## Agent Plugins

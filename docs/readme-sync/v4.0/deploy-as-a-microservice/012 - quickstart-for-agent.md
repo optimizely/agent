@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Quickstart for Agent - Optimizely Full Stack"
 createdAt: "2020-05-21T20:35:58.387Z"
-updatedAt: "2020-08-17T20:51:52.458Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 
 This brief quickstart describes how to run Agent, using two examples:
@@ -73,13 +73,18 @@ for key in env['featuresMap']:
 
 ### Run a feature flag rule
 
-The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user.  We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule and flag variation the user buckets into.  Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience.
 
 This endpoint returns an array of `OptimizelyDecision` objects, which contains information about the flag and rule the user bucketed into.
 
 ```python
 params = { "keys": "my-feature-flag" }
-payload = { "userId": "test-user" }
+payload = {
+    "userId": "test-user",
+    "userAttributes": {
+        "attr1": "sample-attribute-1",
+        "attr2": "sample-attribute-2"
+    }
+}
 resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
 
 print(resp.json())

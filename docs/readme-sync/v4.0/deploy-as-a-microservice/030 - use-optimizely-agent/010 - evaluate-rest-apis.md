@@ -6,7 +6,7 @@ hidden: false
 metadata: 
   title: "Evaluate REST APIs - Optimizely Full Stack"
 createdAt: "2020-02-21T17:44:53.019Z"
-updatedAt: "2020-04-13T23:02:34.056Z"
+updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 Below is an example demonstrating the APIs capabilities. For brevity, we've chosen to illustrate the API usage with Python. Note that the API documentation is defined via an OpenAPI (Swagger) spec and can be viewed [here](https://library.optimizely.com/docs/api/agent/v1/index.htm).
 
@@ -44,7 +44,14 @@ To run a flag rule, use
 ```python
 # decide 1 flag. 
 params = { "keys": "my-feature-flag" }
-payload = { "userId": "test-user" }
+payload = {
+    "userId": "test-user",
+    "userAttributes": {
+        "attr1": "sample-attribute-1",
+        "attr2": "sample-attribute-2"
+    }
+}
+
 resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
 
 print(resp.json())
