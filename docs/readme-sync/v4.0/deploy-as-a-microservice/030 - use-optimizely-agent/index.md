@@ -14,7 +14,7 @@ Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v
 ### Running feature flag rules
 
 
-The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide) buckets a user into a feature flag variation (choosing between multiple enabled or one disabled variation) as part of a flag rule. Flag rules include A/B tests and targeted feature flag deliveries. To run a flag rule, use:
+The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide) buckets a user into a feature flag variation as part of a flag rule. It chooses between multiple enabled or one disabled variation for a flag. Flag rules include A/B tests and targeted feature flag deliveries. To run a flag rule, use:
 
 `POST /v1/decide?keys={flagKey}`
 
