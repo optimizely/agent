@@ -28,6 +28,56 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/datafile:
+    get:
+      summary: >-
+        Return the datafile for the given environment. If you need strict consistency, you can pass the datafile to other Optimizely instances. 
+        so that all initialize from exactly the same datafile version (rather than each fetching the datafile separately from the Optimizely CDN).  
+      operationId: getDatafile
+      description: Returns the json datafile for the given environment.
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                description: Optimizely Datafile
+                type: object
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/decide:
+    parameters:
+      - $ref: '#/components/parameters/decideKeysParam'
+    post:
+      summary: Decide makes feature decisions for the selected query parameters.
+      operationId: decide
+      description: >-
+        Returns decision results for flag keys for a user.
+        The result for a single key is returned as an
+        OptimizelyDecision object whereas the result for multiple keys is returned as an array of OptimizelyDecision objects. If no flag key is
+        provided, decision is made for all flag keys. OptimizelyDecision object
+        contains all data required to deliver the flag rule.
+      requestBody:
+        $ref: '#/components/requestBodies/DecideContext'
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/OptimizelyDecision'
+                  - $ref: '#/components/schemas/OptimizelyDecision'
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /v1/track:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
@@ -150,6 +200,13 @@ components:
       description: Key of the event we're tracking
       schema:
         type: string
+    decideKeysParam:
+      in: query
+      name: keys
+      required: false
+      description: Flag keys for decision
+      schema:
+        type: string
     experimentKeyParam:
       in: query
       name: experimentKey
@@ -195,6 +252,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
+    DecideContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DecideContext'
     TokenContext:
       required: true
       content:
@@ -288,6 +351,36 @@ components:
           additionalProperties: true
         error:
           type: string
+    OptimizelyDecision:
+      properties:
+        variables:
+          type: object
+        variationKey:
+          type: string
+        enabled:
+          type: boolean
+        ruleKey:
+          type: string
+        flagKey:
+          type: string
+        userContext:
+          type: object
+          properties:
+            userId:
+              type: string
+            attributes:
+              type: object
+              additionalProperties: true
+          required:
+            - userId
+        reasons:
+          type: array
+          items:
+            type: string
+      required:
+        - ruleKey
+        - flagKey
+        - userContext
     ActivateContext:
       properties:
         userId:
@@ -340,6 +433,25 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
+    DecideContext:
+      properties:
+        decideOptions:
+          type: array
+          items:
+            type: string
+            enum:
+              - DISABLE_DECISION_EVENT
+              - ENABLED_FLAGS_ONLY
+              - IGNORE_USER_PROFILE_SERVICE
+              - EXCLUDE_VARIABLES
+              - INCLUDE_REASONS
+        userId:
+          type: string
+        userAttributes:
+          type: object
+          additionalProperties: true
+      required:
+        - userId
     Variation:
       properties:
         id:

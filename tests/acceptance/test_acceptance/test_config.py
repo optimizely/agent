@@ -1,12 +1,10 @@
 import json
-import os
+
 import pytest
 import requests
 
 from tests.acceptance.helpers import ENDPOINT_CONFIG
 from tests.acceptance.helpers import create_and_validate_request_and_response
-
-BASE_URL = os.getenv('host')
 
 expected_config = """{
     "revision": "111",
@@ -135,7 +133,6 @@ def test_config(session_obj):
     Note: Test will fail as soon as anything in the response body is modified.
     If someone updates any of the fields, the expected_response will need to be updated
     as well.
-    :param agent_server: starts agent server with default config
     :param session_obj: session object
     """
     resp = create_and_validate_request_and_response(ENDPOINT_CONFIG, 'get', session_obj)
@@ -147,10 +144,8 @@ def test_config(session_obj):
 def test_config_403(session_override_sdk_key):
     """
     Test that 403 Forbidden is returned. We use invalid SDK key to trigger 403.
-    :param agent_server: starts agent server with default config
     :param : session_obj
     """
-
     with pytest.raises(requests.exceptions.HTTPError):
         resp = create_and_validate_request_and_response(ENDPOINT_CONFIG, 'get', session_override_sdk_key)
 

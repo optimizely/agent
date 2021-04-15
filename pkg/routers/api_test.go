@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020-2021, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -109,6 +109,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		maxConns:        1,
 		sdkMiddleware:   testOptlyMiddleware,
 		configHandler:   testHandler("config"),
+		datafileHandler: testHandler("datafile"),
 		activateHandler: testHandler("activate"),
 		overrideHandler: testHandler("override"),
 		trackHandler:    testHandler("track"),
@@ -138,6 +139,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		path   string
 	}{
 		{"GET", "config"},
+		{"GET", "datafile"},
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
@@ -188,6 +190,7 @@ func (suite *APIV1TestSuite) TestCORSAllowedOrigins() {
 		path   string
 	}{
 		{"GET", "config"},
+		{"GET", "datafile"},
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
