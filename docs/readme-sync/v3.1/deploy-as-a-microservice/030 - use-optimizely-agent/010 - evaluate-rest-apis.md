@@ -8,7 +8,7 @@ metadata:
 createdAt: "2020-02-21T17:44:53.019Z"
 updatedAt: "2020-04-13T23:02:34.056Z"
 ---
-Below is an example demonstrating the APIs capabilities. For brevity, we've chosen to illustrate the API usage with Python. Note that the API documentation is defined via an OpenAPI (Swagger) spec and can be viewed [here](https://library.optimizely.com/docs/api/agent/v1/index.htm).
+Below is an example demonstrating the APIs capabilities. For brevity, we've chosen to illustrate the API usage with Python. Note that the API documentation is defined via an OpenAPI (Swagger) spec and can be viewed [here](https://library.optimizely.com/docs/api/agent/v1/index.html).
 
 ## Start an http session
 Each request made into Optimizely Agent is in the context of an Optimizely SDK Key. SDK Keys map API requests to a specific Optimizely Project and Environment. We can setup a global request header by using the `requests.Session` object.
