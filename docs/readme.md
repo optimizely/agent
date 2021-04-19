@@ -1,8 +1,18 @@
 ## Internal docs authoring notes
 
 
+### deploying to readme.io
 
 When you edit the docs in /docs/readme-sync/ and merge to the master branch, you trigger a Travis build stage (readme-sync) that syncs  the Markdown doc files to FullStack public docs at https://docs.developers.optimizely.com/full-stack/docs/optimizely-agent.
+
+If for any reason the travis build isn't working, you can publish the docs from GitHub to readme.io manually. For the sync tool's readme see [https://github.com/flowcommerce/readme-sync](https://github.com/flowcommerce/readme-sync). Here are quick instructions:
+1. clone https://github.com/flowcommerce/readme-sync to an environment in which you've installed Node & NPX.
+2. clone this agent repo
+3. Record the API key for the the full stack docs project (https://dash.readme.com/project/full-stack/v4.0/api-key)
+4.  From the readme-sync cloned directory, run the sync for the docs version you want using the API key and the local directory path to the docs, i.e:
+`npx ts-node sync/index.ts --apiKey <your_api_key_here> --version 4.0 --docs ~/Github/agent/docs/readme-sync/v4.0`
+and
+`npx ts-node sync/index.ts --apiKey <your_api_key_here> --version 3.1 --docs ~/Github/agent/docs/readme-sync/v3.1`
 
 ### Previewing
 
