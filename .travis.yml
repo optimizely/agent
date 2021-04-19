@@ -34,7 +34,7 @@ jobs:
       dist: xenial
       script:
         - make -e lint
-        - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint < $f; done
+        - for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
 
     - stage: Tests
       name: coveralls
