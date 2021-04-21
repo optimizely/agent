@@ -11,7 +11,7 @@ updatedAt: "2021-03-15T23:02:34.056Z"
 
 This brief quickstart describes how to run Agent, using two examples:
 
-- To get started using Docker, see [Running locally via Docker](https://docs.developers.optimizely.com/full-stack/docs/quickstart-with-docker#section-running-locally-via-docker).
+- To get started using Docker, see the following section.
 
 - To get started using example Node microservices, see the following video link.
 
