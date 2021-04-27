@@ -7,7 +7,7 @@ a highly available and distributed web application.
 Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the [documentation](https://docs.developers.optimizely.com/full-stack/docs).
 
 ## Getting Started
-To get started with Optimizely Agent, follow the [Quickstart guide](https://docs.developers.optimizely.com/full-stack/docs/) and view example usage in our [examples folder](./examples).
+To get started with Optimizely Agent, follow the [Quickstart guide](https://docs.developers.optimizely.com/full-stack/docs/quickstart-for-agent) and view example usage in our [examples folder](./examples).
 
 ## Prerequisites
 Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
