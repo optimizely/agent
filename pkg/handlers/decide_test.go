@@ -381,7 +381,7 @@ func TestTranslateOptions(t *testing.T) {
 	options := []string{"DISABLE_DECISION_EVENT", "ENABLED_FLAGS_ONLY", "IGNORE_USER_PROFILE_SERVICE",
 		"EXCLUDE_VARIABLES", "INCLUDE_REASONS"}
 
-	decideOptions, err := translateOptions(options)
+	decideOptions, err := decide.TranslateOptions(options)
 	expected := []decide.OptimizelyDecideOptions{decide.DisableDecisionEvent, decide.EnabledFlagsOnly, decide.IgnoreUserProfileService,
 		decide.ExcludeVariables, decide.IncludeReasons}
 	assert.NoError(t, err)
@@ -389,7 +389,7 @@ func TestTranslateOptions(t *testing.T) {
 
 	options = append(options, "invalid")
 
-	decideOptions, err = translateOptions(options)
+	decideOptions, err = decide.TranslateOptions(options)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid option: invalid", err.Error())
 	assert.Equal(t, []decide.OptimizelyDecideOptions{}, decideOptions)
