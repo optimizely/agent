@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# example: python advanced.py <SDK-Key>
-# This advanced example shows how to make batched decision requests with decide api.
+# example: python advanced_activate.py <SDK-Key>
+# This advanced example shows how to make batched activation requests.
 
 import json
 import requests
@@ -22,25 +22,21 @@ env = resp.json()
 
 payload = {
     "userId": "test-user",
-    "decideOptions": [
-        "ENABLED_FLAGS_ONLY",
-        "INCLUDE_REASONS"
-    ],
     "userAttributes": {
         "attr1": "sample-attribute-1",
         "attr2": "sample-attribute-2"
     }
 }
 
-# /decide accepts a list of feature and/or experiment keys
+# /activate accepts a list of feature and/or experiment keys
 params = {
     "featureKey": [key for key in env['featuresMap']],
     "experimentKey": [key for key in env['experimentsMap']]
 }
-resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
 print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-# Alternatively /decide can be passed a type of either "feature" or "experiment"
+# Alternatively /activate can be passed a type of either "feature" or "experiment"
 params = {"type": ["experiment", "feature"]}
-resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
 print(json.dumps(resp.json(), indent=4, sort_keys=True))

@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# example: python basic.py <SDK-Key>
-# This basic example shows how to make individual decision requests with decide api
+# example: python basic_activate.py <SDK-Key>
+# This basic example shows how to make individual activation requests.
 
 import json
 import requests
@@ -19,10 +19,6 @@ env = resp.json()
 
 payload = {
     "userId": "test-user",
-    "decideOptions": [
-        "ENABLED_FLAGS_ONLY",
-        "INCLUDE_REASONS"
-    ],
     "userAttributes": {
         "attr1": "sample-attribute-1",
         "attr2": "sample-attribute-2"
@@ -31,12 +27,12 @@ payload = {
 
 for key in env['featuresMap']:
     params = {"featureKey": key}
-    resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+    resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
     print("Feature Key: {}".format(key))
     print(json.dumps(resp.json()[0], indent=4, sort_keys=True))
 
 for key in env['experimentsMap']:
     params = {"experimentKey": key}
-    resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+    resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=payload)
     print("Experiment Key: {}".format(key))
     print(json.dumps(resp.json()[0], indent=4, sort_keys=True))

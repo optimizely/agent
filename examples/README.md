@@ -11,25 +11,43 @@ you can install all of the dependencies in the requirements.txt:
 ```bash
 pip install -r requirements.txt
 ```
+### Decide
 
-### Activate
-
-The `/activate` endpoint returns a decision of the requested experiment or feature for a given user context.
-For single decisions please refer to [basic.py](./basic.py) which demonstrates how to iterate through the configuration for
-a given SDK project and make individual activation requests.
+The `/decide` endpoint returns the requested flag decisions for a user. The flag decision includes flag enabled/disabled status and flag variation.
 
 Example usage:
 ```bash
 python basic.py <SDK-Key>
 ```
 
-The `/activate` endpoint also supports batching requests by supplying multiple experiment or feature keys in 
-single `/activate` call. Please refer to [advanced.py](./advanced.py) for an example on how to fetch multiple decisions. This
+The `/decide` endpoint also supports batching requests by supplying multiple flag keys in 
+single `/decide` call. Please refer to [advanced.py](./advanced.py) for an example on how to fetch multiple decisions. This
 is useful to reduce the number of outbound API calls made from your service to Optimizely Agent.
 
 Example usage:
 ```bash
 python advanced.py <SDK-Key>
+```
+
+### Activate
+
+The `/activate` endpoint returns a decision of the requested experiment or feature for a given user context.
+For single decisions please refer to [basic_activate.py](./basic_activate.py) which demonstrates how to iterate through the configuration for
+a given SDK project and make individual activation requests.
+Activate is currently still widely used, but it will be gradually superseeded by Decide.
+
+Example usage:
+```bash
+python basic_activate.py <SDK-Key>
+```
+
+The `/activate` endpoint also supports batching requests by supplying multiple experiment or feature keys in 
+single `/activate` call. Please refer to [advanced_activate.py](./advanced_activate.py) for an example on how to fetch multiple decisions. This
+is useful to reduce the number of outbound API calls made from your service to Optimizely Agent.
+
+Example usage:
+```bash
+python advanced_activate.py <SDK-Key>
 ```
 
 ### Track
