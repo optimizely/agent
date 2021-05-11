@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -57,7 +56,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decideOptions, err := translateOptions(db.DecideOptions)
+	decideOptions, err := decide.TranslateOptions(db.DecideOptions)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
@@ -108,25 +107,4 @@ func getUserContextWithOptions(r *http.Request) (DecideBody, error) {
 	}
 
 	return body, nil
-}
-
-func translateOptions(options []string) ([]decide.OptimizelyDecideOptions, error) {
-	decideOptions := []decide.OptimizelyDecideOptions{}
-	for _, val := range options {
-		switch val {
-		case "DISABLE_DECISION_EVENT":
-			decideOptions = append(decideOptions, decide.DisableDecisionEvent)
-		case "ENABLED_FLAGS_ONLY":
-			decideOptions = append(decideOptions, decide.EnabledFlagsOnly)
-		case "IGNORE_USER_PROFILE_SERVICE":
-			decideOptions = append(decideOptions, decide.IgnoreUserProfileService)
-		case "EXCLUDE_VARIABLES":
-			decideOptions = append(decideOptions, decide.ExcludeVariables)
-		case "INCLUDE_REASONS":
-			decideOptions = append(decideOptions, decide.IncludeReasons)
-		default:
-			return []decide.OptimizelyDecideOptions{}, errors.New("invalid option: " + val)
-		}
-	}
-	return decideOptions, nil
 }
