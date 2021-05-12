@@ -225,7 +225,7 @@ jobs:
       before_script: skip
       cache: false
       # translation: if we're committing to a pull request...
-      if: type = pull_request
+      if: false AND type = pull_request
 
       language: node_js
       install:
@@ -257,7 +257,7 @@ jobs:
       before_script: skip
       cache: false
       # translation: if we're merging into a master branch...
-      if: type = push AND branch = master
+      if: false AND type = push AND branch = master
 
       language: node_js
       install:
