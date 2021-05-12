@@ -29,27 +29,6 @@ Example usage:
 python advanced.py <SDK-Key>
 ```
 
-### Activate
-
-The `/activate` endpoint returns a decision of the requested experiment or feature for a given user context.
-For single decisions please refer to [basic_activate.py](./basic_activate.py) which demonstrates how to iterate through the configuration for
-a given SDK project and make individual activation requests.
-Activate is currently still widely used, but it will be gradually superseeded by Decide.
-
-Example usage:
-```bash
-python basic_activate.py <SDK-Key>
-```
-
-The `/activate` endpoint also supports batching requests by supplying multiple experiment or feature keys in 
-single `/activate` call. Please refer to [advanced_activate.py](./advanced_activate.py) for an example on how to fetch multiple decisions. This
-is useful to reduce the number of outbound API calls made from your service to Optimizely Agent.
-
-Example usage:
-```bash
-python advanced_activate.py <SDK-Key>
-```
-
 ### Track
 
 The `/track` endpoint is used to send conversion events to the Optimizely analytics backend.
@@ -82,4 +61,26 @@ for a complete overview of the authentication modes supported by Agent.
 Example usage:
 ```bash
 python auth.py <Your SDK Key> clientid1 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6spM=
+```
+
+### Activate
+##### Activate is currently still widely used, but it will be gradually superseeded by Decide.
+
+
+The `/activate` endpoint returns a decision of the requested experiment or feature for a given user context.
+For single decisions please refer to [basic_activate.py](./basic_activate.py) which demonstrates how to iterate through the configuration for
+a given SDK project and make individual activation requests.
+
+Example usage:
+```bash
+python basic_activate.py <SDK-Key>
+```
+
+The `/activate` endpoint also supports batching requests by supplying multiple experiment or feature keys in 
+single `/activate` call. Please refer to [advanced_activate.py](./advanced_activate.py) for an example on how to fetch multiple decisions. This
+is useful to reduce the number of outbound API calls made from your service to Optimizely Agent.
+
+Example usage:
+```bash
+python advanced_activate.py <SDK-Key>
 ```
