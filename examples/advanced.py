@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # example: python advanced.py <SDK-Key>
-# This advanced example shows how to make batched decision requests with decide api.
+# This advanced example shows:
+# 1. The result for a single key is returned as an OptimizelyDecision object.
+# 2. The result for multiple keys is returned as an array of OptimizelyDecision objects.
+# 3. When no flag key is provided, decision is made for all flag keys.
 
 import json
 import requests
@@ -16,7 +19,6 @@ s.headers.update({'X-Optimizely-SDK-Key': sdk_key})
 
 # Making a request to /config to generically pull the set of features and experiments.
 # In production, making this initial request to build the set of keys would not be recommended.
-# Instead the keys would already be known by the application, or we'd use the type= parameter illustrated below.
 resp = s.get('http://localhost:8080/v1/config')
 env = resp.json()
 
@@ -32,15 +34,22 @@ payload = {
     }
 }
 
-# /decide accepts a list of feature and/or experiment keys
-params = {
-    "featureKey": [key for key in env['featuresMap']],
-    "experimentKey": [key for key in env['experimentsMap']]
-}
+# The result for a single key is returned as an OptimizelyDecision object
+key = [key for key in env['featuresMap']][0]
+params = {"keys": key}
 resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+print("OptimizelyDecision object for flag key {}".format(key))
 print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-# Alternatively /decide can be passed a type of either "feature" or "experiment"
-params = {"type": ["experiment", "feature"]}
+# The result for multiple keys is returned as an array of OptimizelyDecision objects
+keys = [key for key in env['featuresMap']]
+params = {"keys": keys}
 resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+print("Array of OptimizelyDecision objects")
+print(json.dumps(resp.json(), indent=4, sort_keys=True))
+
+# When no flag key is provided, decision is made for all flag keys.
+params = {"keys": None}
+resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+print("Decision for all flag keys when flagh key is not provided.")
 print(json.dumps(resp.json(), indent=4, sort_keys=True))
