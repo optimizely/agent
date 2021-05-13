@@ -35,8 +35,3 @@ for key in env['featuresMap']:
     print("Flag key: {}".format(key))
     print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-for key in env['experimentsMap']:
-    params = {"keys": key}
-    resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
-    print("Experiment Key: {}".format(key))
-    print(json.dumps(resp.json(), indent=4, sort_keys=True))
