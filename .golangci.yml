@@ -25,6 +25,8 @@ linters-settings:
      - wrapperFunc
      - hugeParam
      - rangeValCopy
+  gofmt:
+    simplify: false
 
 linters:
  disable-all: true
@@ -50,6 +52,7 @@ linters:
    - unconvert
    - unparam
    - varcheck
+   - gofmt
  fast: false
 
 run:
