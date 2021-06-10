@@ -31,7 +31,7 @@ jobs:
 
     - stage: Fmt
       script:
-        - test -z "$(go fmt ./pkg/...)";
+        - test -z "$(go fmt ./pkg/...)"
     - stage: Tests
       name: hadolint
       os: linux
