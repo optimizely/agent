@@ -31,7 +31,7 @@ jobs:
 
     - stage: Fmt
       script:
-        - if test -z "$(go fmt pkg/...)"; then true; else false; fi
+        - if test -z "$(go fmt ./pkg/...)"; then true; else false; fi
     - stage: Tests
       name: hadolint
       os: linux
