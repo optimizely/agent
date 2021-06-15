@@ -152,9 +152,9 @@ expected_response = {"accountId": "10845721364", "anonymizeIP": True,
 
 def test_datafile_200(session_obj):
     """
-    Normally a good practice is to haev expected response as a string likein other tests.
+    Normally a good practice is to have expected response as a string like in other tests.
     Here we are exceptionally making expected response a dict for easier comparison.
-    String was causing some issues extra with spaces.
+    String was causing some issues with extra white space characters.
     :param session_obj: session object
     """
     payload = '{"userId": "matjaz", "userAttributes": {"attr_1": "hola"}}'
