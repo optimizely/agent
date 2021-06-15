@@ -15,6 +15,7 @@ branches:
   - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 stages:
+  - 'Fmt'
   - 'Tests'
   - 'Trigger FSC Tests'
   - 'Test Build using latest tag (no upload)'
@@ -28,6 +29,9 @@ jobs:
 
   include:
 
+    - stage: Fmt
+      script:
+        - test -z "$(go fmt ./pkg/...)"
     - stage: Tests
       name: hadolint
       os: linux

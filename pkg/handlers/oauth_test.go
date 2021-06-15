@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, 2021 Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -326,12 +326,12 @@ func (s *OAuthHMACSecretsValidationTestSuite) SetupTest() {
 				SDKKeys:    []string{"123"},
 			},
 		},
-		TTL:         30 * time.Minute,
+		TTL: 30 * time.Minute,
 	}
 }
 
 func (s *OAuthHMACSecretsValidationTestSuite) TestOneHMACSecretNotBase64() {
-	s.config.HMACSecrets = []string {
+	s.config.HMACSecrets = []string{
 		"j390luT0CRUN2Aft4My8/ojuayRXEtE1fdNWUHqwQh8=", // valid base64
 		"not_valid_base64", // invalid
 	}
@@ -340,7 +340,7 @@ func (s *OAuthHMACSecretsValidationTestSuite) TestOneHMACSecretNotBase64() {
 }
 
 func (s *OAuthHMACSecretsValidationTestSuite) TestOnlyHMACSecretNotBase64() {
-	s.config.HMACSecrets = []string {
+	s.config.HMACSecrets = []string{
 		"not_valid_base64", // invalid
 	}
 	handler := NewOAuthHandler(s.config)

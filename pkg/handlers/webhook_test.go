@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019, 2021 Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -33,7 +33,7 @@ import (
 
 // TestCache implements the Cache interface and is used in testing.
 type TestCache struct {
-	testClient *optimizelytest.TestClient
+	testClient          *optimizelytest.TestClient
 	updateConfigsCalled bool
 }
 
@@ -41,7 +41,7 @@ type TestCache struct {
 func NewCache() *TestCache {
 	testClient := optimizelytest.NewClient()
 	return &TestCache{
-		testClient: testClient,
+		testClient:          testClient,
 		updateConfigsCalled: false,
 	}
 }
