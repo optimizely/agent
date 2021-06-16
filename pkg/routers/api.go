@@ -28,7 +28,6 @@ import (
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
-	_ "github.com/optimizely/agent/statik" // Required to serve openapi.yaml
 
 	"github.com/go-chi/chi"
 	chimw "github.com/go-chi/chi/middleware"
