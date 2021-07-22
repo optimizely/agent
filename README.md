@@ -73,45 +73,45 @@ Below is a comprehensive list of available configuration properties.
 |Property Name|Env Variable|Description|
 |---|---|---|
 |admin.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
-|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
-|admin.auth.jwksUpdateInterval|OPTIMIZELY_ADMIN_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |admin.auth.hmacSecrets|OPTIMIZELY_ADMIN_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|admin.auth.jwksUpdateInterval|OPTIMIZELY_ADMIN_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
 |api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
-|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.auth.jwksUpdateInterval|OPTIMIZELY_API_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
+|api.auth.jwksURL|OPTIMIZELY_API_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.enableNotifications|OPTIMIZELY_API_ENABLENOTIFICATIONS|Enable streaming notification endpoint. Default: false|
 |api.enableOverrides|OPTIMIZELY_API_ENABLEOVERRIDES|Enable bucketing overrides endpoint. Default: false|
-|api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|api.maxConns|OPTIMIZELY_API_MAXCONNS|Maximum number of concurrent requests|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
-|server.certfile|OPTIMIZELY_SERVER_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
+|client.datafileURLTemplate|OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE|Template URL for SDK datafile location. Default: https://cdn.optimizely.com/datafiles/%s.json|
+|client.eventURL|OPTIMIZELY_CLIENT_EVENTURL|URL for dispatching events. Default: https://logx.optimizely.com/v1/events|
 |client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
 |client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
 |client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
-|client.datafileURLTemplate|OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE|Template URL for SDK datafile location. Default: https://cdn.optimizely.com/datafiles/%s.json|
-|client.eventURL|OPTIMIZELY_CLIENT_EVENTURL|URL for dispatching events. Default: https://logx.optimizely.com/v1/events|
 |client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+(:\\w+)?$|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
-|server.keyfile|OPTIMIZELY_SERVER_KEYFILE|Path to a key file, used to run Agent with HTTPS|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
-|version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
 |server.allowedHosts|OPTIMIZELY_SERVER_ALLOWEDHOSTS|List of allowed request host values. Requests whose host value does not match either the configured server.host, or one of these, will be rejected with a 404 response. To match all subdomains, you can use a leading dot (for example `.example.com` matches `my.example.com`, `hello.world.example.com`, etc.). You can use the value `.` to disable allowed host checking, allowing requests with any host. Request host is determined in the following priority order: 1. X-Forwarded-Host header value, 2. Forwarded header host= directive value, 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request). Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.|
 |server.batchRequests.maxConcurrency|OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY|Number of requests running in parallel. Default: 10|
 |server.batchRequests.operationsLimit|OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT|Number of allowed operations. ( will flag an error if the number of operations exeeds this parameter) Default: 500|
+|server.certfile|OPTIMIZELY_SERVER_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |server.disabledCiphers|OPTIMIZELY_SERVER_DISABLEDCIPHERS|List of TLS ciphers to disable when accepting HTTPS connections|
 |server.healthCheckPath|OPTIMIZELY_SERVER_HEALTHCHECKPATH|Path for the health status api. Default: /health|
 |server.host|OPTIMIZELY_SERVER_HOST|Host of server. Default: 127.0.0.1|
 |server.interceptors|N/A|Property used to enable and set [Interceptor](https://docs.developers.optimizely.com/full-stack/docs/agent-plugins#section-interceptor-plugins) plugins|
+|server.keyfile|OPTIMIZELY_SERVER_KEYFILE|Path to a key file, used to run Agent with HTTPS|
 |server.readTimeout|OPTIMIZELY_SERVER_READTIMEOUT|The maximum duration for reading the entire body. Default: “5s”|
 |server.writeTimeout|OPTIMIZELY_SERVER_WRITETIMEOUT|The maximum duration before timing out writes of the response. Default: “10s”|
+|version|OPTIMIZELY_VERSION|Agent version. Default: `git describe --tags`|
 |webhook.port|OPTIMIZELY_WEBHOOK_PORT|Webhook listener port: Default: 8085|
 |webhook.projects.<*projectId*>.sdkKeys|N/A|Comma delimited list of SDK Keys applicable to the respective projectId|
 |webhook.projects.<*projectId*>.secret|N/A|Webhook secret used to validate webhook requests originating from the respective projectId|
