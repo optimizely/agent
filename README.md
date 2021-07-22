@@ -85,7 +85,7 @@ Below is a comprehensive list of available configuration properties.
 |api.auth.ttl|OPTIMIZELY_API_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.enableNotifications|OPTIMIZELY_API_ENABLENOTIFICATIONS|Enable streaming notification endpoint. Default: false|
 |api.enableOverrides|OPTIMIZELY_API_ENABLEOVERRIDES|Enable bucketing overrides endpoint. Default: false|
-|api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
+|api.maxConns|OPTIMIZELEY_API_MAXCONNS|Maximum number of concurrent requests|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
 |server.certfile|OPTIMIZELY_SERVER_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
