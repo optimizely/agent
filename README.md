@@ -88,7 +88,7 @@ Below is a comprehensive list of available configuration properties.
 |api.maxConns|OPTIMIZLEY_API_MAXCONNS|Maximum number of concurrent requests|
 |api.port|OPTIMIZELY_API_PORT|Api listener port. Default: 8080|
 |author|OPTIMIZELY_AUTHOR|Agent author. Default: Optimizely Inc.|
-|certfile|OPTIMIZELY_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
+|server.certfile|OPTIMIZELY_SERVER_CERTFILE|Path to a certificate file, used to run Agent with HTTPS|
 |client.batchSize|OPTIMIZELY_CLIENT_BATCHSIZE|The number of events in a batch. Default: 10|
 |client.flushInterval|OPTIMIZELY_CLIENT_FLUSHINTERVAL|The maximum time between events being dispatched. Default: 30s|
 |client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
@@ -97,7 +97,7 @@ Below is a comprehensive list of available configuration properties.
 |client.eventURL|OPTIMIZELY_CLIENT_EVENTURL|URL for dispatching events. Default: https://logx.optimizely.com/v1/events|
 |client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+(:\\w+)?$|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
-|keyfile|OPTIMIZELY_KEYFILE|Path to a key file, used to run Agent with HTTPS|
+|server.keyfile|OPTIMIZELY_SERVER_KEYFILE|Path to a key file, used to run Agent with HTTPS|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
