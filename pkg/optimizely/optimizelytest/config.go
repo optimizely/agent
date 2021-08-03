@@ -81,6 +81,7 @@ func (c *TestProjectConfig) GetAttributeID(key string) string {
 func (c *TestProjectConfig) GetAttributes() []entities.Attribute {
 	return nil
 }
+
 // GetEvents returns nil
 func (c *TestProjectConfig) GetEvents() []entities.Event {
 	return nil
