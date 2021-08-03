@@ -77,9 +77,11 @@ func (c *TestProjectConfig) GetAttributeID(key string) string {
 	return c.AttributeKeyToIDMap[key]
 }
 
+// GetAttributes returns nil
 func (c *TestProjectConfig) GetAttributes() []entities.Attribute {
 	return nil
 }
+// GetEvents returns nil
 func (c *TestProjectConfig) GetEvents() []entities.Event {
 	return nil
 }
@@ -89,10 +91,12 @@ func (c *TestProjectConfig) GetOptimizelyAudiences() []entities.OptimizelyAudien
 	return nil
 }
 
+// GetEnvironmentKey returns ""
 func (c *TestProjectConfig) GetEnvironmentKey() string {
 	return ""
 }
 
+// GetSdkKey returns ""
 func (c *TestProjectConfig) GetSdkKey() string {
 	return ""
 }
