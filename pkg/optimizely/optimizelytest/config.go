@@ -77,6 +77,26 @@ func (c *TestProjectConfig) GetAttributeID(key string) string {
 	return c.AttributeKeyToIDMap[key]
 }
 
+func (c *TestProjectConfig) GetAttributes() []entities.Attribute {
+	return nil
+}
+func (c *TestProjectConfig) GetEvents() []entities.Event {
+	return nil
+}
+
+// GetOptimizelyAudiences returns audiences slice
+func (c *TestProjectConfig) GetOptimizelyAudiences() []entities.OptimizelyAudience {
+	return nil
+}
+
+func (c *TestProjectConfig) GetEnvironmentKey() string {
+	return ""
+}
+
+func (c *TestProjectConfig) GetSdkKey() string {
+	return ""
+}
+
 // GetBotFiltering returns GetBotFiltering
 func (c *TestProjectConfig) GetBotFiltering() bool {
 	return c.BotFiltering
