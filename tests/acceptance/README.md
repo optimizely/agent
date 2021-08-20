@@ -1,5 +1,8 @@
 ### API acceptance tests for Optimizely Agent
 
+Acceptance tests run against a real Optimizely project, using REST API calls.
+The project lives on app.optimzely.com and is maintained by the Full Stack team at Optimizely.
+
 First, do everything from the agent's root directory. 
 
 Python version 3.7 or greater is required.
