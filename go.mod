@@ -10,16 +10,23 @@ require (
 	github.com/go-chi/httplog v0.1.6
 	github.com/go-chi/render v1.0.1
 	github.com/go-kit/kit v0.9.0
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.3.0
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/lestrrat-go/jwx v0.9.0
-	github.com/optimizely/go-sdk v1.6.2-0.20210507191537-aba050a09690
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/optimizely/go-sdk v1.6.2-0.20210903184112-9d97c16f5787
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.18.1-0.20200514152719-663cbb4c8469
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
+	github.com/twmb/murmur3 v1.1.6 // indirect
 	golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	gopkg.in/yaml.v2 v2.2.4
 )
