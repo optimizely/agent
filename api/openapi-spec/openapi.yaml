@@ -306,6 +306,8 @@ components:
           type: string
         key:
           type: string
+        audiences:
+          type: string
         variationsMap:
           type: object
           additionalProperties:
@@ -313,16 +315,48 @@ components:
       required:
         - id
         - key
+    Attribute:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+    OptimizelyAudience:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        conditions:
+          type: string
+    OptimizelyEvent:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        experimentIds:
+          type: array
+          items:
+            type: string
     Feature:
       properties:
         id:
           type: string
         key:
           type: string
+        experimentRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experiment'
+        deliveryRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experiment'
         variablesMap:
           type: object
           additionalProperties:
-            type: object
+            $ref: '#/components/schemas/OptimizelyVariable'
         experimentsMap:
           type: object
           additionalProperties:
@@ -413,6 +447,10 @@ components:
             type: string
     OptimizelyConfig:
       properties:
+        environmentKey:
+          type: string
+        sdkKey:
+          type: string
         revision:
           type: string
         experimentsMap:
@@ -423,6 +461,18 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Feature'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attribute'
+        audiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyAudience'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyEvent'
     TrackContext:
       properties:
         eventTags:
@@ -458,10 +508,16 @@ components:
           type: string
         key:
           type: string
+        featureEnabled:
+          type: boolean
+        variablesMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OptimizelyVariable'
       required:
         - id
         - key
-    Variable:
+    OptimizelyVariable:
       properties:
         id:
           type: string
@@ -470,7 +526,7 @@ components:
         type:
           type: string
         value:
-          type: object
+          type: string
       required:
         - id
         - key
