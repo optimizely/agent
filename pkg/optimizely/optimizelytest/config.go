@@ -40,11 +40,14 @@ type TestProjectConfig struct {
 	ExperimentMap        map[string]entities.Experiment
 	FeatureMap           map[string]entities.Feature
 	GroupMap             map[string]entities.Group
+	Rollouts             []entities.Rollout
 	RolloutMap           map[string]entities.Rollout
 	nextID               int
 	AnonymizeIP          bool
 	BotFiltering         bool
 	sendFlagDecisions    bool
+	sdkKey               string
+	environmentKey       string
 }
 
 // GetDatafile returns a string representation of the environment's datafile
@@ -72,6 +75,14 @@ func (c *TestProjectConfig) GetAnonymizeIP() bool {
 	return c.AnonymizeIP
 }
 
+// GetAttributes returns attributes
+func (c *TestProjectConfig) GetAttributes() (attributeList []entities.Attribute) {
+	for _, attribute := range c.AttributeMap {
+		attributeList = append(attributeList, attribute)
+	}
+	return attributeList
+}
+
 // GetAttributeID returns attributeID
 func (c *TestProjectConfig) GetAttributeID(key string) string {
 	return c.AttributeKeyToIDMap[key]
@@ -80,6 +91,24 @@ func (c *TestProjectConfig) GetAttributeID(key string) string {
 // GetBotFiltering returns GetBotFiltering
 func (c *TestProjectConfig) GetBotFiltering() bool {
 	return c.BotFiltering
+}
+
+// GetSdkKey returns sdkKey for specific environment.
+func (c *TestProjectConfig) GetSdkKey() string {
+	return c.sdkKey
+}
+
+// GetEnvironmentKey returns current environment of the datafile.
+func (c *TestProjectConfig) GetEnvironmentKey() string {
+	return c.environmentKey
+}
+
+// GetEvents returns all events
+func (c *TestProjectConfig) GetEvents() (eventList []entities.Event) {
+	for _, event := range c.EventMap {
+		eventList = append(eventList, event)
+	}
+	return eventList
 }
 
 // GetEventByKey returns the event with the given key
@@ -139,6 +168,19 @@ func (c *TestProjectConfig) GetExperimentList() (experimentList []entities.Exper
 		experimentList = append(experimentList, experiment)
 	}
 	return experimentList
+}
+
+// GetRolloutList returns an array of all the rollouts
+func (c *TestProjectConfig) GetRolloutList() (rolloutList []entities.Rollout) {
+	return c.Rollouts
+}
+
+// GetAudienceList returns an array of all the audiences
+func (c *TestProjectConfig) GetAudienceList() (audienceList []entities.Audience) {
+	for _, audience := range c.AudienceMap {
+		audienceList = append(audienceList, audience)
+	}
+	return audienceList
 }
 
 // GetAudienceByID returns the audience with the given ID
@@ -447,6 +489,7 @@ func NewConfig() *TestProjectConfig {
 		FeatureMap:           make(map[string]entities.Feature),
 		ProjectID:            "projectId",
 		Revision:             "revision",
+		Rollouts:             []entities.Rollout{},
 		RolloutMap:           make(map[string]entities.Rollout),
 	}
 
