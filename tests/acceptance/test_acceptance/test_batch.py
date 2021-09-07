@@ -47,36 +47,90 @@ def test_batch_valid_reponse(session_obj):
 
 
 expected_body_of_operationid_2 = """{
-    "experimentsMap": {
-        "ab_exper": {
-            "id": "17273802375",
-            "key": "ab_exper",
-            "variationsMap": {
-                "my_single_variation": {
-                    "featureEnabled": false,
-                    "id": "17266384371",
-                    "key": "my_single_variation",
-                    "variablesMap": {}
-                }
-            }
-        }
-    },
-    "featuresMap": {
-        "feature1": {
-            "experimentsMap": {},
-            "id": "15444990338",
-            "key": "feature1",
-            "variablesMap": {
-                "fff": {
-                    "id": "15427520260",
-                    "key": "fff",
-                    "type": "string",
-                    "value": "ss"
-                }
-            }
-        }
-    },
-    "revision": "18"
+	"attributes": [{
+		"id": "12459620467",
+		"key": "bob_ross"
+	}],
+	"audiences": [
+
+	],
+	"environmentKey": "",
+	"events": [{
+			"experimentIds": [
+
+			],
+			"id": "15410720745",
+			"key": "clickyclick"
+		}
+
+	],
+	"experimentsMap": {
+		"ab_exper": {
+			"audiences": "",
+			"id": "17273802375",
+			"key": "ab_exper",
+			"variationsMap": {
+				"my_single_variation": {
+					"featureEnabled": false,
+					"id": "17266384371",
+					"key": "my_single_variation",
+					"variablesMap": {
+
+					}
+				}
+			}
+		}
+	},
+	"featuresMap": {
+		"feature1": {
+			"deliveryRules": [{
+					"audiences": "",
+					"id": "15439080355",
+					"key": "15439080355",
+					"variationsMap": {
+						"15404730339": {
+							"featureEnabled": true,
+							"id": "15404730339",
+							"key": "15404730339",
+							"variablesMap": {
+								"fff": {
+									"id": "15427520260",
+									"key": "fff",
+									"type": "string",
+									"value": "ss"
+
+								}
+
+							}
+
+						}
+
+					}
+
+				}
+
+			],
+			"experimentRules": [
+
+			],
+			"experimentsMap": {
+
+			},
+			"id": "15444990338",
+			"key": "feature1",
+			"variablesMap": {
+				"fff": {
+					"id": "15427520260",
+					"key": "fff",
+					"type": "string",
+					"value": "ss"
+				}
+			}
+		}
+	},
+	"revision": "18",
+	"sdkKey": ""
+
 }"""
 
 
