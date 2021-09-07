@@ -52,17 +52,14 @@ expected_body_of_operationid_2 = """{
 		"key": "bob_ross"
 	}],
 	"audiences": [
-
 	],
 	"environmentKey": "",
 	"events": [{
 			"experimentIds": [
-
 			],
 			"id": "15410720745",
 			"key": "clickyclick"
 		}
-
 	],
 	"experimentsMap": {
 		"ab_exper": {
@@ -75,7 +72,6 @@ expected_body_of_operationid_2 = """{
 					"id": "17266384371",
 					"key": "my_single_variation",
 					"variablesMap": {
-
 					}
 				}
 			}
@@ -100,21 +96,14 @@ expected_body_of_operationid_2 = """{
 									"value": "ss"
 
 								}
-
 							}
-
 						}
-
 					}
-
 				}
-
 			],
 			"experimentRules": [
-
 			],
 			"experimentsMap": {
-
 			},
 			"id": "15444990338",
 			"key": "feature1",
@@ -130,7 +119,6 @@ expected_body_of_operationid_2 = """{
 	},
 	"revision": "18",
 	"sdkKey": ""
-
 }"""
 
 
