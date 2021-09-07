@@ -7,7 +7,6 @@ from tests.acceptance.helpers import ENDPOINT_CONFIG
 from tests.acceptance.helpers import create_and_validate_request_and_response
 
 expected_config = """{
-  "revision": "111",
   "attributes": [
     {
       "id": "16921322086",
@@ -16,7 +15,7 @@ expected_config = """{
   ],
   "audiences": [
     {
-      "conditions": "[\"and \", [\"or \", [\"or \", {\"match \": \"exact \", \"name \": \"attr_1\",\"type\": \"custom_attribute\",\"value\": \"hola\"}]]]",
+      "conditions": "[\"and\", [\"or\", [\"or\", {\"match\": \"exact\", \"name\": \"attr_1\", \"type\": \"custom_attribute\", \"value\": \"hola\"}]]]",
       "id": "16902921321",
       "name": "Audience1"
     }
@@ -39,17 +38,17 @@ expected_config = """{
       "key": "ab_test1",
       "variationsMap": {
         "variation_1": {
+          "featureEnabled": false,
           "id": "16905941566",
           "key": "variation_1",
-          "featureEnabled": false,
           "variablesMap": {
             
           }
         },
         "variation_2": {
+          "featureEnabled": false,
           "id": "16927770169",
           "key": "variation_2",
-          "featureEnabled": false,
           "variablesMap": {
             
           }
@@ -62,17 +61,17 @@ expected_config = """{
       "key": "feature_2_test",
       "variationsMap": {
         "variation_1": {
+          "featureEnabled": true,
           "id": "16925360560",
           "key": "variation_1",
-          "featureEnabled": true,
           "variablesMap": {
             
           }
         },
         "variation_2": {
+          "featureEnabled": true,
           "id": "16915611472",
           "key": "variation_2",
-          "featureEnabled": true,
           "variablesMap": {
             
           }
@@ -125,11 +124,11 @@ expected_config = """{
       "experimentRules": [
         
       ],
-      "id": "16925981047",
-      "key": "feature_1",
       "experimentsMap": {
         
       },
+      "id": "16925981047",
+      "key": "feature_1",
       "variablesMap": {
         "bool_var": {
           "id": "16932993089",
@@ -158,8 +157,6 @@ expected_config = """{
       }
     },
     "feature_2": {
-      "id": "16928980973",
-      "key": "feature_2",
       "deliveryRules": [
         {
           "audiences": "\"Audience1\"",
@@ -209,17 +206,17 @@ expected_config = """{
           "key": "feature_2_test",
           "variationsMap": {
             "variation_1": {
+              "featureEnabled": true,
               "id": "16925360560",
               "key": "variation_1",
-              "featureEnabled": true,
               "variablesMap": {
                 
               }
             },
             "variation_2": {
+              "featureEnabled": true,
               "id": "16915611472",
               "key": "variation_2",
-              "featureEnabled": true,
               "variablesMap": {
                 
               }
@@ -227,6 +224,8 @@ expected_config = """{
           }
         }
       },
+      "id": "16928980973",
+      "key": "feature_2",
       "variablesMap": {
         
       }
@@ -239,7 +238,7 @@ expected_config = """{
           "key": "16907440927",
           "variationsMap": {
             "16908510336": {
-              "featureEnabled": false,
+              "featureEnabled": true,
               "id": "16908510336",
               "key": "16908510336",
               "variablesMap": {
@@ -252,11 +251,11 @@ expected_config = """{
       "experimentRules": [
         
       ],
-      "id": "16907463855",
-      "key": "feature_3",
       "experimentsMap": {
         
       },
+      "id": "16907463855",
+      "key": "feature_3",
       "variablesMap": {
         
       }
@@ -282,11 +281,11 @@ expected_config = """{
       "experimentRules": [
         
       ],
-      "id": "16912161768",
-      "key": "feature_4",
       "experimentsMap": {
         
       },
+      "id": "16912161768",
+      "key": "feature_4",
       "variablesMap": {
         
       }
@@ -312,16 +311,17 @@ expected_config = """{
       "experimentRules": [
         
       ],
-      "id": "16923312421",
-      "key": "feature_5",
       "experimentsMap": {
         
       },
+      "id": "16923312421",
+      "key": "feature_5",
       "variablesMap": {
         
       }
     }
   },
+  "revision": "111",
   "sdkKey": ""
 }"""
 
