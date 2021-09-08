@@ -300,7 +300,7 @@ components:
           type: string
         error_description:
           type: string
-    Experiment:
+    OptimizelyExperiment:
       properties:
         id:
           type: string
@@ -315,7 +315,7 @@ components:
       required:
         - id
         - key
-    Attribute:
+    OptimizelyAttribute:
       properties:
         id:
           type: string
@@ -339,7 +339,7 @@ components:
           type: array
           items:
             type: string
-    Feature:
+    OptimizelyFeature:
       properties:
         id:
           type: string
@@ -348,11 +348,11 @@ components:
         experimentRules:
           type: array
           items:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
         deliveryRules:
           type: array
           items:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
         variablesMap:
           type: object
           additionalProperties:
@@ -360,7 +360,7 @@ components:
         experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
       required:
         - id
         - key
@@ -456,15 +456,15 @@ components:
         experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
         featuresMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Feature'
+            $ref: '#/components/schemas/OptimizelyFeature'
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: '#/components/schemas/OptimizelyAttribute'
         audiences:
           type: array
           items:

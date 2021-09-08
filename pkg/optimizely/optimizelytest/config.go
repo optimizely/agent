@@ -40,7 +40,6 @@ type TestProjectConfig struct {
 	ExperimentMap        map[string]entities.Experiment
 	FeatureMap           map[string]entities.Feature
 	GroupMap             map[string]entities.Group
-	Rollouts             []entities.Rollout
 	RolloutMap           map[string]entities.Rollout
 	nextID               int
 	AnonymizeIP          bool
@@ -172,7 +171,10 @@ func (c *TestProjectConfig) GetExperimentList() (experimentList []entities.Exper
 
 // GetRolloutList returns an array of all the rollouts
 func (c *TestProjectConfig) GetRolloutList() (rolloutList []entities.Rollout) {
-	return c.Rollouts
+	for _, rollout := range c.RolloutMap {
+		rolloutList = append(rolloutList, rollout)
+	}
+	return rolloutList
 }
 
 // GetAudienceList returns an array of all the audiences
@@ -489,7 +491,6 @@ func NewConfig() *TestProjectConfig {
 		FeatureMap:           make(map[string]entities.Feature),
 		ProjectID:            "projectId",
 		Revision:             "revision",
-		Rollouts:             []entities.Rollout{},
 		RolloutMap:           make(map[string]entities.Rollout),
 	}
 
