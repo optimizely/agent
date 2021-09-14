@@ -311,7 +311,7 @@ components:
         variationsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Variation'
+            $ref: '#/components/schemas/OptimizelyVariation'
       required:
         - id
         - key
@@ -502,7 +502,7 @@ components:
           additionalProperties: true
       required:
         - userId
-    Variation:
+    OptimizelyVariation:
       properties:
         id:
           type: string
