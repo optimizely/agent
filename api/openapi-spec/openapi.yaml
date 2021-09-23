@@ -300,33 +300,67 @@ components:
           type: string
         error_description:
           type: string
-    Experiment:
+    OptimizelyExperiment:
       properties:
         id:
           type: string
         key:
+          type: string
+        audiences:
           type: string
         variationsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Variation'
+            $ref: '#/components/schemas/OptimizelyVariation'
       required:
         - id
         - key
-    Feature:
+    OptimizelyAttribute:
       properties:
         id:
           type: string
         key:
           type: string
+    OptimizelyAudience:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        conditions:
+          type: string
+    OptimizelyEvent:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        experimentIds:
+          type: array
+          items:
+            type: string
+    OptimizelyFeature:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        experimentRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyExperiment'
+        deliveryRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyExperiment'
         variablesMap:
           type: object
           additionalProperties:
-            type: object
+            $ref: '#/components/schemas/OptimizelyVariable'
         experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
       required:
         - id
         - key
@@ -413,16 +447,32 @@ components:
             type: string
     OptimizelyConfig:
       properties:
+        environmentKey:
+          type: string
+        sdkKey:
+          type: string
         revision:
           type: string
         experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
         featuresMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Feature'
+            $ref: '#/components/schemas/OptimizelyFeature'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyAttribute'
+        audiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyAudience'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyEvent'
     TrackContext:
       properties:
         eventTags:
@@ -452,16 +502,22 @@ components:
           additionalProperties: true
       required:
         - userId
-    Variation:
+    OptimizelyVariation:
       properties:
         id:
           type: string
         key:
           type: string
+        featureEnabled:
+          type: boolean
+        variablesMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OptimizelyVariable'
       required:
         - id
         - key
-    Variable:
+    OptimizelyVariable:
       properties:
         id:
           type: string
@@ -470,7 +526,7 @@ components:
         type:
           type: string
         value:
-          type: object
+          type: string
       required:
         - id
         - key
