@@ -7,17 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 ## [2.5.0] - Sep 24, 2021
 
-- Introduce the following properties in the schema to support OptimizelyConfig ([PR #322](https://github.com/optimizely/agent/pull/322)):
+  - Introduce the following properties in the schema to support OptimizelyConfig ([PR #322](https://github.com/optimizely/agent/pull/322)):  
   - sdk key
-  - environment key
+  - environment key  
   - attributes
   - audiences
   - events
   - experimentRules and deliveryRules to OptimizelyFeature
   - audiences to OptimizelyExperiment
 
-  - For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.
-  - Upgrade to use [Go SDK v1.7.0](https://github.com/optimizely/go-sdk/tree/v1.7.0). This adds support for improved OptimizelyConfig.
+For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.
+Upgrade to use [Go SDK v1.7.0](https://github.com/optimizely/go-sdk/tree/v1.7.0). This adds support for improved OptimizelyConfig.
 
 ## [2.4.0] - March 3, 2021
 ## New Features
