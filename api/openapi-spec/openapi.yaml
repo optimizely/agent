@@ -500,8 +500,22 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
+        forcedDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyForcedDecision'
       required:
         - userId
+    OptimizelyForcedDecision:
+      properties:
+        flagKey:
+          type: string
+        ruleKey:
+          type: string
+        variationKey:
+          type: string
+      required:
+        - variationKey
     OptimizelyVariation:
       properties:
         id:

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -73,6 +73,11 @@ func (t *TestClient) AddFeatureRollout(f entities.Feature) {
 // AddFeatureTest is a helper method for adding feature rollouts to the ProjectConfig to facilitate testing.
 func (t *TestClient) AddFeatureTest(f entities.Feature) {
 	t.ProjectConfig.AddFeatureTest(f)
+}
+
+// AddFlagVariation is a helper method for adding flag variation to the ProjectConfig to facilitate testing.
+func (t *TestClient) AddFlagVariation(f entities.Feature, v entities.Variation) {
+	t.ProjectConfig.AddFlagVariation(f, v)
 }
 
 // GetProcessedEvents returns the UserEvent objects sent to the event processor.

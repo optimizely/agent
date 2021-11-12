@@ -159,6 +159,216 @@ func (suite *DecideTestSuite) TestTrackWithFeatureRollout() {
 	suite.Equal(expected, actual)
 }
 
+func (suite *DecideTestSuite) TestForcedDecisionWithFeatureTest() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureTest(feature)
+
+	// Adding Forced Decision
+	suite.tc.AddFlagVariation(feature, entities.Variation{Key: "4", FeatureEnabled: true})
+	db := DecideBody{
+		UserID:         "testUser",
+		UserAttributes: nil,
+		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
+		ForcedDecisions: []OptimizelyForcedDecision{
+			{
+				FlagKey:      "two",
+				RuleKey:      "1",
+				VariationKey: "2",
+			},
+			{
+				FlagKey:      "one",
+				RuleKey:      "1",
+				VariationKey: "3",
+			},
+			{
+				// Checking for last forced-decision to be considered if 2 similar rule and flagkeys's are given
+				FlagKey:      "one",
+				RuleKey:      "1",
+				VariationKey: "4",
+			},
+		},
+	}
+
+	payload, err := json.Marshal(db)
+	suite.NoError(err)
+
+	suite.body = payload
+
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.body))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual client.OptimizelyDecision
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := client.OptimizelyDecision{
+		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+		FlagKey:      "one",
+		RuleKey:      "1",
+		Enabled:      true,
+		VariationKey: "4",
+		Reasons:      []string{},
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *DecideTestSuite) TestForcedDecisionFeatureRollout() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// Adding Forced Decision
+	suite.tc.AddFlagVariation(feature, entities.Variation{Key: "4", FeatureEnabled: true})
+	db := DecideBody{
+		UserID:         "testUser",
+		UserAttributes: nil,
+		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
+		ForcedDecisions: []OptimizelyForcedDecision{
+			{
+				FlagKey:      "two",
+				RuleKey:      "1",
+				VariationKey: "2",
+			},
+			{
+				FlagKey:      "one",
+				RuleKey:      "1",
+				VariationKey: "3",
+			},
+			{
+				// Checking for last forced-decision to be considered if 2 similar rule and flagkeys's are given
+				FlagKey:      "one",
+				RuleKey:      "1",
+				VariationKey: "4",
+			},
+		},
+	}
+
+	payload, err := json.Marshal(db)
+	suite.NoError(err)
+	suite.body = payload
+
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.body))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual client.OptimizelyDecision
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := client.OptimizelyDecision{
+		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+		FlagKey:      "one",
+		RuleKey:      "1",
+		Enabled:      true,
+		VariationKey: "4",
+		Reasons:      []string{},
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *DecideTestSuite) TestForcedDecisionWithInvalidVariationKey() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// Adding Forced Decision
+	db := DecideBody{
+		UserID:         "testUser",
+		UserAttributes: nil,
+		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
+		ForcedDecisions: []OptimizelyForcedDecision{
+			{
+				FlagKey:      "one",
+				RuleKey:      "1",
+				VariationKey: "4",
+			},
+		},
+	}
+
+	payload, err := json.Marshal(db)
+	suite.NoError(err)
+	suite.body = payload
+
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.body))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual client.OptimizelyDecision
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := client.OptimizelyDecision{
+		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+		FlagKey:      "one",
+		RuleKey:      "1",
+		Enabled:      true,
+		VariationKey: "3",
+		Reasons:      []string{},
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *DecideTestSuite) TestForcedDecisionWithEmptyRuleKey() {
+	feature := entities.Feature{Key: "one"}
+	suite.tc.AddFeatureRollout(feature)
+
+	// Adding Forced Decision
+	suite.tc.AddFlagVariation(feature, entities.Variation{Key: "4", FeatureEnabled: true})
+	db := DecideBody{
+		UserID:         "testUser",
+		UserAttributes: nil,
+		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
+		ForcedDecisions: []OptimizelyForcedDecision{
+			{
+				FlagKey:      "one",
+				RuleKey:      "",
+				VariationKey: "4",
+			},
+		},
+	}
+
+	payload, err := json.Marshal(db)
+	suite.NoError(err)
+	suite.body = payload
+
+	req := httptest.NewRequest("POST", "/decide?keys=one", bytes.NewBuffer(suite.body))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual client.OptimizelyDecision
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := client.OptimizelyDecision{
+		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+		FlagKey:      "one",
+		RuleKey:      "",
+		Enabled:      true,
+		VariationKey: "4",
+		Reasons:      []string{},
+	}
+
+	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
 func (suite *DecideTestSuite) TestTrackWithFeatureTest() {
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)

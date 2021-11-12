@@ -47,6 +47,7 @@ type TestProjectConfig struct {
 	sendFlagDecisions    bool
 	sdkKey               string
 	environmentKey       string
+	flagVariationsMap    map[string][]entities.Variation
 }
 
 // GetDatafile returns a string representation of the environment's datafile
@@ -466,6 +467,13 @@ func (c *TestProjectConfig) AddMultiVariationABTest(experimentKey, variationAKey
 	return c
 }
 
+// AddFlagVariation Adds to map of all variations for each flag
+func (c *TestProjectConfig) AddFlagVariation(f entities.Feature, v entities.Variation) {
+	c.flagVariationsMap = map[string][]entities.Variation{
+		f.Key: {v},
+	}
+}
+
 func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
@@ -474,6 +482,11 @@ func (c *TestProjectConfig) getNextID() (nextID string) {
 // SendFlagDecisions returns the value of sendFlagDecisions
 func (c *TestProjectConfig) SendFlagDecisions() bool {
 	return c.sendFlagDecisions
+}
+
+// GetFlagVariationsMap returns map containing all variations for each flag
+func (c *TestProjectConfig) GetFlagVariationsMap() map[string][]entities.Variation {
+	return c.flagVariationsMap
 }
 
 // NewConfig initializes a new datafile from a json byte array using the default JSON datafile parser
@@ -492,6 +505,7 @@ func NewConfig() *TestProjectConfig {
 		ProjectID:            "projectId",
 		Revision:             "revision",
 		RolloutMap:           make(map[string]entities.Rollout),
+		flagVariationsMap:    make(map[string][]entities.Variation),
 	}
 
 	return config
