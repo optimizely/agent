@@ -40,7 +40,7 @@ type DecideBody struct {
 // OptimizelyForcedDecision defines Forced Decision
 type OptimizelyForcedDecision struct {
 	FlagKey      string `json:"flagKey"`
-	RuleKey      string `json:"ruleKey"`
+	RuleKey      string `json:"ruleKey,omitempty"`
 	VariationKey string `json:"variationKey"`
 }
 

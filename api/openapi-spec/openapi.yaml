@@ -501,6 +501,7 @@ components:
           type: object
           additionalProperties: true
         forcedDecisions:
+          required: false
           type: array
           items:
             $ref: '#/components/schemas/OptimizelyForcedDecision'
@@ -515,6 +516,7 @@ components:
         variationKey:
           type: string
       required:
+        - flagKey
         - variationKey
     OptimizelyVariation:
       properties:
