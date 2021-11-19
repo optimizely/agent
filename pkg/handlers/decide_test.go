@@ -169,7 +169,7 @@ func (suite *DecideTestSuite) TestInvalidForcedDecisions() {
 		UserID:         "testUser",
 		UserAttributes: nil,
 		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
-		ForcedDecisions: []OptimizelyForcedDecision{
+		ForcedDecisions: []ForcedDecision{
 			{
 				VariationKey: "2",
 			},
@@ -223,7 +223,7 @@ func (suite *DecideTestSuite) TestForcedDecisionWithFeatureTest() {
 		UserID:         "testUser",
 		UserAttributes: nil,
 		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
-		ForcedDecisions: []OptimizelyForcedDecision{
+		ForcedDecisions: []ForcedDecision{
 			{
 				FlagKey:      "two",
 				RuleKey:      "1",
@@ -282,7 +282,7 @@ func (suite *DecideTestSuite) TestForcedDecisionFeatureRollout() {
 		UserID:         "testUser",
 		UserAttributes: nil,
 		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
-		ForcedDecisions: []OptimizelyForcedDecision{
+		ForcedDecisions: []ForcedDecision{
 			{
 				FlagKey:      "two",
 				RuleKey:      "1",
@@ -339,7 +339,7 @@ func (suite *DecideTestSuite) TestForcedDecisionWithInvalidVariationKey() {
 		UserID:         "testUser",
 		UserAttributes: nil,
 		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
-		ForcedDecisions: []OptimizelyForcedDecision{
+		ForcedDecisions: []ForcedDecision{
 			{
 				FlagKey:      "one",
 				RuleKey:      "1",
@@ -386,7 +386,7 @@ func (suite *DecideTestSuite) TestForcedDecisionWithEmptyRuleKey() {
 		UserID:         "testUser",
 		UserAttributes: nil,
 		DecideOptions:  []string{"DISABLE_DECISION_EVENT"},
-		ForcedDecisions: []OptimizelyForcedDecision{
+		ForcedDecisions: []ForcedDecision{
 			{
 				FlagKey:      "one",
 				RuleKey:      "",

@@ -501,13 +501,12 @@ components:
           type: object
           additionalProperties: true
         forcedDecisions:
-          required: false
           type: array
           items:
-            $ref: '#/components/schemas/OptimizelyForcedDecision'
+            $ref: '#/components/schemas/ForcedDecision'
       required:
         - userId
-    OptimizelyForcedDecision:
+    ForcedDecision:
       properties:
         flagKey:
           type: string

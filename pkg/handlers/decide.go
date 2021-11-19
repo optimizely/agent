@@ -31,14 +31,14 @@ import (
 
 // DecideBody defines the request body for decide API
 type DecideBody struct {
-	UserID          string                     `json:"userId"`
-	UserAttributes  map[string]interface{}     `json:"userAttributes"`
-	DecideOptions   []string                   `json:"decideOptions"`
-	ForcedDecisions []OptimizelyForcedDecision `json:"forcedDecisions,omitempty"`
+	UserID          string                 `json:"userId"`
+	UserAttributes  map[string]interface{} `json:"userAttributes"`
+	DecideOptions   []string               `json:"decideOptions"`
+	ForcedDecisions []ForcedDecision       `json:"forcedDecisions,omitempty"`
 }
 
-// OptimizelyForcedDecision defines Forced Decision
-type OptimizelyForcedDecision struct {
+// ForcedDecision defines Forced Decision
+type ForcedDecision struct {
 	FlagKey      string `json:"flagKey"`
 	RuleKey      string `json:"ruleKey,omitempty"`
 	VariationKey string `json:"variationKey"`
