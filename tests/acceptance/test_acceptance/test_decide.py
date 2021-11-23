@@ -25,9 +25,9 @@ expected_forced_decision_without_rule_key = r"""
  
 expected_forced_decision_with_rule_key = r"""
     {
-      "variationKey": "16931381940",
+      "variationKey": "variation_2",
       "enabled": true,
-      "ruleKey": "16924931120",
+      "ruleKey": "feature_2_test",
       "flagKey": "feature_2",
       "userContext": {
         "userId": "matjaz",
@@ -35,8 +35,7 @@ expected_forced_decision_with_rule_key = r"""
           "attr_1": "hola"
         }
       },
-      "reasons": [
-      ]
+      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]
     }
 """
 
@@ -114,7 +113,7 @@ def test_decide__feature(session_obj, flag_key, expected_response, expected_stat
 @pytest.mark.parametrize(
     "flag_key, expected_response, expected_status_code, forced_flag, forced_rule, forced_variation", [
         ("feature_2", expected_forced_decision_without_rule_key, 200, "feature_2", None, "variation_1"),
-        ("feature_2", expected_forced_decision_with_rule_key, 200, "feature_2", "16924931120", "16931381940")
+        ("feature_2", expected_forced_decision_with_rule_key, 200, "feature_2", "feature_2_test", "variation_2")
     ],
     ids=["variation_1", "16931381940"])
 def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_response, expected_status_code, forced_flag, forced_rule, forced_variation):
@@ -126,6 +125,9 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
     :param flag_key:
     :param expected_response:
     :param expected_status_code:
+    :param forced_flag:
+    :param forced_rule:
+    :param forced_variation:
     """
     rule_key = '"ruleKey": "{}",'.format(forced_rule) if forced_rule else ''
     payload = """
@@ -136,7 +138,7 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
               "INCLUDE_REASONS"
           ],
           "userAttributes": {"attr_1": "hola"},
-          "forced_decision": [
+          "forcedDecisions": [
             {
               "flagKey": \"""" + forced_flag + """\",
               """+ rule_key +"""
@@ -145,7 +147,7 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
           ]
         }
     """
- 
+
     params = {"keys": flag_key}
     resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, payload=payload,
                                                     params=params)
