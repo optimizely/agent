@@ -24,15 +24,24 @@ import (
 
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decide"
+	"github.com/optimizely/go-sdk/pkg/decision"
 
 	"github.com/go-chi/render"
 )
 
 // DecideBody defines the request body for decide API
 type DecideBody struct {
-	UserID         string                 `json:"userId"`
-	UserAttributes map[string]interface{} `json:"userAttributes"`
-	DecideOptions  []string               `json:"decideOptions"`
+	UserID          string                 `json:"userId"`
+	UserAttributes  map[string]interface{} `json:"userAttributes"`
+	DecideOptions   []string               `json:"decideOptions"`
+	ForcedDecisions []ForcedDecision       `json:"forcedDecisions,omitempty"`
+}
+
+// ForcedDecision defines Forced Decision
+type ForcedDecision struct {
+	FlagKey      string `json:"flagKey"`
+	RuleKey      string `json:"ruleKey,omitempty"`
+	VariationKey string `json:"variationKey"`
 }
 
 // DecideOut defines the response
@@ -63,6 +72,13 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
+
+	// Setting up forced decisions
+	for _, fd := range db.ForcedDecisions {
+		context := decision.OptimizelyDecisionContext{FlagKey: fd.FlagKey, RuleKey: fd.RuleKey}
+		forcedDecision := decision.OptimizelyForcedDecision{VariationKey: fd.VariationKey}
+		optimizelyUserContext.SetForcedDecision(context, forcedDecision)
+	}
 
 	keys := []string{}
 	if err := r.ParseForm(); err == nil {
