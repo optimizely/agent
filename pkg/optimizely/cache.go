@@ -65,7 +65,7 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 func (c *OptlyCache) Init(sdkKeys []string) {
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
-			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
+			log.Warn().Msg("Failed to initialize Optimizely Client.")
 		}
 	}
 }
@@ -144,7 +144,7 @@ func defaultLoader(
 		var configManager SyncedConfigManager
 
 		if !validator(clientKey) {
-			log.Warn().Msgf("failed to validate sdk key: %q", sdkKey)
+			log.Warn().Msgf("failed to validate sdk key")
 			return &OptlyClient{}, ErrValidationFailure
 		}
 
@@ -158,7 +158,7 @@ func defaultLoader(
 			datafileAccessToken = clientKeySplit[1]
 		}
 
-		log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
+		log.Info().Msg("Loading Optimizely instance")
 
 		if datafileAccessToken != "" {
 			configManager = pcFactory(
