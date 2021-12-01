@@ -136,7 +136,7 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
         "forcedDecisions": [
             {
               "flagKey": forced_flag,
-              "ruleKey": "{}".format(forced_rule),
+              "ruleKey": f"{forced_rule}",
               "variationKey": forced_variation,
             }
         ]
