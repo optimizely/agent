@@ -7,6 +7,34 @@ from tests.acceptance.helpers import ENDPOINT_DECIDE
 from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
 
+expected_forced_decision_without_rule_key = {
+    "variationKey": "variation_1",
+    "enabled": True,
+    "ruleKey": "",
+    "flagKey": "feature_2",
+    "userContext": {
+        "userId": "matjaz",
+        "attributes": {
+            "attr_1": "hola"
+        }
+    },
+    "reasons": ["Variation (variation_1) is mapped to flag (feature_2) and user (matjaz) in the forced decision map."]
+}
+
+expected_forced_decision_with_rule_key = {
+    "variationKey": "variation_2",
+    "enabled": True,
+    "ruleKey": "feature_2_test",
+    "flagKey": "feature_2",
+    "userContext": {
+        "userId": "matjaz",
+        "attributes": {
+            "attr_1": "hola"
+        }
+    },
+    "reasons": ["Variation (variation_2) is mapped to flag (feature_2), rule (feature_2_test) and user (matjaz) in the forced decision map."]
+}
+
 expected_single_flag_key = """
     {
       "variationKey": "variation_1",
@@ -74,6 +102,51 @@ def test_decide__feature(session_obj, flag_key, expected_response, expected_stat
                                                     params=params)
 
     assert json.loads(expected_response) == resp.json()
+    assert resp.status_code == expected_status_code, resp.text
+    resp.raise_for_status()
+
+
+@pytest.mark.parametrize(
+    "flag_key, expected_response, expected_status_code, forced_flag, forced_rule, forced_variation", [
+        ("feature_2", expected_forced_decision_without_rule_key, 200, "feature_2", "", "variation_1"),
+        ("feature_2", expected_forced_decision_with_rule_key, 200, "feature_2", "feature_2_test", "variation_2")
+    ],
+    ids=["variation_1", "16931381940"])
+def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_response, expected_status_code, forced_flag, forced_rule, forced_variation):
+    """
+    Test validates:
+    Correct response when valid or empty rule key is passed in forced-decision parameters.
+    ...
+    :param session_obj:
+    :param flag_key:
+    :param expected_response:
+    :param expected_status_code:
+    :param forced_flag:
+    :param forced_rule:
+    :param forced_variation:
+    """
+
+    payload = {
+        "userId": "matjaz",
+        "decideOptions": [
+            "ENABLED_FLAGS_ONLY",
+            "INCLUDE_REASONS"
+        ],
+        "userAttributes": {"attr_1": "hola"},
+        "forcedDecisions": [
+            {
+              "flagKey": forced_flag,
+              "ruleKey": f"{forced_rule}",
+              "variationKey": forced_variation,
+            }
+        ]
+    }
+
+    params = {"keys": flag_key}
+    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, payload=json.dumps(payload),
+                                                    params=params)
+
+    assert json.loads(json.dumps(expected_response)) == resp.json()
     assert resp.status_code == expected_status_code, resp.text
     resp.raise_for_status()
 
@@ -215,3 +288,4 @@ def test_decide_403(session_override_sdk_key):
                                        'rechecking SDK key), status code: 403 Forbidden'
 
         resp.raise_for_status()
+
