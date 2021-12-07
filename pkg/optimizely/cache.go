@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -192,12 +192,22 @@ func defaultLoader(
 
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
+
+		var userProfileService decision.UserProfileService
+		switch conf.UPSType {
+		case inMemory:
+			userProfileService = newInMemoryUserProfileService()
+		case custom:
+			// TODO: Add custom implementation here
+		}
+
 		optimizelyClient, err := optimizelyFactory.Client(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
+			client.WithUserProfileService(userProfileService),
 		)
 
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, &userProfileService}, err
 	}
 }

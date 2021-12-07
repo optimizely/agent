@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2021, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -78,6 +78,7 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
 			SdkKeyRegex: "^\\w+(:\\w+)?$",
+			UPSType:     "inMemory",
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -154,6 +155,7 @@ type ClientConfig struct {
 	DatafileURLTemplate string        `json:"datafileURLTemplate"`
 	EventURL            string        `json:"eventURL"`
 	SdkKeyRegex         string        `json:"sdkKeyRegex"`
+	UPSType             string        `json:"upsType"`
 }
 
 // LogConfig holds the log configuration

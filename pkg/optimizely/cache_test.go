@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -113,7 +113,7 @@ func mockLoader(sdkKey string) (*OptlyClient, error) {
 	tc := optimizelytest.NewClient()
 	tc.ProjectConfig.ProjectID = sdkKey
 
-	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations}, nil
+	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations, nil}, nil
 }
 
 func TestDefaultLoader(t *testing.T) {
