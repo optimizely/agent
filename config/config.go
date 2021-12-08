@@ -78,7 +78,7 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
 			SdkKeyRegex: "^\\w+(:\\w+)?$",
-			UPSType:     "inMemory",
+			UPSPlugin:   make(map[string]interface{}),
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -148,14 +148,14 @@ func (ac *AgentConfig) LogConfigWarnings() {
 
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
-	PollingInterval     time.Duration `json:"pollingInterval"`
-	BatchSize           int           `json:"batchSize" default:"10"`
-	QueueSize           int           `json:"queueSize" default:"1000"`
-	FlushInterval       time.Duration `json:"flushInterval" default:"30s"`
-	DatafileURLTemplate string        `json:"datafileURLTemplate"`
-	EventURL            string        `json:"eventURL"`
-	SdkKeyRegex         string        `json:"sdkKeyRegex"`
-	UPSType             string        `json:"upsType"`
+	PollingInterval     time.Duration          `json:"pollingInterval"`
+	BatchSize           int                    `json:"batchSize" default:"10"`
+	QueueSize           int                    `json:"queueSize" default:"1000"`
+	FlushInterval       time.Duration          `json:"flushInterval" default:"30s"`
+	DatafileURLTemplate string                 `json:"datafileURLTemplate"`
+	EventURL            string                 `json:"eventURL"`
+	SdkKeyRegex         string                 `json:"sdkKeyRegex"`
+	UPSPlugin           map[string]interface{} `json:"upsPlugin"`
 }
 
 // LogConfig holds the log configuration

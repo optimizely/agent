@@ -47,6 +47,8 @@ type APIOptions struct {
 	decideHandler   http.HandlerFunc
 	trackHandler    http.HandlerFunc
 	overrideHandler http.HandlerFunc
+	lookupHandler   http.HandlerFunc
+	saveHandler     http.HandlerFunc
 	nStreamHandler  http.HandlerFunc
 	oAuthHandler    http.HandlerFunc
 	oAuthMiddleware func(next http.Handler) http.Handler
@@ -95,6 +97,8 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		activateHandler: handlers.Activate,
 		decideHandler:   handlers.Decide,
 		overrideHandler: overrideHandler,
+		lookupHandler:   handlers.Lookup,
+		saveHandler:     handlers.Save,
 		trackHandler:    handlers.TrackEvent,
 		sdkMiddleware:   mw.ClientCtx,
 		nStreamHandler:  nStreamHandler,
@@ -121,6 +125,8 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
 	decideTimer := middleware.Metricize("decide", opt.metricsRegistry)
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
+	lookupTimer := middleware.Metricize("lookup", opt.metricsRegistry)
+	saveTimer := middleware.Metricize("save", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 	contentTypeMiddleware := chimw.AllowContentType("application/json")
@@ -141,6 +147,8 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(decideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/decide", opt.decideHandler)
 		r.With(trackTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/track", opt.trackHandler)
 		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/override", opt.overrideHandler)
+		r.With(lookupTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/lookup", opt.lookupHandler)
+		r.With(saveTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/save", opt.saveHandler)
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 

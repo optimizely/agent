@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -38,6 +38,9 @@ import (
 
 	// Initiate the loading of the interceptor plugins
 	_ "github.com/optimizely/agent/plugins/interceptors/all"
+
+	// Initiate the loading of the userprofileservice plugins
+	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
 )
 
 // Version holds the admin version
@@ -82,6 +85,9 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	// https://github.com/spf13/viper/issues/406
 	if interceptors, ok := v.Get("server.interceptors").(map[string]interface{}); ok {
 		conf.Server.Interceptors = interceptors
+	}
+	if upsPlugin, ok := v.Get("client.upsPlugin").(map[string]interface{}); ok {
+		conf.Client.UPSPlugin = upsPlugin
 	}
 
 	return conf

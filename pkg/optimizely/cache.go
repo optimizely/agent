@@ -25,6 +25,7 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -193,21 +194,18 @@ func defaultLoader(
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 
-		var userProfileService decision.UserProfileService
-		switch conf.UPSType {
-		case inMemory:
-			userProfileService = newInMemoryUserProfileService()
-		case custom:
-			// TODO: Add custom implementation here
-		}
+		profilesCount := len(userprofileservice.UserProfileServices)
+		// By default, in-memory ups is used
+		// Any other ups provided through config will take precedence over in-memory ups
+		upsPlugin := userprofileservice.UserProfileServices[profilesCount-1]
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
-			client.WithUserProfileService(userProfileService),
+			client.WithUserProfileService(upsPlugin),
 		)
 
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations, &userProfileService}, err
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, upsPlugin}, err
 	}
 }

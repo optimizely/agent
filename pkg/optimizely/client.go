@@ -36,7 +36,7 @@ type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
 	ConfigManager      SyncedConfigManager
 	ForcedVariations   *decision.MapExperimentOverridesStore
-	UserProfileService *decision.UserProfileService
+	UserProfileService decision.UserProfileService
 }
 
 // Decision Model
