@@ -19,6 +19,7 @@ package optimizely
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"regexp"
 	"strings"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/plugins/userprofileservice"
+	"github.com/optimizely/agent/plugins/userprofileservice/memory"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -194,18 +196,48 @@ func defaultLoader(
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 
-		profilesCount := len(userprofileservice.UserProfileServices)
-		// By default, in-memory ups is used
-		// Any other ups provided through config will take precedence over in-memory ups
-		upsPlugin := userprofileservice.UserProfileServices[profilesCount-1]
+		inMemoryUPSCreator := func() decision.UserProfileService {
+			return memory.NewInMemoryUserProfileService()
+		}
+		// Adding in-memory UserProfileService
+		userprofileservice.AddUserProfileService(sdkKey, "in-memory", inMemoryUPSCreator)
+		var finalUserProfileService decision.UserProfileService = inMemoryUPSCreator()
+		// Only use the provided user profile service if conversion was successful. else use in-memory user profile service
+		if configUserProfileService := getFinalUserProfileServiceFromConfig(conf, sdkKey); configUserProfileService != nil {
+			finalUserProfileService = configUserProfileService
+		}
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
-			client.WithUserProfileService(upsPlugin),
+			client.WithUserProfileService(finalUserProfileService),
 		)
 
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations, upsPlugin}, err
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, finalUserProfileService}, err
 	}
+}
+
+func getFinalUserProfileServiceFromConfig(conf config.ClientConfig, sdkKey string) decision.UserProfileService {
+	// Check if any default user profile service was prodided and if it exists in client config
+	if defaultUserProfileServiceName, ok := conf.UserProfileServices["default"].(string); ok && defaultUserProfileServiceName != "" {
+		if defaultUserProfileServiceMap, ok := conf.UserProfileServices[defaultUserProfileServiceName].(map[string]interface{}); ok {
+			// Check if any such user profile service was added using `AddUserProfileService` method
+			if upsInstance := userprofileservice.GetUserProfileService(sdkKey, defaultUserProfileServiceName)(); upsInstance != nil {
+				success := true
+				// Trying to map userProfileService from client config to struct
+				if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
+					log.Warn().Err(err).Msg("Error marshaling default user profile service config")
+					success = false
+				} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
+					log.Warn().Err(err).Msg("Error unmarshalling user profile service config")
+					success = false
+				}
+				if success {
+					return upsInstance
+				}
+			}
+		}
+	}
+	return nil
 }

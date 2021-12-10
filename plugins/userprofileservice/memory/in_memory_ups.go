@@ -20,22 +20,24 @@ package memory
 import (
 	"sync"
 
-	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
-type inMemoryUserProfileService struct {
+// InMemoryUserProfileService represents the in-memory implementation of UserProfileService interface
+type InMemoryUserProfileService struct {
 	profiles map[string]decision.UserProfile
 	lock     sync.RWMutex
 }
 
-func newInMemoryUserProfileService() *inMemoryUserProfileService {
-	return &inMemoryUserProfileService{
+// NewInMemoryUserProfileService returns new instance of InMemoryUserProfileService
+func NewInMemoryUserProfileService() *InMemoryUserProfileService {
+	return &InMemoryUserProfileService{
 		profiles: make(map[string]decision.UserProfile),
 	}
 }
 
-func (u *inMemoryUserProfileService) Lookup(userID string) decision.UserProfile {
+// Lookup is used to retrieve past bucketing decisions for users
+func (u *InMemoryUserProfileService) Lookup(userID string) decision.UserProfile {
 	var profile decision.UserProfile
 	u.lock.RLock()
 	defer u.lock.RUnlock()
@@ -45,7 +47,8 @@ func (u *inMemoryUserProfileService) Lookup(userID string) decision.UserProfile 
 	return profile
 }
 
-func (u *inMemoryUserProfileService) Save(profile decision.UserProfile) {
+// Save is used to save bucketing decisions for users
+func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 	if profile.ID == "" {
 		return
 	}
@@ -53,8 +56,4 @@ func (u *inMemoryUserProfileService) Save(profile decision.UserProfile) {
 	u.lock.Lock()
 	defer u.lock.Unlock()
 	u.profiles[profile.ID] = profile
-}
-
-func init() {
-	userprofileservice.Add(newInMemoryUserProfileService())
 }

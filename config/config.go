@@ -77,8 +77,8 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex: "^\\w+(:\\w+)?$",
-			UPSPlugin:   make(map[string]interface{}),
+			SdkKeyRegex:         "^\\w+(:\\w+)?$",
+			UserProfileServices: make(map[string]interface{}),
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -155,7 +155,7 @@ type ClientConfig struct {
 	DatafileURLTemplate string                 `json:"datafileURLTemplate"`
 	EventURL            string                 `json:"eventURL"`
 	SdkKeyRegex         string                 `json:"sdkKeyRegex"`
-	UPSPlugin           map[string]interface{} `json:"upsPlugin"`
+	UserProfileServices map[string]interface{} `json:"userProfileServices"`
 }
 
 // LogConfig holds the log configuration

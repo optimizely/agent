@@ -18,6 +18,7 @@
 package all
 
 import (
-	// Register the plugin middleware
+	// Register the userProfileService similar to the line below
+	// Make sure custom UPS calls `userprofileservice.AddUserProfileService()` in its init() method
 	_ "github.com/optimizely/agent/plugins/userprofileservice/memory"
 )

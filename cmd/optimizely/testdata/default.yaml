@@ -31,9 +31,12 @@ client:
   datafileURLTemplate: "https://localhost/v1/%s.json"
   eventURL: "https://logx.localhost.com/v1"
   sdkKeyRegex: "custom-regex"
-  upsPlugin:
-    key1: 5
-    key2: 10 
+  userProfileServices:
+    default: "redis"
+    redis: 
+      url: ""
+    custom: 
+      path: ""
       
 admin:
   port: "3002"

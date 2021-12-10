@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
+ * Copyright 2019-2021 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -86,8 +86,8 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	if interceptors, ok := v.Get("server.interceptors").(map[string]interface{}); ok {
 		conf.Server.Interceptors = interceptors
 	}
-	if upsPlugin, ok := v.Get("client.upsPlugin").(map[string]interface{}); ok {
-		conf.Client.UPSPlugin = upsPlugin
+	if userProfileServices, ok := v.Get("client.userProfileServices").(map[string]interface{}); ok {
+		conf.Client.UserProfileServices = userProfileServices
 	}
 
 	return conf

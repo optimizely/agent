@@ -18,13 +18,34 @@
 package userprofileservice
 
 import (
+	"sync"
+
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
-// UserProfileServices stores the mapping of UserProfileServices
-var UserProfileServices = []decision.UserProfileService{}
+// userProfileServices stores the mapping of UserProfileServices against sdkKey and userProfileServiceName
+var userProfileServices = map[string]map[string]Creator{}
+var lock sync.RWMutex
 
-// Add function registers a Middleware Creator
-func Add(creator decision.UserProfileService) {
-	UserProfileServices = append(UserProfileServices, creator)
+// Creator type defines a function for creating an instance of a UserProfileService
+type Creator func() decision.UserProfileService
+
+// AddUserProfileService maps userProfileService against sdkKey and userProfileServiceName
+// Both sdkKey and userProfileServiceName should be unique. Also, userProfileServiceName should match one of the
+// user profile services provided in `client.userProfileServices` in `config.yaml`
+func AddUserProfileService(sdkKey, userProfileServiceName string, profileService Creator) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	if _, ok := userProfileServices[sdkKey]; !ok {
+		userProfileServices[sdkKey] = map[string]Creator{}
+	}
+	userProfileServices[sdkKey][userProfileServiceName] = profileService
+}
+
+// GetUserProfileService returns userProfileService mapped against the sdkKey and userProfileServiceName
+func GetUserProfileService(sdkKey, userProfileServiceName string) (profileService Creator) {
+	lock.RLock()
+	defer lock.RUnlock()
+	return userProfileServices[sdkKey][userProfileServiceName]
 }
