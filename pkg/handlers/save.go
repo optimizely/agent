@@ -33,7 +33,7 @@ type saveBody struct {
 // Save saves the user profile against the given userId
 func Save(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
+	if err != nil || optlyClient.UserProfileService == nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

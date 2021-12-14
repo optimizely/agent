@@ -24,6 +24,7 @@ import (
 	"time"
 
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/stretchr/testify/assert"
 
@@ -34,6 +35,21 @@ import (
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"
 )
+
+type testRedisUserProfileService struct {
+	Path string `json:"path"`
+	Addr string `json:"addr"`
+	Port int    `json:"port"`
+}
+
+// Lookup is used to retrieve past bucketing decisions for users
+func (u *testRedisUserProfileService) Lookup(userID string) decision.UserProfile {
+	return decision.UserProfile{}
+}
+
+// Save is used to save bucketing decisions for users
+func (u *testRedisUserProfileService) Save(profile decision.UserProfile) {
+}
 
 var counter int
 
@@ -131,25 +147,129 @@ func TestDefaultLoader(t *testing.T) {
 
 	mr := &MetricsRegistry{metrics.NewRegistry()}
 	conf := config.ClientConfig{
-		FlushInterval: 321 * time.Second,
-		BatchSize:     1234,
-		QueueSize:     5678,
-		EventURL:      "https://localhost/events",
-		SdkKeyRegex:   "sdkkey",
+		FlushInterval:       321 * time.Second,
+		BatchSize:           1234,
+		QueueSize:           5678,
+		EventURL:            "https://localhost/events",
+		SdkKeyRegex:         "sdkkey",
+		UserProfileServices: map[string]interface{}{"default": "in-memory"},
 	}
 
 	loader := defaultLoader(conf, mr, pcFactory, bpFactory)
-	_, err := loader("sdkkey")
+	client, err := loader("sdkkey")
 	assert.NoError(t, err)
 
 	assert.Equal(t, conf.FlushInterval, bp.FlushInterval)
 	assert.Equal(t, conf.BatchSize, bp.BatchSize)
 	assert.Equal(t, conf.QueueSize, bp.MaxQueueSize)
 	assert.Equal(t, conf.EventURL, bp.EventEndPoint)
+	assert.NotNil(t, client.UserProfileService)
 
 	_, err = loader("invalid!")
 	assert.Error(t, err)
 }
+
+// func TestGetFinalUserProfileServiceFromConfig(t *testing.T) {
+
+// 	// var bp *event.BatchEventProcessor
+// 	// bpFactory := func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
+// 	// 	bp = event.NewBatchEventProcessor(options...)
+// 	// 	return bp
+// 	// }
+// 	pcFactory := func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
+// 		return MockConfigManager{}
+// 	}
+
+// 	mr := &MetricsRegistry{metrics.NewRegistry()}
+
+// 	testRedisUPSCreator := func() decision.UserProfileService {
+// 		return &testRedisUserProfileService{}
+// 	}
+// 	userprofileservice.AddUserProfileService("sdkkey1", "redis", testRedisUPSCreator)
+
+// 	conf := config.ClientConfig{
+// 		UserProfileServices: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
+// 			"redis": map[string]interface{}{
+// 				"path": "http://test.com",
+// 				"addr": "1.2.1.2-abc",
+// 				"port": 8080,
+// 			},
+// 		}},
+// 	}
+
+// 	loader := defaultLoader(conf, mr, pcFactory, nil)
+// 	client, err := loader("sdkkey1")
+// 	assert.NoError(t, err)
+
+// 	// There should be 2 user profile services now since in-memory is added by default
+// 	assert.NotNil(t, userprofileservice.GetUserProfileService("sdkkey1", "in-memory"))
+
+// 	assert.NotNil(t, client.UserProfileService)
+// 	if testRedisUPS, ok := client.UserProfileService.(*testRedisUserProfileService); ok {
+// 		assert.Equal(t, "http://test.com", testRedisUPS.Path)
+// 		assert.Equal(t, "1.2.1.2-abc", testRedisUPS.Addr)
+// 		assert.Equal(t, 8080, testRedisUPS.Port)
+// 		return
+// 	}
+// 	assert.Failf(t, "UserProfileService not registered", "%s DNE in registry", "redis")
+// }
+
+// func TestEmptyUserProfileServicesConfig(t *testing.T) {
+
+// 	var bp *event.BatchEventProcessor
+// 	bpFactory := func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
+// 		bp = event.NewBatchEventProcessor(options...)
+// 		return bp
+// 	}
+// 	pcFactory := func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
+// 		return MockConfigManager{}
+// 	}
+
+// 	mr := &MetricsRegistry{metrics.NewRegistry()}
+
+// 	testRedisUPSCreator := func() decision.UserProfileService {
+// 		return &testRedisUserProfileService{}
+// 	}
+// 	userprofileservice.AddUserProfileService("sdkkey2", "redis", testRedisUPSCreator)
+// 	conf := config.ClientConfig{
+// 		UserProfileServices: map[string]interface{}{},
+// 	}
+
+// 	loader := defaultLoader(conf, mr, pcFactory, bpFactory)
+// 	client, err := loader("sdkkey2")
+// 	assert.NoError(t, err)
+
+// 	assert.Nil(t, client.UserProfileService)
+// }
+
+// func TestNoDefaultUserProfileService(t *testing.T) {
+
+// 	var bp *event.BatchEventProcessor
+// 	bpFactory := func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
+// 		bp = event.NewBatchEventProcessor(options...)
+// 		return bp
+// 	}
+// 	pcFactory := func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
+// 		return MockConfigManager{}
+// 	}
+
+// 	mr := &MetricsRegistry{metrics.NewRegistry()}
+
+// 	testRedisUPSCreator := func() decision.UserProfileService {
+// 		return &testRedisUserProfileService{}
+// 	}
+// 	userprofileservice.AddUserProfileService("sdkkey3", "redis", testRedisUPSCreator)
+// 	conf := config.ClientConfig{
+// 		UserProfileServices: map[string]interface{}{"default": "", "services": map[string]interface{}{
+// 			"redis": map[string]interface{}{},
+// 		}},
+// 	}
+
+// 	loader := defaultLoader(conf, mr, pcFactory, bpFactory)
+// 	client, err := loader("sdkkey3")
+// 	assert.NoError(t, err)
+// 	assert.Nil(t, client.UserProfileService)
+// }
 
 func TestDefaultRegexValidator(t *testing.T) {
 

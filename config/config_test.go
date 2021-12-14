@@ -82,6 +82,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
 	assert.Equal(t, "^\\w+(:\\w+)?$", conf.Client.SdkKeyRegex)
+	assert.Equal(t, "in-memory", conf.Client.UserProfileServices["default"])
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)

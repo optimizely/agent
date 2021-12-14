@@ -78,7 +78,7 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
 			SdkKeyRegex:         "^\\w+(:\\w+)?$",
-			UserProfileServices: make(map[string]interface{}),
+			UserProfileServices: UserProfileServiceConfigs{"default": "in-memory"},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -146,16 +146,19 @@ func (ac *AgentConfig) LogConfigWarnings() {
 	}
 }
 
+// UserProfileServiceConfigs defines the generic mapping of userprofileservice plugins
+type UserProfileServiceConfigs map[string]interface{}
+
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
-	PollingInterval     time.Duration          `json:"pollingInterval"`
-	BatchSize           int                    `json:"batchSize" default:"10"`
-	QueueSize           int                    `json:"queueSize" default:"1000"`
-	FlushInterval       time.Duration          `json:"flushInterval" default:"30s"`
-	DatafileURLTemplate string                 `json:"datafileURLTemplate"`
-	EventURL            string                 `json:"eventURL"`
-	SdkKeyRegex         string                 `json:"sdkKeyRegex"`
-	UserProfileServices map[string]interface{} `json:"userProfileServices"`
+	PollingInterval     time.Duration             `json:"pollingInterval"`
+	BatchSize           int                       `json:"batchSize" default:"10"`
+	QueueSize           int                       `json:"queueSize" default:"1000"`
+	FlushInterval       time.Duration             `json:"flushInterval" default:"30s"`
+	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
+	EventURL            string                    `json:"eventURL"`
+	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
+	UserProfileServices UserProfileServiceConfigs `json:"userProfileServices"`
 }
 
 // LogConfig holds the log configuration

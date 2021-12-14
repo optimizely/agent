@@ -23,12 +23,12 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
+// Creator type defines a function for creating an instance of a UserProfileService
+type Creator func() decision.UserProfileService
+
 // userProfileServices stores the mapping of UserProfileServices against sdkKey and userProfileServiceName
 var userProfileServices = map[string]map[string]Creator{}
 var lock sync.RWMutex
-
-// Creator type defines a function for creating an instance of a UserProfileService
-type Creator func() decision.UserProfileService
 
 // AddUserProfileService maps userProfileService against sdkKey and userProfileServiceName
 // Both sdkKey and userProfileServiceName should be unique. Also, userProfileServiceName should match one of the

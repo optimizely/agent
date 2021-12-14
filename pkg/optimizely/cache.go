@@ -199,42 +199,50 @@ func defaultLoader(
 		inMemoryUPSCreator := func() decision.UserProfileService {
 			return memory.NewInMemoryUserProfileService()
 		}
-		// Adding in-memory UserProfileService
+		// Adding in-memory UserProfileService by default, can be overridden if user changes the default value in config
 		userprofileservice.AddUserProfileService(sdkKey, "in-memory", inMemoryUPSCreator)
-		var finalUserProfileService decision.UserProfileService = inMemoryUPSCreator()
-		// Only use the provided user profile service if conversion was successful. else use in-memory user profile service
+
+		clientOptions := []client.OptionFunc{
+			client.WithConfigManager(configManager),
+			client.WithExperimentOverrides(forcedVariations),
+			client.WithEventProcessor(ep),
+		}
+		// Only use the provided user profile service if conversion was successful
+		var finalUserProfileService decision.UserProfileService
 		if configUserProfileService := getFinalUserProfileServiceFromConfig(conf, sdkKey); configUserProfileService != nil {
+			clientOptions = append(clientOptions, client.WithUserProfileService(configUserProfileService))
 			finalUserProfileService = configUserProfileService
 		}
 
 		optimizelyClient, err := optimizelyFactory.Client(
-			client.WithConfigManager(configManager),
-			client.WithExperimentOverrides(forcedVariations),
-			client.WithEventProcessor(ep),
-			client.WithUserProfileService(finalUserProfileService),
+			clientOptions...,
 		)
-
 		return &OptlyClient{optimizelyClient, configManager, forcedVariations, finalUserProfileService}, err
 	}
 }
 
 func getFinalUserProfileServiceFromConfig(conf config.ClientConfig, sdkKey string) decision.UserProfileService {
-	// Check if any default user profile service was prodided and if it exists in client config
+	// Check if any default user profile service was provided and if it exists in client config
 	if defaultUserProfileServiceName, ok := conf.UserProfileServices["default"].(string); ok && defaultUserProfileServiceName != "" {
-		if defaultUserProfileServiceMap, ok := conf.UserProfileServices[defaultUserProfileServiceName].(map[string]interface{}); ok {
-			// Check if any such user profile service was added using `AddUserProfileService` method
-			if upsInstance := userprofileservice.GetUserProfileService(sdkKey, defaultUserProfileServiceName)(); upsInstance != nil {
-				success := true
-				// Trying to map userProfileService from client config to struct
-				if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
-					log.Warn().Err(err).Msg("Error marshaling default user profile service config")
-					success = false
-				} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
-					log.Warn().Err(err).Msg("Error unmarshalling user profile service config")
-					success = false
-				}
-				if success {
-					return upsInstance
+		if defaultUserProfileServiceName == "in-memory" {
+			return userprofileservice.GetUserProfileService(sdkKey, defaultUserProfileServiceName)()
+		}
+		if userProfileServicesMap, ok := conf.UserProfileServices["services"].(map[string]interface{}); ok {
+			if defaultUserProfileServiceMap, ok := userProfileServicesMap[defaultUserProfileServiceName].(map[string]interface{}); ok {
+				// Check if any such user profile service was added using `AddUserProfileService` method
+				if upsInstance := userprofileservice.GetUserProfileService(sdkKey, defaultUserProfileServiceName)(); upsInstance != nil {
+					success := true
+					// Trying to map userProfileService from client config to struct
+					if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
+						log.Warn().Err(err).Msg("Error marshaling default user profile service config")
+						success = false
+					} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
+						log.Warn().Err(err).Msg("Error unmarshalling user profile service config")
+						success = false
+					}
+					if success {
+						return upsInstance
+					}
 				}
 			}
 		}

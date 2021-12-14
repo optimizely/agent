@@ -38,7 +38,7 @@ type UPSResponseOut struct {
 // Lookup searches for user profile for the given userId
 func Lookup(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil {
+	if err != nil || optlyClient.UserProfileService == nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}

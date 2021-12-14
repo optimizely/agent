@@ -32,11 +32,12 @@ client:
   eventURL: "https://logx.localhost.com/v1"
   sdkKeyRegex: "custom-regex"
   userProfileServices:
-    default: "redis"
-    redis: 
-      url: ""
-    custom: 
-      path: ""
+    default: "in-memory"
+    services:
+      redis: 
+        url: "http://test1.com"
+      custom: 
+        path: "http://test2.com"
       
 admin:
   port: "3002"

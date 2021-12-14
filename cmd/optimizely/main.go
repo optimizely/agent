@@ -86,9 +86,6 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	if interceptors, ok := v.Get("server.interceptors").(map[string]interface{}); ok {
 		conf.Server.Interceptors = interceptors
 	}
-	if userProfileServices, ok := v.Get("client.userProfileServices").(map[string]interface{}); ok {
-		conf.Client.UserProfileServices = userProfileServices
-	}
 
 	return conf
 }

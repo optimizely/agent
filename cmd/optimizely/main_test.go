@@ -55,7 +55,7 @@ func assertServer(t *testing.T, actual config.ServerConfig, assertPlugins bool) 
 	}
 }
 
-func assertClient(t *testing.T, actual config.ClientConfig) {
+func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileServices bool) {
 	assert.Equal(t, 10*time.Second, actual.PollingInterval)
 	assert.Equal(t, 1, actual.BatchSize)
 	assert.Equal(t, 10, actual.QueueSize)
@@ -63,6 +63,16 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
+	if assertUserProfileServices {
+		assert.Equal(t, "in-memory", actual.UserProfileServices["default"])
+		services := map[string]interface{}{
+			"redis": map[string]interface {
+			}{"url": "http://test1.com"},
+			"custom": map[string]interface {
+			}{"path": "http://test2.com"},
+		}
+		assert.Equal(t, services, actual.UserProfileServices["services"])
+	}
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -139,7 +149,7 @@ func TestViperYaml(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, true)
-	assertClient(t, actual.Client)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -176,6 +186,15 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
 	v.Set("client.sdkKeyRegex", "custom-regex")
+	userProfileServices := map[string]interface {
+	}{"default": "in-memory",
+		"services": map[string]interface{}{
+			"redis": map[string]interface {
+			}{"url": "http://test1.com"},
+			"custom": map[string]interface {
+			}{"path": "http://test2.com"},
+		}}
+	v.Set("client.userProfileServices", userProfileServices)
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")
@@ -228,7 +247,7 @@ func TestViperProps(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, true)
-	assertClient(t, actual.Client)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -289,7 +308,7 @@ func TestViperEnv(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, false)
-	assertClient(t, actual.Client)
+	assertClient(t, actual.Client, false)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
