@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -35,25 +36,38 @@ type UPSResponseOut struct {
 	ExperimentBucketMap map[string]interface{} `json:"experimentBucketMap"`
 }
 
+// ErrNoUPS is a constant error if no user profile service was found
+var ErrNoUPS = errors.New(`no user profile service found`)
+
 // Lookup searches for user profile for the given userId
 func Lookup(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil || optlyClient.UserProfileService == nil {
+	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	if optlyClient.UserProfileService == nil {
+		RenderError(ErrNoUPS, http.StatusInternalServerError, w, r)
 		return
 	}
 
 	var body lookupBody
 	err = ParseRequestBody(r, &body)
-	if err != nil || body.UserID == "" {
+
+	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	if body.UserID == "" {
+		RenderError(ErrEmptyUserID, http.StatusBadRequest, w, r)
 		return
 	}
 
 	lookupResponse := UPSResponseOut{
 		UserID: body.UserID,
 	}
-
 	savedProfile := optlyClient.UserProfileService.Lookup(body.UserID)
 	// Converting to map
 	experimentBucketMap := map[string]interface{}{}
@@ -61,6 +75,5 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 		experimentBucketMap[k.ExperimentID] = map[string]interface{}{k.Field: v}
 	}
 	lookupResponse.ExperimentBucketMap = experimentBucketMap
-
 	render.JSON(w, r, lookupResponse)
 }

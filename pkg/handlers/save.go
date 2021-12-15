@@ -33,15 +33,26 @@ type saveBody struct {
 // Save saves the user profile against the given userId
 func Save(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
-	if err != nil || optlyClient.UserProfileService == nil {
+	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
+
+	if optlyClient.UserProfileService == nil {
+		RenderError(ErrNoUPS, http.StatusInternalServerError, w, r)
 		return
 	}
 
 	var body saveBody
 	err = ParseRequestBody(r, &body)
+
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
+
+	if body.UserID == "" {
+		RenderError(ErrEmptyUserID, http.StatusBadRequest, w, r)
 		return
 	}
 
@@ -50,24 +61,19 @@ func Save(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
 	}
-
 	optlyClient.UserProfileService.Save(convertedProfile)
-	render.NoContent(w, r)
+	render.Status(r, http.StatusOK)
 }
 
 // convertToUserProfile converts map to User Profile object
 func convertToUserProfile(body saveBody) (profile decision.UserProfile, success bool) {
-	userProfile := decision.UserProfile{}
-	if experimentBucketMap, ok := body.ExperimentBucketMap["experimentBucketMap"].(map[string]interface{}); ok && profile.ID != "" {
-		userProfile.ID = body.UserID
-		userProfile.ExperimentBucketMap = make(map[decision.UserDecisionKey]string)
-		for k, v := range experimentBucketMap {
-			decisionKey := decision.NewUserDecisionKey(k)
-			if bucketMap, ok := v.(map[string]interface{}); ok {
-				userProfile.ExperimentBucketMap[decisionKey] = bucketMap[decisionKey.Field].(string)
-			}
+	userProfile := decision.UserProfile{ID: body.UserID}
+	userProfile.ExperimentBucketMap = make(map[decision.UserDecisionKey]string)
+	for k, v := range body.ExperimentBucketMap {
+		decisionKey := decision.NewUserDecisionKey(k)
+		if bucketMap, ok := v.(map[string]interface{}); ok {
+			userProfile.ExperimentBucketMap[decisionKey] = bucketMap[decisionKey.Field].(string)
 		}
-		return userProfile, true
 	}
-	return userProfile, false
+	return userProfile, true
 }
