@@ -31,7 +31,7 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
-	"github.com/optimizely/agent/plugins/userprofileservice/memory"
+	userprofileservices "github.com/optimizely/agent/plugins/userprofileservice/services"
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
@@ -52,7 +52,9 @@ func (suite *SaveTestSuite) ClientCtx(next http.Handler) http.Handler {
 
 func (suite *SaveTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
-	userProfileService := memory.NewInMemoryUserProfileService()
+	userProfileService := &userprofileservices.InMemoryUserProfileService{
+		Profiles: make(map[string]decision.UserProfile),
+	}
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient:   testClient.OptimizelyClient,
 		ConfigManager:      nil,

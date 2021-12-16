@@ -136,12 +136,13 @@ client:
     ## configure optional User profile service
     userProfileServices:
       default: "in-memory"
-    #   services:
-    #     redis: 
-    #       url: ""
-    #     custom: 
-    #       path: ""
-        
+      services:
+        in-memory: 
+          capacity: 0
+        redis: 
+          host: "localhost:6379"
+          password: ""
+          database: 0
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.

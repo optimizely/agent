@@ -65,13 +65,20 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
 	if assertUserProfileServices {
 		assert.Equal(t, "in-memory", actual.UserProfileServices["default"])
-		services := map[string]interface{}{
-			"redis": map[string]interface {
-			}{"url": "http://test1.com"},
-			"custom": map[string]interface {
-			}{"path": "http://test2.com"},
+		userProfileServices := map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"capacity": 0,
+			},
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+			"custom": map[string]interface{}{
+				"path": "http://test2.com",
+			},
 		}
-		assert.Equal(t, services, actual.UserProfileServices["services"])
+		assert.Equal(t, userProfileServices, actual.UserProfileServices["services"])
 	}
 }
 
@@ -186,14 +193,23 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
 	v.Set("client.sdkKeyRegex", "custom-regex")
-	userProfileServices := map[string]interface {
-	}{"default": "in-memory",
-		"services": map[string]interface{}{
-			"redis": map[string]interface {
-			}{"url": "http://test1.com"},
-			"custom": map[string]interface {
-			}{"path": "http://test2.com"},
-		}}
+	services := map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"capacity": 0,
+		},
+		"redis": map[string]interface{}{
+			"host":     "localhost:6379",
+			"password": "",
+			"database": 0,
+		},
+		"custom": map[string]interface{}{
+			"path": "http://test2.com",
+		},
+	}
+	userProfileServices := map[string]interface{}{
+		"default":  "in-memory",
+		"services": services,
+	}
 	v.Set("client.userProfileServices", userProfileServices)
 
 	v.Set("log.pretty", true)

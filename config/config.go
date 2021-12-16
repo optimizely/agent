@@ -77,8 +77,21 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex:         "^\\w+(:\\w+)?$",
-			UserProfileServices: UserProfileServiceConfigs{"default": "in-memory"},
+			SdkKeyRegex: "^\\w+(:\\w+)?$",
+			UserProfileServices: UserProfileServiceConfigs{
+				"default": "in-memory",
+				"services": map[string]interface{}{
+					"in-memory": map[string]interface{}{
+						"capacity": 0,
+					},
+					"redis": map[string]interface {
+					}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled

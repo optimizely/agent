@@ -18,7 +18,7 @@
 package all
 
 import (
-	// Register your userProfileService similar to the line below
-	// Make sure your UPS calls `userprofileservice.AddUserProfileService()` in its init() method
-	_ "github.com/optimizely/agent/plugins/userprofileservice/memory"
+	// Register your userProfileService here if it is created outside the userprofileservice/services package
+	// Also, make sure your UPS calls `userprofileservice.Add()` in its init() method
+	_ "github.com/optimizely/agent/plugins/userprofileservice/services"
 )

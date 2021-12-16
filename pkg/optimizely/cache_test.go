@@ -35,6 +35,10 @@ import (
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"
+
+	// To test the loading of the userprofileservice plugins
+	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
+	"github.com/optimizely/agent/plugins/userprofileservice/services"
 )
 
 var counter int
@@ -161,12 +165,16 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 
 func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	conf := config.ClientConfig{
-		FlushInterval:       321 * time.Second,
-		BatchSize:           1234,
-		QueueSize:           5678,
-		EventURL:            "https://localhost/events",
-		SdkKeyRegex:         "sdkkey",
-		UserProfileServices: map[string]interface{}{"default": "in-memory"},
+		FlushInterval: 321 * time.Second,
+		BatchSize:     1234,
+		QueueSize:     5678,
+		EventURL:      "https://localhost/events",
+		SdkKeyRegex:   "sdkkey",
+		UserProfileServices: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"capacity": 0,
+			}},
+		},
 	}
 
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
@@ -183,28 +191,34 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	s.Error(err)
 }
 
-func (s *DefaultLoaderTestSuite) TestGetFinalUserProfileServiceFromConfig() {
-	testRedisUPSCreator := func() decision.UserProfileService {
+func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedAutomatically() {
+	s.NotNil(userprofileservice.Creators["in-memory"])
+	_, ok := (userprofileservice.Creators["in-memory"]()).(*services.InMemoryUserProfileService)
+	s.True(ok)
+
+	s.NotNil(userprofileservice.Creators["redis"])
+	_, ok = (userprofileservice.Creators["redis"]()).(*services.RedisUserProfileService)
+	s.True(ok)
+}
+
+func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
+	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
 	}
-	userprofileservice.AddUserProfileService("sdkkey1", "redis", testRedisUPSCreator)
+	userprofileservice.Add("mock", upCreator)
 
 	conf := config.ClientConfig{
-		UserProfileServices: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
-			"redis": map[string]interface{}{
+		UserProfileServices: map[string]interface{}{"default": "mock", "services": map[string]interface{}{
+			"mock": map[string]interface{}{
 				"path": "http://test.com",
 				"addr": "1.2.1.2-abc",
 				"port": 8080,
 			},
 		}},
 	}
-
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey1")
+	client, err := loader("sdkkey")
 	s.NoError(err)
-
-	// There should be 2 user profile services now since in-memory is added by default
-	s.NotNil(userprofileservice.GetUserProfileService("sdkkey1", "in-memory"))
 
 	s.NotNil(client.UserProfileService)
 	if testRedisUPS, ok := client.UserProfileService.(*MockUserProfileService); ok {
@@ -216,35 +230,35 @@ func (s *DefaultLoaderTestSuite) TestGetFinalUserProfileServiceFromConfig() {
 	s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
 }
 
-func (s *DefaultLoaderTestSuite) TestEmptyUserProfileServicesConfig() {
-	testRedisUPSCreator := func() decision.UserProfileService {
+func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
+	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
 	}
-	userprofileservice.AddUserProfileService("sdkkey2", "redis", testRedisUPSCreator)
+	userprofileservice.Add("mock", upCreator)
+
 	conf := config.ClientConfig{
 		UserProfileServices: map[string]interface{}{},
 	}
-
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey2")
+	client, err := loader("sdkkey")
 	s.NoError(err)
 
 	s.Nil(client.UserProfileService)
 }
 
-func (s *DefaultLoaderTestSuite) TestNoDefaultUserProfileServicesConfig() {
-	testRedisUPSCreator := func() decision.UserProfileService {
+func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
+	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
 	}
-	userprofileservice.AddUserProfileService("sdkkey3", "redis", testRedisUPSCreator)
+	userprofileservice.Add("mock", upCreator)
+
 	conf := config.ClientConfig{
 		UserProfileServices: map[string]interface{}{"default": "", "services": map[string]interface{}{
-			"redis": map[string]interface{}{},
+			"mock": map[string]interface{}{},
 		}},
 	}
-
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey3")
+	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
 }

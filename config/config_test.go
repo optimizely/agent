@@ -84,6 +84,18 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "^\\w+(:\\w+)?$", conf.Client.SdkKeyRegex)
 	assert.Equal(t, "in-memory", conf.Client.UserProfileServices["default"])
 
+	services := map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"capacity": 0,
+		},
+		"redis": map[string]interface{}{
+			"host":     "localhost:6379",
+			"password": "",
+			"database": 0,
+		},
+	}
+	assert.Equal(t, services, conf.Client.UserProfileServices["services"])
+
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
 }

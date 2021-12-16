@@ -14,26 +14,21 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package memory //
-package memory
+// Package services //
+package services
 
 import (
 	"sync"
 
+	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
 // InMemoryUserProfileService represents the in-memory implementation of UserProfileService interface
 type InMemoryUserProfileService struct {
-	profiles map[string]decision.UserProfile
+	Capacity int `json:"capacity"` // Need to work on its implementation
+	Profiles map[string]decision.UserProfile
 	lock     sync.RWMutex
-}
-
-// NewInMemoryUserProfileService returns new instance of InMemoryUserProfileService
-func NewInMemoryUserProfileService() *InMemoryUserProfileService {
-	return &InMemoryUserProfileService{
-		profiles: make(map[string]decision.UserProfile),
-	}
 }
 
 // Lookup is used to retrieve past bucketing decisions for users
@@ -41,7 +36,7 @@ func (u *InMemoryUserProfileService) Lookup(userID string) decision.UserProfile 
 	var profile decision.UserProfile
 	u.lock.RLock()
 	defer u.lock.RUnlock()
-	if userProfile, ok := u.profiles[userID]; ok {
+	if userProfile, ok := u.Profiles[userID]; ok {
 		profile = userProfile
 	}
 	return profile
@@ -55,5 +50,14 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 
 	u.lock.Lock()
 	defer u.lock.Unlock()
-	u.profiles[profile.ID] = profile
+	u.Profiles[profile.ID] = profile
+}
+
+func init() {
+	inMemoryUPSCreator := func() decision.UserProfileService {
+		return &InMemoryUserProfileService{
+			Profiles: make(map[string]decision.UserProfile),
+		}
+	}
+	userprofileservice.Add("in-memory", inMemoryUPSCreator)
 }

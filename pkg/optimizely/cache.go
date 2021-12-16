@@ -27,7 +27,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/plugins/userprofileservice"
-	"github.com/optimizely/agent/plugins/userprofileservice/memory"
+	"github.com/optimizely/agent/plugins/userprofileservice/services"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -196,22 +196,19 @@ func defaultLoader(
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 
-		inMemoryUPSCreator := func() decision.UserProfileService {
-			return memory.NewInMemoryUserProfileService()
-		}
-		// Adding in-memory UserProfileService by default, can be overridden if user changes the default value in config
-		userprofileservice.AddUserProfileService(sdkKey, "in-memory", inMemoryUPSCreator)
-
 		clientOptions := []client.OptionFunc{
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
 		}
-		// Only use the provided user profile service if conversion was successful
+
 		var finalUserProfileService decision.UserProfileService
-		if configUserProfileService := getFinalUserProfileServiceFromConfig(conf, sdkKey); configUserProfileService != nil {
-			clientOptions = append(clientOptions, client.WithUserProfileService(configUserProfileService))
-			finalUserProfileService = configUserProfileService
+		if finalUserProfileService = getFinalUserProfileServiceFromConfig(conf); finalUserProfileService != nil {
+			// Check if redis is being used, if yes, configure its client with user configuration
+			if redisUPS, ok := finalUserProfileService.(*services.RedisUserProfileService); ok {
+				redisUPS.ConfigureClient()
+			}
+			clientOptions = append(clientOptions, client.WithUserProfileService(finalUserProfileService))
 		}
 
 		optimizelyClient, err := optimizelyFactory.Client(
@@ -221,16 +218,13 @@ func defaultLoader(
 	}
 }
 
-func getFinalUserProfileServiceFromConfig(conf config.ClientConfig, sdkKey string) decision.UserProfileService {
+func getFinalUserProfileServiceFromConfig(conf config.ClientConfig) decision.UserProfileService {
 	// Check if any default user profile service was provided and if it exists in client config
 	if defaultUserProfileServiceName, ok := conf.UserProfileServices["default"].(string); ok && defaultUserProfileServiceName != "" {
-		if defaultUserProfileServiceName == "in-memory" {
-			return userprofileservice.GetUserProfileService(sdkKey, defaultUserProfileServiceName)()
-		}
 		if userProfileServicesMap, ok := conf.UserProfileServices["services"].(map[string]interface{}); ok {
 			if defaultUserProfileServiceMap, ok := userProfileServicesMap[defaultUserProfileServiceName].(map[string]interface{}); ok {
-				// Check if any such user profile service was added using `AddUserProfileService` method
-				if upsInstance := userprofileservice.GetUserProfileService(sdkKey, defaultUserProfileServiceName)(); upsInstance != nil {
+				// Check if any such user profile service was added using `Add` method
+				if upsInstance := userprofileservice.Creators[defaultUserProfileServiceName](); upsInstance != nil {
 					success := true
 					// Trying to map userProfileService from client config to struct
 					if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {

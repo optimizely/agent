@@ -32,7 +32,7 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
-	"github.com/optimizely/agent/plugins/userprofileservice/memory"
+	userprofileservices "github.com/optimizely/agent/plugins/userprofileservice/services"
 )
 
 type LookupTestSuite struct {
@@ -52,7 +52,9 @@ func (suite *LookupTestSuite) ClientCtx(next http.Handler) http.Handler {
 
 func (suite *LookupTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
-	userProfileService := memory.NewInMemoryUserProfileService()
+	userProfileService := &userprofileservices.InMemoryUserProfileService{
+		Profiles: make(map[string]decision.UserProfile),
+	}
 	userProfileService.Save(decision.UserProfile{
 		ID: "testUser",
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{
