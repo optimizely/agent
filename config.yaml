@@ -135,14 +135,14 @@ client:
     sdkKeyRegex: "^\\w+(:\\w+)?$"
     ## configure optional User profile service
     userProfileServices:
-      default: "in-memory"
+      default: ""
       services:
-        in-memory: 
-          capacity: 0
-        redis: 
-          host: "localhost:6379"
-          password: ""
-          database: 0
+        # in-memory: 
+        #   capacity: 0
+        # redis: 
+        #   host: "localhost:6379"
+        #   password: ""
+        #   database: 0
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.
