@@ -14,7 +14,7 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package middleware //
+// Package interceptors //
 package interceptors
 
 import (

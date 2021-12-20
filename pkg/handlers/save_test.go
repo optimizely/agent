@@ -65,12 +65,12 @@ func (suite *SaveTestSuite) SetupTest() {
 	mux := chi.NewMux()
 	mux.With(suite.ClientCtx).Post("/save", Save)
 
-	ab := saveBody{
+	body := saveBody{
 		UPSResponseOut: UPSResponseOut{
 			UserID: "testUser",
 		},
 	}
-	payload, err := json.Marshal(ab)
+	payload, err := json.Marshal(body)
 	suite.NoError(err)
 
 	suite.body = payload
@@ -84,7 +84,7 @@ func (suite *SaveTestSuite) TestInvalidPayload() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.assertError(rec, `missing "userId" in request payload`, http.StatusBadRequest)
+	suite.assertError(rec, ErrEmptyUserID.Error(), http.StatusBadRequest)
 }
 
 func (suite *SaveTestSuite) TestNoUserProfileService() {
@@ -94,6 +94,47 @@ func (suite *SaveTestSuite) TestNoUserProfileService() {
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.assertError(rec, ErrNoUPS.Error(), http.StatusInternalServerError)
+}
+
+func (suite *SaveTestSuite) TestSaveEmptyUserID() {
+	body := saveBody{
+		UPSResponseOut: UPSResponseOut{
+			UserID: "",
+			ExperimentBucketMap: map[string]interface{}{
+				"1": map[string]interface{}{"variation_id": "2"},
+				"2": map[string]interface{}{"variation_id": "2"},
+				"3": map[string]interface{}{"variation_id": "3"},
+			},
+		},
+	}
+	payload, err := json.Marshal(body)
+	suite.NoError(err)
+
+	req := httptest.NewRequest("POST", "/save", bytes.NewBuffer(payload))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.assertError(rec, ErrEmptyUserID.Error(), http.StatusBadRequest)
+}
+
+func (suite *SaveTestSuite) TestSaveEmptyBucketMap() {
+	req := httptest.NewRequest("POST", "/save", bytes.NewBuffer(suite.body))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	body := saveBody{
+		UPSResponseOut: UPSResponseOut{
+			UserID: "testUser",
+		},
+	}
+
+	expected, success := convertToUserProfile(body)
+	suite.True(success)
+
+	actual := suite.oc.UserProfileService.Lookup("testUser")
+	suite.Equal(expected, actual)
 }
 
 func (suite *SaveTestSuite) TestSave() {

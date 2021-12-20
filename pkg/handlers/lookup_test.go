@@ -73,10 +73,10 @@ func (suite *LookupTestSuite) SetupTest() {
 	mux := chi.NewMux()
 	mux.With(suite.ClientCtx).Post("/lookup", Lookup)
 
-	ab := lookupBody{
+	body := lookupBody{
 		UserID: "testUser",
 	}
-	payload, err := json.Marshal(ab)
+	payload, err := json.Marshal(body)
 	suite.NoError(err)
 
 	suite.body = payload
@@ -90,7 +90,7 @@ func (suite *LookupTestSuite) TestInvalidPayload() {
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
-	suite.assertError(rec, `missing "userId" in request payload`, http.StatusBadRequest)
+	suite.assertError(rec, ErrEmptyUserID.Error(), http.StatusBadRequest)
 }
 
 func (suite *LookupTestSuite) TestNoUserProfileService() {
@@ -102,7 +102,32 @@ func (suite *LookupTestSuite) TestNoUserProfileService() {
 	suite.assertError(rec, ErrNoUPS.Error(), http.StatusInternalServerError)
 }
 
-func (suite *LookupTestSuite) TestLookup() {
+func (suite *LookupTestSuite) TestNoProfileForUser() {
+	body := lookupBody{
+		UserID: "testUser1",
+	}
+	payload, err := json.Marshal(body)
+	suite.NoError(err)
+
+	req := httptest.NewRequest("POST", "/lookup", bytes.NewBuffer(payload))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual map[string]interface{}
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := map[string]interface{}{
+		"userId":              "testUser1",
+		"experimentBucketMap": map[string]interface{}{},
+	}
+	suite.Equal(expected, actual)
+}
+
+func (suite *LookupTestSuite) TestLookupSavedProfile() {
 	// lookup already saved profiles
 	req := httptest.NewRequest("POST", "/lookup", bytes.NewBuffer(suite.body))
 	rec := httptest.NewRecorder()

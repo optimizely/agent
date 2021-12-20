@@ -18,21 +18,53 @@
 package userprofileservice
 
 import (
-	"fmt"
+	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/stretchr/testify/assert"
 )
 
-// Creator type defines a function for creating an instance of a UserProfileService
-type Creator func() decision.UserProfileService
+type mockUserProfileService struct {
+}
 
-// Creators stores the mapping of Creator against userProfileServiceName
-var Creators = map[string]Creator{}
+// Lookup is used to retrieve past bucketing decisions for users
+func (u *mockUserProfileService) Lookup(userID string) decision.UserProfile {
+	return decision.UserProfile{}
+}
 
-// Add registers a creator against userProfileServiceName
-func Add(userProfileServiceName string, creator Creator) {
-	if _, ok := Creators[userProfileServiceName]; ok {
-		panic(fmt.Sprintf("UserProfileService with name %q already exists", userProfileServiceName))
+// Save is used to save bucketing decisions for users
+func (u *mockUserProfileService) Save(profile decision.UserProfile) {
+}
+
+func TestAdd(t *testing.T) {
+	mockUPSCreator := func() decision.UserProfileService {
+		return &mockUserProfileService{}
 	}
-	Creators[userProfileServiceName] = creator
+
+	Add("mock", mockUPSCreator)
+	creator := Creators["mock"]()
+	if _, ok := creator.(*mockUserProfileService); !ok {
+		assert.Fail(t, "Cannot convert to type InMemoryUserProfileService")
+	}
+}
+
+func TestDuplicateKeys(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			assert.Fail(t, "Should have recovered")
+		}
+	}()
+
+	mockUPSCreator := func() decision.UserProfileService {
+		return &mockUserProfileService{}
+	}
+
+	Add("mock", mockUPSCreator)
+	Add("mock", mockUPSCreator)
+	assert.Fail(t, "Should have panicked")
+}
+
+func TestDoesNotExist(t *testing.T) {
+	dne := Creators["DNE"]
+	assert.Nil(t, dne)
 }

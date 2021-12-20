@@ -36,8 +36,6 @@ import (
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"
 
-	// To test the loading of the userprofileservice plugins
-	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
 	"github.com/optimizely/agent/plugins/userprofileservice/services"
 )
 
@@ -191,7 +189,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	s.Error(err)
 }
 
-func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedAutomatically() {
+func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedByDefault() {
 	s.NotNil(userprofileservice.Creators["in-memory"])
 	_, ok := (userprofileservice.Creators["in-memory"]()).(*services.InMemoryUserProfileService)
 	s.True(ok)
@@ -201,15 +199,46 @@ func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedAutomatically() {
 	s.True(ok)
 }
 
+func (s *DefaultLoaderTestSuite) TestConfigureClientForRedisUPS() {
+	conf := config.ClientConfig{
+		UserProfileServices: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "100",
+				"password": "10",
+				"database": 1,
+			},
+		}},
+	}
+	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+
+	s.NotNil(client.UserProfileService)
+	if testRedisUPS, ok := client.UserProfileService.(*services.RedisUserProfileService); ok {
+		s.Equal("100", testRedisUPS.Address)
+		s.Equal("10", testRedisUPS.Password)
+		s.Equal(1, testRedisUPS.Database)
+
+		// Check if redis client was instantiated with updated config
+		s.NotNil(testRedisUPS.Client)
+		s.Equal(testRedisUPS.Address, testRedisUPS.Client.Options().Addr)
+		s.Equal(testRedisUPS.Password, testRedisUPS.Client.Options().Password)
+		s.Equal(testRedisUPS.Database, testRedisUPS.Client.Options().DB)
+
+		return
+	}
+	s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
+}
+
 func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
 	}
-	userprofileservice.Add("mock", upCreator)
+	userprofileservice.Add("mock2", upCreator)
 
 	conf := config.ClientConfig{
-		UserProfileServices: map[string]interface{}{"default": "mock", "services": map[string]interface{}{
-			"mock": map[string]interface{}{
+		UserProfileServices: map[string]interface{}{"default": "mock2", "services": map[string]interface{}{
+			"mock2": map[string]interface{}{
 				"path": "http://test.com",
 				"addr": "1.2.1.2-abc",
 				"port": 8080,
@@ -250,11 +279,11 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
 	}
-	userprofileservice.Add("mock", upCreator)
+	userprofileservice.Add("mock3", upCreator)
 
 	conf := config.ClientConfig{
 		UserProfileServices: map[string]interface{}{"default": "", "services": map[string]interface{}{
-			"mock": map[string]interface{}{},
+			"mock3": map[string]interface{}{},
 		}},
 	}
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)

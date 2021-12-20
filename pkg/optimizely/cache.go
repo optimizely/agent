@@ -202,23 +202,23 @@ func defaultLoader(
 			client.WithEventProcessor(ep),
 		}
 
-		var finalUserProfileService decision.UserProfileService
-		if finalUserProfileService = getFinalUserProfileServiceFromConfig(conf); finalUserProfileService != nil {
+		var clientUserProfileService decision.UserProfileService
+		if clientUserProfileService = getUserProfileService(conf); clientUserProfileService != nil {
 			// Check if redis is being used, if yes, configure its client with user configuration
-			if redisUPS, ok := finalUserProfileService.(*services.RedisUserProfileService); ok {
+			if redisUPS, ok := clientUserProfileService.(*services.RedisUserProfileService); ok {
 				redisUPS.ConfigureClient()
 			}
-			clientOptions = append(clientOptions, client.WithUserProfileService(finalUserProfileService))
+			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
 		}
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,
 		)
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations, finalUserProfileService}, err
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService}, err
 	}
 }
 
-func getFinalUserProfileServiceFromConfig(conf config.ClientConfig) decision.UserProfileService {
+func getUserProfileService(conf config.ClientConfig) decision.UserProfileService {
 	// Check if any default user profile service was provided and if it exists in client config
 	if defaultUserProfileServiceName, ok := conf.UserProfileServices["default"].(string); ok && defaultUserProfileServiceName != "" {
 		if userProfileServicesMap, ok := conf.UserProfileServices["services"].(map[string]interface{}); ok {
