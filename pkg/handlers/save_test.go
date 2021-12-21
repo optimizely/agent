@@ -53,7 +53,7 @@ func (suite *SaveTestSuite) ClientCtx(next http.Handler) http.Handler {
 func (suite *SaveTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	userProfileService := &userprofileservices.InMemoryUserProfileService{
-		Profiles: make(map[string]decision.UserProfile),
+		ProfilesMap: make(map[string]decision.UserProfile),
 	}
 	optlyClient := &optimizely.OptlyClient{
 		OptimizelyClient:   testClient.OptimizelyClient,

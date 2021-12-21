@@ -53,7 +53,7 @@ func (suite *LookupTestSuite) ClientCtx(next http.Handler) http.Handler {
 func (suite *LookupTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	userProfileService := &userprofileservices.InMemoryUserProfileService{
-		Profiles: make(map[string]decision.UserProfile),
+		ProfilesMap: make(map[string]decision.UserProfile),
 	}
 	userProfileService.Save(decision.UserProfile{
 		ID: "testUser",
