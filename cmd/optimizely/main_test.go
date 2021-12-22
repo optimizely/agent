@@ -68,6 +68,7 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 		userProfileServices := map[string]interface{}{
 			"in-memory": map[string]interface{}{
 				"capacity": 0,
+				"order":    "fifo",
 			},
 			"redis": map[string]interface{}{
 				"host":     "localhost:6379",
@@ -196,6 +197,7 @@ func TestViperProps(t *testing.T) {
 	services := map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			"capacity": 0,
+			"order":    "fifo",
 		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",

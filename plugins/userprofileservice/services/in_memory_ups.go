@@ -26,22 +26,26 @@ import (
 
 // InMemoryUserProfileService represents the in-memory implementation of UserProfileService interface
 type InMemoryUserProfileService struct {
-	Capacity        int `json:"capacity"`
-	orderedProfiles chan decision.UserProfile
-	isReady         bool
-	ProfilesMap     map[string]decision.UserProfile
-	lock            sync.RWMutex
+	Capacity int `json:"capacity"`
+	// Order defines the priority order. Supported values include fifo and lifo.
+	Order               string `json:"order"`
+	ProfilesMap         map[string]decision.UserProfile
+	fifoOrderedProfiles chan string
+	lifoOrderedProfiles []string
+	lock                sync.RWMutex
+	isReady             bool
 }
 
 // Lookup is used to retrieve past bucketing decisions for users
-func (u *InMemoryUserProfileService) Lookup(userID string) decision.UserProfile {
-	var profile decision.UserProfile
+func (u *InMemoryUserProfileService) Lookup(userID string) (profile decision.UserProfile) {
+	u.lock.RLock()
+	defer u.lock.RUnlock()
+
 	// Check if UPS is ready
 	if !u.isReady {
 		return profile
 	}
-	u.lock.RLock()
-	defer u.lock.RUnlock()
+
 	if userProfile, ok := u.ProfilesMap[userID]; ok {
 		profile = userProfile
 	}
@@ -60,7 +64,13 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 	if !u.isReady {
 		// Initialize with capacity only if required
 		if u.Capacity > 0 {
-			u.orderedProfiles = make(chan decision.UserProfile, u.Capacity)
+			switch u.Order {
+			case "lifo":
+				u.lifoOrderedProfiles = []string{}
+			default:
+				// fifo by default
+				u.fifoOrderedProfiles = make(chan string, u.Capacity)
+			}
 			u.ProfilesMap = make(map[string]decision.UserProfile, u.Capacity)
 		} else {
 			u.ProfilesMap = map[string]decision.UserProfile{}
@@ -70,20 +80,33 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 
 	// check if profile does not exist already
 	if _, ok := u.ProfilesMap[profile.ID]; !ok {
-		// Check if capacity has reached, if so, pop the oldest entry
-		if u.Capacity > 0 && len(u.ProfilesMap) == u.Capacity {
-			select {
-			// pop entry from ordered list
-			case p := <-u.orderedProfiles:
-				// remove entry from map aswell
-				delete(u.ProfilesMap, p.ID)
-			default:
-			}
-		}
-		// Only push to channel if needed
 		if u.Capacity > 0 {
-			// push new entry to ordered list
-			u.orderedProfiles <- profile
+			// Check if capacity has reached, if so, pop the entry from ordered list and map
+			if len(u.ProfilesMap) == u.Capacity {
+				var oldProfile string
+				// pop entry from ordered list
+				switch u.Order {
+				case "lifo":
+					n := len(u.lifoOrderedProfiles) - 1
+					oldProfile = u.lifoOrderedProfiles[n]
+					u.lifoOrderedProfiles[n] = "" // Erase element (write zero value)
+					u.lifoOrderedProfiles = u.lifoOrderedProfiles[:n]
+				default:
+					// fifo by default
+					oldProfile = <-u.fifoOrderedProfiles
+				}
+				// remove entry from map
+				delete(u.ProfilesMap, oldProfile)
+			}
+
+			// Push new entry to ordered list
+			switch u.Order {
+			case "lifo":
+				u.lifoOrderedProfiles = append(u.lifoOrderedProfiles, profile.ID)
+			default:
+				// fifo by default
+				u.fifoOrderedProfiles <- profile.ID
+			}
 		}
 	}
 	// Save new profile to map
@@ -92,10 +115,7 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 
 func init() {
 	inMemoryUPSCreator := func() decision.UserProfileService {
-		return &InMemoryUserProfileService{
-			ProfilesMap:     make(map[string]decision.UserProfile),
-			orderedProfiles: make(chan decision.UserProfile),
-		}
+		return &InMemoryUserProfileService{}
 	}
 	userprofileservice.Add("in-memory", inMemoryUPSCreator)
 }

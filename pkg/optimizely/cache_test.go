@@ -171,6 +171,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		UserProfileServices: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 			"in-memory": map[string]interface{}{
 				"capacity": 0,
+				"order":    "fifo",
 			}},
 		},
 	}

@@ -33,8 +33,7 @@ type InMemoryUPSTestSuite struct {
 
 func (im *InMemoryUPSTestSuite) SetupTest() {
 	im.ups = InMemoryUserProfileService{
-		Capacity:    10,
-		ProfilesMap: make(map[string]decision.UserProfile),
+		Capacity: 10,
 	}
 }
 
@@ -129,7 +128,7 @@ func (im *InMemoryUPSTestSuite) TestSaveEmptyProfile() {
 	im.Equal(profile, actual)
 }
 
-func (im *InMemoryUPSTestSuite) TestCapacity() {
+func (im *InMemoryUPSTestSuite) TestCapacityFifoOrEmpty() {
 	// Save 10 Profiles as capacity is given as 10
 	i := 1
 	for i <= 10 {
@@ -190,10 +189,73 @@ func (im *InMemoryUPSTestSuite) TestCapacity() {
 	im.Equal(10, len(im.ups.ProfilesMap))
 }
 
-func (im *InMemoryUPSTestSuite) TestZeroCapacity() {
+func (im *InMemoryUPSTestSuite) TestCapacityLifoOrEmpty() {
 	im.ups = InMemoryUserProfileService{
-		Capacity:    0,
-		ProfilesMap: make(map[string]decision.UserProfile),
+		Order:    "lifo",
+		Capacity: 10,
+	}
+	// Save 10 Profiles as capacity is given as 10
+	i := 1
+	for i <= 10 {
+		strValue := strconv.Itoa(i)
+		profile := decision.UserProfile{
+			ID: strValue,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		im.ups.Save(profile)
+		i++
+	}
+
+	// Check all 10 Profiles were saved
+	i = 1
+	for i <= 10 {
+		strValue := strconv.Itoa(i)
+		expected := decision.UserProfile{
+			ID: strValue,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		actual := im.ups.Lookup(strValue)
+		im.Equal(expected, actual)
+		i++
+	}
+
+	// Save 3 more Profiles than the capacity
+	i = 11
+	for i <= 13 {
+		strValue := strconv.Itoa(i)
+		profile := decision.UserProfile{
+			ID: strValue,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		im.ups.Save(profile)
+		i++
+	}
+
+	// Check latest entry was always overwritten by the newer entry
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 13}
+	for _, v := range values {
+		strValue := strconv.Itoa(v)
+		expected := decision.UserProfile{
+			ID: strValue,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		actual := im.ups.Lookup(strValue)
+		im.Equal(expected, actual)
+	}
+	im.Equal(10, len(im.ups.ProfilesMap))
+}
+
+func (im *InMemoryUPSTestSuite) TestZeroCapacityFifoOrEmpty() {
+	im.ups = InMemoryUserProfileService{
+		Capacity: 0,
 	}
 	// Save 200 Profiles as capacity is given as 10
 	i := 1
@@ -224,7 +286,44 @@ func (im *InMemoryUPSTestSuite) TestZeroCapacity() {
 		im.Equal(expected, actual)
 	}
 	im.Equal(200, len(im.ups.ProfilesMap))
-	im.Nil(im.ups.orderedProfiles)
+	im.Nil(im.ups.fifoOrderedProfiles)
+}
+
+func (im *InMemoryUPSTestSuite) TestZeroCapacityLifo() {
+	im.ups = InMemoryUserProfileService{
+		Order:    "lifo",
+		Capacity: 0,
+	}
+	// Save 200 Profiles as capacity is given as 10
+	i := 1
+	for i <= 200 {
+		i++
+		strValue := strconv.Itoa(i)
+		profile := decision.UserProfile{
+			ID: strValue,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		im.ups.Save(profile)
+	}
+
+	// Check all 200 Profiles were saved
+	i = 1
+	for i <= 200 {
+		i++
+		strValue := strconv.Itoa(i)
+		expected := decision.UserProfile{
+			ID: strValue,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		actual := im.ups.Lookup(strValue)
+		im.Equal(expected, actual)
+	}
+	im.Equal(200, len(im.ups.ProfilesMap))
+	im.Nil(im.ups.fifoOrderedProfiles)
 }
 
 func TestInMemoryUPSTestSuite(t *testing.T) {

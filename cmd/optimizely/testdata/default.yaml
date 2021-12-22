@@ -36,6 +36,7 @@ client:
     services:
       in-memory: 
         capacity: 0
+        order: "fifo"
       redis: 
         host: "localhost:6379"
         password: ""
