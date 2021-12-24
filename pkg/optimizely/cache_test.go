@@ -200,7 +200,7 @@ func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedByDefault() {
 	s.True(ok)
 }
 
-func (s *DefaultLoaderTestSuite) TestConfigureClientForRedisUPS() {
+func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 	conf := config.ClientConfig{
 		UserProfileServices: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
 			"redis": map[string]interface{}{
@@ -213,8 +213,17 @@ func (s *DefaultLoaderTestSuite) TestConfigureClientForRedisUPS() {
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
-
 	s.NotNil(client.UserProfileService)
+
+	profile := decision.UserProfile{
+		ID: "1",
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{
+			decision.NewUserDecisionKey("1"): "1",
+		},
+	}
+	// Should initialize redis client on first save call
+	client.UserProfileService.Save(profile)
+
 	if testRedisUPS, ok := client.UserProfileService.(*services.RedisUserProfileService); ok {
 		s.Equal("100", testRedisUPS.Address)
 		s.Equal("10", testRedisUPS.Password)

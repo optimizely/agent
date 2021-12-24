@@ -27,7 +27,6 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/plugins/userprofileservice"
-	"github.com/optimizely/agent/plugins/userprofileservice/services"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -204,10 +203,6 @@ func defaultLoader(
 
 		var clientUserProfileService decision.UserProfileService
 		if clientUserProfileService = getUserProfileService(conf); clientUserProfileService != nil {
-			// Check if redis is being used, if yes, configure its client with user configuration
-			if redisUPS, ok := clientUserProfileService.(*services.RedisUserProfileService); ok {
-				redisUPS.ConfigureClient()
-			}
 			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
 		}
 

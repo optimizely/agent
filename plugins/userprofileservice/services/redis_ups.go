@@ -39,15 +39,6 @@ type RedisUserProfileService struct {
 	Database   int    `json:"database"`
 }
 
-// ConfigureClient configures client with provided configuration before assigning it to optimizely client
-func (u *RedisUserProfileService) ConfigureClient() {
-	u.Client = redis.NewClient(&redis.Options{
-		Addr:     u.Address,
-		Password: u.Password,
-		DB:       u.Database,
-	})
-}
-
 // Lookup is used to retrieve past bucketing decisions for users
 func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserProfile) {
 	profile = decision.UserProfile{
@@ -91,7 +82,16 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 
 // Save is used to save bucketing decisions for users
 func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
-	if u.Client == nil || profile.ID == "" {
+
+	if u.Client == nil {
+		u.Client = redis.NewClient(&redis.Options{
+			Addr:     u.Address,
+			Password: u.Password,
+			DB:       u.Database,
+		})
+	}
+
+	if profile.ID == "" {
 		return
 	}
 

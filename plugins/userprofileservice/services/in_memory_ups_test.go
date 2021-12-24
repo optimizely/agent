@@ -32,12 +32,13 @@ type InMemoryUPSTestSuite struct {
 }
 
 func (im *InMemoryUPSTestSuite) SetupTest() {
+	// To check if lifo is used by default
 	im.ups = InMemoryUserProfileService{
 		Capacity: 10,
 	}
 }
 
-func (im *InMemoryUPSTestSuite) TestConcurrentSaveAndLookup() {
+func (im *InMemoryUPSTestSuite) TestConcurrentSaveAndLookupFifo() {
 	wg := sync.WaitGroup{}
 	saveProfile := func(counter string) {
 		profile := decision.UserProfile{
@@ -63,29 +64,79 @@ func (im *InMemoryUPSTestSuite) TestConcurrentSaveAndLookup() {
 	}
 
 	// Save concurrently
-	wg.Add(9)
+	wg.Add(10)
 	i := 1
-	for i < 10 {
+	for i <= 10 {
 		i++
 		go saveProfile(strconv.Itoa(i))
 	}
 	wg.Wait()
 
 	// Lookup and save concurrently
-	wg.Add(18)
+	wg.Add(20)
 	i = 1
-	for i < 10 {
+	for i <= 10 {
 		i++
 		go saveProfile(strconv.Itoa(i))
 		go lookUp(strconv.Itoa(i))
 	}
 	wg.Wait()
+	im.Equal(im.ups.Capacity, len(im.ups.ProfilesMap))
 }
 
-func (im *InMemoryUPSTestSuite) TestOverride() {
+func (im *InMemoryUPSTestSuite) TestConcurrentSaveAndLookupLifo() {
+	im.ups = InMemoryUserProfileService{
+		Order:    "lifo",
+		Capacity: 10,
+	}
+	wg := sync.WaitGroup{}
+	saveProfile := func(counter string) {
+		profile := decision.UserProfile{
+			ID: counter,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(counter): counter,
+			},
+		}
+		im.ups.Save(profile)
+		wg.Done()
+	}
+
+	lookUp := func(counter string) {
+		expected := decision.UserProfile{
+			ID: counter,
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(counter): counter,
+			},
+		}
+		actual := im.ups.Lookup(counter)
+		im.Equal(expected, actual)
+		wg.Done()
+	}
+
+	// Save concurrently
+	wg.Add(10)
+	i := 1
+	for i <= 10 {
+		i++
+		go saveProfile(strconv.Itoa(i))
+	}
+	wg.Wait()
+
+	// Lookup and save concurrently
+	wg.Add(20)
+	i = 1
+	for i <= 10 {
+		i++
+		go saveProfile(strconv.Itoa(i))
+		go lookUp(strconv.Itoa(i))
+	}
+	wg.Wait()
+	im.Equal(im.ups.Capacity, len(im.ups.ProfilesMap))
+}
+
+func (im *InMemoryUPSTestSuite) TestOverrideFifo() {
 	i := 1
 	for i < 3 {
-		i++
 		strValue := strconv.Itoa(i)
 		profile := decision.UserProfile{
 			ID: "1",
@@ -94,9 +145,10 @@ func (im *InMemoryUPSTestSuite) TestOverride() {
 			},
 		}
 		im.ups.Save(profile)
+		i++
 	}
 
-	strValue := strconv.Itoa(3)
+	strValue := strconv.Itoa(2)
 	expected := decision.UserProfile{
 		ID: "1",
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{
@@ -107,7 +159,61 @@ func (im *InMemoryUPSTestSuite) TestOverride() {
 	im.Equal(expected, actual)
 }
 
-func (im *InMemoryUPSTestSuite) TestSaveEmptyProfile() {
+func (im *InMemoryUPSTestSuite) TestOverrideLifo() {
+	im.ups = InMemoryUserProfileService{
+		Order:    "lifo",
+		Capacity: 10,
+	}
+	i := 1
+	for i < 3 {
+		strValue := strconv.Itoa(i)
+		profile := decision.UserProfile{
+			ID: "1",
+			ExperimentBucketMap: map[decision.UserDecisionKey]string{
+				decision.NewUserDecisionKey(strValue): strValue,
+			},
+		}
+		im.ups.Save(profile)
+		i++
+	}
+
+	strValue := strconv.Itoa(2)
+	expected := decision.UserProfile{
+		ID: "1",
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{
+			decision.NewUserDecisionKey(strValue): strValue,
+		},
+	}
+	actual := im.ups.Lookup("1")
+	im.Equal(expected, actual)
+}
+
+func (im *InMemoryUPSTestSuite) TestSaveEmptyProfileFifo() {
+	strValue := strconv.Itoa(1)
+	profile := decision.UserProfile{
+		ID: strValue,
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{
+			decision.NewUserDecisionKey(strValue): strValue,
+		},
+	}
+	im.ups.Save(profile)
+
+	// Save empty profile
+	profile = decision.UserProfile{
+		ID:                  strValue,
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
+	}
+	im.ups.Save(profile)
+
+	actual := im.ups.Lookup(strValue)
+	im.Equal(profile, actual)
+}
+
+func (im *InMemoryUPSTestSuite) TestSaveEmptyProfileLifo() {
+	im.ups = InMemoryUserProfileService{
+		Order:    "lifo",
+		Capacity: 10,
+	}
 	strValue := strconv.Itoa(1)
 	profile := decision.UserProfile{
 		ID: strValue,
@@ -257,7 +363,7 @@ func (im *InMemoryUPSTestSuite) TestZeroCapacityFifoOrEmpty() {
 	im.ups = InMemoryUserProfileService{
 		Capacity: 0,
 	}
-	// Save 200 Profiles as capacity is given as 10
+	// Save 200 Profiles as capacity is given as 0
 	i := 1
 	for i <= 200 {
 		i++
@@ -294,7 +400,7 @@ func (im *InMemoryUPSTestSuite) TestZeroCapacityLifo() {
 		Order:    "lifo",
 		Capacity: 0,
 	}
-	// Save 200 Profiles as capacity is given as 10
+	// Save 200 Profiles as capacity is given as 0
 	i := 1
 	for i <= 200 {
 		i++
