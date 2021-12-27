@@ -134,12 +134,12 @@ client:
     ## https://github.com/google/re2/wiki/Syntax
     sdkKeyRegex: "^\\w+(:\\w+)?$"
     ## configure optional User profile service
-    userProfileServices:
+    userProfileService:
       default: ""
       services:
         # in-memory: 
         #   capacity: 0
-        #   order: "fifo"
+        #   storageStrategy: "fifo"
         # redis: 
         #   host: "localhost:6379"
         #   password: ""

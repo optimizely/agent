@@ -27,8 +27,8 @@ import (
 // InMemoryUserProfileService represents the in-memory implementation of UserProfileService interface
 type InMemoryUserProfileService struct {
 	Capacity int `json:"capacity"`
-	// Order defines the priority order. Supported values include fifo and lifo.
-	Order               string `json:"order"`
+	// StorageStrategy defines the storage strategy. Supported values include fifo and lifo.
+	StorageStrategy     string `json:"storageStrategy"`
 	ProfilesMap         map[string]decision.UserProfile
 	fifoOrderedProfiles chan string
 	lifoOrderedProfiles []string
@@ -64,7 +64,7 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 	if !u.isReady {
 		// Initialize with capacity only if required
 		if u.Capacity > 0 {
-			switch u.Order {
+			switch u.StorageStrategy {
 			case "lifo":
 				u.lifoOrderedProfiles = []string{}
 			default:
@@ -85,7 +85,7 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 			if len(u.ProfilesMap) == u.Capacity {
 				var oldProfile string
 				// pop entry from ordered list
-				switch u.Order {
+				switch u.StorageStrategy {
 				case "lifo":
 					n := len(u.lifoOrderedProfiles) - 1
 					oldProfile = u.lifoOrderedProfiles[n]
@@ -100,7 +100,7 @@ func (u *InMemoryUserProfileService) Save(profile decision.UserProfile) {
 			}
 
 			// Push new entry to ordered list
-			switch u.Order {
+			switch u.StorageStrategy {
 			case "lifo":
 				u.lifoOrderedProfiles = append(u.lifoOrderedProfiles, profile.ID)
 			default:

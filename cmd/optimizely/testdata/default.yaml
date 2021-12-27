@@ -31,12 +31,12 @@ client:
   datafileURLTemplate: "https://localhost/v1/%s.json"
   eventURL: "https://logx.localhost.com/v1"
   sdkKeyRegex: "custom-regex"
-  userProfileServices:
+  userProfileService:
     default: "in-memory"
     services:
       in-memory: 
         capacity: 0
-        order: "fifo"
+        storageStrategy: "fifo"
       redis: 
         host: "localhost:6379"
         password: ""

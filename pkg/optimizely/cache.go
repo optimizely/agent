@@ -215,8 +215,8 @@ func defaultLoader(
 
 func getUserProfileService(conf config.ClientConfig) decision.UserProfileService {
 	// Check if any default user profile service was provided and if it exists in client config
-	if defaultUserProfileServiceName, ok := conf.UserProfileServices["default"].(string); ok && defaultUserProfileServiceName != "" {
-		if userProfileServicesMap, ok := conf.UserProfileServices["services"].(map[string]interface{}); ok {
+	if defaultUserProfileServiceName, ok := conf.UserProfileService["default"].(string); ok && defaultUserProfileServiceName != "" {
+		if userProfileServicesMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
 			if defaultUserProfileServiceMap, ok := userProfileServicesMap[defaultUserProfileServiceName].(map[string]interface{}); ok {
 				// Check if any such user profile service was added using `Add` method
 				if upsInstance := userprofileservice.Creators[defaultUserProfileServiceName](); upsInstance != nil {

@@ -55,7 +55,7 @@ func assertServer(t *testing.T, actual config.ServerConfig, assertPlugins bool) 
 	}
 }
 
-func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileServices bool) {
+func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileService bool) {
 	assert.Equal(t, 10*time.Second, actual.PollingInterval)
 	assert.Equal(t, 1, actual.BatchSize)
 	assert.Equal(t, 10, actual.QueueSize)
@@ -63,12 +63,13 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
-	if assertUserProfileServices {
-		assert.Equal(t, "in-memory", actual.UserProfileServices["default"])
+	if assertUserProfileService {
+		assert.Equal(t, "in-memory", actual.UserProfileService["default"])
 		userProfileServices := map[string]interface{}{
 			"in-memory": map[string]interface{}{
 				"capacity": 0,
-				"order":    "fifo",
+				// Viper.set is case in-sensitive
+				"storagestrategy": "fifo",
 			},
 			"redis": map[string]interface{}{
 				"host":     "localhost:6379",
@@ -79,7 +80,7 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 				"path": "http://test2.com",
 			},
 		}
-		assert.Equal(t, userProfileServices, actual.UserProfileServices["services"])
+		assert.Equal(t, userProfileServices, actual.UserProfileService["services"])
 	}
 }
 
@@ -196,8 +197,8 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.sdkKeyRegex", "custom-regex")
 	services := map[string]interface{}{
 		"in-memory": map[string]interface{}{
-			"capacity": 0,
-			"order":    "fifo",
+			"capacity":        0,
+			"storageStrategy": "fifo",
 		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
@@ -212,7 +213,7 @@ func TestViperProps(t *testing.T) {
 		"default":  "in-memory",
 		"services": services,
 	}
-	v.Set("client.userProfileServices", userProfileServices)
+	v.Set("client.userProfileService", userProfileServices)
 
 	v.Set("log.pretty", true)
 	v.Set("log.level", "debug")

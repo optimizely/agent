@@ -78,7 +78,7 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
 			SdkKeyRegex: "^\\w+(:\\w+)?$",
-			UserProfileServices: UserProfileServiceConfigs{
+			UserProfileService: UserProfileServiceConfigs{
 				"default":  "",
 				"services": map[string]interface{}{},
 			},
@@ -161,7 +161,7 @@ type ClientConfig struct {
 	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
 	EventURL            string                    `json:"eventURL"`
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
-	UserProfileServices UserProfileServiceConfigs `json:"userProfileServices"`
+	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
 }
 
 // LogConfig holds the log configuration

@@ -86,8 +86,8 @@ func (im *InMemoryUPSTestSuite) TestConcurrentSaveAndLookupFifo() {
 
 func (im *InMemoryUPSTestSuite) TestConcurrentSaveAndLookupLifo() {
 	im.ups = InMemoryUserProfileService{
-		Order:    "lifo",
-		Capacity: 10,
+		StorageStrategy: "lifo",
+		Capacity:        10,
 	}
 	wg := sync.WaitGroup{}
 	saveProfile := func(counter string) {
@@ -161,8 +161,8 @@ func (im *InMemoryUPSTestSuite) TestOverrideFifo() {
 
 func (im *InMemoryUPSTestSuite) TestOverrideLifo() {
 	im.ups = InMemoryUserProfileService{
-		Order:    "lifo",
-		Capacity: 10,
+		StorageStrategy: "lifo",
+		Capacity:        10,
 	}
 	i := 1
 	for i < 3 {
@@ -211,8 +211,8 @@ func (im *InMemoryUPSTestSuite) TestSaveEmptyProfileFifo() {
 
 func (im *InMemoryUPSTestSuite) TestSaveEmptyProfileLifo() {
 	im.ups = InMemoryUserProfileService{
-		Order:    "lifo",
-		Capacity: 10,
+		StorageStrategy: "lifo",
+		Capacity:        10,
 	}
 	strValue := strconv.Itoa(1)
 	profile := decision.UserProfile{
@@ -297,8 +297,8 @@ func (im *InMemoryUPSTestSuite) TestCapacityFifoOrEmpty() {
 
 func (im *InMemoryUPSTestSuite) TestCapacityLifoOrEmpty() {
 	im.ups = InMemoryUserProfileService{
-		Order:    "lifo",
-		Capacity: 10,
+		StorageStrategy: "lifo",
+		Capacity:        10,
 	}
 	// Save 10 Profiles as capacity is given as 10
 	i := 1
@@ -397,8 +397,8 @@ func (im *InMemoryUPSTestSuite) TestZeroCapacityFifoOrEmpty() {
 
 func (im *InMemoryUPSTestSuite) TestZeroCapacityLifo() {
 	im.ups = InMemoryUserProfileService{
-		Order:    "lifo",
-		Capacity: 0,
+		StorageStrategy: "lifo",
+		Capacity:        0,
 	}
 	// Save 200 Profiles as capacity is given as 0
 	i := 1

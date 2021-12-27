@@ -168,10 +168,10 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		QueueSize:     5678,
 		EventURL:      "https://localhost/events",
 		SdkKeyRegex:   "sdkkey",
-		UserProfileServices: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+		UserProfileService: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 			"in-memory": map[string]interface{}{
-				"capacity": 0,
-				"order":    "fifo",
+				"capacity":        0,
+				"storageStrategy": "fifo",
 			}},
 		},
 	}
@@ -185,6 +185,11 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	s.Equal(conf.QueueSize, s.bp.MaxQueueSize)
 	s.Equal(conf.EventURL, s.bp.EventEndPoint)
 	s.NotNil(client.UserProfileService)
+
+	inMemoryUps, ok := client.UserProfileService.(*services.InMemoryUserProfileService)
+	s.True(ok)
+	s.Equal(0, inMemoryUps.Capacity)
+	s.Equal("fifo", inMemoryUps.StorageStrategy)
 
 	_, err = loader("invalid!")
 	s.Error(err)
@@ -202,7 +207,7 @@ func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedByDefault() {
 
 func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 	conf := config.ClientConfig{
-		UserProfileServices: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
+		UserProfileService: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
 			"redis": map[string]interface{}{
 				"host":     "100",
 				"password": "10",
@@ -247,7 +252,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 	userprofileservice.Add("mock2", upCreator)
 
 	conf := config.ClientConfig{
-		UserProfileServices: map[string]interface{}{"default": "mock2", "services": map[string]interface{}{
+		UserProfileService: map[string]interface{}{"default": "mock2", "services": map[string]interface{}{
 			"mock2": map[string]interface{}{
 				"path": "http://test.com",
 				"addr": "1.2.1.2-abc",
@@ -276,7 +281,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	userprofileservice.Add("mock", upCreator)
 
 	conf := config.ClientConfig{
-		UserProfileServices: map[string]interface{}{},
+		UserProfileService: map[string]interface{}{},
 	}
 	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
@@ -292,7 +297,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 	userprofileservice.Add("mock3", upCreator)
 
 	conf := config.ClientConfig{
-		UserProfileServices: map[string]interface{}{"default": "", "services": map[string]interface{}{
+		UserProfileService: map[string]interface{}{"default": "", "services": map[string]interface{}{
 			"mock3": map[string]interface{}{},
 		}},
 	}
