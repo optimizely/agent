@@ -39,10 +39,11 @@ import (
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader   func(string) (*OptlyClient, error)
-	optlyMap cmap.ConcurrentMap
-	ctx      context.Context
-	wg       sync.WaitGroup
+	loader                func(string) (*OptlyClient, error)
+	optlyMap              cmap.ConcurrentMap
+	userProfileServiceMap cmap.ConcurrentMap
+	ctx                   context.Context
+	wg                    sync.WaitGroup
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
@@ -53,11 +54,13 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 		return sdkconfig.NewPollingProjectConfigManager(sdkkey, options...)
 	}
 
+	userProfileServiceMap := cmap.New()
 	cache := &OptlyCache{
-		ctx:      ctx,
-		wg:       sync.WaitGroup{},
-		loader:   defaultLoader(conf, metricsRegistry, cmLoader, event.NewBatchEventProcessor),
-		optlyMap: cmap.New(),
+		ctx:                   ctx,
+		wg:                    sync.WaitGroup{},
+		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
+		optlyMap:              cmap.New(),
+		userProfileServiceMap: userProfileServiceMap,
 	}
 
 	return cache
@@ -116,6 +119,11 @@ func (c *OptlyCache) UpdateConfigs(sdkKey string) {
 	}
 }
 
+// SetUserProfileService sets maps userProfileService against the given sdkKey
+func (c *OptlyCache) SetUserProfileService(sdkKey, userProfileService string) {
+	c.userProfileServiceMap.SetIfAbsent(sdkKey, userProfileService)
+}
+
 // Wait for all optimizely clients to gracefully shutdown
 func (c *OptlyCache) Wait() {
 	c.wg.Wait()
@@ -136,6 +144,7 @@ func regexValidator(sdkKeyRegex string) func(string) bool {
 func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
+	userProfileServiceMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
 	validator := regexValidator(conf.SdkKeyRegex)
@@ -202,7 +211,7 @@ func defaultLoader(
 		}
 
 		var clientUserProfileService decision.UserProfileService
-		if clientUserProfileService = getUserProfileService(conf); clientUserProfileService != nil {
+		if clientUserProfileService = getUserProfileService(sdkKey, userProfileServiceMap, conf); clientUserProfileService != nil {
 			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
 		}
 
@@ -213,13 +222,13 @@ func defaultLoader(
 	}
 }
 
-func getUserProfileService(conf config.ClientConfig) decision.UserProfileService {
-	// Check if any default user profile service was provided and if it exists in client config
-	if defaultUserProfileServiceName, ok := conf.UserProfileService["default"].(string); ok && defaultUserProfileServiceName != "" {
-		if userProfileServicesMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
-			if defaultUserProfileServiceMap, ok := userProfileServicesMap[defaultUserProfileServiceName].(map[string]interface{}); ok {
+func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentMap, conf config.ClientConfig) decision.UserProfileService {
+
+	createAndReturnUPSWithName := func(upsName string) decision.UserProfileService {
+		if clientConfigUPSMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
+			if defaultUserProfileServiceMap, ok := clientConfigUPSMap[upsName].(map[string]interface{}); ok {
 				// Check if any such user profile service was added using `Add` method
-				if upsInstance := userprofileservice.Creators[defaultUserProfileServiceName](); upsInstance != nil {
+				if upsInstance := userprofileservice.Creators[upsName](); upsInstance != nil {
 					success := true
 					// Trying to map userProfileService from client config to struct
 					if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
@@ -235,6 +244,19 @@ func getUserProfileService(conf config.ClientConfig) decision.UserProfileService
 				}
 			}
 		}
+		return nil
+	}
+
+	// Check if ups type was provided in the request headers
+	if ups, ok := userProfileServiceMap.Get(sdkKey); ok {
+		if upsNameStr, ok := ups.(string); ok && upsNameStr != "" {
+			return createAndReturnUPSWithName(upsNameStr)
+		}
+	}
+
+	// Check if any default user profile service was provided and if it exists in client config
+	if upsNameStr, ok := conf.UserProfileService["default"].(string); ok && upsNameStr != "" {
+		return createAndReturnUPSWithName(upsNameStr)
 	}
 	return nil
 }

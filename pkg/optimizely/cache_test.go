@@ -51,9 +51,10 @@ func (suite *CacheTestSuite) SetupTest() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	suite.cache = &OptlyCache{
-		loader:   mockLoader,
-		optlyMap: cmap.New(),
-		ctx:      ctx,
+		loader:                mockLoader,
+		optlyMap:              cmap.New(),
+		userProfileServiceMap: cmap.New(),
+		ctx:                   ctx,
 	}
 
 	suite.cancel = cancel
@@ -102,6 +103,19 @@ func (suite *CacheTestSuite) TestUpdateConfigs() {
 	suite.cache.UpdateConfigs("one")
 }
 
+func (suite *CacheTestSuite) TestSetUserProfileService() {
+	suite.cache.SetUserProfileService("one", "a")
+
+	actual, ok := suite.cache.userProfileServiceMap.Get("one")
+	suite.True(ok)
+	suite.Equal("a", actual)
+
+	suite.cache.SetUserProfileService("one", "b")
+	actual, ok = suite.cache.userProfileServiceMap.Get("one")
+	suite.True(ok)
+	suite.Equal("a", actual)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCacheTestSuite(t *testing.T) {
@@ -141,6 +155,7 @@ type DefaultLoaderTestSuite struct {
 	suite.Suite
 	registry  *MetricsRegistry
 	bp        *event.BatchEventProcessor
+	upsMap    cmap.ConcurrentMap
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
 }
@@ -150,6 +165,7 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 	doOnce.Do(func() {
 		s.registry = &MetricsRegistry{metrics.NewRegistry()}
 	})
+	s.upsMap = cmap.New()
 	s.bpFactory = func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
 		s.bp = event.NewBatchEventProcessor(options...)
 		return s.bp
@@ -176,7 +192,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		},
 	}
 
-	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -193,6 +209,40 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 
 	_, err = loader("invalid!")
 	s.Error(err)
+}
+
+func (s *DefaultLoaderTestSuite) TestUPSHeaderOverridesDefaultKey() {
+	conf := config.ClientConfig{
+		FlushInterval: 321 * time.Second,
+		BatchSize:     1234,
+		QueueSize:     5678,
+		EventURL:      "https://localhost/events",
+		SdkKeyRegex:   "sdkkey",
+		UserProfileService: map[string]interface{}{"default": "", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"capacity":        100,
+				"storageStrategy": "fifo",
+			}},
+		},
+	}
+
+	tmpUPSMap := cmap.New()
+	tmpUPSMap.Set("sdkkey", "in-memory")
+
+	loader := defaultLoader(conf, s.registry, tmpUPSMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+
+	s.Equal(conf.FlushInterval, s.bp.FlushInterval)
+	s.Equal(conf.BatchSize, s.bp.BatchSize)
+	s.Equal(conf.QueueSize, s.bp.MaxQueueSize)
+	s.Equal(conf.EventURL, s.bp.EventEndPoint)
+	s.NotNil(client.UserProfileService)
+
+	inMemoryUps, ok := client.UserProfileService.(*services.InMemoryUserProfileService)
+	s.True(ok)
+	s.Equal(100, inMemoryUps.Capacity)
+	s.Equal("fifo", inMemoryUps.StorageStrategy)
 }
 
 func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedByDefault() {
@@ -215,7 +265,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 			},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -260,7 +310,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 			},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -283,7 +333,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{},
 	}
-	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -301,7 +351,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 			"mock3": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)

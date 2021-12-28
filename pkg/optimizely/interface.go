@@ -25,6 +25,7 @@ import (
 type Cache interface {
 	GetClient(sdkKey string) (*OptlyClient, error)
 	UpdateConfigs(sdkKey string)
+	SetUserProfileService(sdkKey, userProfileService string)
 }
 
 // SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates

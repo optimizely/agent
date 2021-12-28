@@ -55,8 +55,12 @@ func (tc *TestCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
 }
 
 // UpdateConfigs sets called boolean to true for testing
-func (m *TestCache) UpdateConfigs(_ string) {
-	m.updateConfigsCalled = true
+func (tc *TestCache) UpdateConfigs(_ string) {
+	tc.updateConfigsCalled = true
+}
+
+// SetUserProfileService sets maps userProfileService against the given sdkKey
+func (tc *TestCache) SetUserProfileService(sdkKey, userProfileService string) {
 }
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {

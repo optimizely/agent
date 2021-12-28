@@ -66,6 +66,9 @@ func (m MockCache) GetClient(_ string) (*optimizely.OptlyClient, error) {
 func (m MockCache) UpdateConfigs(_ string) {
 }
 
+func (m MockCache) SetUserProfileService(sdkKey, userProfileService string) {
+}
+
 var testHandler = func(val string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(methodHeaderKey, val)
