@@ -42,7 +42,7 @@ type RedisUserProfileService struct {
 // Lookup is used to retrieve past bucketing decisions for users
 func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserProfile) {
 	profile = decision.UserProfile{
-		ID:                  userID,
+		ID:                  "",
 		ExperimentBucketMap: make(map[decision.UserDecisionKey]string),
 	}
 
@@ -66,6 +66,7 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 	}
 
 	// Converting result to profile
+	profile.ID = userID
 	for experimentID, bucketMap := range experimentBucketMap {
 		decisionKey := decision.UserDecisionKey{
 			ExperimentID: experimentID,

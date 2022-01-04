@@ -228,18 +228,20 @@ func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentM
 		if clientConfigUPSMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
 			if defaultUserProfileServiceMap, ok := clientConfigUPSMap[upsName].(map[string]interface{}); ok {
 				// Check if any such user profile service was added using `Add` method
-				if upsInstance := userprofileservice.Creators[upsName](); upsInstance != nil {
-					success := true
-					// Trying to map userProfileService from client config to struct
-					if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
-						log.Warn().Err(err).Msg("Error marshaling default user profile service config")
-						success = false
-					} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
-						log.Warn().Err(err).Msg("Error unmarshalling user profile service config")
-						success = false
-					}
-					if success {
-						return upsInstance
+				if creator, ok := userprofileservice.Creators[upsName]; ok {
+					if upsInstance := creator(); upsInstance != nil {
+						success := true
+						// Trying to map userProfileService from client config to struct
+						if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
+							log.Warn().Err(err).Msg("Error marshaling default user profile service config")
+							success = false
+						} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
+							log.Warn().Err(err).Msg("Error unmarshalling user profile service config")
+							success = false
+						}
+						if success {
+							return upsInstance
+						}
 					}
 				}
 			}

@@ -79,12 +79,19 @@ func (suite *SaveTestSuite) SetupTest() {
 	suite.oc = optlyClient
 }
 
-func (suite *SaveTestSuite) TestInvalidPayload() {
+func (suite *SaveTestSuite) TestNilPayload() {
 	req := httptest.NewRequest("POST", "/save", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.assertError(rec, ErrEmptyUserID.Error(), http.StatusBadRequest)
+}
+
+func (suite *SaveTestSuite) TestInvalidPayload() {
+	req := httptest.NewRequest("POST", "/save", bytes.NewBuffer([]byte("ABC€")))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.assertError(rec, "error parsing request body", http.StatusBadRequest)
 }
 
 func (suite *SaveTestSuite) TestNoUserProfileService() {
@@ -130,9 +137,7 @@ func (suite *SaveTestSuite) TestSaveEmptyBucketMap() {
 		},
 	}
 
-	expected, success := convertToUserProfile(body)
-	suite.True(success)
-
+	expected := convertToUserProfile(body)
 	actual := suite.oc.UserProfileService.Lookup("testUser")
 	suite.Equal(expected, actual)
 }
@@ -159,8 +164,7 @@ func (suite *SaveTestSuite) TestSave() {
 
 	suite.Equal(http.StatusOK, rec.Code)
 
-	expected, success := convertToUserProfile(body)
-	suite.True(success)
+	expected := convertToUserProfile(body)
 	// Check if UPS was updated
 	actual := suite.oc.UserProfileService.Lookup("testUser")
 	suite.Equal(expected, actual)
@@ -183,9 +187,7 @@ func (suite *SaveTestSuite) TestSave() {
 
 	suite.Equal(http.StatusOK, rec.Code)
 
-	expected, success = convertToUserProfile(body)
-	suite.True(success)
-
+	expected = convertToUserProfile(body)
 	actual = suite.oc.UserProfileService.Lookup("testUser")
 	suite.Equal(expected, actual)
 }
@@ -216,8 +218,7 @@ func (suite *SaveTestSuite) TestSaveEmptyProfile() {
 
 	suite.Equal(http.StatusOK, rec.Code)
 
-	expected, success := convertToUserProfile(body)
-	suite.True(success)
+	expected := convertToUserProfile(body)
 	// Check if UPS was updated
 	actual := suite.oc.UserProfileService.Lookup("testUser")
 	suite.Equal(expected, actual)
@@ -229,4 +230,11 @@ func (suite *SaveTestSuite) assertError(rec *httptest.ResponseRecorder, msg stri
 
 func TestSaveTestSuite(t *testing.T) {
 	suite.Run(t, new(SaveTestSuite))
+}
+
+func TestSaveMissingOptlyCtx(t *testing.T) {
+	req := httptest.NewRequest("POST", "/", nil)
+	rec := httptest.NewRecorder()
+	http.HandlerFunc(Save).ServeHTTP(rec, req)
+	assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
 }

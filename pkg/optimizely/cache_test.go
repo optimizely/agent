@@ -103,6 +103,15 @@ func (suite *CacheTestSuite) TestUpdateConfigs() {
 	suite.cache.UpdateConfigs("one")
 }
 
+func (suite *CacheTestSuite) TestNewCache() {
+	agentMetricsRegistry := metrics.NewRegistry()
+	sdkMetricsRegistry := NewRegistry(agentMetricsRegistry)
+
+	// To improve coverage
+	optlyCache := NewCache(context.Background(), config.ClientConfig{}, sdkMetricsRegistry)
+	suite.NotNil(optlyCache)
+}
+
 func (suite *CacheTestSuite) TestSetUserProfileService() {
 	suite.cache.SetUserProfileService("one", "a")
 
@@ -114,6 +123,86 @@ func (suite *CacheTestSuite) TestSetUserProfileService() {
 	actual, ok = suite.cache.userProfileServiceMap.Get("one")
 	suite.True(ok)
 	suite.Equal("a", actual)
+}
+
+func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
+	conf := config.ClientConfig{
+		UserProfileService: map[string]interface{}{"services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"capacity": []string{"dummy"},
+			}},
+		},
+	}
+
+	// json unmarshal error case
+	suite.cache.SetUserProfileService("one", "in-memory")
+	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	suite.Nil(userProfileService)
+
+	// json marshal error case
+	conf.UserProfileService = map[string]interface{}{"services": map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"capacity": make(chan int),
+		}},
+	}
+	userProfileService = getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	suite.Nil(userProfileService)
+}
+
+func (suite *CacheTestSuite) TestNoUserProfileServicesProvidedInConfig() {
+	conf := config.ClientConfig{
+		UserProfileService: map[string]interface{}{},
+	}
+	suite.cache.SetUserProfileService("one", "in-memory")
+	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	suite.Nil(userProfileService)
+}
+
+func (suite *CacheTestSuite) TestUPSForSDKKeyNotProvidedInConfig() {
+	conf := config.ClientConfig{
+		UserProfileService: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"capacity":        0,
+				"storageStrategy": "fifo",
+			}},
+		},
+	}
+	suite.cache.SetUserProfileService("one", "dummy")
+	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	suite.Nil(userProfileService)
+}
+
+func (suite *CacheTestSuite) TestNoCreatorAddedforUPS() {
+	conf := config.ClientConfig{
+		UserProfileService: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+			"dummy": map[string]interface{}{
+				"capacity":        0,
+				"storageStrategy": "fifo",
+			}},
+		},
+	}
+	suite.cache.SetUserProfileService("one", "dummy")
+	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	suite.Nil(userProfileService)
+}
+
+func (suite *CacheTestSuite) TestNilCreatorAddedforUPS() {
+	upCreator := func() decision.UserProfileService {
+		return nil
+	}
+	userprofileservice.Add("dummy", upCreator)
+
+	conf := config.ClientConfig{
+		UserProfileService: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+			"dummy": map[string]interface{}{
+				"capacity":        0,
+				"storageStrategy": "fifo",
+			}},
+		},
+	}
+	suite.cache.SetUserProfileService("one", "dummy")
+	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	suite.Nil(userProfileService)
 }
 
 // In order for 'go test' to run this suite, we need to create

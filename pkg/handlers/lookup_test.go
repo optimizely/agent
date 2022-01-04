@@ -85,12 +85,18 @@ func (suite *LookupTestSuite) SetupTest() {
 	suite.oc = optlyClient
 }
 
-func (suite *LookupTestSuite) TestInvalidPayload() {
+func (suite *LookupTestSuite) TestNilPayload() {
 	req := httptest.NewRequest("POST", "/lookup", nil)
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
-
 	suite.assertError(rec, ErrEmptyUserID.Error(), http.StatusBadRequest)
+}
+
+func (suite *LookupTestSuite) TestInvalidPayload() {
+	req := httptest.NewRequest("POST", "/lookup", bytes.NewBuffer([]byte("ABC€")))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.assertError(rec, "error parsing request body", http.StatusBadRequest)
 }
 
 func (suite *LookupTestSuite) TestNoUserProfileService() {
@@ -157,4 +163,11 @@ func (suite *LookupTestSuite) assertError(rec *httptest.ResponseRecorder, msg st
 
 func TestLookupTestSuite(t *testing.T) {
 	suite.Run(t, new(LookupTestSuite))
+}
+
+func TestLookupMissingOptlyCtx(t *testing.T) {
+	req := httptest.NewRequest("POST", "/", nil)
+	rec := httptest.NewRecorder()
+	http.HandlerFunc(Lookup).ServeHTTP(rec, req)
+	assertError(t, rec, "optlyClient not available", http.StatusInternalServerError)
 }

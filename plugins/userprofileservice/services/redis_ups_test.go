@@ -52,6 +52,17 @@ func (r *RedisUPSTestSuite) TestFirstSaveConfiguresClient() {
 	r.NotNil(r.ups.Client)
 }
 
+func (r *RedisUPSTestSuite) TestLookupNilClient() {
+	r.Nil(r.ups.Client)
+
+	expected := decision.UserProfile{
+		ID:                  "",
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
+	}
+	actual := r.ups.Lookup("1")
+	r.Equal(expected, actual)
+}
+
 func TestRedisUPSTestSuite(t *testing.T) {
 	suite.Run(t, new(RedisUPSTestSuite))
 }

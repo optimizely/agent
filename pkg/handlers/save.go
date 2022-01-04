@@ -56,17 +56,13 @@ func Save(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	convertedProfile, success := convertToUserProfile(body)
-	if !success {
-		RenderError(err, http.StatusBadRequest, w, r)
-		return
-	}
+	convertedProfile := convertToUserProfile(body)
 	optlyClient.UserProfileService.Save(convertedProfile)
 	render.Status(r, http.StatusOK)
 }
 
 // convertToUserProfile converts map to User Profile object
-func convertToUserProfile(body saveBody) (profile decision.UserProfile, success bool) {
+func convertToUserProfile(body saveBody) decision.UserProfile {
 	userProfile := decision.UserProfile{ID: body.UserID}
 	userProfile.ExperimentBucketMap = make(map[decision.UserDecisionKey]string)
 	for k, v := range body.ExperimentBucketMap {
@@ -75,5 +71,5 @@ func convertToUserProfile(body saveBody) (profile decision.UserProfile, success 
 			userProfile.ExperimentBucketMap[decisionKey] = bucketMap[decisionKey.Field].(string)
 		}
 	}
-	return userProfile, true
+	return userProfile
 }
