@@ -67,14 +67,12 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 		assert.Equal(t, "in-memory", actual.UserProfileService["default"])
 		userProfileServices := map[string]interface{}{
 			"in-memory": map[string]interface{}{
-				"capacity": 0,
 				// Viper.set is case in-sensitive
 				"storagestrategy": "fifo",
 			},
 			"redis": map[string]interface{}{
 				"host":     "localhost:6379",
 				"password": "",
-				"database": 0,
 			},
 			"custom": map[string]interface{}{
 				"path": "http://test2.com",
@@ -197,13 +195,11 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.sdkKeyRegex", "custom-regex")
 	services := map[string]interface{}{
 		"in-memory": map[string]interface{}{
-			"capacity":        0,
 			"storageStrategy": "fifo",
 		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
 			"password": "",
-			"database": 0,
 		},
 		"custom": map[string]interface{}{
 			"path": "http://test2.com",
@@ -299,6 +295,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
@@ -327,7 +324,7 @@ func TestViperEnv(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, false)
-	assertClient(t, actual.Client, false)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)

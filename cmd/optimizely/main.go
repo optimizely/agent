@@ -87,6 +87,11 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		conf.Server.Interceptors = interceptors
 	}
 
+	// Check if JSON string was set using OPTIMIZELY_CLIENT_USERPROFILESERVICE
+	if userProfileService := v.GetStringMap("client.userprofileservice"); userProfileService != nil {
+		conf.Client.UserProfileService = userProfileService
+	}
+
 	return conf
 }
 
