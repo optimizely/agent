@@ -233,13 +233,14 @@ func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentM
 						success := true
 						// Trying to map userProfileService from client config to struct
 						if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
-							log.Warn().Err(err).Msg("Error marshaling default user profile service config")
+							log.Warn().Err(err).Msgf(`Error marshaling user profile service config: "%s"`, upsName)
 							success = false
 						} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
-							log.Warn().Err(err).Msg("Error unmarshalling user profile service config")
+							log.Warn().Err(err).Msgf(`Error unmarshalling user profile service config: "%s"`, upsName)
 							success = false
 						}
 						if success {
+							log.Info().Msgf(`UserProfileService of type: "%s" created for sdkKey: "%s"`, upsName, sdkKey)
 							return upsInstance
 						}
 					}
