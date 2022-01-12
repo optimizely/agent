@@ -51,15 +51,15 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 	}
 
 	// Check if profile exists
-	result, err := u.Client.Get(ctx, userID).Result()
-	if err != nil {
-		log.Error().Msg(err.Error())
+	result, getError := u.Client.Get(ctx, userID).Result()
+	if getError != nil {
+		log.Error().Msg(getError.Error())
 		return profile
 	}
 
 	// Check if result was unmarshalled successfully
 	experimentBucketMap := map[string]interface{}{}
-	err = json.Unmarshal([]byte(result), &experimentBucketMap)
+	err := json.Unmarshal([]byte(result), &experimentBucketMap)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return profile
@@ -71,10 +71,12 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 		decisionKey := decision.UserDecisionKey{
 			ExperimentID: experimentID,
 		}
-		if finalBucketMap, ok := bucketMap.(map[string]string); ok {
+		if finalBucketMap, ok := bucketMap.(map[string]interface{}); ok {
 			for field, variationKey := range finalBucketMap {
-				decisionKey.Field = field
-				profile.ExperimentBucketMap[decisionKey] = variationKey
+				if strVariationKey, ok := variationKey.(string); ok {
+					decisionKey.Field = field
+					profile.ExperimentBucketMap[decisionKey] = strVariationKey
+				}
 			}
 		}
 	}
@@ -101,10 +103,10 @@ func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 		experimentBucketMap[k.ExperimentID] = map[string]string{k.Field: v}
 	}
 
-	if finalProfile, err := json.Marshal(experimentBucketMap); err != nil {
+	if finalProfile, err := json.Marshal(experimentBucketMap); err == nil {
 		// Log error message if something went wrong
 		if setError := u.Client.Set(ctx, profile.ID, finalProfile, u.Expiration).Err(); setError != nil {
-			log.Error().Msg(err.Error())
+			log.Error().Msg(setError.Error())
 		}
 	}
 }
