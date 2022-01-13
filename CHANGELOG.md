@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Introduce `Forced Decisions` property into the `decide` API for overriding and managing user-level flag, experiment and delivery rule decisions. Forced decisions can be used for QA and automated testing purposes ([#324](https://github.com/optimizely/agent/pull/324), [#325](https://github.com/optimizely/agent/pull/325)).
 
-    - For details about this Agent release, refer to our API documentation page: https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide.  
+    - For details, refer to our API documentation page: https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide.  
     - Upgrade to use [Go SDK v1.8.0](https://github.com/optimizely/go-sdk/releases/tag/v1.8.0). This adds support for Forced Decisions.
 
 ## [2.5.0] - Sep 24, 2021
