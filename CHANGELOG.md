@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.6.0] - Jan 12, 2022
 
-  - Add functionality for forced decisions ([PR #324](https://github.com/optimizely/agent/pull/324), [PR #325](https://github.com/optimizely/agent/pull/325)):
+  - Introduce `Forced Decisions` property in the open-api spec for overriding and managing user-level flag, experiment and delivery rule decisions. Forced decisions can be used for QA and automated testing purposes ([PR #324](https://github.com/optimizely/agent/pull/324), [PR #325](https://github.com/optimizely/agent/pull/325)).
+
+    - For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.  
+    - Upgrade to use [Go SDK v1.8.0](https://github.com/optimizely/go-sdk/releases/tag/v1.8.0). This adds support for Forced Decisions.
 
 ## [2.5.0] - Sep 24, 2021
 
