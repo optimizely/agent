@@ -49,6 +49,10 @@ func TestLog(t *testing.T) {
 	out.Reset()
 }
 
+func TestShouldIncludeSDKKeyDefaultValue(t *testing.T) {
+	assert.True(t, ShouldIncludeSDKKey)
+}
+
 func TestSetLevel(t *testing.T) {
 	out := &bytes.Buffer{}
 	logger := zerolog.New(out)

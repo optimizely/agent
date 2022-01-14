@@ -31,6 +31,9 @@ var levelMap = map[logging.LogLevel]zerolog.Level{
 	logging.LogLevelError:   zerolog.ErrorLevel,
 }
 
+// ShouldIncludeSDKKey Defaults to true to include the SDK in log fields
+var ShouldIncludeSDKKey = true
+
 // init overrides the Optimizely SDK logger with the default zerolog logger.
 func init() {
 	SetLogger(&log.Logger)

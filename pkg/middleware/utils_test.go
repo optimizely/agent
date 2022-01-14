@@ -63,6 +63,13 @@ func TestGetLogger(t *testing.T) {
 	assert.Contains(t, out.String(), `"requestId":"12345"`)
 	assert.Contains(t, out.String(), `"sdkKey":"some_key"`)
 
+	optimizely.ShouldIncludeSDKKey = false
+	out = &bytes.Buffer{}
+	logger = GetLogger(req)
+	newLogger = logger.Output(out)
+	newLogger.Info().Msg("some_message")
+	assert.Contains(t, out.String(), `"requestId":"12345"`)
+	assert.NotContains(t, out.String(), `"sdkKey":"some_key"`)
 }
 
 func TestGetFeature(t *testing.T) {

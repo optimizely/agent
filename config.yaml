@@ -23,6 +23,8 @@ log:
     ## enable pretty colorized console logging. setting to false will output
     ## structured JSON logs. Recommended false in production.
     pretty: true
+    ## to set whether or not the SDK key is included in the logging output.
+    includeSdkKey: true
 
 ##
 ## http server configuration
