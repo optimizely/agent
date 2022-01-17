@@ -46,7 +46,12 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 		ExperimentBucketMap: make(map[decision.UserDecisionKey]string),
 	}
 
-	if u.Client == nil || userID == "" {
+	// This is required in both lookup and save since an old redis instance can also be used
+	if u.Client == nil {
+		u.initClient()
+	}
+
+	if userID == "" {
 		return profile
 	}
 
@@ -66,32 +71,15 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 	}
 
 	// Converting result to profile
-	profile.ID = userID
-	for experimentID, bucketMap := range experimentBucketMap {
-		decisionKey := decision.UserDecisionKey{
-			ExperimentID: experimentID,
-		}
-		if finalBucketMap, ok := bucketMap.(map[string]interface{}); ok {
-			for field, variationKey := range finalBucketMap {
-				if strVariationKey, ok := variationKey.(string); ok {
-					decisionKey.Field = field
-					profile.ExperimentBucketMap[decisionKey] = strVariationKey
-				}
-			}
-		}
-	}
-	return profile
+	return convertToUserProfile(map[string]interface{}{"user_id": userID, "experiment_bucket_map": experimentBucketMap})
 }
 
 // Save is used to save bucketing decisions for users
 func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 
+	// This is required in both lookup and save since an old redis instance can also be used
 	if u.Client == nil {
-		u.Client = redis.NewClient(&redis.Options{
-			Addr:     u.Address,
-			Password: u.Password,
-			DB:       u.Database,
-		})
+		u.initClient()
 	}
 
 	if profile.ID == "" {
@@ -109,6 +97,14 @@ func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 			log.Error().Msg(setError.Error())
 		}
 	}
+}
+
+func (u *RedisUserProfileService) initClient() {
+	u.Client = redis.NewClient(&redis.Options{
+		Addr:     u.Address,
+		Password: u.Password,
+		DB:       u.Database,
+	})
 }
 
 func init() {

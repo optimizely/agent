@@ -38,6 +38,47 @@ userProfileService:
           database: 0 ## your database
 ```
 
+1. To use the rest `UserProfileService`, update the `config.yaml` as shown below:
+```
+## configure optional User profile service
+userProfileService:
+      default: "rest"
+      services:
+        rest:
+          host: "your_host"
+          lookupPath: "/lookup_endpoint"
+          savePath: "/save_endpoint"
+          headers: 
+            "header_key": "header_value"
+```
+
+Implement 2 `POST` api's `/lookup_endpoint` and `/save_endpoint` on your host server.
+    
+- `lookup_endpoint` should accept `user_id` in its json body and if successful, return status code `200` with json response:   
+
+```
+{
+  "experiment_bucket_map": {
+    "saved_experiment_id": {
+      "variation_id": "saved_variation_id"
+    }
+  },
+  "user_id": "saved_user_id"
+}
+```
+- `save_endpoint` should accept the following parameters in its json body and return the status code `200` if successful:  
+
+    ```
+{
+  "experiment_bucket_map": {
+    "experiment_id_to_save": {
+      "variation_id": "variation_id_to_save"
+    }
+  },
+  "user_id": "user_id_to_save"
+}
+```
+
 ## Custom UserProfileService Implementation
 
 To implement a custom user profile service, followings steps need to be taken:

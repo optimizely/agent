@@ -74,6 +74,12 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 				"host":     "localhost:6379",
 				"password": "",
 			},
+			"rest": map[string]interface{}{
+				"host":       "http://localhost",
+				"lookuppath": "/ups/lookup",
+				"savepath":   "/ups/save",
+				"headers":    map[string]interface{}{"content-type": "application/json"},
+			},
 			"custom": map[string]interface{}{
 				"path": "http://test2.com",
 			},
@@ -201,6 +207,12 @@ func TestViperProps(t *testing.T) {
 			"host":     "localhost:6379",
 			"password": "",
 		},
+		"rest": map[string]interface{}{
+			"host":       "http://localhost",
+			"lookuppath": "/ups/lookup",
+			"savepath":   "/ups/save",
+			"headers":    map[string]interface{}{"content-type": "application/json"},
+		},
 		"custom": map[string]interface{}{
 			"path": "http://test2.com",
 		},
@@ -295,7 +307,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
-	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"}},"custom":{"path":"http://test2.com"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")

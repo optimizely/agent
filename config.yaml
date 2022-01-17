@@ -144,6 +144,13 @@ client:
         #   host: "localhost:6379"
         #   password: ""
         #   database: 0
+        # rest: 
+        #   host: "http://localhost"
+        #   lookupPath: "/ups/lookup"
+        #   savePath: "/ups/save"
+        #   headers: 
+        #     Content-Type: "application/json"
+        #     Auth-Token: "12345
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.

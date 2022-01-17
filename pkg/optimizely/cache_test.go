@@ -334,13 +334,17 @@ func (s *DefaultLoaderTestSuite) TestUPSHeaderOverridesDefaultKey() {
 	s.Equal("fifo", inMemoryUps.StorageStrategy)
 }
 
-func (s *DefaultLoaderTestSuite) TestInMemoryAndRedisUpsAddedByDefault() {
+func (s *DefaultLoaderTestSuite) TestAddedByDefaultProfileServices() {
 	s.NotNil(userprofileservice.Creators["in-memory"])
 	_, ok := (userprofileservice.Creators["in-memory"]()).(*services.InMemoryUserProfileService)
 	s.True(ok)
 
 	s.NotNil(userprofileservice.Creators["redis"])
 	_, ok = (userprofileservice.Creators["redis"]()).(*services.RedisUserProfileService)
+	s.True(ok)
+
+	s.NotNil(userprofileservice.Creators["rest"])
+	_, ok = (userprofileservice.Creators["rest"]()).(*services.RestUserProfileService)
 	s.True(ok)
 }
 
@@ -384,6 +388,25 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 	s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
 }
 
+func (s *DefaultLoaderTestSuite) TestHttpClientInitializesByDefaultRestUPS() {
+	conf := config.ClientConfig{
+		UserProfileService: map[string]interface{}{"default": "rest", "services": map[string]interface{}{
+			"rest": map[string]interface{}{},
+		}},
+	}
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+	s.NotNil(client.UserProfileService)
+
+	if testRestUPS, ok := client.UserProfileService.(*services.RestUserProfileService); ok {
+		// Check if rest client was instantiated with updated config
+		s.NotNil(testRestUPS.Requester)
+		return
+	}
+	s.Failf("UserProfileService not registered", "%s DNE in registry", "rest")
+}
+
 func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
@@ -404,13 +427,13 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 	s.NoError(err)
 
 	s.NotNil(client.UserProfileService)
-	if testRedisUPS, ok := client.UserProfileService.(*MockUserProfileService); ok {
-		s.Equal("http://test.com", testRedisUPS.Path)
-		s.Equal("1.2.1.2-abc", testRedisUPS.Addr)
-		s.Equal(8080, testRedisUPS.Port)
+	if mockUPS, ok := client.UserProfileService.(*MockUserProfileService); ok {
+		s.Equal("http://test.com", mockUPS.Path)
+		s.Equal("1.2.1.2-abc", mockUPS.Addr)
+		s.Equal(8080, mockUPS.Port)
 		return
 	}
-	s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
+	s.Failf("UserProfileService not registered", "%s DNE in registry", "mock2")
 }
 
 func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
