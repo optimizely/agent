@@ -52,9 +52,9 @@ userProfileService:
             "header_key": "header_value"
 ```
 
-Implement 2 `POST` api's `/lookup_endpoint` and `/save_endpoint` on your host server.
+Implement 2 `POST` api's `/lookup_endpoint` and `/save_endpoint` on your `host`.
     
-- `lookup_endpoint` should accept `user_id` in its json body and if successful, return status code `200` with json response:   
+- `lookup_endpoint` should accept `user_id` in its json body and if successful, return the status code `200` with json response:   
 
 ```
 {
@@ -68,7 +68,7 @@ Implement 2 `POST` api's `/lookup_endpoint` and `/save_endpoint` on your host se
 ```
 - `save_endpoint` should accept the following parameters in its json body and return the status code `200` if successful:  
 
-    ```
+```
 {
   "experiment_bucket_map": {
     "experiment_id_to_save": {

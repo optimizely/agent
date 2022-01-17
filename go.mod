@@ -13,7 +13,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/google/uuid v1.1.1
 	github.com/lestrrat-go/jwx v0.9.0
-	github.com/optimizely/go-sdk v1.7.1-0.20211102215133-82644c6670e8
+	github.com/optimizely/go-sdk v1.8.0
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.18.1-0.20200514152719-663cbb4c8469
