@@ -150,7 +150,7 @@ client:
         #   savePath: "/ups/save"
         #   headers: 
         #     Content-Type: "application/json"
-        #     Auth-Token: "12345
+        #     Auth-Token: "12345"
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.
