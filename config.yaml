@@ -147,7 +147,10 @@ client:
         # rest: 
         #   host: "http://localhost"
         #   lookupPath: "/ups/lookup"
+        #   lookupMethod: "POST"
         #   savePath: "/ups/save"
+        #   saveMethod: "POST"
+        #   userIDKey: "user_id"
         #   headers: 
         #     Content-Type: "application/json"
         #     Auth-Token: "12345"

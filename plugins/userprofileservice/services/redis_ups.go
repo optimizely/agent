@@ -71,7 +71,7 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 	}
 
 	// Converting result to profile
-	return convertToUserProfile(map[string]interface{}{"user_id": userID, "experiment_bucket_map": experimentBucketMap})
+	return convertToUserProfile(map[string]interface{}{userIDKey: userID, experimentBucketMapKey: experimentBucketMap}, userIDKey)
 }
 
 // Save is used to save bucketing decisions for users

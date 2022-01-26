@@ -18,6 +18,7 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,6 +36,7 @@ type RestUPSTestSuite struct {
 	ups              RestUserProfileService
 	server           *httptest.Server
 	userProfile      decision.UserProfile
+	MethodUsed       string
 	savedUserProfile decision.UserProfile
 }
 
@@ -47,15 +49,28 @@ func (rups *RestUPSTestSuite) SetupTest() {
 		},
 	}
 	rups.savedUserProfile = decision.UserProfile{}
+	rups.ups.UserIDKey = "custom_user_id"
 	rups.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.String() {
+		rups.MethodUsed = r.Method
+		switch r.URL.Path {
 		case "/ups/save":
-			var userProfile map[string]interface{}
-			_ = handlers.ParseRequestBody(r, &userProfile)
-			rups.savedUserProfile = convertToUserProfile(userProfile)
+			userProfile := map[string]interface{}{}
+			switch r.Method {
+			case "GET":
+				userID := r.URL.Query().Get(rups.ups.getUserIDKey())
+				bucketMap := map[string]interface{}{}
+				if err := json.Unmarshal([]byte(r.URL.Query().Get(experimentBucketMapKey)), &bucketMap); err != nil {
+					panic(err)
+				}
+				userProfile[rups.ups.getUserIDKey()] = userID
+				userProfile[experimentBucketMapKey] = bucketMap
+			default:
+				_ = handlers.ParseRequestBody(r, &userProfile)
+			}
+			rups.savedUserProfile = convertToUserProfile(userProfile, rups.ups.getUserIDKey())
 			w.WriteHeader(http.StatusOK)
 		case "/ups/lookup":
-			userProfileMap := convertUserProfileToMap(rups.userProfile)
+			userProfileMap := convertUserProfileToMap(rups.userProfile, rups.ups.getUserIDKey())
 			w.Header().Set("Content-Type", "application/json")
 			render.JSON(w, r, userProfileMap)
 		default:
@@ -119,9 +134,17 @@ func (rups *RestUPSTestSuite) TestLookupInvalidPath() {
 	rups.Assert().Empty(profile)
 }
 
-func (rups *RestUPSTestSuite) TestLookup() {
+func (rups *RestUPSTestSuite) TestLookupDefaultPost() {
 	profile := rups.ups.Lookup("a")
 	rups.Equal(rups.userProfile, profile)
+	rups.Equal("POST", rups.MethodUsed)
+}
+
+func (rups *RestUPSTestSuite) TestLookupGet() {
+	rups.ups.LookupMethod = "GET"
+	profile := rups.ups.Lookup("a")
+	rups.Equal(rups.userProfile, profile)
+	rups.Equal("GET", rups.MethodUsed)
 }
 
 func (rups *RestUPSTestSuite) TestSaveInvalidHost() {
@@ -146,9 +169,28 @@ func (rups *RestUPSTestSuite) TestSaveInvalidPath() {
 	rups.Empty(rups.savedUserProfile)
 }
 
-func (rups *RestUPSTestSuite) TestSave() {
+func (rups *RestUPSTestSuite) TestSaveDefaultPOST() {
 	rups.ups.Save(rups.userProfile)
 	rups.Equal(rups.userProfile, rups.savedUserProfile)
+	rups.Equal("POST", rups.MethodUsed)
+}
+
+func (rups *RestUPSTestSuite) TestSaveWithGetMethod() {
+	rups.ups.SaveMethod = "GET"
+	rups.ups.Save(rups.userProfile)
+	rups.Equal(rups.userProfile, rups.savedUserProfile)
+	rups.Equal("GET", rups.MethodUsed)
+}
+
+func (rups *RestUPSTestSuite) TestCustomUserID() {
+	ups := RestUserProfileService{
+		UserIDKey: "custom",
+	}
+	rups.Equal(ups.UserIDKey, ups.getUserIDKey())
+
+	// Test default value
+	ups.UserIDKey = ""
+	rups.Equal(userIDKey, ups.getUserIDKey())
 }
 
 func TestRestUPSTestSuite(t *testing.T) {

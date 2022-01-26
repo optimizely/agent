@@ -47,14 +47,21 @@ userProfileService:
         rest:
           host: "your_host"
           lookupPath: "/lookup_endpoint"
+          lookupMethod: "POST"
           savePath: "/save_endpoint"
+          saveMethod: "POST"
+          userIDKey: "user_id"
           headers: 
             "header_key": "header_value"
 ```
 
-Implement 2 `POST` api's `/lookup_endpoint` and `/save_endpoint` on your `host`.
+Implement 2 api's `/lookup_endpoint` and `/save_endpoint` on your `host`. Api methods will be `POST` by default but can be  
+updated through `lookupMethod` and `saveMethod` properties. Similarly, request parameter key for `user_id` can also be updated  
+using `userIDKey` property.
     
-- `lookup_endpoint` should accept `user_id` in its json body and if successful, return the status code `200` with json response:   
+- `lookup_endpoint` should accept `user_id` in its json body or query (depending upon the method type) and if successful,   
+return the status code `200` with json response (keep in mind that when sending response,   
+`user_id` should be substituted with value of `userIDKey` from config.yaml):   
 
 ```
 {
@@ -66,7 +73,9 @@ Implement 2 `POST` api's `/lookup_endpoint` and `/save_endpoint` on your `host`.
   "user_id": "saved_user_id"
 }
 ```
-- `save_endpoint` should accept the following parameters in its json body and return the status code `200` if successful:  
+- `save_endpoint` should accept the following parameters in its json body or query (depending upon the method type)   
+and return the status code `200` if successful (keep in mind that `user_id` should be substituted   
+with the value of`userIDKey` from config.yaml):  
 
 ```
 {

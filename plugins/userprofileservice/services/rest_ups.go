@@ -18,8 +18,10 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -32,11 +34,14 @@ import (
 
 // RestUserProfileService represents the rest API implementation of UserProfileService interface
 type RestUserProfileService struct {
-	Requester  *utils.HTTPRequester
-	Host       string            `json:"host"`
-	Headers    map[string]string `json:"headers"`
-	LookupPath string            `json:"lookupPath"`
-	SavePath   string            `json:"savePath"`
+	Requester    *utils.HTTPRequester
+	Host         string            `json:"host"`
+	Headers      map[string]string `json:"headers"`
+	LookupPath   string            `json:"lookupPath"`
+	LookupMethod string            `json:"lookupMethod"`
+	SavePath     string            `json:"savePath"`
+	SaveMethod   string            `json:"saveMethod"`
+	UserIDKey    string            `json:"userIDKey"`
 }
 
 // Lookup is used to retrieve past bucketing decisions for users
@@ -50,9 +55,10 @@ func (r *RestUserProfileService) Lookup(userID string) (profile decision.UserPro
 		return
 	}
 
+	userIDKey := r.getUserIDKey()
 	// Check if profile exists
-	parameters := map[string]interface{}{"user_id": userID}
-	success, response := r.performRequest(requestURL, parameters)
+	parameters := map[string]interface{}{userIDKey: userID}
+	success, response := r.performRequest(requestURL, r.LookupMethod, parameters)
 	if !success {
 		return
 	}
@@ -63,7 +69,7 @@ func (r *RestUserProfileService) Lookup(userID string) (profile decision.UserPro
 		return
 	}
 
-	return convertToUserProfile(userProfileMap)
+	return convertToUserProfile(userProfileMap, userIDKey)
 }
 
 // Save is used to save bucketing decisions for users
@@ -71,11 +77,12 @@ func (r *RestUserProfileService) Save(profile decision.UserProfile) {
 	if profile.ID == "" {
 		return
 	}
+
 	requestURL, err := r.getURL(r.SavePath)
 	if err != nil {
 		return
 	}
-	r.performRequest(requestURL, convertUserProfileToMap(profile))
+	r.performRequest(requestURL, r.SaveMethod, convertUserProfileToMap(profile, r.getUserIDKey()))
 }
 
 func (r *RestUserProfileService) getURL(endpointPath string) (string, error) {
@@ -86,22 +93,66 @@ func (r *RestUserProfileService) getURL(endpointPath string) (string, error) {
 	return "", fmt.Errorf("invalid url components")
 }
 
-func (r *RestUserProfileService) performRequest(requestURL string, parameters map[string]interface{}) (success bool, response []byte) {
+func (r *RestUserProfileService) getUserIDKey() string {
+	if r.UserIDKey == "" {
+		return userIDKey
+	}
+	return r.UserIDKey
+}
+
+func (r *RestUserProfileService) performRequest(requestURL, method string, parameters map[string]interface{}) (success bool, response []byte) {
 	fHeaders := []utils.Header{}
 	for n, v := range r.Headers {
 		fHeaders = append(fHeaders, utils.Header{Name: n, Value: v})
 	}
 
-	response, _, code, err := r.Requester.Post(requestURL, parameters, fHeaders...)
+	var body io.Reader
+	fURL, err := url.Parse(requestURL)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return
 	}
 
-	if code == http.StatusOK {
-		return true, response
+	restAPIMethod := method
+	// User Post method in case none is provided
+	if method == "" {
+		restAPIMethod = "POST"
 	}
-	return false, response
+
+	switch method {
+	case "GET":
+		// add parameter to query string
+		queryString := fURL.Query()
+		for k, v := range parameters {
+			switch v := v.(type) {
+			// For experimentBucketMap
+			case map[string]interface{}:
+				if jsonStr, tmpErr := json.Marshal(v); tmpErr == nil {
+					queryString.Set(k, string(jsonStr))
+				}
+			// For userID
+			case string:
+				queryString.Set(k, v)
+			default:
+				log.Error().Msgf("incompatible value type %T found for key %v in rest ups request parameters.", v, k)
+			}
+		}
+		// add query to url
+		fURL.RawQuery = queryString.Encode()
+	default:
+		jsonStr, tmpErr := json.Marshal(parameters)
+		if tmpErr != nil {
+			log.Error().Msg(tmpErr.Error())
+			return
+		}
+		body = bytes.NewBuffer(jsonStr)
+	}
+
+	response, _, code, err := r.Requester.Do(fURL.String(), restAPIMethod, body, fHeaders)
+	if err != nil {
+		return
+	}
+	return code == http.StatusOK, response
 }
 
 func init() {

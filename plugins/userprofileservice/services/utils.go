@@ -18,34 +18,29 @@
 package services
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
 // convertUserProfileToMap converts User Profile object to map
-func convertUserProfileToMap(userProfile decision.UserProfile) map[string]interface{} {
+func convertUserProfileToMap(userProfile decision.UserProfile, userIDKey string) map[string]interface{} {
 	experimentBucketMap := map[string]interface{}{}
 	for k, v := range userProfile.ExperimentBucketMap {
 		experimentBucketMap[k.ExperimentID] = map[string]interface{}{k.Field: v}
 	}
 	return map[string]interface{}{
-		"user_id":               userProfile.ID,
-		"experiment_bucket_map": experimentBucketMap,
+		userIDKey:              userProfile.ID,
+		experimentBucketMapKey: experimentBucketMap,
 	}
 }
 
 // convertToUserProfile converts map to User Profile object
-func convertToUserProfile(profileDict map[string]interface{}) decision.UserProfile {
+func convertToUserProfile(profileDict map[string]interface{}, userIDKey string) decision.UserProfile {
 	userProfile := decision.UserProfile{}
-	userID, ok := profileDict["user_id"].(string)
-	j, _ := json.Marshal(profileDict)
-	fmt.Printf("%v", string(j))
+	userID, ok := profileDict[userIDKey].(string)
 	if !ok {
 		return userProfile
 	}
-	if experimentBucketMap, ok := profileDict["experiment_bucket_map"].(map[string]interface{}); ok {
+	if experimentBucketMap, ok := profileDict[experimentBucketMapKey].(map[string]interface{}); ok {
 		userProfile.ID = userID
 		userProfile.ExperimentBucketMap = make(map[decision.UserDecisionKey]string)
 		for k, v := range experimentBucketMap {

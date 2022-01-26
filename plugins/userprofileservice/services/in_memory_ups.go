@@ -24,6 +24,9 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
+const userIDKey = "user_id"
+const experimentBucketMapKey = "experiment_bucket_map"
+
 // InMemoryUserProfileService represents the in-memory implementation of UserProfileService interface
 type InMemoryUserProfileService struct {
 	Capacity int `json:"capacity"`
