@@ -8,10 +8,6 @@ env:
     # may also want to run `go mod edit -go=1.13` to fix go.mod as well
     - GIMME_GO_VERSION=1.13.x GIMME_OS=linux GIMME_ARCH=amd64
 
-# For unit testing purposes, redis uses the default configuration and is available on localhost.
-services:
-  - redis-server
-
 branches:
   only:
   - master

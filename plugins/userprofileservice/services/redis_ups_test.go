@@ -32,17 +32,10 @@ type RedisUPSTestSuite struct {
 func (r *RedisUPSTestSuite) SetupTest() {
 	// To check if lifo is used by default
 	r.ups = RedisUserProfileService{
-		Address:  "localhost:6379",
-		Password: "", // no password set
-		Database: 0,  // use default DB
+		Address:  "100",
+		Password: "10",
+		Database: 1,
 	}
-}
-
-func (r *RedisUPSTestSuite) TestInitClient() {
-	r.ups.initClient()
-	pong, err := r.ups.Client.Ping(ctx).Result()
-	r.Equal("PONG", pong)
-	r.Nil(err)
 }
 
 func (r *RedisUPSTestSuite) TestFirstSaveOrLookupConfiguresClient() {
@@ -78,17 +71,6 @@ func (r *RedisUPSTestSuite) TestLookupNotSavedProfileID() {
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
 	}
 	r.Equal(expectedProfile, r.ups.Lookup("123"))
-}
-
-func (r *RedisUPSTestSuite) TestSaveAndLookup() {
-	expectedProfile := decision.UserProfile{
-		ID: "1",
-		ExperimentBucketMap: map[decision.UserDecisionKey]string{
-			decision.NewUserDecisionKey("1"): "1",
-		},
-	}
-	r.ups.Save(expectedProfile)
-	r.Equal(expectedProfile, r.ups.Lookup("1"))
 }
 
 func TestRedisUPSTestSuite(t *testing.T) {
