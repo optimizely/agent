@@ -18,7 +18,7 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.18.1-0.20200514152719-663cbb4c8469
 	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gopkg.in/yaml.v2 v2.4.0

@@ -25,6 +25,7 @@ import (
 type Cache interface {
 	GetClient(sdkKey string) (*OptlyClient, error)
 	UpdateConfigs(sdkKey string)
+	// SetUserProfileService sets userProfileService to be used for the given sdkKey
 	SetUserProfileService(sdkKey, userProfileService string)
 }
 

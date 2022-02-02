@@ -119,7 +119,7 @@ func (c *OptlyCache) UpdateConfigs(sdkKey string) {
 	}
 }
 
-// SetUserProfileService sets maps userProfileService against the given sdkKey
+// SetUserProfileService sets userProfileService to be used for the given sdkKey
 func (c *OptlyCache) SetUserProfileService(sdkKey, userProfileService string) {
 	c.userProfileServiceMap.SetIfAbsent(sdkKey, userProfileService)
 }
@@ -222,17 +222,18 @@ func defaultLoader(
 	}
 }
 
+// Returns the registered userProfileService against the sdkKey
 func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentMap, conf config.ClientConfig) decision.UserProfileService {
 
-	createAndReturnUPSWithName := func(upsName string) decision.UserProfileService {
+	intializeUPSWithName := func(upsName string) decision.UserProfileService {
 		if clientConfigUPSMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
-			if defaultUserProfileServiceMap, ok := clientConfigUPSMap[upsName].(map[string]interface{}); ok {
+			if userProfileServiceConfig, ok := clientConfigUPSMap[upsName].(map[string]interface{}); ok {
 				// Check if any such user profile service was added using `Add` method
 				if creator, ok := userprofileservice.Creators[upsName]; ok {
 					if upsInstance := creator(); upsInstance != nil {
 						success := true
 						// Trying to map userProfileService from client config to struct
-						if upsConfig, err := json.Marshal(defaultUserProfileServiceMap); err != nil {
+						if upsConfig, err := json.Marshal(userProfileServiceConfig); err != nil {
 							log.Warn().Err(err).Msgf(`Error marshaling user profile service config: "%s"`, upsName)
 							success = false
 						} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
@@ -250,16 +251,16 @@ func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentM
 		return nil
 	}
 
-	// Check if ups type was provided in the request headers
+	// Check if ups name was provided in the request headers
 	if ups, ok := userProfileServiceMap.Get(sdkKey); ok {
 		if upsNameStr, ok := ups.(string); ok && upsNameStr != "" {
-			return createAndReturnUPSWithName(upsNameStr)
+			return intializeUPSWithName(upsNameStr)
 		}
 	}
 
 	// Check if any default user profile service was provided and if it exists in client config
 	if upsNameStr, ok := conf.UserProfileService["default"].(string); ok && upsNameStr != "" {
-		return createAndReturnUPSWithName(upsNameStr)
+		return intializeUPSWithName(upsNameStr)
 	}
 	return nil
 }

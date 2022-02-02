@@ -32,13 +32,20 @@ type RedisUPSTestSuite struct {
 func (r *RedisUPSTestSuite) SetupTest() {
 	// To check if lifo is used by default
 	r.ups = RedisUserProfileService{
-		Address:  "100",
-		Password: "10",
-		Database: 1,
+		Address:  "localhost:6379",
+		Password: "", // no password set
+		Database: 0,  // use default DB
 	}
 }
 
-func (r *RedisUPSTestSuite) TestFirstSaveConfiguresClient() {
+func (r *RedisUPSTestSuite) TestInitClient() {
+	r.ups.initClient()
+	pong, err := r.ups.Client.Ping(ctx).Result()
+	r.Equal("PONG", pong)
+	r.Nil(err)
+}
+
+func (r *RedisUPSTestSuite) TestFirstSaveOrLookupConfiguresClient() {
 	r.Nil(r.ups.Client)
 
 	profile := decision.UserProfile{
@@ -50,17 +57,38 @@ func (r *RedisUPSTestSuite) TestFirstSaveConfiguresClient() {
 	// Should initialize redis client on first save call
 	r.ups.Save(profile)
 	r.NotNil(r.ups.Client)
+
+	r.ups.Client = nil
+	// Should initialize redis client on first save call
+	r.ups.Lookup("")
+	r.NotNil(r.ups.Client)
 }
 
-func (r *RedisUPSTestSuite) TestLookupNilClient() {
-	r.Nil(r.ups.Client)
-
-	expected := decision.UserProfile{
+func (r *RedisUPSTestSuite) TestLookupEmptyProfileID() {
+	expectedProfile := decision.UserProfile{
 		ID:                  "",
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
 	}
-	actual := r.ups.Lookup("1")
-	r.Equal(expected, actual)
+	r.Equal(expectedProfile, r.ups.Lookup(""))
+}
+
+func (r *RedisUPSTestSuite) TestLookupNotSavedProfileID() {
+	expectedProfile := decision.UserProfile{
+		ID:                  "",
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
+	}
+	r.Equal(expectedProfile, r.ups.Lookup("123"))
+}
+
+func (r *RedisUPSTestSuite) TestSaveAndLookup() {
+	expectedProfile := decision.UserProfile{
+		ID: "1",
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{
+			decision.NewUserDecisionKey("1"): "1",
+		},
+	}
+	r.ups.Save(expectedProfile)
+	r.Equal(expectedProfile, r.ups.Lookup("1"))
 }
 
 func TestRedisUPSTestSuite(t *testing.T) {

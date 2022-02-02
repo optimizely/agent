@@ -59,7 +59,7 @@ func (tc *TestCache) UpdateConfigs(_ string) {
 	tc.updateConfigsCalled = true
 }
 
-// SetUserProfileService sets maps userProfileService against the given sdkKey
+// SetUserProfileService sets userProfileService to be used for the given sdkKey
 func (tc *TestCache) SetUserProfileService(sdkKey, userProfileService string) {
 }
 
