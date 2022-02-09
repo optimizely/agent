@@ -78,6 +78,48 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/lookup:
+    post:
+      summary: Lookup returns saved user profile.
+      operationId: lookup
+      description: >-
+        Returns the saved user profile for a user.
+      requestBody:
+        $ref: '#/components/requestBodies/LookupContext'
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: User Profile Service not found
+  /v1/save:
+    post:
+      summary: Save saves user profile.
+      operationId: save
+      description: >-
+        Saves user profile for a user.
+      requestBody:
+        $ref: '#/components/requestBodies/SaveContext'
+      responses:
+        '200':
+          description: Valid response, Profile saved.
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: User Profile Service not found
   /v1/track:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
@@ -252,6 +294,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
+    LookupContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LookupContext'
+    SaveContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaveContext'
     DecideContext:
       required: true
       content:
@@ -364,6 +418,18 @@ components:
       required:
         - id
         - key
+    UserProfile:
+      properties:
+        experimentBucketMap:
+          type: object
+          properties:
+            your_experiment_id:
+              type: object
+              properties:
+                variation_id:
+                  type: string
+        userId:
+          type: string
     Decision:
       properties:
         featureKey:
@@ -483,6 +549,14 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
+    LookupContext:
+      properties:
+        userId:
+          type: string
+      required:
+        - userId
+    SaveContext:
+      $ref: '#/components/schemas/UserProfile'
     DecideContext:
       properties:
         decideOptions:
