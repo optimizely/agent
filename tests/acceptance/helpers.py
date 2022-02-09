@@ -19,6 +19,8 @@ ENDPOINT_TRACK = '/v1/track'
 ENDPOINT_BATCH = '/v1/batch'
 ENDPOINT_DECIDE = '/v1/decide'
 ENDPOINT_DATAFILE = '/v1/datafile'
+ENDPOINT_SAVE = '/v1/save'
+ENDPOINT_LOOKUP = '/v1/lookup'
 
 YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
 
