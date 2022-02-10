@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -49,11 +49,14 @@ func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 
 // GetLogger gets the logger with some info coming from http request
 func GetLogger(r *http.Request) *zerolog.Logger {
-	sdkKey := r.Header.Get(OptlySDKHeader)
 	reqID := r.Header.Get(OptlyRequestHeader)
+	logger := log.With().Str("requestId", reqID).Logger()
 
-	sdkKeySplit := strings.Split(sdkKey, ":")
-	logger := log.With().Str("sdkKey", sdkKeySplit[0]).Str("requestId", reqID).Logger()
+	if optimizely.ShouldIncludeSDKKey {
+		sdkKey := r.Header.Get(OptlySDKHeader)
+		sdkKeySplit := strings.Split(sdkKey, ":")
+		logger = logger.With().Str("sdkKey", sdkKeySplit[0]).Logger()
+	}
 	return &logger
 }
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2022 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -66,8 +66,9 @@ func NewDefaultConfig() *AgentConfig {
 			EnableOverrides:     false,
 		},
 		Log: LogConfig{
-			Pretty: false,
-			Level:  "info",
+			Pretty:        false,
+			IncludeSDKKey: true,
+			Level:         "info",
 		},
 		Client: ClientConfig{
 			PollingInterval:     1 * time.Minute,
@@ -158,8 +159,9 @@ type ClientConfig struct {
 
 // LogConfig holds the log configuration
 type LogConfig struct {
-	Pretty bool   `json:"pretty"`
-	Level  string `json:"level"`
+	Pretty        bool   `json:"pretty"`
+	IncludeSDKKey bool   `json:"includeSdkKey" default:"true"`
+	Level         string `json:"level"`
 }
 
 // PluginConfigs defines the generic mapping of middleware plugins
