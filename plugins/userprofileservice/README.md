@@ -11,6 +11,43 @@ even when experiment conditions are changed while it is running (for example, au
 variation pausing, and traffic distribution). Otherwise, the agent is stateless and relies on deterministic bucketing to return  
 consistent assignments.
 
+## UserProfileService EndPoints
+
+1. To lookup a user profile, use agent's `POST /v1/lookup`:
+
+```
+In the request `application/json` body, include the `userId`. The full request looks like this:
+
+```curl
+curl --location --request POST 'http://localhost:8080/v1/lookup' \
+--header 'X-Optimizely-SDK-Key: YOUR_SDK_KEY' \
+--header 'Accept: text/event-stream' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "userId": "string"
+}'
+```
+
+2. To save a user profile, use agent's `POST /v1/save`:
+
+```
+In the request `application/json` body, include the `userId` and `experimentBucketMap`. The full request looks like this:
+
+```curl
+curl --location --request POST 'http://localhost:8080/v1/save' \
+--header 'X-Optimizely-SDK-Key: YOUR_SDK_KEY' \
+--header 'Accept: text/event-stream' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "userId": "string",
+    "experimentBucketMap": {
+        "experiment_id_to_save": {
+            "variation_id": "variation_id_to_save"
+        }
+    }
+}'
+```
+
 ## Out of Box UserProfileService Usage
 
 1. To use the in-memory `UserProfileService`, update the `config.yaml` as shown below:
@@ -26,7 +63,7 @@ userProfileService:
           storageStrategy: "fifo"
 ```
 
-1. To use the redis `UserProfileService`, update the `config.yaml` as shown below:
+2. To use the redis `UserProfileService`, update the `config.yaml` as shown below:
 ```
 ## configure optional User profile service
 userProfileService:
@@ -38,7 +75,7 @@ userProfileService:
           database: 0 ## your database
 ```
 
-1. To use the rest `UserProfileService`, update the `config.yaml` as shown below:
+3. To use the rest `UserProfileService`, update the `config.yaml` as shown below:
 ```
 ## configure optional User profile service
 userProfileService:

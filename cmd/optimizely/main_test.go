@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -90,6 +91,7 @@ func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileSer
 
 func assertLog(t *testing.T, actual config.LogConfig) {
 	assert.True(t, actual.Pretty)
+	assert.False(t, actual.IncludeSDKKey)
 	assert.Equal(t, "debug", actual.Level)
 }
 
@@ -224,6 +226,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.userProfileService", userProfileServices)
 
 	v.Set("log.pretty", true)
+	v.Set("log.includeSdkKey", false)
 	v.Set("log.level", "debug")
 
 	v.Set("admin.port", "3002")
@@ -310,6 +313,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"}},"custom":{"path":"http://test2.com"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
+	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
 
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
@@ -342,4 +346,14 @@ func TestViperEnv(t *testing.T) {
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
 	assertRuntime(t, actual.Runtime)
+}
+
+func TestLoggingWithIncludeSdkKey(t *testing.T) {
+	// Test default IncludeSDKKey value
+	assert.True(t, optimizely.ShouldIncludeSDKKey)
+	// Test log config should reflect on optimizely.ShouldIncludeSDKKey
+	initLogging(config.LogConfig{
+		IncludeSDKKey: false,
+	})
+	assert.False(t, optimizely.ShouldIncludeSDKKey)
 }
