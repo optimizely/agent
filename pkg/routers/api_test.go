@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020-2021, Optimizely, Inc. and contributors                   *
+ * Copyright 2020-2022, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -66,6 +66,9 @@ func (m MockCache) GetClient(_ string) (*optimizely.OptlyClient, error) {
 func (m MockCache) UpdateConfigs(_ string) {
 }
 
+func (m MockCache) SetUserProfileService(sdkKey, userProfileService string) {
+}
+
 var testHandler = func(val string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(methodHeaderKey, val)
@@ -112,6 +115,8 @@ func (suite *APIV1TestSuite) SetupTest() {
 		datafileHandler: testHandler("datafile"),
 		activateHandler: testHandler("activate"),
 		overrideHandler: testHandler("override"),
+		lookupHandler:   testHandler("lookup"),
+		saveHandler:     testHandler("save"),
 		trackHandler:    testHandler("track"),
 		nStreamHandler:  testHandler("notifications/event-stream"),
 		oAuthHandler:    testHandler("oauth/token"),
@@ -143,6 +148,8 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
+		{"POST", "lookup"},
+		{"POST", "save"},
 		{"GET", "notifications/event-stream"},
 	}
 
@@ -194,6 +201,8 @@ func (suite *APIV1TestSuite) TestCORSAllowedOrigins() {
 		{"POST", "activate"},
 		{"POST", "track"},
 		{"POST", "override"},
+		{"POST", "lookup"},
+		{"POST", "save"},
 		{"GET", "notifications/event-stream"},
 	}
 

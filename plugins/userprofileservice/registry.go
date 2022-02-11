@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2022, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -14,49 +14,25 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package interceptors //
-package interceptors
+// Package userprofileservice //
+package userprofileservice
 
 import (
-	"net/http"
-	"testing"
+	"fmt"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/optimizely/go-sdk/pkg/decision"
 )
 
-type testMiddleware struct {
-	called bool
-}
+// Creator type defines a function for creating an instance of a UserProfileService
+type Creator func() decision.UserProfileService
 
-func (m *testMiddleware) Handler() func(http.Handler) http.Handler {
-	m.called = true
-	return nil
-}
+// Creators stores the mapping of Creator against userProfileServiceName
+var Creators = map[string]Creator{}
 
-func TestAdd(t *testing.T) {
-	Add("test", func() Interceptor { return &testMiddleware{} })
-	mw := Interceptors["test"]()
-	mw.Handler()
-	if tmw, ok := mw.(*testMiddleware); ok {
-		assert.True(t, tmw.called)
-	} else {
-		assert.Fail(t, "Cannot convert to type testMiddleware")
+// Add registers a creator against userProfileServiceName
+func Add(userProfileServiceName string, creator Creator) {
+	if _, ok := Creators[userProfileServiceName]; ok {
+		panic(fmt.Sprintf("UserProfileService with name %q already exists", userProfileServiceName))
 	}
-}
-
-func TestDuplicateKeys(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			assert.Fail(t, "Should have recovered")
-		}
-	}()
-
-	Add("dupe", func() Interceptor { return &testMiddleware{} })
-	Add("dupe", func() Interceptor { return &testMiddleware{} })
-	assert.Fail(t, "Should have panicked")
-}
-
-func TestDoesNotExist(t *testing.T) {
-	dne := Interceptors["DNE"]
-	assert.Nil(t, dne)
+	Creators[userProfileServiceName] = creator
 }

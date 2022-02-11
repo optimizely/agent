@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
+ * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -38,6 +38,9 @@ import (
 
 	// Initiate the loading of the interceptor plugins
 	_ "github.com/optimizely/agent/plugins/interceptors/all"
+
+	// Initiate the loading of the userprofileservice plugins
+	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
 	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
@@ -83,6 +86,11 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	// https://github.com/spf13/viper/issues/406
 	if interceptors, ok := v.Get("server.interceptors").(map[string]interface{}); ok {
 		conf.Server.Interceptors = interceptors
+	}
+
+	// Check if JSON string was set using OPTIMIZELY_CLIENT_USERPROFILESERVICE environment variable
+	if userProfileService := v.GetStringMap("client.userprofileservice"); userProfileService != nil {
+		conf.Client.UserProfileService = userProfileService
 	}
 
 	return conf

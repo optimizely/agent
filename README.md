@@ -95,6 +95,7 @@ Below is a comprehensive list of available configuration properties.
 |client.pollingInterval|OPTIMIZELY_CLIENT_POLLINGINTERVAL|The time between successive polls for updated project configuration. Default: 1m|
 |client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
 |client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+(:\\w+)?$|
+|client.userProfileService|OPTIMIZELY_CLIENT_USERPROFILESERVICE| Property used to enable and set UserProfileServices. Default: ./config.yaml|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
@@ -285,6 +286,9 @@ to provide a namespaced environment for custom logic. Plugins must be compiled a
 
 ### Interceptor Plugins
 * [httplog](./plugins/interceptors/httplog) - Adds HTTP request logging based on [go-chi/httplog](https://github.com/go-chi/httplog).
+
+## UserProfileService Plugins
+* [UserProfileService](./plugins/userprofileservice/README.md) - Adds UserProfileService.
 
 ## Authorization
 Optimizely Agent supports authorization workflows based on OAuth and JWT standards, allowing you to protect access to its API and Admin interfaces. For details, see [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization).

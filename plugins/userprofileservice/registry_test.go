@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2022, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -14,33 +14,37 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package interceptors //
-package interceptors
+// Package userprofileservice //
+package userprofileservice
 
 import (
-	"net/http"
 	"testing"
 
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/stretchr/testify/assert"
 )
 
-type testMiddleware struct {
-	called bool
+type mockUserProfileService struct {
 }
 
-func (m *testMiddleware) Handler() func(http.Handler) http.Handler {
-	m.called = true
-	return nil
+// Lookup is used to retrieve past bucketing decisions for users
+func (u *mockUserProfileService) Lookup(userID string) decision.UserProfile {
+	return decision.UserProfile{}
+}
+
+// Save is used to save bucketing decisions for users
+func (u *mockUserProfileService) Save(profile decision.UserProfile) {
 }
 
 func TestAdd(t *testing.T) {
-	Add("test", func() Interceptor { return &testMiddleware{} })
-	mw := Interceptors["test"]()
-	mw.Handler()
-	if tmw, ok := mw.(*testMiddleware); ok {
-		assert.True(t, tmw.called)
-	} else {
-		assert.Fail(t, "Cannot convert to type testMiddleware")
+	mockUPSCreator := func() decision.UserProfileService {
+		return &mockUserProfileService{}
+	}
+
+	Add("mock", mockUPSCreator)
+	creator := Creators["mock"]()
+	if _, ok := creator.(*mockUserProfileService); !ok {
+		assert.Fail(t, "Cannot convert to type InMemoryUserProfileService")
 	}
 }
 
@@ -51,12 +55,16 @@ func TestDuplicateKeys(t *testing.T) {
 		}
 	}()
 
-	Add("dupe", func() Interceptor { return &testMiddleware{} })
-	Add("dupe", func() Interceptor { return &testMiddleware{} })
+	mockUPSCreator := func() decision.UserProfileService {
+		return &mockUserProfileService{}
+	}
+
+	Add("mock", mockUPSCreator)
+	Add("mock", mockUPSCreator)
 	assert.Fail(t, "Should have panicked")
 }
 
 func TestDoesNotExist(t *testing.T) {
-	dne := Interceptors["DNE"]
+	dne := Creators["DNE"]
 	assert.Nil(t, dne)
 }

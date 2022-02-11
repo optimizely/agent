@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, 2021 Optimizely, Inc. and contributors                   *
+ * Copyright 2019,2021-2022, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -55,8 +55,12 @@ func (tc *TestCache) GetClient(sdkKey string) (*optimizely.OptlyClient, error) {
 }
 
 // UpdateConfigs sets called boolean to true for testing
-func (m *TestCache) UpdateConfigs(_ string) {
-	m.updateConfigsCalled = true
+func (tc *TestCache) UpdateConfigs(_ string) {
+	tc.updateConfigsCalled = true
+}
+
+// SetUserProfileService sets userProfileService to be used for the given sdkKey
+func (tc *TestCache) SetUserProfileService(sdkKey, userProfileService string) {
 }
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {

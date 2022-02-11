@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2022, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -14,49 +14,11 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package interceptors //
-package interceptors
+// Package all //
+package all
 
 import (
-	"net/http"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	// Register your userProfileService here if it is created outside the userprofileservice/services package
+	// Also, make sure your UPS calls `userprofileservice.Add()` in its init() method
+	_ "github.com/optimizely/agent/plugins/userprofileservice/services"
 )
-
-type testMiddleware struct {
-	called bool
-}
-
-func (m *testMiddleware) Handler() func(http.Handler) http.Handler {
-	m.called = true
-	return nil
-}
-
-func TestAdd(t *testing.T) {
-	Add("test", func() Interceptor { return &testMiddleware{} })
-	mw := Interceptors["test"]()
-	mw.Handler()
-	if tmw, ok := mw.(*testMiddleware); ok {
-		assert.True(t, tmw.called)
-	} else {
-		assert.Fail(t, "Cannot convert to type testMiddleware")
-	}
-}
-
-func TestDuplicateKeys(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			assert.Fail(t, "Should have recovered")
-		}
-	}()
-
-	Add("dupe", func() Interceptor { return &testMiddleware{} })
-	Add("dupe", func() Interceptor { return &testMiddleware{} })
-	assert.Fail(t, "Should have panicked")
-}
-
-func TestDoesNotExist(t *testing.T) {
-	dne := Interceptors["DNE"]
-	assert.Nil(t, dne)
-}

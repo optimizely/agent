@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -82,6 +82,8 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
 	assert.Equal(t, "^\\w+(:\\w+)?$", conf.Client.SdkKeyRegex)
+	assert.Equal(t, "", conf.Client.UserProfileService["default"])
+	assert.Equal(t, map[string]interface{}{}, conf.Client.UserProfileService["services"])
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)

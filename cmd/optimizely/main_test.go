@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022 Optimizely, Inc. and contributors               *
+ * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -56,7 +56,7 @@ func assertServer(t *testing.T, actual config.ServerConfig, assertPlugins bool) 
 	}
 }
 
-func assertClient(t *testing.T, actual config.ClientConfig) {
+func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileService bool) {
 	assert.Equal(t, 10*time.Second, actual.PollingInterval)
 	assert.Equal(t, 1, actual.BatchSize)
 	assert.Equal(t, 10, actual.QueueSize)
@@ -64,6 +64,29 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
+	if assertUserProfileService {
+		assert.Equal(t, "in-memory", actual.UserProfileService["default"])
+		userProfileServices := map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				// Viper.set is case in-sensitive
+				"storagestrategy": "fifo",
+			},
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+			},
+			"rest": map[string]interface{}{
+				"host":       "http://localhost",
+				"lookuppath": "/ups/lookup",
+				"savepath":   "/ups/save",
+				"headers":    map[string]interface{}{"content-type": "application/json"},
+			},
+			"custom": map[string]interface{}{
+				"path": "http://test2.com",
+			},
+		}
+		assert.Equal(t, userProfileServices, actual.UserProfileService["services"])
+	}
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -141,7 +164,7 @@ func TestViperYaml(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, true)
-	assertClient(t, actual.Client)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -178,6 +201,29 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
 	v.Set("client.sdkKeyRegex", "custom-regex")
+	services := map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"storageStrategy": "fifo",
+		},
+		"redis": map[string]interface{}{
+			"host":     "localhost:6379",
+			"password": "",
+		},
+		"rest": map[string]interface{}{
+			"host":       "http://localhost",
+			"lookuppath": "/ups/lookup",
+			"savepath":   "/ups/save",
+			"headers":    map[string]interface{}{"content-type": "application/json"},
+		},
+		"custom": map[string]interface{}{
+			"path": "http://test2.com",
+		},
+	}
+	userProfileServices := map[string]interface{}{
+		"default":  "in-memory",
+		"services": services,
+	}
+	v.Set("client.userProfileService", userProfileServices)
 
 	v.Set("log.pretty", true)
 	v.Set("log.includeSdkKey", false)
@@ -231,7 +277,7 @@ func TestViperProps(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, true)
-	assertClient(t, actual.Client)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -264,6 +310,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"}},"custom":{"path":"http://test2.com"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")
@@ -293,7 +340,7 @@ func TestViperEnv(t *testing.T) {
 
 	assertRoot(t, actual)
 	assertServer(t, actual.Server, false)
-	assertClient(t, actual.Client)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -34,8 +34,9 @@ var ErrForcedVariationsUninitialized = errors.New("client forced variations stor
 // OptlyClient wraps an instance of the OptimizelyClient to provide higher level functionality
 type OptlyClient struct {
 	*optimizelyclient.OptimizelyClient
-	ConfigManager    SyncedConfigManager
-	ForcedVariations *decision.MapExperimentOverridesStore
+	ConfigManager      SyncedConfigManager
+	ForcedVariations   *decision.MapExperimentOverridesStore
+	UserProfileService decision.UserProfileService
 }
 
 // Decision Model

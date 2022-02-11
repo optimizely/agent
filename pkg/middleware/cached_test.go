@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -44,7 +44,11 @@ func (m *MockCache) GetClient(key string) (*optimizely.OptlyClient, error) {
 	return args.Get(0).(*optimizely.OptlyClient), args.Error(1)
 }
 
-func (m MockCache) UpdateConfigs(_ string) {
+func (m *MockCache) UpdateConfigs(_ string) {
+}
+
+func (m *MockCache) SetUserProfileService(sdkKey, userProfileService string) {
+	m.Called(sdkKey, userProfileService)
 }
 
 type OptlyMiddlewareTestSuite struct {
@@ -114,14 +118,18 @@ func (suite *OptlyMiddlewareTestSuite) TestGetClientMissingHeader() {
 	suite.Equal(http.StatusBadRequest, rec.Code)
 }
 
-func (suite *OptlyMiddlewareTestSuite) TestGetClient() {
+func (suite *OptlyMiddlewareTestSuite) TestGetClientWithUserProfileService() {
 	handler := suite.mw.ClientCtx(AssertOptlyClientHandler(suite, &expectedClient))
 	req := httptest.NewRequest("GET", "/", nil)
+	suite.mw.Cache.(*MockCache).On("SetUserProfileService", "EXPECTED", "in-memory")
+
 	req.Header.Add(OptlySDKHeader, "EXPECTED")
+	req.Header.Add(OptlyUPSHeader, "in-memory")
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
+	suite.mw.Cache.(*MockCache).AssertCalled(suite.T(), "SetUserProfileService", "EXPECTED", "in-memory")
 }
 
 // ErrorHandler will panic if reached.
