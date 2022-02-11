@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -30,6 +30,9 @@ var levelMap = map[logging.LogLevel]zerolog.Level{
 	logging.LogLevelWarning: zerolog.WarnLevel,
 	logging.LogLevelError:   zerolog.ErrorLevel,
 }
+
+// ShouldIncludeSDKKey Defaults to true to include the SDK in log fields
+var ShouldIncludeSDKKey = true
 
 // init overrides the Optimizely SDK logger with the default zerolog logger.
 func init() {

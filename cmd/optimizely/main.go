@@ -41,6 +41,7 @@ import (
 
 	// Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
+	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
 // Version holds the admin version
@@ -99,6 +100,10 @@ func initLogging(conf config.LogConfig) {
 	if conf.Pretty {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
+
+	// Set whether or not the SDK key is included in the logging output of agent and go-sdk
+	optimizely.ShouldIncludeSDKKey = conf.IncludeSDKKey
+	logging.IncludeSDKKeyInLogFields(conf.IncludeSDKKey)
 
 	if lvl, err := zerolog.ParseLevel(conf.Level); err != nil {
 		log.Warn().Err(err).Msg("Error parsing log level")

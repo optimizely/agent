@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -63,6 +63,13 @@ func TestGetLogger(t *testing.T) {
 	assert.Contains(t, out.String(), `"requestId":"12345"`)
 	assert.Contains(t, out.String(), `"sdkKey":"some_key"`)
 
+	optimizely.ShouldIncludeSDKKey = false
+	out = &bytes.Buffer{}
+	logger = GetLogger(req)
+	newLogger = logger.Output(out)
+	newLogger.Info().Msg("some_message")
+	assert.Contains(t, out.String(), `"requestId":"12345"`)
+	assert.NotContains(t, out.String(), `"sdkKey":"some_key"`)
 }
 
 func TestGetFeature(t *testing.T) {

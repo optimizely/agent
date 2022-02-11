@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -47,6 +47,10 @@ func TestLog(t *testing.T) {
 	logConsumer.Log(logging.LogLevelError, "error", map[string]interface{}{})
 	assert.Equal(t, "{\"level\":\"error\",\"message\":\"error\"}\n", out.String())
 	out.Reset()
+}
+
+func TestShouldIncludeSDKKeyDefaultValue(t *testing.T) {
+	assert.True(t, ShouldIncludeSDKKey)
 }
 
 func TestSetLevel(t *testing.T) {

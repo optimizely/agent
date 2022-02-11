@@ -66,8 +66,9 @@ func NewDefaultConfig() *AgentConfig {
 			EnableOverrides:     false,
 		},
 		Log: LogConfig{
-			Pretty: false,
-			Level:  "info",
+			Pretty:        false,
+			IncludeSDKKey: true,
+			Level:         "info",
 		},
 		Client: ClientConfig{
 			PollingInterval:     1 * time.Minute,
@@ -166,8 +167,9 @@ type ClientConfig struct {
 
 // LogConfig holds the log configuration
 type LogConfig struct {
-	Pretty bool   `json:"pretty"`
-	Level  string `json:"level"`
+	Pretty        bool   `json:"pretty"`
+	IncludeSDKKey bool   `json:"includeSdkKey" default:"true"`
+	Level         string `json:"level"`
 }
 
 // PluginConfigs defines the generic mapping of middleware plugins
