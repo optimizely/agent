@@ -41,7 +41,6 @@ import (
 
 	// Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
-
 	"github.com/optimizely/go-sdk/pkg/logging"
 )
 

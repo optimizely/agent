@@ -218,6 +218,7 @@ paths:
           description: Unprocessable Entity, too many operations
       requestBody:
         $ref: '#/components/requestBodies/BatchContext'
+
 components:
   parameters:
     disableTrackingParam:
@@ -322,7 +323,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/BatchContext'
+            $ref: '#/components/schemas/BatchContext'           
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
