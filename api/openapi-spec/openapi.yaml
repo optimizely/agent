@@ -218,44 +218,6 @@ paths:
           description: Unprocessable Entity, too many operations
       requestBody:
         $ref: '#/components/requestBodies/BatchContext'
-  /v1/save:
-    post:
-      summary: Save an experiment decision for a user
-      operationId: save
-      description: Saves a decision for a user in-memory.
-      responses:
-        '200':
-          description: Valid response
-        '400':
-          description: Invalid payload
-        '401':
-          description: Unauthorized, invalid JWT
-        '403':
-          $ref: '#/components/responses/Forbidden'
-      requestBody:
-        $ref: '#/components/requestBodies/SaveContext'
-  /v1/lookup:
-    # parameters:
-    #   - $ref: '#/components/parameters/UserId'
-    post:
-      summary: Get saved decision for a user
-      operationId: lookup
-      description: Get a decision for a user from in-memory.
-      responses:
-        '200':
-          description: Valid response
-          content:
-            application/json:
-              schema:
-                  $ref: '#/components/schemas/LookupContext'
-        '400':
-          description: Invalid payload
-        '401':
-          description: Unauthorized, invalid JWT
-        '403':
-          $ref: '#/components/responses/Forbidden'
-      requestBody:
-        $ref: '#/components/requestBodies/LookupContext'
 components:
   parameters:
     disableTrackingParam:
@@ -284,13 +246,6 @@ components:
       name: keys
       required: false
       description: Flag keys for decision
-      schema:
-        type: string
-    UserId:
-      in: query
-      name: userID
-      required: true
-      description: User ID of user
       schema:
         type: string
     experimentKeyParam:
@@ -368,18 +323,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/BatchContext'
-    SaveContext:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SaveContext'
-    LookupContext:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/LookupRequest'
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -662,42 +605,6 @@ components:
       required:
         - id
         - key
-    SaveContext:
-      properties:
-        experimentBucketMap:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/ExperimentSaveBucket'
-        user_id:
-          type: string
-    LookupContext:
-      properties:
-        experiment_bucket_map:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/ExperimentLookupUpBucket'
-        userId:
-          type: string
-    ExperimentLookupUpBucket:
-      properties:
-        savedExperimentId:
-            type: object
-            additionalProperties:
-              $ref: '#/components/schemas/VariationId'
-    ExperimentSaveBucket:
-      properties:
-        experimentIdToSave:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/VariationId'
-    VariationId:
-      properties:
-        variation_id:
-          type: string
-    LookupRequest:
-      properties:
-        userId:
-          type: string
     OptimizelyVariable:
       properties:
         id:
