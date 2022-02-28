@@ -100,7 +100,7 @@ Below is a comprehensive list of available configuration properties.
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|
 |name|OPTIMIZELY_NAME|Agent name. Default: optimizely|
-|sdkKeys|OPTIMIZELY_SDKKEYS|List of SDK keys used to initialize on startup|
+|sdkKeys|OPTIMIZELY_SDKKEYS|Comma delimited list of SDK keys used to initialize on startup|
 |server.allowedHosts|OPTIMIZELY_SERVER_ALLOWEDHOSTS|List of allowed request host values. Requests whose host value does not match either the configured server.host, or one of these, will be rejected with a 404 response. To match all subdomains, you can use a leading dot (for example `.example.com` matches `my.example.com`, `hello.world.example.com`, etc.). You can use the value `.` to disable allowed host checking, allowing requests with any host. Request host is determined in the following priority order: 1. X-Forwarded-Host header value, 2. Forwarded header host= directive value, 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request). Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.|
 |server.batchRequests.maxConcurrency|OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY|Number of requests running in parallel. Default: 10|
 |server.batchRequests.operationsLimit|OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT|Number of allowed operations. ( will flag an error if the number of operations exeeds this parameter) Default: 500|
