@@ -77,8 +77,8 @@ def test_overrides(session_obj):
 expected_empty_user = '{"error":"userId cannot be empty"}\n'
 expected_empty_experiment_key = '{"error":"experimentKey cannot be empty"}\n'
 expected_empty_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' \
-                               '"variationKey":"","prevVariationKey":"variation_2","messages":' \
-                               '["removing previous override"]}\n'
+                               '"variationKey":"","prevVariationKey":"","messages":' \
+                               '["no pre-existing override"]}\n'
 expected_invalid_user = '{"userId":"invalid_user","experimentKey":"ab_test1",' \
                         '"variationKey":"variation_2","prevVariationKey":"",' \
                         '"messages":null}\n'
