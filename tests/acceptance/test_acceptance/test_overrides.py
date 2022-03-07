@@ -42,7 +42,7 @@ def test_overrides(session_obj):
     # Override with "variation_2"
     resp_over = override_variation(session_obj, override_with='variation_2')
     assert resp_over.status_code == 200, resp_over.text
-    assert "updating previous override" in resp_over.json()['messages']
+    assert resp_over.json()['messages'] == None
     assert resp_over.json()['prevVariationKey'] == 'invalid_variation'
 
     # Confirm new variation is "variation_2" (activate)
