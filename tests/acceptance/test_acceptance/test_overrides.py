@@ -42,8 +42,8 @@ def test_overrides(session_obj):
     # Override with "variation_2"
     resp_over = override_variation(session_obj, override_with='variation_2')
     assert resp_over.status_code == 200, resp_over.text
-    assert resp_over.json()['messages'] == None
-    assert resp_over.json()['prevVariationKey'] == ''
+    assert "updating previous override" in resp_over.json()['messages']
+    assert resp_over.json()['prevVariationKey'] == 'invalid_variation'
 
     # Confirm new variation is "variation_2" (activate)
     activating_again = activate_experiment(session_obj)
@@ -80,12 +80,13 @@ expected_empty_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' 
                                '"variationKey":"","prevVariationKey":"","messages":' \
                                '["no pre-existing override"]}\n'
 expected_invalid_user = '{"userId":"invalid_user","experimentKey":"ab_test1",' \
-                        '"variationKey":"variation_2","prevVariationKey":"",' \
-                        '"messages":null}\n'
+                        '"variationKey":"variation_2","prevVariationKey":"variation_2",' \
+                        '"messages":' \
+                                  '["updating previous override"]}\n'
 expected_invalid_experiment_key = '{"userId":"matjaz","experimentKey":' \
                                   '"invalid_experimentKey","variationKey":"variation_2",' \
-                                  '"prevVariationKey":"","messages":' \
-                                  '["experimentKey not found in configuration"]}\n'
+                                  '"prevVariationKey":"variation_2","messages":' \
+                                  '["experimentKey not found in configuration","updating previous override"]}\n'
 expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' \
                                  '"variationKey":"invalid_variation",' \
                                  '"prevVariationKey":"","messages":' \

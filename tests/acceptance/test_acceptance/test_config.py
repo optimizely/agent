@@ -7,9 +7,9 @@ from tests.acceptance.helpers import ENDPOINT_CONFIG
 from tests.acceptance.helpers import create_and_validate_request_and_response
 
 expected_config = """{
-  "environmentKey": "",
-  "sdkKey": "",
-  "revision": "111",
+  "environmentKey": "production",
+  "sdkKey": "KZbunNn9bVfBWLpZPq2XC4",
+  "revision": "125",
   "experimentsMap": {
     "ab_test1": {
       "id": "16911963060",
@@ -19,7 +19,7 @@ expected_config = """{
         "variation_1": {
           "id": "16905941566",
           "key": "variation_1",
-          "featureEnabled": false,
+          "featureEnabled": true,
           "variablesMap": {
             
           }
@@ -27,7 +27,7 @@ expected_config = """{
         "variation_2": {
           "id": "16927770169",
           "key": "variation_2",
-          "featureEnabled": false,
+          "featureEnabled": true,
           "variablesMap": {
             
           }
@@ -75,6 +75,82 @@ expected_config = """{
               "id": "16906801184",
               "key": "16906801184",
               "featureEnabled": true,
+              "variablesMap": {
+                "bool_var": {
+                  "id": "16932993089",
+                  "key": "bool_var",
+                  "type": "boolean",
+                  "value": "true"
+                },
+                "double_var": {
+                  "id": "16923002469",
+                  "key": "double_var",
+                  "type": "double",
+                  "value": "5.6"
+                },
+                "int_var": {
+                  "id": "16937161477",
+                  "key": "int_var",
+                  "type": "integer",
+                  "value": "1"
+                },
+                "str_var": {
+                  "id": "16916052157",
+                  "key": "str_var",
+                  "type": "string",
+                  "value": "hello"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "18263416053",
+          "key": "18263416053",
+          "audiences": "",
+          "variationsMap": {
+            "18317043587": {
+              "id": "18317043587",
+              "key": "18317043587",
+              "featureEnabled": true,
+              "variablesMap": {
+                "bool_var": {
+                  "id": "16932993089",
+                  "key": "bool_var",
+                  "type": "boolean",
+                  "value": "true"
+                },
+                "double_var": {
+                  "id": "16923002469",
+                  "key": "double_var",
+                  "type": "double",
+                  "value": "5.6"
+                },
+                "int_var": {
+                  "id": "16937161477",
+                  "key": "int_var",
+                  "type": "integer",
+                  "value": "1"
+                },
+                "str_var": {
+                  "id": "16916052157",
+                  "key": "str_var",
+                  "type": "string",
+                  "value": "hello"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "default-16928980969",
+          "key": "default-16928980969",
+          "audiences": "",
+          "variationsMap": {
+            "off": {
+              "id": "31387",
+              "key": "off",
+              "featureEnabled": false,
               "variablesMap": {
                 "bool_var": {
                   "id": "16932993089",
@@ -178,6 +254,36 @@ expected_config = """{
               }
             }
           }
+        },
+        {
+          "id": "18234756110",
+          "key": "18234756110",
+          "audiences": "",
+          "variationsMap": {
+            "18244927831": {
+              "id": "18244927831",
+              "key": "18244927831",
+              "featureEnabled": true,
+              "variablesMap": {
+                
+              }
+            }
+          }
+        },
+        {
+          "id": "default-16917900798",
+          "key": "default-16917900798",
+          "audiences": "",
+          "variationsMap": {
+            "off": {
+              "id": "31389",
+              "key": "off",
+              "featureEnabled": false,
+              "variablesMap": {
+                
+              }
+            }
+          }
         }
       ],
       "variablesMap": {
@@ -224,6 +330,21 @@ expected_config = """{
             "16908510336": {
               "id": "16908510336",
               "key": "16908510336",
+              "featureEnabled": true,
+              "variablesMap": {
+                
+              }
+            }
+          }
+        },
+        {
+          "id": "default-16909553406",
+          "key": "default-16909553406",
+          "audiences": "",
+          "variationsMap": {
+            "off": {
+              "id": "31386",
+              "key": "off",
               "featureEnabled": false,
               "variablesMap": {
                 
@@ -260,6 +381,21 @@ expected_config = """{
               }
             }
           }
+        },
+        {
+          "id": "default-16943340293",
+          "key": "default-16943340293",
+          "audiences": "",
+          "variationsMap": {
+            "off": {
+              "id": "31385",
+              "key": "off",
+              "featureEnabled": false,
+              "variablesMap": {
+                
+              }
+            }
+          }
         }
       ],
       "variablesMap": {
@@ -290,6 +426,21 @@ expected_config = """{
               }
             }
           }
+        },
+        {
+          "id": "default-16917103311",
+          "key": "default-16917103311",
+          "audiences": "",
+          "variationsMap": {
+            "off": {
+              "id": "31388",
+              "key": "off",
+              "featureEnabled": false,
+              "variablesMap": {
+                
+              }
+            }
+          }
         }
       ],
       "variablesMap": {
@@ -297,6 +448,80 @@ expected_config = """{
       },
       "experimentsMap": {
         
+      }
+    },
+    "flag_ab_test1": {
+      "id": "11079",
+      "key": "flag_ab_test1",
+      "experimentRules": [
+        {
+          "id": "16911963060",
+          "key": "ab_test1",
+          "audiences": "\\"Audience1\\"",
+          "variationsMap": {
+            "variation_1": {
+              "id": "16905941566",
+              "key": "variation_1",
+              "featureEnabled": true,
+              "variablesMap": {
+                
+              }
+            },
+            "variation_2": {
+              "id": "16927770169",
+              "key": "variation_2",
+              "featureEnabled": true,
+              "variablesMap": {
+                
+              }
+            }
+          }
+        }
+      ],
+      "deliveryRules": [
+        {
+          "id": "default-rollout-11079-16935023792",
+          "key": "default-rollout-11079-16935023792",
+          "audiences": "",
+          "variationsMap": {
+            "off": {
+              "id": "31390",
+              "key": "off",
+              "featureEnabled": false,
+              "variablesMap": {
+                
+              }
+            }
+          }
+        }
+      ],
+      "variablesMap": {
+        
+      },
+      "experimentsMap": {
+        "ab_test1": {
+          "id": "16911963060",
+          "key": "ab_test1",
+          "audiences": "\\"Audience1\\"",
+          "variationsMap": {
+            "variation_1": {
+              "id": "16905941566",
+              "key": "variation_1",
+              "featureEnabled": true,
+              "variablesMap": {
+                
+              }
+            },
+            "variation_2": {
+              "id": "16927770169",
+              "key": "variation_2",
+              "featureEnabled": true,
+              "variablesMap": {
+                
+              }
+            }
+          }
+        }
       }
     }
   },

@@ -165,8 +165,7 @@ expected_flag_keys = r"""
       }
     },
     "reasons": [
-      "Audiences for experiment 16939051724 collectively evaluated to true.",
-      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
+      "Audiences for experiment 16939051724 collectively evaluated to true."
     ]
   },
   {
@@ -181,8 +180,22 @@ expected_flag_keys = r"""
       }
     },
     "reasons": [
-      "Audiences for experiment 16932940705 collectively evaluated to true.",
-      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
+      "Audiences for experiment 16932940705 collectively evaluated to true."
+    ]
+  },
+  {
+    "variationKey": "variation_1",
+    "enabled": true,
+    "ruleKey": "ab_test1",
+    "flagKey": "flag_ab_test1",
+    "userContext": {
+      "userId": "matjaz",
+      "attributes": {
+        "attr_1": "hola"
+      }
+    },
+    "reasons": [
+      "Audiences for experiment ab_test1 collectively evaluated to true."
     ]
   },
   {
@@ -197,8 +210,7 @@ expected_flag_keys = r"""
       }
     },
     "reasons": [
-      "Audiences for experiment 16941022436 collectively evaluated to true.",
-      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
+      "Audiences for experiment 16941022436 collectively evaluated to true."
     ],
     "variables": {
       "bool_var": true,
@@ -230,7 +242,7 @@ expected_flag_keys = r"""
     "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
         ({}, expected_flag_keys, 200, True, True),
         ({"keys": []}, expected_flag_keys, 200, True, True),
-        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200, True, True),
+        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5","flag_ab_test1"]}, expected_flag_keys, 200, True, True),
     ],
     ids=["missig_flagkey_parameter", "no flag key specified", "multiple flag keys"])
 def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,

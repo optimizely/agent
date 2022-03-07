@@ -176,6 +176,20 @@ expected_activate_type_exper = """[
 expected_activate_type_feat = """[
   {
     "userId": "matjaz",
+    "experimentKey": "",
+    "featureKey": "feature_1",
+    "variationKey": "",
+    "type": "feature",
+    "variables": {
+      "bool_var": true,
+      "double_var": 5.6,
+      "int_var": 1,
+      "str_var": "hello"
+    },
+    "enabled": true
+  },
+  {
+    "userId": "matjaz",
     "experimentKey": "feature_2_test",
     "featureKey": "feature_2",
     "variationKey": "variation_1",
@@ -208,16 +222,10 @@ expected_activate_type_feat = """[
   },
   {
     "userId": "matjaz",
-    "experimentKey": "",
-    "featureKey": "feature_1",
-    "variationKey": "",
+    "experimentKey": "ab_test1",
+    "featureKey": "flag_ab_test1",
+    "variationKey": "variation_1",
     "type": "feature",
-    "variables": {
-      "bool_var": true,
-      "double_var": 5.6,
-      "int_var": 1,
-      "str_var": "hello"
-    },
     "enabled": true
   }
 ]"""
@@ -529,6 +537,14 @@ expected_activate_with_config = """[
     "experimentKey": "",
     "featureKey": "feature_5",
     "variationKey": "",
+    "type": "feature",
+    "enabled": true
+  },
+  {
+    "userId": "matjaz",
+    "experimentKey": "ab_test1",
+    "featureKey": "flag_ab_test1",
+    "variationKey": "variation_1",
     "type": "feature",
     "enabled": true
   }
