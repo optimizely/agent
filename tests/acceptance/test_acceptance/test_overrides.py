@@ -77,16 +77,15 @@ def test_overrides(session_obj):
 expected_empty_user = '{"error":"userId cannot be empty"}\n'
 expected_empty_experiment_key = '{"error":"experimentKey cannot be empty"}\n'
 expected_empty_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' \
-                               '"variationKey":"","prevVariationKey":"","messages":' \
-                               '["no pre-existing override"]}\n'
+                               '"variationKey":"","prevVariationKey":"variation_2","messages":' \
+                               '["removing previous override"]}\n'
 expected_invalid_user = '{"userId":"invalid_user","experimentKey":"ab_test1",' \
-                        '"variationKey":"variation_2","prevVariationKey":"variation_2",' \
-                        '"messages":' \
-                                  '["updating previous override"]}\n'
+                        '"variationKey":"variation_2","prevVariationKey":"",' \
+                        '"messages":null}\n'
 expected_invalid_experiment_key = '{"userId":"matjaz","experimentKey":' \
                                   '"invalid_experimentKey","variationKey":"variation_2",' \
-                                  '"prevVariationKey":"variation_2","messages":' \
-                                  '["experimentKey not found in configuration","updating previous override"]}\n'
+                                  '"prevVariationKey":"","messages":' \
+                                  '["experimentKey not found in configuration"]}\n'
 expected_invalid_variation_key = '{"userId":"matjaz","experimentKey":"ab_test1",' \
                                  '"variationKey":"invalid_variation",' \
                                  '"prevVariationKey":"","messages":' \
