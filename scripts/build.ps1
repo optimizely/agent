@@ -101,7 +101,7 @@ function main($mode) {
     # noninteractive mode: ./build.ps1 noninteractive (default: interactive)
 
     # check if go is installed, if not, install it.
-    checkPrereq 'Go Programming Language amd64 go1.15.15' https://dl.google.com/go/go1.15.15.windows-amd64.msi eabcf66d6d8f44de21a96a18d957990c62f21d7fadcb308a25c6b58c79ac2b96 $mode
+    checkPrereq 'Go Programming Language amd64 go1.15.15' https://dl.google.com/go/go1.15.15.windows-amd64.msi C76656A253CC4C7A0BA7AE006CADC0BF2D6DF7066ACB8DF84460EAC94DC3A7D1 $mode
     # same but with git
     checkPrereq 'Git version 2.24.1.2' https://github.com/git-for-windows/git/releases/download/v2.24.1.windows.2/Git-2.24.1.2-64-bit.exe 34e484936105713e7d0c2f421bf62e4cfe652f6638a9ecb5df2186c1918753e2 $mode
 
