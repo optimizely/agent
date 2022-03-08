@@ -28,7 +28,7 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/jwtauth"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/rs/zerolog/log"
 )
