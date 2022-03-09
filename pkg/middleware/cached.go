@@ -75,7 +75,7 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 			GetLogger(r).Error().Err(err).Msg("Initializing OptimizelyClient")
 
 			switch {
-			// Check if error indicates a 403 from the CDN. Ideally we'd use errors.Is(), but the go-sdk isn't 1.15
+			// Check if error indicates a 403 from the CDN. Ideally we'd use errors.Is(), but the go-sdk isn't 1.13
 			case strings.Contains(err.Error(), "403"):
 				RenderError(err, http.StatusForbidden, w, r)
 			case errors.Is(err, optimizely.ErrValidationFailure):
