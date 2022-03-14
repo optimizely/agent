@@ -27,7 +27,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

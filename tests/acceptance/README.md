@@ -1,5 +1,8 @@
 ### API acceptance tests for Optimizely Agent
 
+Acceptance tests run against a real Optimizely project, using REST API calls.
+The project lives on app.optimzely.com and is maintained by the Full Stack team at Optimizely.
+
 First, do everything from the agent's root directory. 
 
 Python version 3.7 or greater is required.
@@ -9,9 +12,10 @@ Install requirements `pip install -r tests/acceptance/requirements.txt`
 
 
 Run tests  
-1. `pytest -v tests/acceptance/test_acceptance/ --host http://localhost:8080`
+`MYHOST="http://localhost:8080" make test-acceptance`
 
-`--host` can point to any URL where agent service is located
+You can point `MYHOST` to any URL where agent service is located.
 
-For a nicer output you can add additional flags and run this  
-`pytest -vv -rA --diff-type=split tests/acceptance/test_acceptance/ --host http://localhost:8080`
+If you want to run an individual test add TEST variable in front like so:
+`TEST="test_activate__disable_tracking" MYHOST="http://localhost:8080" make test-acceptance`  
+The TEST variable is based on Pytest's -k pattern matching flag so you can provide a full name of the test to only run that test, or a partial name which will run all tests that match that name pattern. 

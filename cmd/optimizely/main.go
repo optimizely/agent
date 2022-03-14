@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -35,6 +35,13 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
+
+	// Initiate the loading of the interceptor plugins
+	_ "github.com/optimizely/agent/plugins/interceptors/all"
+
+	// Initiate the loading of the userprofileservice plugins
+	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
+	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
 // Version holds the admin version
@@ -76,6 +83,16 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		log.Info().Err(err).Msg("Unable to marshal configuration.")
 	}
 
+	// https://github.com/spf13/viper/issues/406
+	if interceptors, ok := v.Get("server.interceptors").(map[string]interface{}); ok {
+		conf.Server.Interceptors = interceptors
+	}
+
+	// Check if JSON string was set using OPTIMIZELY_CLIENT_USERPROFILESERVICE environment variable
+	if userProfileService := v.GetStringMap("client.userprofileservice"); userProfileService != nil {
+		conf.Client.UserProfileService = userProfileService
+	}
+
 	return conf
 }
 
@@ -83,6 +100,10 @@ func initLogging(conf config.LogConfig) {
 	if conf.Pretty {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
+
+	// Set whether or not the SDK key is included in the logging output of agent and go-sdk
+	optimizely.ShouldIncludeSDKKey = conf.IncludeSDKKey
+	logging.IncludeSDKKeyInLogFields(conf.IncludeSDKKey)
 
 	if lvl, err := zerolog.ParseLevel(conf.Level); err != nil {
 		log.Warn().Err(err).Msg("Error parsing log level")

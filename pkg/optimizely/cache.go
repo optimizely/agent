@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -19,12 +19,14 @@ package optimizely
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -37,10 +39,11 @@ import (
 // OptlyCache implements the Cache interface backed by a concurrent map.
 // The default OptlyClient lookup is based on supplied configuration via env variables.
 type OptlyCache struct {
-	loader   func(string) (*OptlyClient, error)
-	optlyMap cmap.ConcurrentMap
-	ctx      context.Context
-	wg       sync.WaitGroup
+	loader                func(string) (*OptlyClient, error)
+	optlyMap              cmap.ConcurrentMap
+	userProfileServiceMap cmap.ConcurrentMap
+	ctx                   context.Context
+	wg                    sync.WaitGroup
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
@@ -51,11 +54,13 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 		return sdkconfig.NewPollingProjectConfigManager(sdkkey, options...)
 	}
 
+	userProfileServiceMap := cmap.New()
 	cache := &OptlyCache{
-		ctx:      ctx,
-		wg:       sync.WaitGroup{},
-		loader:   defaultLoader(conf, metricsRegistry, cmLoader, event.NewBatchEventProcessor),
-		optlyMap: cmap.New(),
+		ctx:                   ctx,
+		wg:                    sync.WaitGroup{},
+		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
+		optlyMap:              cmap.New(),
+		userProfileServiceMap: userProfileServiceMap,
 	}
 
 	return cache
@@ -65,7 +70,12 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 func (c *OptlyCache) Init(sdkKeys []string) {
 	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
-			log.Warn().Str("sdkKey", sdkKey).Msg("Failed to initialize Optimizely Client.")
+			message := "Failed to initialize Optimizely Client."
+			if ShouldIncludeSDKKey {
+				log.Warn().Str("sdkKey", sdkKey).Msg(message)
+				continue
+			}
+			log.Warn().Msg(message)
 		}
 	}
 }
@@ -114,6 +124,11 @@ func (c *OptlyCache) UpdateConfigs(sdkKey string) {
 	}
 }
 
+// SetUserProfileService sets userProfileService to be used for the given sdkKey
+func (c *OptlyCache) SetUserProfileService(sdkKey, userProfileService string) {
+	c.userProfileServiceMap.SetIfAbsent(sdkKey, userProfileService)
+}
+
 // Wait for all optimizely clients to gracefully shutdown
 func (c *OptlyCache) Wait() {
 	c.wg.Wait()
@@ -134,6 +149,7 @@ func regexValidator(sdkKeyRegex string) func(string) bool {
 func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
+	userProfileServiceMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
 	validator := regexValidator(conf.SdkKeyRegex)
@@ -144,7 +160,12 @@ func defaultLoader(
 		var configManager SyncedConfigManager
 
 		if !validator(clientKey) {
-			log.Warn().Msgf("failed to validate sdk key: %q", sdkKey)
+			message := "failed to validate sdk key"
+			if ShouldIncludeSDKKey {
+				log.Warn().Msgf("%v: %q", message, sdkKey)
+			} else {
+				log.Warn().Msg(message)
+			}
 			return &OptlyClient{}, ErrValidationFailure
 		}
 
@@ -158,7 +179,12 @@ func defaultLoader(
 			datafileAccessToken = clientKeySplit[1]
 		}
 
-		log.Info().Str("sdkKey", sdkKey).Msg("Loading Optimizely instance")
+		message := "Loading Optimizely instance"
+		if ShouldIncludeSDKKey {
+			log.Info().Str("sdkKey", sdkKey).Msg(message)
+		} else {
+			log.Info().Msg(message)
+		}
 
 		if datafileAccessToken != "" {
 			configManager = pcFactory(
@@ -192,12 +218,64 @@ func defaultLoader(
 
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
-		optimizelyClient, err := optimizelyFactory.Client(
+
+		clientOptions := []client.OptionFunc{
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
-		)
+		}
 
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations}, err
+		var clientUserProfileService decision.UserProfileService
+		if clientUserProfileService = getUserProfileService(sdkKey, userProfileServiceMap, conf); clientUserProfileService != nil {
+			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
+		}
+
+		optimizelyClient, err := optimizelyFactory.Client(
+			clientOptions...,
+		)
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService}, err
 	}
+}
+
+// Returns the registered userProfileService against the sdkKey
+func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentMap, conf config.ClientConfig) decision.UserProfileService {
+
+	intializeUPSWithName := func(upsName string) decision.UserProfileService {
+		if clientConfigUPSMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
+			if userProfileServiceConfig, ok := clientConfigUPSMap[upsName].(map[string]interface{}); ok {
+				// Check if any such user profile service was added using `Add` method
+				if creator, ok := userprofileservice.Creators[upsName]; ok {
+					if upsInstance := creator(); upsInstance != nil {
+						success := true
+						// Trying to map userProfileService from client config to struct
+						if upsConfig, err := json.Marshal(userProfileServiceConfig); err != nil {
+							log.Warn().Err(err).Msgf(`Error marshaling user profile service config: "%s"`, upsName)
+							success = false
+						} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
+							log.Warn().Err(err).Msgf(`Error unmarshalling user profile service config: "%s"`, upsName)
+							success = false
+						}
+						if success {
+							log.Info().Msgf(`UserProfileService of type: "%s" created for sdkKey: "%s"`, upsName, sdkKey)
+							return upsInstance
+						}
+					}
+				}
+			}
+		}
+		return nil
+	}
+
+	// Check if ups name was provided in the request headers
+	if ups, ok := userProfileServiceMap.Get(sdkKey); ok {
+		if upsNameStr, ok := ups.(string); ok && upsNameStr != "" {
+			return intializeUPSWithName(upsNameStr)
+		}
+	}
+
+	// Check if any default user profile service was provided and if it exists in client config
+	if upsNameStr, ok := conf.UserProfileService["default"].(string); ok && upsNameStr != "" {
+		return intializeUPSWithName(upsNameStr)
+	}
+	return nil
 }

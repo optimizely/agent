@@ -19,10 +19,11 @@ package jwtauth
 
 import (
 	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/stretchr/testify/suite"
 )
 
 type JWTAuthTestSuite struct {

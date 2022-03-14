@@ -28,6 +28,98 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
+  /v1/datafile:
+    get:
+      summary: >-
+        Return the datafile for the given environment. If you need strict consistency, you can pass the datafile to other Optimizely instances. 
+        so that all initialize from exactly the same datafile version (rather than each fetching the datafile separately from the Optimizely CDN).  
+      operationId: getDatafile
+      description: Returns the json datafile for the given environment.
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                description: Optimizely Datafile
+                type: object
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/decide:
+    parameters:
+      - $ref: '#/components/parameters/decideKeysParam'
+    post:
+      summary: Decide makes feature decisions for the selected query parameters.
+      operationId: decide
+      description: >-
+        Returns decision results for flag keys for a user.
+        The result for a single key is returned as an
+        OptimizelyDecision object whereas the result for multiple keys is returned as an array of OptimizelyDecision objects. If no flag key is
+        provided, decision is made for all flag keys. OptimizelyDecision object
+        contains all data required to deliver the flag rule.
+      requestBody:
+        $ref: '#/components/requestBodies/DecideContext'
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/OptimizelyDecision'
+                  - $ref: '#/components/schemas/OptimizelyDecision'
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /v1/lookup:
+    post:
+      summary: Lookup returns saved user profile.
+      operationId: lookup
+      description: >-
+        Returns the saved user profile for a user.
+      requestBody:
+        $ref: '#/components/requestBodies/LookupContext'
+      responses:
+        '200':
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: User Profile Service not found
+  /v1/save:
+    post:
+      summary: Save saves user profile.
+      operationId: save
+      description: >-
+        Saves user profile for a user.
+      requestBody:
+        $ref: '#/components/requestBodies/SaveContext'
+      responses:
+        '200':
+          description: Valid response, Profile saved.
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: User Profile Service not found
   /v1/track:
     parameters:
       - $ref: '#/components/parameters/eventKeyParam'
@@ -109,6 +201,24 @@ paths:
           $ref: '#/components/responses/UnauthorizedToken'
       requestBody:
         $ref: '#/components/requestBodies/TokenContext'
+  /v1/batch:
+    post:
+      summary: Batch multiple API endpoints into one request.
+      description:  |
+                      You can use the Batch endpoint to do things like   
+                      1. Make activate decisions for a batch of users in a short timeframe for testing purposes
+                      2. Gather responses from a bunch of activate calls into one response for comparison or analysis
+      responses:  
+
+        '200':
+          $ref: '#/components/responses/BatchResponse'
+        '400':
+          description: Bad request, invalid parameters.
+        '422':
+          description: Unprocessable Entity, too many operations
+      requestBody:
+        $ref: '#/components/requestBodies/BatchContext'
+
 components:
   parameters:
     disableTrackingParam:
@@ -130,6 +240,13 @@ components:
       name: eventKey
       required: true
       description: Key of the event we're tracking
+      schema:
+        type: string
+    decideKeysParam:
+      in: query
+      name: keys
+      required: false
+      description: Flag keys for decision
       schema:
         type: string
     experimentKeyParam:
@@ -177,12 +294,36 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
+    LookupContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LookupContext'
+    SaveContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaveContext'
+    DecideContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DecideContext'
     TokenContext:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenContext'
+    BatchContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BatchContext'           
   responses:
     Forbidden:
       description: You do not have necessary permissions for the resource
@@ -196,6 +337,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TokenError'
+    BatchResponse:
+      description: responses for each endpoint called in the batch request
+      content:
+        application/json:
+         schema:
+          $ref: '#/components/schemas/BatchResponse'    
   schemas:
     Error:
       properties:
@@ -207,36 +354,82 @@ components:
           type: string
         error_description:
           type: string
-    Experiment:
+    OptimizelyExperiment:
       properties:
         id:
           type: string
         key:
+          type: string
+        audiences:
           type: string
         variationsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Variation'
+            $ref: '#/components/schemas/OptimizelyVariation'
       required:
         - id
         - key
-    Feature:
+    OptimizelyAttribute:
       properties:
         id:
           type: string
         key:
           type: string
+    OptimizelyAudience:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        conditions:
+          type: string
+    OptimizelyEvent:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        experimentIds:
+          type: array
+          items:
+            type: string
+    OptimizelyFeature:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        experimentRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyExperiment'
+        deliveryRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyExperiment'
         variablesMap:
           type: object
           additionalProperties:
-            type: object
+            $ref: '#/components/schemas/OptimizelyVariable'
         experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
       required:
         - id
         - key
+    UserProfile:
+      properties:
+        experimentBucketMap:
+          type: object
+          properties:
+            your_experiment_id:
+              type: object
+              properties:
+                variation_id:
+                  type: string
+        userId:
+          type: string
     Decision:
       properties:
         featureKey:
@@ -258,6 +451,36 @@ components:
           additionalProperties: true
         error:
           type: string
+    OptimizelyDecision:
+      properties:
+        variables:
+          type: object
+        variationKey:
+          type: string
+        enabled:
+          type: boolean
+        ruleKey:
+          type: string
+        flagKey:
+          type: string
+        userContext:
+          type: object
+          properties:
+            userId:
+              type: string
+            attributes:
+              type: object
+              additionalProperties: true
+          required:
+            - userId
+        reasons:
+          type: array
+          items:
+            type: string
+      required:
+        - ruleKey
+        - flagKey
+        - userContext
     ActivateContext:
       properties:
         userId:
@@ -290,16 +513,32 @@ components:
             type: string
     OptimizelyConfig:
       properties:
+        environmentKey:
+          type: string
+        sdkKey:
+          type: string
         revision:
           type: string
         experimentsMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Experiment'
+            $ref: '#/components/schemas/OptimizelyExperiment'
         featuresMap:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Feature'
+            $ref: '#/components/schemas/OptimizelyFeature'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyAttribute'
+        audiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyAudience'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptimizelyEvent'
     TrackContext:
       properties:
         eventTags:
@@ -310,16 +549,64 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
-    Variation:
+    LookupContext:
+      properties:
+        userId:
+          type: string
+      required:
+        - userId
+    SaveContext:
+      $ref: '#/components/schemas/UserProfile'
+    DecideContext:
+      properties:
+        decideOptions:
+          type: array
+          items:
+            type: string
+            enum:
+              - DISABLE_DECISION_EVENT
+              - ENABLED_FLAGS_ONLY
+              - IGNORE_USER_PROFILE_SERVICE
+              - EXCLUDE_VARIABLES
+              - INCLUDE_REASONS
+        userId:
+          type: string
+        userAttributes:
+          type: object
+          additionalProperties: true
+        forcedDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForcedDecision'
+      required:
+        - userId
+    ForcedDecision:
+      properties:
+        flagKey:
+          type: string
+        ruleKey:
+          type: string
+        variationKey:
+          type: string
+      required:
+        - flagKey
+        - variationKey
+    OptimizelyVariation:
       properties:
         id:
           type: string
         key:
           type: string
+        featureEnabled:
+          type: boolean
+        variablesMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OptimizelyVariable'
       required:
         - id
         - key
-    Variable:
+    OptimizelyVariable:
       properties:
         id:
           type: string
@@ -328,7 +615,7 @@ components:
         type:
           type: string
         value:
-          type: object
+          type: string
       required:
         - id
         - key
@@ -340,6 +627,131 @@ components:
           type: string
         client_secret:
           type: string
+    BatchContext:
+      properties:
+        operations:
+          description: Array of requests to Agent endpoints, batched into one request
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchOperation'
+      required:
+        - operations
+
+    BatchOperation:
+      properties:
+        method:
+          description: The REST request method
+          type: string
+          enum:
+            - GET
+            - POST
+        url:
+          description: The base and endpoint components of the API request's path
+          type: string
+        operationID: 
+          description: Index of the request in the batch  
+          type: string
+        body:
+          description: The body for the request as JSON
+          type: object
+        parameters:
+          description: The parameters for the request as JSON
+          type: object
+        headers:
+          description: The headers for the request as JSON
+          type: object
+      example:   
+        method: "POST"
+        url: "/v1/activate"
+        operationID: 1
+        body: {"userId": "user1"}
+        parameters: {
+          "type": "feature",
+          "experimentKey": "ab_test_experiment"}
+        headers: {
+          "X-Optimizely-SDK-Key": "<sdk_key>",
+          "Content-Type": "application/json"}  
+
+    BatchResponse:
+      properties:
+        startedAt:
+          type: string
+        endedAt:
+          type: string 
+        errorCount:
+          type: integer
+        response:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchResponseItem'  
+
+    BatchResponseItem:
+      properties:
+        status:
+          type: integer
+          enum:
+            - 200 
+            - 400
+        requestID:
+          type: string
+        operationID:
+          type: string
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+        url:
+          type: string
+        body:
+          oneOf:
+            - type: array
+              items:
+                type: object
+            - type: object
+        startedAt:
+          type: string
+        endedAt:
+          type: string
+
+      example: 
+        status: 200
+        requestID: "abee6bdf-6d14-4fac-8357-769f5fd07e7c"
+        operationID: "1"
+        method: POST
+        url: "/v1/activate"
+        body:  [
+        {
+          "enabled": true,
+          "experimentKey": "new_feature_test",
+          "featureKey": "new_feature",
+          "type": "feature",
+          "userId": "user1",
+          "variables": {
+            "bool_var": true,
+            "double_var": 5.6,
+            "int_var": 1,
+          },
+          "variationKey": "variation_2"
+        },
+
+        {
+          "enabled": false,
+          "experimentKey": "flag_test_2",
+          "featureKey": "test_feature",
+          "type": "feature",
+          "userId": "user1",
+          "variables": {
+            "double": 0,
+            "json_key": {}
+          },
+          "variationKey": ""
+        }
+        ]
+
+        startedAt: "2020-09-10T10:50:37.466121-07:00"
+        endedAt: "2020-09-10T10:50:37.466192-07:00"
+
   securitySchemes:
      SdkKeyAuth:
        in: header

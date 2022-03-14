@@ -20,6 +20,8 @@ Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v
 - [getFeatureVariableDouble](doc:get-feature-variable-go#section-double)
 - [getFeatureVariableInteger](doc:get-feature-variable-go#section-integer)
 - [getFeatureVariableString](doc:get-feature-variable-go#section-string) 
+- [getEnabledFeatures](doc:get-enabled-features-go)
+
 
 ... into one, convenient endpoint:
 
@@ -71,6 +73,19 @@ This dispatches an impression and return the user’s assigned variation:
   "variationKey": "variation-key-1"
 }
 ```
+### Get All Decisions
+To get all Feature decisions for a visitor in a single request use:
+`POST /v1/activate?type=feature`
+
+To receive only the enabled features for a visitor use: 
+
+`POST /v1/activate?type=feature&enabled=true`
+
+To get all Experiment decisions for a visitor in a single request use:
+`POST /v1/activate?type=experiment`
+
+
+
 ### Tracking conversions
 
 To track events, use the same  [tracking endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/trackEvent) you use in the [SDKs' track API](doc:track-javascript):

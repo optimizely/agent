@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019-2021, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,6 +28,7 @@ import (
 
 // TestProjectConfig is a project config backed by a datafile
 type TestProjectConfig struct {
+	Datafile             string
 	AccountID            string
 	ProjectID            string
 	Revision             string
@@ -40,9 +41,18 @@ type TestProjectConfig struct {
 	FeatureMap           map[string]entities.Feature
 	GroupMap             map[string]entities.Group
 	RolloutMap           map[string]entities.Rollout
+	nextID               int
 	AnonymizeIP          bool
 	BotFiltering         bool
-	nextID               int
+	sendFlagDecisions    bool
+	sdkKey               string
+	environmentKey       string
+	flagVariationsMap    map[string][]entities.Variation
+}
+
+// GetDatafile returns a string representation of the environment's datafile
+func (c *TestProjectConfig) GetDatafile() string {
+	return c.Datafile
 }
 
 // GetProjectID returns projectID
@@ -65,6 +75,14 @@ func (c *TestProjectConfig) GetAnonymizeIP() bool {
 	return c.AnonymizeIP
 }
 
+// GetAttributes returns attributes
+func (c *TestProjectConfig) GetAttributes() (attributeList []entities.Attribute) {
+	for _, attribute := range c.AttributeMap {
+		attributeList = append(attributeList, attribute)
+	}
+	return attributeList
+}
+
 // GetAttributeID returns attributeID
 func (c *TestProjectConfig) GetAttributeID(key string) string {
 	return c.AttributeKeyToIDMap[key]
@@ -73,6 +91,24 @@ func (c *TestProjectConfig) GetAttributeID(key string) string {
 // GetBotFiltering returns GetBotFiltering
 func (c *TestProjectConfig) GetBotFiltering() bool {
 	return c.BotFiltering
+}
+
+// GetSdkKey returns sdkKey for specific environment.
+func (c *TestProjectConfig) GetSdkKey() string {
+	return c.sdkKey
+}
+
+// GetEnvironmentKey returns current environment of the datafile.
+func (c *TestProjectConfig) GetEnvironmentKey() string {
+	return c.environmentKey
+}
+
+// GetEvents returns all events
+func (c *TestProjectConfig) GetEvents() (eventList []entities.Event) {
+	for _, event := range c.EventMap {
+		eventList = append(eventList, event)
+	}
+	return eventList
 }
 
 // GetEventByKey returns the event with the given key
@@ -132,6 +168,22 @@ func (c *TestProjectConfig) GetExperimentList() (experimentList []entities.Exper
 		experimentList = append(experimentList, experiment)
 	}
 	return experimentList
+}
+
+// GetRolloutList returns an array of all the rollouts
+func (c *TestProjectConfig) GetRolloutList() (rolloutList []entities.Rollout) {
+	for _, rollout := range c.RolloutMap {
+		rolloutList = append(rolloutList, rollout)
+	}
+	return rolloutList
+}
+
+// GetAudienceList returns an array of all the audiences
+func (c *TestProjectConfig) GetAudienceList() (audienceList []entities.Audience) {
+	for _, audience := range c.AudienceMap {
+		audienceList = append(audienceList, audience)
+	}
+	return audienceList
 }
 
 // GetAudienceByID returns the audience with the given ID
@@ -415,9 +467,26 @@ func (c *TestProjectConfig) AddMultiVariationABTest(experimentKey, variationAKey
 	return c
 }
 
+// AddFlagVariation Adds to map of all variations for each flag
+func (c *TestProjectConfig) AddFlagVariation(f entities.Feature, v entities.Variation) {
+	c.flagVariationsMap = map[string][]entities.Variation{
+		f.Key: {v},
+	}
+}
+
 func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
+}
+
+// SendFlagDecisions returns the value of sendFlagDecisions
+func (c *TestProjectConfig) SendFlagDecisions() bool {
+	return c.sendFlagDecisions
+}
+
+// GetFlagVariationsMap returns map containing all variations for each flag
+func (c *TestProjectConfig) GetFlagVariationsMap() map[string][]entities.Variation {
+	return c.flagVariationsMap
 }
 
 // NewConfig initializes a new datafile from a json byte array using the default JSON datafile parser
@@ -436,6 +505,7 @@ func NewConfig() *TestProjectConfig {
 		ProjectID:            "projectId",
 		Revision:             "revision",
 		RolloutMap:           make(map[string]entities.Rollout),
+		flagVariationsMap:    make(map[string][]entities.Variation),
 	}
 
 	return config

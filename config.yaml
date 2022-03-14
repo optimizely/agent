@@ -23,6 +23,8 @@ log:
     ## enable pretty colorized console logging. setting to false will output
     ## structured JSON logs. Recommended false in production.
     pretty: true
+    ## to set whether or not the SDK key is included in the logging output.
+    includeSdkKey: true
 
 ##
 ## http server configuration
@@ -31,10 +33,13 @@ server:
     ## List of allowed request host values.
     ## Requests whose host value does not match either the configured server.host, or one of these, will be rejected
     ## with a 404 response.
+    ## To match all subdomains, you can use a leading dot (for example .example.com matches my.example.com, hello.world.example.com, etc.).
+    ## You can use the value "." to disable allowed host checking, allowing requests with any host.
     ## Request host is determined in the following priority order:
     ## 1. X-Forwarded-Host header value
     ## 2. Forwarded header host= directive value
     ## 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
+    ## Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.
     allowedHosts:
         - localhost
     ## the maximum duration for reading the entire request, including the body.
@@ -51,6 +56,9 @@ server:
 #    certFile: <cert-file>
     ## IP of the host
     host: "127.0.0.1"
+    ## configure optional Agent interceptors
+#    interceptors:
+#        httplog: {}
 
 ##
 ## api service configuration
@@ -66,21 +74,21 @@ api:
     enableOverrides: true
     ## CORS support is provided via chi middleware
     ## https://github.com/go-chi/cors
-    # cors:
-    #     ## If allowedOrigins is nil or empty, value is set to ["*"].
-    #     allowedOrigins: 
-    #         - ["*"]
-    #     ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
-    #     allowedMethods:
-    #         - "HEAD"
-    #         - "GET"
-    #         - "POST"
-    #         - "OPTIONS"
-    #     ## Default value is [] but "Origin" is always appended to the list.
-    #     allowedHeaders: []
-    #     exposedHeaders: []
-    #     allowedCredentials: false
-    #     maxAge: 300
+#    cors:
+#      ## If allowedOrigins is nil or empty, value is set to ["*"].
+#      allowedOrigins: ["*"]
+#      ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
+#      allowedMethods:
+#      - "HEAD"
+#      - "GET"
+#      - "POST"
+#      - "OPTIONS"
+#      ## Default value is [] but "Origin" is always appended to the list.
+#      allowedHeaders: ["*"]
+#      exposedHeaders: []
+#      allowedCredentials: false
+#      maxAge: 300
+
 ##
 ## admin service configuration
 ##
@@ -127,6 +135,27 @@ client:
     ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
     ## https://github.com/google/re2/wiki/Syntax
     sdkKeyRegex: "^\\w+(:\\w+)?$"
+    ## configure optional User profile service
+    userProfileService:
+      default: ""
+      services:
+        # in-memory: 
+        #   capacity: 0
+        #   storageStrategy: "fifo"
+        # redis: 
+        #   host: "localhost:6379"
+        #   password: ""
+        #   database: 0
+        # rest: 
+        #   host: "http://localhost"
+        #   lookupPath: "/ups/lookup"
+        #   lookupMethod: "POST"
+        #   savePath: "/ups/save"
+        #   saveMethod: "POST"
+        #   userIDKey: "user_id"
+        #   headers: 
+        #     Content-Type: "application/json"
+        #     Auth-Token: "12345"
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.

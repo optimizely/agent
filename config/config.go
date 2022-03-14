@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -66,8 +66,9 @@ func NewDefaultConfig() *AgentConfig {
 			EnableOverrides:     false,
 		},
 		Log: LogConfig{
-			Pretty: false,
-			Level:  "info",
+			Pretty:        false,
+			IncludeSDKKey: true,
+			Level:         "info",
 		},
 		Client: ClientConfig{
 			PollingInterval:     1 * time.Minute,
@@ -78,6 +79,10 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
 			SdkKeyRegex: "^\\w+(:\\w+)?$",
+			UserProfileService: UserProfileServiceConfigs{
+				"default":  "",
+				"services": map[string]interface{}{},
+			},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -93,6 +98,11 @@ func NewDefaultConfig() *AgentConfig {
 			KeyFile:         "",
 			DisabledCiphers: make([]string, 0),
 			Host:            "127.0.0.1",
+			Interceptors:    make(map[string]interface{}),
+			BatchRequests: BatchRequestsConfig{
+				MaxConcurrency:  10,
+				OperationsLimit: 500,
+			},
 		},
 		Webhook: WebhookConfig{
 			Port: "8085",
@@ -140,33 +150,43 @@ func (ac *AgentConfig) LogConfigWarnings() {
 	}
 }
 
+// UserProfileServiceConfigs defines the generic mapping of userprofileservice plugins
+type UserProfileServiceConfigs map[string]interface{}
+
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
-	PollingInterval     time.Duration `json:"pollingInterval"`
-	BatchSize           int           `json:"batchSize" default:"10"`
-	QueueSize           int           `json:"queueSize" default:"1000"`
-	FlushInterval       time.Duration `json:"flushInterval" default:"30s"`
-	DatafileURLTemplate string        `json:"datafileURLTemplate"`
-	EventURL            string        `json:"eventURL"`
-	SdkKeyRegex         string        `json:"sdkKeyRegex"`
+	PollingInterval     time.Duration             `json:"pollingInterval"`
+	BatchSize           int                       `json:"batchSize" default:"10"`
+	QueueSize           int                       `json:"queueSize" default:"1000"`
+	FlushInterval       time.Duration             `json:"flushInterval" default:"30s"`
+	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
+	EventURL            string                    `json:"eventURL"`
+	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
+	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
 }
 
 // LogConfig holds the log configuration
 type LogConfig struct {
-	Pretty bool   `json:"pretty"`
-	Level  string `json:"level"`
+	Pretty        bool   `json:"pretty"`
+	IncludeSDKKey bool   `json:"includeSdkKey" default:"true"`
+	Level         string `json:"level"`
 }
+
+// PluginConfigs defines the generic mapping of middleware plugins
+type PluginConfigs map[string]interface{}
 
 // ServerConfig holds the global http server configs
 type ServerConfig struct {
-	AllowedHosts    []string      `json:"allowedHosts"`
-	ReadTimeout     time.Duration `json:"readTimeout"`
-	WriteTimeout    time.Duration `json:"writeTimeout"`
-	CertFile        string        `json:"certFile"`
-	KeyFile         string        `json:"keyFile"`
-	DisabledCiphers []string      `json:"disabledCiphers"`
-	HealthCheckPath string        `json:"healthCheckPath"`
-	Host            string        `json:"host"`
+	AllowedHosts    []string            `json:"allowedHosts"`
+	ReadTimeout     time.Duration       `json:"readTimeout"`
+	WriteTimeout    time.Duration       `json:"writeTimeout"`
+	CertFile        string              `json:"certFile"`
+	KeyFile         string              `json:"keyFile"`
+	DisabledCiphers []string            `json:"disabledCiphers"`
+	HealthCheckPath string              `json:"healthCheckPath"`
+	Host            string              `json:"host"`
+	BatchRequests   BatchRequestsConfig `json:"batchRequests"`
+	Interceptors    PluginConfigs       `json:"interceptors"`
 }
 
 func (sc *ServerConfig) isHTTPSEnabled() bool {
@@ -187,6 +207,12 @@ type APIConfig struct {
 	Port                string            `json:"port"`
 	EnableNotifications bool              `json:"enableNotifications"`
 	EnableOverrides     bool              `json:"enableOverrides"`
+}
+
+// BatchRequestsConfig holds the configuration for batching
+type BatchRequestsConfig struct {
+	MaxConcurrency  int `json:"maxConcurrency"`
+	OperationsLimit int `json:"operationsLimit"`
 }
 
 // CORSConfig holds the CORS middleware configuration

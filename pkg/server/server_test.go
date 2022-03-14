@@ -18,12 +18,15 @@ package server
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/interceptors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -158,9 +161,12 @@ func TestNewServerHandlerRejectsInvalidHost(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://evil.com:1000/v1/config", nil)
 	rec := httptest.NewRecorder()
-
 	srv.srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
 
+	req = httptest.NewRequest("GET", "http://evil.com/v1/config", nil)
+	rec = httptest.NewRecorder()
+	srv.srv.Handler.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
@@ -175,27 +181,65 @@ func TestNewServerHandlerAllowsValidHost(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com:1000/v1/config", nil)
 	rec := httptest.NewRecorder()
-
 	srv.srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
+	req = httptest.NewRequest("GET", "http://example.com/v1/config", nil)
+	rec = httptest.NewRecorder()
+	srv.srv.Handler.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
-func TestNewServerHandlerAllowsValidHostDefaultPort(t *testing.T) {
-	confWithAllowedHosts := config.ServerConfig{
-		AllowedHosts:    []string{"example.com"},
-		HealthCheckPath: "/health",
-		Host:            "127.0.0.1",
+type mockInterceptor struct {
+	wg *sync.WaitGroup
+}
+
+func (m *mockInterceptor) Handler() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			m.wg.Done()
+			next.ServeHTTP(w, r)
+		}
+
+		return http.HandlerFunc(fn)
 	}
-	// Server running on port 80 with no TLS
-	srv, err := NewServer("valid_hosts", "80", handler, confWithAllowedHosts)
-	assert.NoError(t, err)
+}
 
-	// URL contains no explicit port - request should be allowed since server is running on port 80 with no TLS
-	req := httptest.NewRequest("GET", "http://example.com/v1/config", nil)
-	rec := httptest.NewRecorder()
+func TestWrapWithInterceptors(t *testing.T) {
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		wg.Done()
+	}
 
-	srv.srv.Handler.ServeHTTP(rec, req)
+	conf := config.PluginConfigs{}
+	creator := func() interceptors.Interceptor {
+		return &mockInterceptor{wg: wg}
+	}
 
-	assert.Equal(t, http.StatusOK, rec.Code)
+	// Add valid plugins
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		name := fmt.Sprintf("mock%d", i)
+		interceptors.Add(name, creator)
+		conf[name] = map[string]interface{}{}
+	}
+
+	// Test missing plugin
+	conf["DNE"] = map[string]interface{}{}
+
+	// Test failed unmarshalling
+	interceptors.Add("badConf", creator)
+	conf["badConf"] = false
+
+	// Test failed marshalling
+	interceptors.Add("notJSON", creator)
+	conf["notJSON"] = make(chan struct{})
+
+	next := wrapWithInterceptors(http.HandlerFunc(handler), conf)
+
+	next.ServeHTTP(nil, nil)
+
+	// Ensure all VALID plugins were executed.
+	wg.Wait()
 }

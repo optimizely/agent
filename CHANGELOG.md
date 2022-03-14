@@ -4,8 +4,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.6.0] - Jan 13, 2022
+
+- Introduce `Forced Decisions` property into the `decide` API for overriding and managing user-level flag, experiment and delivery rule decisions. Forced decisions can be used for QA and automated testing purposes ([#324](https://github.com/optimizely/agent/pull/324), [#325](https://github.com/optimizely/agent/pull/325)).
+
+    - For details, refer to our API documentation page: https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide.  
+    - Upgrade to use [Go SDK v1.8.0](https://github.com/optimizely/go-sdk/releases/tag/v1.8.0). This adds support for Forced Decisions.
+
+## [2.5.0] - Sep 24, 2021
+
+  - Add new fields (sdkKey, environmentKey, attributes, audiences, events, experimentRules, deliveryRules) to `/config` endpoint ([PR #322](https://github.com/optimizely/agent/pull/322)):  
+
+## [2.4.0] - March 3, 2021
+## New Features
+- Introduce `/decide` endpoint as a new primary interface for Decide APIs, that is for retrieving feature flag status, configuration and associated experiment decisions for users ([#292](https://github.com/optimizely/agent/pull/292)).   
+
+- For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.  
+Upgrade to use [Go SDK v1.6.1](https://github.com/optimizely/go-sdk/tree/v1.6.1). This adds support for OptimizelyDecision.
+
+## [2.3.1] - November 17, 2020
+- Add "enabled" field to decision metadata structure
+
+## [2.3.0] - November 2, 2020
+- Introduce Agent interceptor plugins
+- Adding support for upcoming application-controlled introduction of tracking for non-experiment Flag decisions
+
+## [2.2.0] - October 5, 2020
+- Update to Optimizely Go SDK 1.4.0 with version audience condition evaluation based on semantic versioning as well as support for number 'greater than or equal to' and 'less than or equal to'.
+
+## [2.1.0] - September 23, 2020
+- For `server.allowedHosts` configuration property, add support for matching all subdomains of a host, or all hosts
+- Adding batching for agent (/v1/batch endpoint), including requests in parallel
+- Removed vulnerable version coreos/etcd 
+
+## [2.0.0] - August 27, 2020
+- Add SDK key validation configuration
+- Reject request with invalid host (excluding port)
+- Block content type other than application/json 
+- Introducing support for authenticated datafiles
+
+### Breaking Changes
 - Reject requests with invalid hosts, and introduce `server.allowedHosts` configuration property
+- Agent will now reject the request if the content-type is not specified from the clients
+- Add Host as a configurable item
+  - Previously, Agent was listening on all interfaces, and did not allow configuring the network interface that it listens on. NewServer allowed specification of a port to listen on, but not an address.
+  - Now, we have added configurable HOST, with the default value set to the localhost (127.0.0.1)
+  - If there is a need to deploy Agent in docker, then the Host needs to be set to 0.0.0.0. This can be achieved by setting variable `OPTIMIZELY_SERVER_HOST=0.0.0.0`, or setting `server.host` to 0.0.0.0 in config file.
 
 ## [1.3.0] - July 7th, 2020
 - Upgrade to use go-sdk v1.3.0. This adds support for JSON feature variables
@@ -140,4 +184,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.0] - September 4th, 2019
 This is the initial release which supported a basic web application and go-sdk integration.
-

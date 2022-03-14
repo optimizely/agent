@@ -12,11 +12,17 @@ server:
   keyFile: "keyfile"
   certFile: "certfile"
   host: "1.2.3.4"
+  batchRequests:
+    maxConcurrency: 5
+    operationsLimit: 100
   disabledCiphers:
     - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  interceptors:
+    plugin: {}
 log:
   pretty: true
+  includeSdkKey: false
   level: debug
 client:
   pollingInterval: 10s
@@ -26,6 +32,23 @@ client:
   datafileURLTemplate: "https://localhost/v1/%s.json"
   eventURL: "https://logx.localhost.com/v1"
   sdkKeyRegex: "custom-regex"
+  userProfileService:
+    default: "in-memory"
+    services:
+      in-memory: 
+        storageStrategy: "fifo"
+      redis: 
+        host: "localhost:6379"
+        password: ""
+      rest:
+        host: "http://localhost"
+        lookupPath: "/ups/lookup"
+        savePath: "/ups/save"
+        headers: 
+          content-type: "application/json"
+      custom: 
+        path: "http://test2.com"
+      
 admin:
   port: "3002"
   auth:

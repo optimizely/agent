@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -44,6 +44,9 @@ const OptlyExperimentKey = contextKey("experimentKey")
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
 
+// OptlyUPSHeader is the header key for an ad-hoc UserProfileService name
+const OptlyUPSHeader = "X-Optimizely-UPS-Name"
+
 // CachedOptlyMiddleware implements OptlyMiddleware backed by a cache
 type CachedOptlyMiddleware struct {
 	Cache optimizely.Cache
@@ -58,6 +61,13 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		if sdkKey == "" {
 			RenderError(fmt.Errorf("missing required %s header", OptlySDKHeader), http.StatusBadRequest, w, r)
 			return
+		}
+
+		upsKey := r.Header.Get(OptlyUPSHeader)
+		// Storing Provided UserProfileService Key in cache, to be used for requests with the given sdkKey.
+		// This UserProfileService Key will override the default UserProfileService provided in Client Config.
+		if upsKey != "" {
+			mw.Cache.SetUserProfileService(sdkKey, upsKey)
 		}
 
 		optlyClient, err := mw.Cache.GetClient(sdkKey)

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +40,7 @@ func assertRuntime(t *testing.T, actual config.RuntimeConfig) {
 	assert.Equal(t, 2, actual.MutexProfileFraction)
 }
 
-func assertServer(t *testing.T, actual config.ServerConfig) {
+func assertServer(t *testing.T, actual config.ServerConfig, assertPlugins bool) {
 	assert.Equal(t, 5*time.Second, actual.ReadTimeout)
 	assert.Equal(t, 10*time.Second, actual.WriteTimeout)
 	assert.Equal(t, "/healthcheck", actual.HealthCheckPath)
@@ -47,9 +48,15 @@ func assertServer(t *testing.T, actual config.ServerConfig) {
 	assert.Equal(t, "certfile", actual.CertFile)
 	assert.Equal(t, []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"}, actual.DisabledCiphers)
 	assert.Equal(t, "1.2.3.4", actual.Host)
+	assert.Equal(t, 100, actual.BatchRequests.OperationsLimit)
+	assert.Equal(t, 5, actual.BatchRequests.MaxConcurrency)
+
+	if assertPlugins {
+		assert.Equal(t, config.PluginConfigs{"plugin": map[string]interface{}{}}, actual.Interceptors)
+	}
 }
 
-func assertClient(t *testing.T, actual config.ClientConfig) {
+func assertClient(t *testing.T, actual config.ClientConfig, assertUserProfileService bool) {
 	assert.Equal(t, 10*time.Second, actual.PollingInterval)
 	assert.Equal(t, 1, actual.BatchSize)
 	assert.Equal(t, 10, actual.QueueSize)
@@ -57,10 +64,34 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
+	if assertUserProfileService {
+		assert.Equal(t, "in-memory", actual.UserProfileService["default"])
+		userProfileServices := map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				// Viper.set is case in-sensitive
+				"storagestrategy": "fifo",
+			},
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+			},
+			"rest": map[string]interface{}{
+				"host":       "http://localhost",
+				"lookuppath": "/ups/lookup",
+				"savepath":   "/ups/save",
+				"headers":    map[string]interface{}{"content-type": "application/json"},
+			},
+			"custom": map[string]interface{}{
+				"path": "http://test2.com",
+			},
+		}
+		assert.Equal(t, userProfileServices, actual.UserProfileService["services"])
+	}
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
 	assert.True(t, actual.Pretty)
+	assert.False(t, actual.IncludeSDKKey)
 	assert.Equal(t, "debug", actual.Level)
 }
 
@@ -132,8 +163,8 @@ func TestViperYaml(t *testing.T) {
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
-	assertServer(t, actual.Server)
-	assertClient(t, actual.Client)
+	assertServer(t, actual.Server, true)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -159,6 +190,9 @@ func TestViperProps(t *testing.T) {
 	v.Set("server.keyFile", "keyfile")
 	v.Set("server.disabledCiphers", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 	v.Set("server.host", "1.2.3.4")
+	v.Set("server.batchRequests.operationsLimit", "100")
+	v.Set("server.batchRequests.maxConcurrency", "5")
+	v.Set("server.interceptors", config.PluginConfigs{"plugin": map[string]interface{}{}})
 
 	v.Set("client.pollingInterval", 10*time.Second)
 	v.Set("client.batchSize", 1)
@@ -167,8 +201,32 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
 	v.Set("client.sdkKeyRegex", "custom-regex")
+	services := map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"storageStrategy": "fifo",
+		},
+		"redis": map[string]interface{}{
+			"host":     "localhost:6379",
+			"password": "",
+		},
+		"rest": map[string]interface{}{
+			"host":       "http://localhost",
+			"lookuppath": "/ups/lookup",
+			"savepath":   "/ups/save",
+			"headers":    map[string]interface{}{"content-type": "application/json"},
+		},
+		"custom": map[string]interface{}{
+			"path": "http://test2.com",
+		},
+	}
+	userProfileServices := map[string]interface{}{
+		"default":  "in-memory",
+		"services": services,
+	}
+	v.Set("client.userProfileService", userProfileServices)
 
 	v.Set("log.pretty", true)
+	v.Set("log.includeSdkKey", false)
 	v.Set("log.level", "debug")
 
 	v.Set("admin.port", "3002")
@@ -218,8 +276,8 @@ func TestViperProps(t *testing.T) {
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
-	assertServer(t, actual.Server)
-	assertClient(t, actual.Client)
+	assertServer(t, actual.Server, true)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAdminAuth(t, actual.Admin.Auth)
@@ -242,6 +300,8 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_SERVER_KEYFILE", "keyfile")
 	_ = os.Setenv("OPTIMIZELY_SERVER_DISABLEDCIPHERS", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 	_ = os.Setenv("OPTIMIZELY_SERVER_HOST", "1.2.3.4")
+	_ = os.Setenv("OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY", "5")
+	_ = os.Setenv("OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT", "100")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_POLLINGINTERVAL", "10s")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_BATCHSIZE", "1")
@@ -250,8 +310,10 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"}},"custom":{"path":"http://test2.com"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
+	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
 
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
@@ -277,11 +339,21 @@ func TestViperEnv(t *testing.T) {
 	actual := loadConfig(v)
 
 	assertRoot(t, actual)
-	assertServer(t, actual.Server)
-	assertClient(t, actual.Client)
+	assertServer(t, actual.Server, false)
+	assertClient(t, actual.Client, true)
 	assertLog(t, actual.Log)
 	assertAdmin(t, actual.Admin)
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
 	assertRuntime(t, actual.Runtime)
+}
+
+func TestLoggingWithIncludeSdkKey(t *testing.T) {
+	// Test default IncludeSDKKey value
+	assert.True(t, optimizely.ShouldIncludeSDKKey)
+	// Test log config should reflect on optimizely.ShouldIncludeSDKKey
+	initLogging(config.LogConfig{
+		IncludeSDKKey: false,
+	})
+	assert.False(t, optimizely.ShouldIncludeSDKKey)
 }

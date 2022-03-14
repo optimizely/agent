@@ -1,13 +1,7 @@
-"""conftest.py for fixtures"""
-
 import os
-import signal
-import subprocess
 
 import pytest
 import requests
-from tests.acceptance.helpers import get_process_id_list
-from tests.acceptance.helpers import wait_for_agent_to_start
 
 # sdk key of the project "Agent Acceptance", under QA account
 sdk_key = "KZbunNn9bVfBWLpZPq2XC4"
@@ -39,37 +33,6 @@ def session_override_sdk_key(session_obj):
     """
     session_obj.headers['X-Optimizely-SDK-Key'] = 'xxx_invalid_sdk_key_xxx'
     return session_obj
-
-
-@pytest.fixture(scope='session', autouse=True)
-def agent_server():
-    """
-    Starts Agent server.
-    Test run after that.
-    Stops Agent server.
-    Also updates config.yaml file - before agent server starts it sets enableNotifications
-    to true and enableOverrides to true and then both back to false at the end
-    """
-    host = os.getenv('host')
-
-    if host == 'http://localhost:8080':
-        # start server
-        subprocess.Popen(["make", "run"], shell=False)
-        wait_for_agent_to_start()
-
-        yield
-
-        # Stop server
-        # Kill all 'optimizely' processes
-        # ('optimizely ' are processes associated with Agent server and set in ENV var?
-        # here: https://github.com/optimizely/agent/blob/master/cmd/main.go#L62)
-        # does not remove zombie processes though
-        pid_integers = get_process_id_list('optimizely')
-        for proc in pid_integers:
-            os.kill(proc, signal.SIGKILL)
-            print('\n========  Killing process pid', proc, end='')
-    else:
-        yield 
 
 
 def pytest_addoption(parser):

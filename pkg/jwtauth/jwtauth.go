@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020, 2021 Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -21,10 +21,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/golang-jwt/jwt"
 )
 
 // BuildAPIAccessToken returns a token for accessing the API service using the argument SDK keys and TTL. It also returns the expiration timestamp.
@@ -32,9 +33,9 @@ func BuildAPIAccessToken(sdkKeys []string, ttl time.Duration, key []byte) (token
 	expires := time.Now().Add(ttl).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss":     "Optimizely",
+		"iss":      "Optimizely",
 		"sdk_keys": sdkKeys,
-		"exp":     expires,
+		"exp":      expires,
 	})
 	tokenString, err = token.SignedString(key)
 	if err != nil {
