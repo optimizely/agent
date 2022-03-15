@@ -45,6 +45,8 @@ service:
      protocol: TCP
      name: webhook
    - port: 8088
+     protocol: TCP
+     name: admin
 
 ingress:
   enabled: false
