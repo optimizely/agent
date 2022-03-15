@@ -38,15 +38,18 @@ securityContext: {}
 service:
   type: ClusterIP
   ports:
-   - port: 8080
+   - port: 80
      protocol: TCP
      name: api
+     targetPort: 8080
    - port: 8085
      protocol: TCP
      name: webhook
+     targetPort: 8085
    - port: 8088
      protocol: TCP
      name: admin
+     targetPort: 8088
 
 ingress:
   enabled: false
