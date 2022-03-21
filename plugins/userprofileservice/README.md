@@ -152,4 +152,6 @@ userProfileServices:
            ## it can updated with value `abc.com` as shown
            host: “abc.com”
 ```
-- If a user has created multiple `UserProfileServices` and wants to override the `default` `UserProfileService` for a specifc `sdkKey`, they can do so by providing the `UserProfileService` name in the request Header `X-Optimizely-UPS-Name`.
+- If a user has created multiple `UserProfileServices` and wants to override the `default` `UserProfileService` for a specific `sdkKey`, they can do so by providing the `UserProfileService` name in the request Header `X-Optimizely-UPS-Name`.
+
+- Whenever a request is made with a unique `sdkKey`, The agent node handling that request creates and caches a new `UserProfileService`. To keep the `UserProfileService` type consistent among all nodes in a cluster, it is recommended to send the request Header `X-Optimizely-UPS-Name` in every request made.
