@@ -154,7 +154,6 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
     resp.raise_for_status()
 
 
-# TODO - FORMAT
 expected_flag_keys = """[
   {
     "variationKey": "16925940659", 
@@ -195,7 +194,6 @@ expected_flag_keys = """[
   }
 ]"""
 
-# TODO - FORMAT
 expected_flag_key__multiple_parameters = """[
     {
       "variationKey": "16906801184", 
