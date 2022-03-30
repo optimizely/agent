@@ -18,6 +18,7 @@
 package services
 
 import (
+	"context"
 	"testing"
 
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -26,16 +27,24 @@ import (
 
 type RedisUPSTestSuite struct {
 	suite.Suite
-	ups RedisUserProfileService
+	ups    RedisUserProfileService
+	cancel func()
 }
 
 func (r *RedisUPSTestSuite) SetupTest() {
 	// To check if lifo is used by default
+	ctx, cancel := context.WithCancel(context.Background())
+	r.cancel = cancel
 	r.ups = RedisUserProfileService{
 		Address:  "100",
 		Password: "10",
 		Database: 1,
+		Ctx:      ctx,
 	}
+}
+
+func (r *RedisUPSTestSuite) TearDownTest() {
+	r.cancel()
 }
 
 func (r *RedisUPSTestSuite) TestFirstSaveOrLookupConfiguresClient() {

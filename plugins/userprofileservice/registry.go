@@ -18,10 +18,18 @@
 package userprofileservice
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/optimizely/go-sdk/pkg/decision"
 )
+
+// ContextUserProfileService has the basic UserProfileService methods plus the AddContext method to provide context
+// to services like Redis
+type ContextUserProfileService interface {
+	decision.UserProfileService
+	AddContext(context.Context)
+}
 
 // Creator type defines a function for creating an instance of a UserProfileService
 type Creator func() decision.UserProfileService

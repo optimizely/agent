@@ -22,17 +22,18 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/bsm/redislock"
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/rs/zerolog/log"
 )
 
-var ctx = context.Background()
-
 // RedisUserProfileService represents the redis implementation of UserProfileService interface
 type RedisUserProfileService struct {
+	Ctx        context.Context
 	Client     *redis.Client
+	Locker     *redislock.Client
 	Expiration time.Duration
 	Address    string `json:"host"`
 	Password   string `json:"password"`
@@ -56,7 +57,7 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 	}
 
 	// Check if profile exists
-	result, getError := u.Client.Get(ctx, userID).Result()
+	result, getError := u.Client.Get(u.Ctx, userID).Result()
 	if getError != nil {
 		log.Error().Msg(getError.Error())
 		return profile
@@ -93,10 +94,26 @@ func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 
 	if finalProfile, err := json.Marshal(experimentBucketMap); err == nil {
 		// Log error message if something went wrong
-		if setError := u.Client.Set(ctx, profile.ID, finalProfile, u.Expiration).Err(); setError != nil {
+		// Try to obtain lock.
+
+		// TODO: need to discuss the time duration for the lock
+		lock, err := u.Locker.Obtain(u.Ctx, profile.ID, 100*time.Millisecond, nil)
+		if err != nil {
+			log.Error().Msg(err.Error())
+			return
+		}
+		// Release lock after setting value
+		defer lock.Release(u.Ctx)
+		// Safely set the new value
+		if setError := u.Client.Set(u.Ctx, profile.ID, finalProfile, u.Expiration).Err(); setError != nil {
 			log.Error().Msg(setError.Error())
 		}
 	}
+}
+
+// AddContext is used to set context in RedisUserProfileService
+func (u *RedisUserProfileService) AddContext(ctx context.Context) {
+	u.Ctx = ctx
 }
 
 func (u *RedisUserProfileService) initClient() {
@@ -105,6 +122,8 @@ func (u *RedisUserProfileService) initClient() {
 		Password: u.Password,
 		DB:       u.Database,
 	})
+	// Create a new lock client.
+	u.Locker = redislock.New(u.Client)
 }
 
 func init() {

@@ -160,9 +160,22 @@ type ClientConfig struct {
 	QueueSize           int                       `json:"queueSize" default:"1000"`
 	FlushInterval       time.Duration             `json:"flushInterval" default:"30s"`
 	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
+	DatafileCache       DatafileCache             `json:"datafileCache"`
 	EventURL            string                    `json:"eventURL"`
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
+}
+
+// DatafileCache holds the configuration options for the Datafile Cache.
+type DatafileCache struct {
+	RedisCache RedisDatafileCache `json:"redis"`
+}
+
+// RedisDatafileCache holds the configuration options for the Redis Datafile Cache.
+type RedisDatafileCache struct {
+	Address  string `json:"host"`
+	Password string `json:"password"`
+	Database int    `json:"database"`
 }
 
 // LogConfig holds the log configuration

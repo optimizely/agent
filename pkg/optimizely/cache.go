@@ -25,6 +25,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
@@ -58,7 +59,7 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 	cache := &OptlyCache{
 		ctx:                   ctx,
 		wg:                    sync.WaitGroup{},
-		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
+		loader:                defaultLoader(ctx, conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: userProfileServiceMap,
 	}
@@ -147,6 +148,7 @@ func regexValidator(sdkKeyRegex string) func(string) bool {
 }
 
 func defaultLoader(
+	ctx context.Context,
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
 	userProfileServiceMap cmap.ConcurrentMap,
@@ -186,23 +188,46 @@ func defaultLoader(
 			log.Info().Msg(message)
 		}
 
+		// Options for PollingProjectConfigManager
+		options := []sdkconfig.OptionFunc{}
+		// Check if datafile is already present in redis cache
+		var redisClient *redis.Client
+		var isDatafileCached bool
+
+		if conf.DatafileCache.RedisCache.Address != "" {
+			redisCacheConfig := conf.DatafileCache.RedisCache
+			redisClient = redis.NewClient(&redis.Options{
+				Addr:     redisCacheConfig.Address,
+				Password: redisCacheConfig.Password,
+				DB:       redisCacheConfig.Database,
+			})
+			if datafile, err := redisClient.Get(ctx, sdkKey).Result(); err != nil && datafile != "" {
+				// Set datafile in config manager so it uses the cached datafile for initialization
+				options = append(options, sdkconfig.WithInitialDatafile([]byte(datafile)))
+				isDatafileCached = true
+			}
+		}
+
+		options = append(options,
+			sdkconfig.WithPollingInterval(conf.PollingInterval),
+			sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
+		)
+
 		if datafileAccessToken != "" {
-			configManager = pcFactory(
-				sdkKey,
-				sdkconfig.WithPollingInterval(conf.PollingInterval),
-				sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
+			options = append(options,
 				sdkconfig.WithDatafileAccessToken(datafileAccessToken),
-			)
-		} else {
-			configManager = pcFactory(
-				sdkKey,
-				sdkconfig.WithPollingInterval(conf.PollingInterval),
-				sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
 			)
 		}
 
+		configManager = pcFactory(sdkKey, options...)
+
 		if _, err := configManager.GetConfig(); err != nil {
 			return &OptlyClient{}, err
+		}
+
+		if redisClient != nil && !isDatafileCached {
+			// Need to use redis lock here
+			redisClient.Set(ctx, sdkKey, configManager.GetOptimizelyConfig().GetDatafile(), 0)
 		}
 
 		q := event.NewInMemoryQueue(conf.QueueSize)
@@ -226,7 +251,7 @@ func defaultLoader(
 		}
 
 		var clientUserProfileService decision.UserProfileService
-		if clientUserProfileService = getUserProfileService(sdkKey, userProfileServiceMap, conf); clientUserProfileService != nil {
+		if clientUserProfileService = getUserProfileService(ctx, sdkKey, userProfileServiceMap, conf); clientUserProfileService != nil {
 			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
 		}
 
@@ -238,7 +263,7 @@ func defaultLoader(
 }
 
 // Returns the registered userProfileService against the sdkKey
-func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentMap, conf config.ClientConfig) decision.UserProfileService {
+func getUserProfileService(ctx context.Context, sdkKey string, userProfileServiceMap cmap.ConcurrentMap, conf config.ClientConfig) decision.UserProfileService {
 
 	intializeUPSWithName := func(upsName string) decision.UserProfileService {
 		if clientConfigUPSMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
@@ -256,6 +281,10 @@ func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentM
 							success = false
 						}
 						if success {
+							// Pass context to ups if required, necessary for redis
+							if ctxUps, ok := upsInstance.(userprofileservice.ContextUserProfileService); ok {
+								ctxUps.AddContext(ctx)
+							}
 							log.Info().Msgf(`UserProfileService of type: "%s" created for sdkKey: "%s"`, upsName, sdkKey)
 							return upsInstance
 						}

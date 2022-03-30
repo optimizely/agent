@@ -136,7 +136,7 @@ func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 
 	// json unmarshal error case
 	suite.cache.SetUserProfileService("one", "in-memory")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getUserProfileService(suite.cache.ctx, "one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
 
 	// json marshal error case
@@ -145,7 +145,7 @@ func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 			"capacity": make(chan int),
 		}},
 	}
-	userProfileService = getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService = getUserProfileService(suite.cache.ctx, "one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
 }
 
@@ -154,7 +154,7 @@ func (suite *CacheTestSuite) TestNoUserProfileServicesProvidedInConfig() {
 		UserProfileService: map[string]interface{}{},
 	}
 	suite.cache.SetUserProfileService("one", "in-memory")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getUserProfileService(suite.cache.ctx, "one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
 }
 
@@ -168,7 +168,7 @@ func (suite *CacheTestSuite) TestUPSForSDKKeyNotProvidedInConfig() {
 		},
 	}
 	suite.cache.SetUserProfileService("one", "dummy")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getUserProfileService(suite.cache.ctx, "one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
 }
 
@@ -182,7 +182,7 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforUPS() {
 		},
 	}
 	suite.cache.SetUserProfileService("one", "dummy")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getUserProfileService(suite.cache.ctx, "one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
 }
 
@@ -201,7 +201,7 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforUPS() {
 		},
 	}
 	suite.cache.SetUserProfileService("one", "dummy")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getUserProfileService(suite.cache.ctx, "one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
 }
 
@@ -245,11 +245,16 @@ type DefaultLoaderTestSuite struct {
 	registry  *MetricsRegistry
 	bp        *event.BatchEventProcessor
 	upsMap    cmap.ConcurrentMap
+	ctx       context.Context
+	cancel    func()
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
 }
 
 func (s *DefaultLoaderTestSuite) SetupTest() {
+	ctx, cancel := context.WithCancel(context.Background())
+	s.ctx = ctx
+	s.cancel = cancel
 	// Need the registry to be created only once since it panics if we create gauges with the same name again and again
 	doOnce.Do(func() {
 		s.registry = &MetricsRegistry{metrics.NewRegistry()}
@@ -264,6 +269,10 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 	s.pcFactory = func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
 		return MockConfigManager{}
 	}
+}
+
+func (s *DefaultLoaderTestSuite) TearDownTest() {
+	s.cancel()
 }
 
 func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
@@ -281,7 +290,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		},
 	}
 
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -318,7 +327,7 @@ func (s *DefaultLoaderTestSuite) TestUPSHeaderOverridesDefaultKey() {
 	tmpUPSMap := cmap.New()
 	tmpUPSMap.Set("sdkkey", "in-memory")
 
-	loader := defaultLoader(conf, s.registry, tmpUPSMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, tmpUPSMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -358,7 +367,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 			},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -377,6 +386,10 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 		s.Equal("10", testRedisUPS.Password)
 		s.Equal(1, testRedisUPS.Database)
 
+		// Check if the original context was passed to redis
+		s.NotNil(testRedisUPS.Ctx)
+		s.Equal(s.ctx, testRedisUPS.Ctx)
+
 		// Check if redis client was instantiated with updated config
 		s.NotNil(testRedisUPS.Client)
 		s.Equal(testRedisUPS.Address, testRedisUPS.Client.Options().Addr)
@@ -394,7 +407,7 @@ func (s *DefaultLoaderTestSuite) TestHttpClientInitializesByDefaultRestUPS() {
 			"rest": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -422,7 +435,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 			},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -445,7 +458,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -463,7 +476,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 			"mock3": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(s.ctx, conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)

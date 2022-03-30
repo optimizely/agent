@@ -129,6 +129,12 @@ client:
     flushInterval: 30s
     ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
     datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
+    ## Datafile cache to save initial datafile fetch call in a multi-node environment.
+    datafileCache:
+    #   redis: 
+    #     host: "localhost:6379"
+    #     password: ""
+    #     database: 0
     ## URL for dispatching events.
     eventURL: "https://logx.optimizely.com/v1/events"
     ## Validation Regex on the request SDK Key
