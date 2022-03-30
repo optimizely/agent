@@ -46,7 +46,7 @@ def test_batch_valid_reponse(session_obj):
     resp.raise_for_status()
 
 
-expected_body_of_operationid_2 ="""
+expected_body_of_operationid_2 = """
 {
     "attributes": [
         {
