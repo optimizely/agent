@@ -46,79 +46,148 @@ def test_batch_valid_reponse(session_obj):
     resp.raise_for_status()
 
 
-expected_body_of_operationid_2 = """{
-	"attributes": [{
-		"id": "12459620467",
-		"key": "bob_ross"
-	}],
-	"audiences": [
-	],
-	"environmentKey": "",
-	"events": [{
-			"experimentIds": [
-			],
-			"id": "15410720745",
-			"key": "clickyclick"
-		}
-	],
-	"experimentsMap": {
-		"ab_exper": {
-			"audiences": "",
-			"id": "17273802375",
-			"key": "ab_exper",
-			"variationsMap": {
-				"my_single_variation": {
-					"featureEnabled": false,
-					"id": "17266384371",
-					"key": "my_single_variation",
-					"variablesMap": {
-					}
-				}
-			}
-		}
-	},
-	"featuresMap": {
-		"feature1": {
-			"deliveryRules": [{
-					"audiences": "",
-					"id": "15439080355",
-					"key": "15439080355",
-					"variationsMap": {
-						"15404730339": {
-							"featureEnabled": true,
-							"id": "15404730339",
-							"key": "15404730339",
-							"variablesMap": {
-								"fff": {
-									"id": "15427520260",
-									"key": "fff",
-									"type": "string",
-									"value": "ss"
-
-								}
-							}
-						}
-					}
-				}
-			],
-			"experimentRules": [
-			],
-			"experimentsMap": {
-			},
-			"id": "15444990338",
-			"key": "feature1",
-			"variablesMap": {
-				"fff": {
-					"id": "15427520260",
-					"key": "fff",
-					"type": "string",
-					"value": "ss"
-				}
-			}
-		}
-	},
-	"revision": "18",
-	"sdkKey": ""
+expected_body_of_operationid_2 ="""
+{
+    "attributes": [
+        {
+            "id": "12459620467",
+            "key": "bob_ross"
+        }
+    ],
+    "audiences": [],
+    "environmentKey": "production",
+    "events": [
+        {
+            "experimentIds": [],
+            "id": "15410720745",
+            "key": "clickyclick"
+        }
+    ],
+    "experimentsMap": {
+        "ab_exper": {
+            "audiences": "",
+            "id": "17273802375",
+            "key": "ab_exper",
+            "variationsMap": {
+                "my_single_variation": {
+                    "featureEnabled": true,
+                    "id": "17266384371",
+                    "key": "my_single_variation",
+                    "variablesMap": {}
+                }
+            }
+        }
+    },
+    "featuresMap": {
+        "feature1": {
+            "deliveryRules": [
+                {
+                    "audiences": "",
+                    "id": "15439080355",
+                    "key": "15439080355",
+                    "variationsMap": {
+                        "15404730339": {
+                            "featureEnabled": true,
+                            "id": "15404730339",
+                            "key": "15404730339",
+                            "variablesMap": {
+                                "fff": {
+                                    "id": "15427520260",
+                                    "key": "fff",
+                                    "type": "string",
+                                    "value": "ss"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "audiences": "",
+                    "id": "default-15416510552",
+                    "key": "default-15416510552",
+                    "variationsMap": {
+                        "off": {
+                            "featureEnabled": false,
+                            "id": "35777",
+                            "key": "off",
+                            "variablesMap": {
+                                "fff": {
+                                    "id": "15427520260",
+                                    "key": "fff",
+                                    "type": "string",
+                                    "value": "ss"
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "experimentRules": [],
+            "experimentsMap": {},
+            "id": "15444990338",
+            "key": "feature1",
+            "variablesMap": {
+                "fff": {
+                    "id": "15427520260",
+                    "key": "fff",
+                    "type": "string",
+                    "value": "ss"
+                }
+            }
+        },
+        "flag_ab_exper": {
+            "deliveryRules": [
+                {
+                    "audiences": "",
+                    "id": "default-rollout-12676-12469090269",
+                    "key": "default-rollout-12676-12469090269",
+                    "variationsMap": {
+                        "off": {
+                            "featureEnabled": false,
+                            "id": "35779",
+                            "key": "off",
+                            "variablesMap": {}
+                        }
+                    }
+                }
+            ],
+            "experimentRules": [
+                {
+                    "audiences": "",
+                    "id": "17273802375",
+                    "key": "ab_exper",
+                    "variationsMap": {
+                        "my_single_variation": {
+                            "featureEnabled": true,
+                            "id": "17266384371",
+                            "key": "my_single_variation",
+                            "variablesMap": {}
+                        }
+                    }
+                }
+            ],
+            "experimentsMap": {
+                "ab_exper": {
+                    "audiences": "",
+                    "id": "17273802375",
+                    "key": "ab_exper",
+                    "variationsMap": {
+                        "my_single_variation": {
+                            "featureEnabled": true,
+                            "id": "17266384371",
+                            "key": "my_single_variation",
+                            "variablesMap": {}
+                        }
+                    }
+                }
+            },
+            "id": "12676",
+            "key": "flag_ab_exper",
+            "variablesMap": {}
+        }
+    },
+    "revision": "20",
+    "sdkKey": "TkB2xhu8WEAHa4LphN3xZ2"
 }"""
 
 

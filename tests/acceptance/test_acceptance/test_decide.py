@@ -32,7 +32,9 @@ expected_forced_decision_with_rule_key = {
             "attr_1": "hola"
         }
     },
-    "reasons": ["Variation (variation_2) is mapped to flag (feature_2), rule (feature_2_test) and user (matjaz) in the forced decision map."]
+    "reasons": [
+        "Variation (variation_2) is mapped to flag (feature_2), rule (feature_2_test) and user (matjaz) "
+        "in the forced decision map."]
 }
 
 expected_single_flag_key = """
@@ -98,7 +100,7 @@ def test_decide__feature(session_obj, flag_key, expected_response, expected_stat
     """
 
     params = {"keys": flag_key}
-    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, payload=payload,
+    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, payload=payload,
                                                     params=params)
 
     assert json.loads(expected_response) == resp.json()
@@ -112,7 +114,8 @@ def test_decide__feature(session_obj, flag_key, expected_response, expected_stat
         ("feature_2", expected_forced_decision_with_rule_key, 200, "feature_2", "feature_2_test", "variation_2")
     ],
     ids=["variation_1", "16931381940"])
-def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_response, expected_status_code, forced_flag, forced_rule, forced_variation):
+def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_response, expected_status_code,
+                                              forced_flag, forced_rule, forced_variation):
     """
     Test validates:
     Correct response when valid or empty rule key is passed in forced-decision parameters.
@@ -135,15 +138,15 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
         "userAttributes": {"attr_1": "hola"},
         "forcedDecisions": [
             {
-              "flagKey": forced_flag,
-              "ruleKey": f"{forced_rule}",
-              "variationKey": forced_variation,
+                "flagKey": forced_flag,
+                "ruleKey": f"{forced_rule}",
+                "variationKey": forced_variation,
             }
         ]
     }
 
     params = {"keys": flag_key}
-    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, payload=json.dumps(payload),
+    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, payload=json.dumps(payload),
                                                     params=params)
 
     assert json.loads(json.dumps(expected_response)) == resp.json()
@@ -151,94 +154,95 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
     resp.raise_for_status()
 
 
-expected_flag_keys = r"""
-[
+# TODO - FORMAT
+expected_flag_keys = """[
   {
-    "variationKey": "16925940659",
-    "enabled": true,
-    "ruleKey": "16939051724",
+    "variationKey": "16925940659", 
+    "enabled": true, 
+    "ruleKey": "16939051724", 
     "flagKey": "feature_4",
-    "userContext": {
-      "userId": "matjaz",
-      "attributes": {
-        "attr_1": "hola"
-      }
-    },
-    "reasons": [
-      "Audiences for experiment 16939051724 collectively evaluated to true.",
-      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
-    ]
-  },
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16939051724 collectively evaluated to true."]},
   {
-    "variationKey": "16927890136",
-    "enabled": true,
-    "ruleKey": "16932940705",
-    "flagKey": "feature_5",
-    "userContext": {
-      "userId": "matjaz",
-      "attributes": {
-        "attr_1": "hola"
-      }
-    },
-    "reasons": [
-      "Audiences for experiment 16932940705 collectively evaluated to true.",
-      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
-    ]
-  },
+    "variationKey": "variation_1", 
+    "enabled": true, 
+    "ruleKey": "ab_test1", 
+    "flagKey": "flag_ab_test1",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment ab_test1 collectively evaluated to true."]},
   {
-    "variationKey": "16906801184",
-    "enabled": true,
-    "ruleKey": "16941022436",
-    "flagKey": "feature_1",
-    "userContext": {
-      "userId": "matjaz",
-      "attributes": {
-        "attr_1": "hola"
-      }
-    },
-    "reasons": [
-      "Audiences for experiment 16941022436 collectively evaluated to true.",
-      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
-    ],
-    "variables": {
-      "bool_var": true,
-      "double_var": 5.6,
-      "int_var": 1,
-      "str_var": "hello"
-    }
-  },
-  {
-    "variationKey": "variation_1",
-    "enabled": true,
-    "ruleKey": "feature_2_test",
+    "variationKey": "variation_1", 
+    "enabled": true, 
+    "ruleKey": "feature_2_test", 
     "flagKey": "feature_2",
-    "userContext": {
-      "userId": "matjaz",
-      "attributes": {
-        "attr_1": "hola"
-      }
-    },
-    "reasons": [
-      "Audiences for experiment feature_2_test collectively evaluated to true."
-    ]
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+    "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+  {
+    "variationKey": "16927890136", 
+    "enabled": true, 
+    "ruleKey": "16932940705", 
+    "flagKey": "feature_5",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+    "reasons": ["Audiences for experiment 16932940705 collectively evaluated to true."]},
+  {
+    "variationKey": "16906801184", 
+    "enabled": true, 
+    "ruleKey": "16941022436", 
+    "flagKey": "feature_1",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+    "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
+    "variables": {"bool_var": true, "double_var": 5.6, "int_var": 1, "str_var": "hello"}
   }
-]
-"""
+]"""
+
+# TODO - FORMAT
+expected_flag_key__multiple_parameters = """[
+    {
+      "variationKey": "16906801184", 
+      "enabled": true, 
+      "ruleKey": "16941022436", 
+      "flagKey": "feature_1",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
+      "variables": {"bool_var": true, "double_var": 5.6, "int_var": 1, "str_var": "hello"}},
+    {
+      "variationKey": "variation_1", 
+      "enabled": true, 
+      "ruleKey": "feature_2_test", 
+      "flagKey": "feature_2",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+    {
+      "variationKey": "16925940659", 
+      "enabled": true, 
+      "ruleKey": "16939051724", 
+      "flagKey": "feature_4",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16939051724 collectively evaluated to true."]},
+    {
+      "variationKey": "16927890136", 
+      "enabled": true, 
+      "ruleKey": "16932940705", 
+      "flagKey": "feature_5",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16932940705 collectively evaluated to true."]
+    }
+]"""
 
 
 @pytest.mark.parametrize(
     "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
         ({}, expected_flag_keys, 200, True, True),
         ({"keys": []}, expected_flag_keys, 200, True, True),
-        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_keys, 200, True, True),
+        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_key__multiple_parameters, 200, True, True),
     ],
-    ids=["missig_flagkey_parameter", "no flag key specified", "multiple flag keys"])
+    ids=["missig_flagkey_parameter", "no flag key specified", "multiple parameters"])
 def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,
                                     bypass_validation_request,
                                     bypass_validation_response):
     """
     Test validates:
-    That no required parameter, empty param and all parameters return identical response.
+    That no required parameter and empty param return identical response.
     Openapi spec specifies 400 for missing flagKey parameter. But We keep 400 status code in the openapi spec
     for missing reuired parameter, even though when no flagKey parameter is supplied to the request,
     Agent still responds with all decisions and status 200.
@@ -260,13 +264,13 @@ def test_decide__flag_key_parameter(session_obj, parameters, expected_response, 
     """
 
     params = parameters
-    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_obj, bypass_validation_request,
+    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, bypass_validation_request,
                                                     bypass_validation_response,
                                                     payload=payload,
                                                     params=params)
 
-    sorted_actual = sort_response(resp.json(), 'flagKey')
-    sorted_expected = sort_response(json.loads(expected_response), 'flagKey')
+    sorted_actual = sort_response(resp.json(), "flagKey")
+    sorted_expected = sort_response(json.loads(expected_response), "flagKey")
 
     assert sorted_actual == sorted_expected
 
@@ -280,12 +284,11 @@ def test_decide_403(session_override_sdk_key):
     params = {"flagKey": "feature_2"}
 
     with pytest.raises(requests.exceptions.HTTPError):
-        resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, 'post', session_override_sdk_key,
+        resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_override_sdk_key,
                                                         payload=payload, params=params)
 
         assert resp.status_code == 403
-        assert resp.json()['error'] == 'unable to fetch fresh datafile (consider ' \
-                                       'rechecking SDK key), status code: 403 Forbidden'
+        assert resp.json()["error"] == "unable to fetch fresh datafile (consider " \
+                                       "rechecking SDK key), status code: 403 Forbidden"
 
         resp.raise_for_status()
-
