@@ -79,6 +79,9 @@ func NewDefaultConfig() *AgentConfig {
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
 			SdkKeyRegex: "^\\w+(:\\w+)?$",
+			DatafileCache: DatafileCache{
+				RedisCache: RedisDatafileCache{},
+			},
 			UserProfileService: UserProfileServiceConfigs{
 				"default":  "",
 				"services": map[string]interface{}{},
@@ -160,7 +163,7 @@ type ClientConfig struct {
 	QueueSize           int                       `json:"queueSize" default:"1000"`
 	FlushInterval       time.Duration             `json:"flushInterval" default:"30s"`
 	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
-	DatafileCache       DatafileCache             `json:"datafileCache"`
+	DatafileCache       DatafileCache             `mapstructure:"datafileCache"`
 	EventURL            string                    `json:"eventURL"`
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
@@ -168,14 +171,14 @@ type ClientConfig struct {
 
 // DatafileCache holds the configuration options for the Datafile Cache.
 type DatafileCache struct {
-	RedisCache RedisDatafileCache `json:"redis"`
+	RedisCache RedisDatafileCache `mapstructure:"redis"`
 }
 
 // RedisDatafileCache holds the configuration options for the Redis Datafile Cache.
 type RedisDatafileCache struct {
-	Address  string `json:"host"`
-	Password string `json:"password"`
-	Database int    `json:"database"`
+	Address  string `mapstructure:"host"`
+	Password string `mapstructure:"password"`
+	Database int    `mapstructure:"database"`
 }
 
 // LogConfig holds the log configuration

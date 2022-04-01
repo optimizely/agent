@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/bsm/redislock"
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -33,7 +32,6 @@ import (
 type RedisUserProfileService struct {
 	Ctx        context.Context
 	Client     *redis.Client
-	Locker     *redislock.Client
 	Expiration time.Duration
 	Address    string `json:"host"`
 	Password   string `json:"password"`
@@ -94,17 +92,6 @@ func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 
 	if finalProfile, err := json.Marshal(experimentBucketMap); err == nil {
 		// Log error message if something went wrong
-		// Try to obtain lock.
-
-		// TODO: need to discuss the time duration for the lock
-		lock, err := u.Locker.Obtain(u.Ctx, profile.ID, 100*time.Millisecond, nil)
-		if err != nil {
-			log.Error().Msg(err.Error())
-			return
-		}
-		// Release lock after setting value
-		defer lock.Release(u.Ctx)
-		// Safely set the new value
 		if setError := u.Client.Set(u.Ctx, profile.ID, finalProfile, u.Expiration).Err(); setError != nil {
 			log.Error().Msg(setError.Error())
 		}
@@ -122,8 +109,6 @@ func (u *RedisUserProfileService) initClient() {
 		Password: u.Password,
 		DB:       u.Database,
 	})
-	// Create a new lock client.
-	u.Locker = redislock.New(u.Client)
 }
 
 func init() {

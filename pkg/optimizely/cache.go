@@ -201,10 +201,13 @@ func defaultLoader(
 				Password: redisCacheConfig.Password,
 				DB:       redisCacheConfig.Database,
 			})
-			if datafile, err := redisClient.Get(ctx, sdkKey).Result(); err != nil && datafile != "" {
+			datafile, err := redisClient.Get(ctx, sdkKey).Result()
+			if err == nil && datafile != "" {
 				// Set datafile in config manager so it uses the cached datafile for initialization
 				options = append(options, sdkconfig.WithInitialDatafile([]byte(datafile)))
 				isDatafileCached = true
+			} else {
+				log.Error().Msg(err.Error())
 			}
 		}
 
@@ -226,8 +229,10 @@ func defaultLoader(
 		}
 
 		if redisClient != nil && !isDatafileCached {
-			// Need to use redis lock here
-			redisClient.Set(ctx, sdkKey, configManager.GetOptimizelyConfig().GetDatafile(), 0)
+			datafile := configManager.GetOptimizelyConfig().GetDatafile()
+			if setError := redisClient.Set(ctx, sdkKey, datafile, 0).Err(); setError != nil {
+				log.Error().Msg(setError.Error())
+			}
 		}
 
 		q := event.NewInMemoryQueue(conf.QueueSize)
