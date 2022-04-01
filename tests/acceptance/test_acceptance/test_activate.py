@@ -219,6 +219,14 @@ expected_activate_type_feat = """[
       "str_var": "hello"
     },
     "enabled": true
+  },
+  {
+    "userId": "matjaz",
+    "experimentKey": "ab_test1",
+    "featureKey": "flag_ab_test1",
+    "variationKey": "variation_1",
+    "type": "feature",
+    "enabled": true
   }
 ]"""
 
@@ -250,8 +258,7 @@ def test_activate__type(session_obj, decision_type, expected_response,
     if decision_type in ['experiment', 'feature']:
         sorted_actual = sort_response(
             resp.json(), 'experimentKey', 'featureKey')
-        sorted_expected = sort_response(json.loads(expected_response), 'experimentKey',
-                                        'featureKey')
+        sorted_expected = sort_response(json.loads(expected_response), 'experimentKey', 'featureKey')
         assert sorted_actual == sorted_expected
     elif resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
@@ -485,6 +492,14 @@ expected_activate_with_config = """[
     "variationKey": "variation_1",
     "type": "experiment",
     "enabled": true
+  },
+  {
+    "enabled": true,
+    "experimentKey": "ab_test1",
+    "featureKey": "flag_ab_test1",
+    "type": "feature",
+    "userId": "matjaz",
+    "variationKey": "variation_1"
   },
   {
     "userId": "matjaz",
