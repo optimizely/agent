@@ -78,7 +78,7 @@ jobs:
       language: python
       python: "3.7"
       install:
-        - python3.7.1 -m pip install -r tests/acceptance/requirements.txt
+        - pip install -r tests/acceptance/requirements.txt --use-deprecated=backtrack-on-build-failures
       script:
         - MYHOST="http://localhost:8080" make test-acceptance
 
