@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2022 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -281,7 +281,8 @@ func (e ErrorConfigManager) SyncConfig() {
 }
 
 type MockConfigManager struct {
-	config config.ProjectConfig
+	config      config.ProjectConfig
+	optlyConfig *config.OptimizelyConfig
 }
 
 func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
@@ -297,6 +298,9 @@ func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
 }
 
 func (m MockConfigManager) GetOptimizelyConfig() *config.OptimizelyConfig {
+	if m.optlyConfig != nil {
+		return m.optlyConfig
+	}
 	panic("implement me")
 }
 

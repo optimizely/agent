@@ -25,8 +25,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/optimizely/datafilecacheservice"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
@@ -46,6 +46,13 @@ type OptlyCache struct {
 	ctx                   context.Context
 	wg                    sync.WaitGroup
 }
+
+type datafileCacheServiceType = string
+
+// Represents types of datafile cache services
+const (
+	redis datafileCacheServiceType = "redis"
+)
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
 func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
@@ -190,25 +197,12 @@ func defaultLoader(
 
 		// Options for PollingProjectConfigManager
 		options := []sdkconfig.OptionFunc{}
-		// Check if datafile is already present in redis cache
-		var redisClient *redis.Client
-		var isDatafileCached bool
 
-		if conf.DatafileCache.RedisCache.Address != "" {
-			redisCacheConfig := conf.DatafileCache.RedisCache
-			redisClient = redis.NewClient(&redis.Options{
-				Addr:     redisCacheConfig.Address,
-				Password: redisCacheConfig.Password,
-				DB:       redisCacheConfig.Database,
-			})
-			datafile, err := redisClient.Get(ctx, sdkKey).Result()
-			if err == nil && datafile != "" {
-				// Set datafile in config manager so it uses the cached datafile for initialization
-				options = append(options, sdkconfig.WithInitialDatafile([]byte(datafile)))
-				isDatafileCached = true
-			} else {
-				log.Error().Msg(err.Error())
-			}
+		// Check if datafile is already present in cache
+		cachedDatafile, cacheService := getDatafileFromCacheService(ctx, sdkKey, conf)
+		if cachedDatafile != "" {
+			// Set datafile in config manager so it uses the cached datafile for initialization
+			options = append(options, sdkconfig.WithInitialDatafile([]byte(cachedDatafile)))
 		}
 
 		options = append(options,
@@ -228,11 +222,10 @@ func defaultLoader(
 			return &OptlyClient{}, err
 		}
 
-		if redisClient != nil && !isDatafileCached {
+		// Set datafile in datafileCacheService if not present
+		if cachedDatafile == "" && cacheService != nil {
 			datafile := configManager.GetOptimizelyConfig().GetDatafile()
-			if setError := redisClient.Set(ctx, sdkKey, datafile, 0).Err(); setError != nil {
-				log.Error().Msg(setError.Error())
-			}
+			cacheService.SetDatafileInCacheService(ctx, sdkKey, datafile)
 		}
 
 		q := event.NewInMemoryQueue(conf.QueueSize)
@@ -265,6 +258,27 @@ func defaultLoader(
 		)
 		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService}, err
 	}
+}
+
+func getDatafileFromCacheService(ctx context.Context, sdkKey string, conf config.ClientConfig) (datafile string, cacheService datafilecacheservice.DatafileCacheService) {
+	// In case of multiple cache services provided, use the first valid service
+	for k, v := range conf.DatafileCacheService {
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		switch k {
+		case redis:
+			var redisDatafileCache datafilecacheservice.RedisCacheService
+			if err = json.Unmarshal(bytes, &redisDatafileCache); err != nil || redisDatafileCache.Address == "" {
+				continue
+			}
+			return redisDatafileCache.GetDatafileFromCacheService(ctx, sdkKey), &redisDatafileCache
+		default:
+			// do nothing
+		}
+	}
+	return "", nil
 }
 
 // Returns the registered userProfileService against the sdkKey

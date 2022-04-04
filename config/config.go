@@ -78,10 +78,8 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex: "^\\w+(:\\w+)?$",
-			DatafileCache: DatafileCache{
-				RedisCache: RedisDatafileCache{},
-			},
+			SdkKeyRegex:          "^\\w+(:\\w+)?$",
+			DatafileCacheService: DatafileCache{},
 			UserProfileService: UserProfileServiceConfigs{
 				"default":  "",
 				"services": map[string]interface{}{},
@@ -156,29 +154,20 @@ func (ac *AgentConfig) LogConfigWarnings() {
 // UserProfileServiceConfigs defines the generic mapping of userprofileservice plugins
 type UserProfileServiceConfigs map[string]interface{}
 
+// DatafileCache holds the configuration options for the Datafile Cache.
+type DatafileCache map[string]interface{}
+
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
-	PollingInterval     time.Duration             `json:"pollingInterval"`
-	BatchSize           int                       `json:"batchSize" default:"10"`
-	QueueSize           int                       `json:"queueSize" default:"1000"`
-	FlushInterval       time.Duration             `json:"flushInterval" default:"30s"`
-	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
-	DatafileCache       DatafileCache             `mapstructure:"datafileCache"`
-	EventURL            string                    `json:"eventURL"`
-	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
-	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
-}
-
-// DatafileCache holds the configuration options for the Datafile Cache.
-type DatafileCache struct {
-	RedisCache RedisDatafileCache `mapstructure:"redis"`
-}
-
-// RedisDatafileCache holds the configuration options for the Redis Datafile Cache.
-type RedisDatafileCache struct {
-	Address  string `mapstructure:"host"`
-	Password string `mapstructure:"password"`
-	Database int    `mapstructure:"database"`
+	PollingInterval      time.Duration             `json:"pollingInterval"`
+	BatchSize            int                       `json:"batchSize" default:"10"`
+	QueueSize            int                       `json:"queueSize" default:"1000"`
+	FlushInterval        time.Duration             `json:"flushInterval" default:"30s"`
+	DatafileURLTemplate  string                    `json:"datafileURLTemplate"`
+	DatafileCacheService DatafileCache             `json:"datafileCacheService"`
+	EventURL             string                    `json:"eventURL"`
+	SdkKeyRegex          string                    `json:"sdkKeyRegex"`
+	UserProfileService   UserProfileServiceConfigs `json:"userProfileService"`
 }
 
 // LogConfig holds the log configuration

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
+ * Copyright 2019,2021-2022 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -267,7 +267,10 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 	// Note we're NOT testing that the ConfigManager was configured properly
 	// This would require a bit larger refactor since the optimizelyFactory.Client takes a few liberties
 	s.pcFactory = func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
-		return MockConfigManager{}
+		return MockConfigManager{
+			// Needed since GetOptimizelyConfig is called in case no datafile is saved in the datafileCacheService
+			optlyConfig: sdkconfig.NewOptimizelyConfig(&optimizelytest.TestProjectConfig{Datafile: `{"abs":123,}`}),
+		}
 	}
 }
 
@@ -287,6 +290,12 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 				"capacity":        0,
 				"storageStrategy": "fifo",
 			}},
+		},
+		DatafileCacheService: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "123",
+			},
 		},
 	}
 
@@ -480,6 +489,39 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
+}
+
+func (s *DefaultLoaderTestSuite) TestGetDatafileFromCacheService() {
+	// Redis
+	conf := config.ClientConfig{
+		DatafileCacheService: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+			},
+		}}
+
+	datafile, service := getDatafileFromCacheService(s.ctx, "123", conf)
+	s.Equal("", datafile)
+	s.NotNil(service)
+
+	// Empty redis config
+	conf.DatafileCacheService["redis"] = map[string]interface{}{}
+	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
+	s.Equal("", datafile)
+	s.Nil(service)
+
+	// No configs
+	conf.DatafileCacheService = make(config.DatafileCache)
+	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
+	s.Equal("", datafile)
+	s.Nil(service)
+
+	// invalid configs
+	conf.DatafileCacheService["invalid"] = map[string]interface{}{}
+	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
+	s.Equal("", datafile)
+	s.Nil(service)
 }
 
 func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {

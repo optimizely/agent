@@ -93,6 +93,11 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		conf.Client.UserProfileService = userProfileService
 	}
 
+	// Check if JSON string was set using OPTIMIZELY_CLIENT_DATAFILECACHESERVICE environment variable
+	if datafileCacheService := v.GetStringMap("client.datafilecacheservice"); datafileCacheService != nil {
+		conf.Client.DatafileCacheService = datafileCacheService
+	}
+
 	return conf
 }
 
