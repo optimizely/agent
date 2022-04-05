@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.7.0] - April 6, 2022
 
-- Add `UserProfileService` support. Out of the box implementations include `in-memory`, `rest` and `redis`. In-memory service supports both `fifo` and `lifo` orders. For details refer to our documentation page. [UserProfileService](https://github.com/optimizely/agent/tree/master/plugins/userprofileservice) ([#326](https://github.com/optimizely/agent/pull/326),[#331](https://github.com/optimizely/agent/pull/331)).
+- Add `UserProfileService` support. Out of the box implementations include `in-memory`, `rest` and `redis`. In-memory service supports both `fifo` and `lifo` orders. For details refer to our documentation page:  [UserProfileService](https://github.com/optimizely/agent/tree/master/plugins/userprofileservice) ([#326](https://github.com/optimizely/agent/pull/326), [#331](https://github.com/optimizely/agent/pull/331)).
 - Add more detail in documentation for sdk key. ([#332](https://github.com/optimizely/agent/pull/332))
 - Add support to remove sdkKey from logs ([#329](https://github.com/optimizely/agent/pull/329)).
 - Update JWT library to `https://github.com/golang-jwt/jwt` to fix security warnings since the previous library was no longer maintained
