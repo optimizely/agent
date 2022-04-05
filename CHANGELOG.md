@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - April 6, 2022
+
+- Add `UserProfileService` support. Out of the box implementations include `in-memory`, `rest` and `redis`. In-memory service supports both `fifo` and `lifo` orders. For details refer to our documentation page:  [UserProfileService](https://github.com/optimizely/agent/tree/master/plugins/userprofileservice) ([#326](https://github.com/optimizely/agent/pull/326), [#331](https://github.com/optimizely/agent/pull/331)).
+- Add more detail in documentation for sdk key. ([#332](https://github.com/optimizely/agent/pull/332))
+- Add support to remove sdkKey from logs ([#329](https://github.com/optimizely/agent/pull/329)).
+- Update JWT library to `https://github.com/golang-jwt/jwt` to fix security warnings since the previous library was no longer maintained
+([#334](https://github.com/optimizely/agent/pull/334)).
+
 ## [2.6.0] - Jan 13, 2022
 
 - Introduce `Forced Decisions` property into the `decide` API for overriding and managing user-level flag, experiment and delivery rule decisions. Forced decisions can be used for QA and automated testing purposes ([#324](https://github.com/optimizely/agent/pull/324), [#325](https://github.com/optimizely/agent/pull/325)).
