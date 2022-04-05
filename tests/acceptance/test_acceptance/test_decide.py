@@ -37,7 +37,7 @@ expected_forced_decision_with_rule_key = {
         "in the forced decision map."]
 }
 
-expected_single_flag_key = """
+expected_single_flag_key = r"""
     {
       "variationKey": "variation_1",
       "enabled": true,
@@ -49,7 +49,7 @@ expected_single_flag_key = """
           "attr_1": "hola"
         }
       },
-      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]
+      "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"feature_2_test\"."]
     }
 """
 
@@ -154,7 +154,7 @@ def test_decide_with_forced_decision__feature(session_obj, flag_key, expected_re
     resp.raise_for_status()
 
 
-expected_flag_keys = """[
+expected_flag_keys = r"""[
   {
     "variationKey": "16925940659",
     "enabled": true,
@@ -168,14 +168,14 @@ expected_flag_keys = """[
     "ruleKey": "ab_test1",
     "flagKey": "flag_ab_test1",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
-      "reasons": ["Audiences for experiment ab_test1 collectively evaluated to true."]},
+      "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"ab_test1\"."]},
   {
     "variationKey": "variation_1",
     "enabled": true,
     "ruleKey": "feature_2_test",
     "flagKey": "feature_2",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
-    "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+    "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"feature_2_test\"."]},
   {
     "variationKey": "16927890136",
     "enabled": true,
@@ -194,7 +194,7 @@ expected_flag_keys = """[
   }
 ]"""
 
-expected_flag_key__multiple_parameters = """[
+expected_flag_key__multiple_parameters = r"""[
     {
       "variationKey": "16906801184",
       "enabled": true,
@@ -209,7 +209,7 @@ expected_flag_key__multiple_parameters = """[
       "ruleKey": "feature_2_test",
       "flagKey": "feature_2",
         "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
-      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+      "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"feature_2_test\"."]},
     {
       "variationKey": "16925940659",
       "enabled": true,
