@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/optimizely/agent/pkg/optimizely/datafilecacheservice"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/rs/zerolog/log"
@@ -30,12 +30,8 @@ import (
 
 // RedisUserProfileService represents the redis implementation of UserProfileService interface
 type RedisUserProfileService struct {
-	Ctx        context.Context
-	Client     *redis.Client
-	Expiration time.Duration
-	Address    string `json:"host"`
-	Password   string `json:"password"`
-	Database   int    `json:"database"`
+	datafilecacheservice.RedisCacheService
+	Ctx context.Context
 }
 
 // Lookup is used to retrieve past bucketing decisions for users
@@ -47,7 +43,7 @@ func (u *RedisUserProfileService) Lookup(userID string) (profile decision.UserPr
 
 	// This is required in both lookup and save since an old redis instance can also be used
 	if u.Client == nil {
-		u.initClient()
+		u.InitClient()
 	}
 
 	if userID == "" {
@@ -78,7 +74,7 @@ func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 
 	// This is required in both lookup and save since an old redis instance can also be used
 	if u.Client == nil {
-		u.initClient()
+		u.InitClient()
 	}
 
 	if profile.ID == "" {
@@ -92,7 +88,7 @@ func (u *RedisUserProfileService) Save(profile decision.UserProfile) {
 
 	if finalProfile, err := json.Marshal(experimentBucketMap); err == nil {
 		// Log error message if something went wrong
-		if setError := u.Client.Set(u.Ctx, profile.ID, finalProfile, u.Expiration).Err(); setError != nil {
+		if setError := u.Client.Set(u.Ctx, profile.ID, finalProfile, 0*time.Second).Err(); setError != nil {
 			log.Error().Msg(setError.Error())
 		}
 	}
@@ -103,19 +99,9 @@ func (u *RedisUserProfileService) AddContext(ctx context.Context) {
 	u.Ctx = ctx
 }
 
-func (u *RedisUserProfileService) initClient() {
-	u.Client = redis.NewClient(&redis.Options{
-		Addr:     u.Address,
-		Password: u.Password,
-		DB:       u.Database,
-	})
-}
-
 func init() {
 	redisUPSCreator := func() decision.UserProfileService {
-		return &RedisUserProfileService{
-			Expiration: 0 * time.Second,
-		}
+		return &RedisUserProfileService{}
 	}
 	userprofileservice.Add("redis", redisUPSCreator)
 }

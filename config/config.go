@@ -78,8 +78,11 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex:          "^\\w+(:\\w+)?$",
-			DatafileCacheService: DatafileCache{},
+			SdkKeyRegex: "^\\w+(:\\w+)?$",
+			DatafileCacheService: DatafileCache{
+				"enabled":  false,
+				"services": map[string]interface{}{},
+			},
 			UserProfileService: UserProfileServiceConfigs{
 				"default":  "",
 				"services": map[string]interface{}{},

@@ -21,6 +21,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/optimizely/agent/pkg/optimizely/datafilecacheservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/stretchr/testify/suite"
 )
@@ -36,10 +37,12 @@ func (r *RedisUPSTestSuite) SetupTest() {
 	ctx, cancel := context.WithCancel(context.Background())
 	r.cancel = cancel
 	r.ups = RedisUserProfileService{
-		Address:  "100",
-		Password: "10",
-		Database: 1,
-		Ctx:      ctx,
+		RedisCacheService: datafilecacheservice.RedisCacheService{
+			Address:  "100",
+			Password: "10",
+			Database: 1,
+		},
+		Ctx: ctx,
 	}
 }
 

@@ -87,10 +87,13 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, userProfileServices, actual.UserProfileService["services"])
 
 	datafileCacheService := map[string]interface{}{
-		"host":     "localhost:6379",
-		"password": "123",
+		"redis": map[string]interface{}{
+			"host":     "localhost:6379",
+			"password": "123",
+		},
 	}
-	assert.Equal(t, datafileCacheService, actual.DatafileCacheService["redis"])
+	assert.Equal(t, datafileCacheService, actual.DatafileCacheService["services"])
+	assert.Equal(t, true, actual.DatafileCacheService["enabled"])
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -230,9 +233,12 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.userProfileService", userProfileServices)
 
 	datafileCacheService := map[string]interface{}{
-		"redis": map[string]interface{}{
-			"host":     "localhost:6379",
-			"password": "123",
+		"enabled": true,
+		"services": map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "123",
+			},
 		},
 	}
 	v.Set("client.datafileCacheService", datafileCacheService)
@@ -323,7 +329,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"}},"custom":{"path":"http://test2.com"}}}`)
-	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILECACHESERVICE", `{"redis":{"host":"localhost:6379","password":"123"}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILECACHESERVICE", `{"enabled":true,"services":{"redis":{"host":"localhost:6379","password":"123"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")

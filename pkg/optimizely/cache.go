@@ -47,11 +47,12 @@ type OptlyCache struct {
 	wg                    sync.WaitGroup
 }
 
-type datafileCacheServiceType = string
+type datafileCacheServiceKey = string
 
-// Represents types of datafile cache services
+// Represents keys in datafile cache services
 const (
-	redis datafileCacheServiceType = "redis"
+	enabled datafileCacheServiceKey = "enabled"
+	redis   datafileCacheServiceKey = "redis"
 )
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
@@ -261,21 +262,26 @@ func defaultLoader(
 }
 
 func getDatafileFromCacheService(ctx context.Context, sdkKey string, conf config.ClientConfig) (datafile string, cacheService datafilecacheservice.DatafileCacheService) {
-	// In case of multiple cache services provided, use the first valid service
-	for k, v := range conf.DatafileCacheService {
-		bytes, err := json.Marshal(v)
-		if err != nil {
-			continue
-		}
-		switch k {
-		case redis:
-			var redisDatafileCache datafilecacheservice.RedisCacheService
-			if err = json.Unmarshal(bytes, &redisDatafileCache); err != nil || redisDatafileCache.Address == "" {
-				continue
+	// Check whether datafileCacheService should be enabled
+	if shouldEnable, ok := conf.DatafileCacheService[enabled].(bool); ok && shouldEnable {
+		if services, ok := conf.DatafileCacheService["services"].(map[string]interface{}); ok {
+			// In case of multiple cache services provided, use the first valid service
+			for k, v := range services {
+				bytes, err := json.Marshal(v)
+				if err != nil {
+					continue
+				}
+				switch k {
+				case redis:
+					var redisDatafileCache datafilecacheservice.RedisCacheService
+					if err = json.Unmarshal(bytes, &redisDatafileCache); err != nil || redisDatafileCache.Address == "" {
+						continue
+					}
+					return redisDatafileCache.GetDatafileFromCacheService(ctx, sdkKey), &redisDatafileCache
+				default:
+					// do nothing
+				}
 			}
-			return redisDatafileCache.GetDatafileFromCacheService(ctx, sdkKey), &redisDatafileCache
-		default:
-			// do nothing
 		}
 	}
 	return "", nil

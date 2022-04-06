@@ -33,9 +33,11 @@ client:
   eventURL: "https://logx.localhost.com/v1"
   sdkKeyRegex: "custom-regex"
   datafileCacheService:
-    redis: 
-      host: "localhost:6379"
-      password: "123"
+    enabled: true
+    services:
+      redis: 
+        host: "localhost:6379"
+        password: "123"
   userProfileService:
     default: "in-memory"
     services:

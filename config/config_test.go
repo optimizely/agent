@@ -84,6 +84,10 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "^\\w+(:\\w+)?$", conf.Client.SdkKeyRegex)
 	assert.Equal(t, "", conf.Client.UserProfileService["default"])
 	assert.Equal(t, map[string]interface{}{}, conf.Client.UserProfileService["services"])
+	assert.Equal(t, DatafileCache{
+		"enabled":  false,
+		"services": map[string]interface{}{},
+	}, conf.Client.DatafileCacheService)
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)

@@ -292,9 +292,12 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 			}},
 		},
 		DatafileCacheService: map[string]interface{}{
-			"redis": map[string]interface{}{
-				"host":     "localhost:6379",
-				"password": "123",
+			"enabled": true,
+			"services": map[string]interface{}{
+				"redis": map[string]interface{}{
+					"host":     "localhost:6379",
+					"password": "123",
+				},
 			},
 		},
 	}
@@ -492,21 +495,38 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 }
 
 func (s *DefaultLoaderTestSuite) TestGetDatafileFromCacheService() {
-	// Redis
+	cacheServices := map[string]interface{}{
+		"redis": map[string]interface{}{
+			"host":     "localhost:6379",
+			"password": "",
+		},
+	}
+	// Redis Enabled
 	conf := config.ClientConfig{
 		DatafileCacheService: map[string]interface{}{
-			"redis": map[string]interface{}{
-				"host":     "localhost:6379",
-				"password": "",
-			},
+			"enabled":  true,
+			"services": cacheServices,
 		}}
 
 	datafile, service := getDatafileFromCacheService(s.ctx, "123", conf)
 	s.Equal("", datafile)
 	s.NotNil(service)
 
+	// Redis Disabled
+	conf.DatafileCacheService["enabled"] = false
+	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
+	s.Equal("", datafile)
+	s.Nil(service)
+
+	// No Enabled key
+	delete(conf.DatafileCacheService, "enabled")
+	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
+	s.Equal("", datafile)
+	s.Nil(service)
+
 	// Empty redis config
-	conf.DatafileCacheService["redis"] = map[string]interface{}{}
+	conf.DatafileCacheService["enabled"] = true
+	cacheServices["redis"] = map[string]interface{}{}
 	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
 	s.Equal("", datafile)
 	s.Nil(service)
@@ -518,7 +538,7 @@ func (s *DefaultLoaderTestSuite) TestGetDatafileFromCacheService() {
 	s.Nil(service)
 
 	// invalid configs
-	conf.DatafileCacheService["invalid"] = map[string]interface{}{}
+	cacheServices["invalid"] = map[string]interface{}{}
 	datafile, service = getDatafileFromCacheService(s.ctx, "123", conf)
 	s.Equal("", datafile)
 	s.Nil(service)

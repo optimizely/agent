@@ -38,10 +38,19 @@ type RedisCacheService struct {
 	Database int    `json:"database"`
 }
 
+// InitClient initializes redis client with the given configuration
+func (r *RedisCacheService) InitClient() {
+	r.Client = redis.NewClient(&redis.Options{
+		Addr:     r.Address,
+		Password: r.Password,
+		DB:       r.Database,
+	})
+}
+
 // GetDatafileFromCacheService returns the saved datafile from the cache service
 func (r *RedisCacheService) GetDatafileFromCacheService(ctx context.Context, sdkKey string) string {
 	if r.Client == nil {
-		r.initClient()
+		r.InitClient()
 	}
 	datafile, err := r.Client.Get(ctx, sdkKey).Result()
 	if err != nil {
@@ -54,17 +63,9 @@ func (r *RedisCacheService) GetDatafileFromCacheService(ctx context.Context, sdk
 // SetDatafileInCacheService saves the datafile in the cache service
 func (r *RedisCacheService) SetDatafileInCacheService(ctx context.Context, sdkKey, datafile string) {
 	if r.Client == nil {
-		r.initClient()
+		r.InitClient()
 	}
 	if setError := r.Client.Set(ctx, sdkKey, datafile, 0).Err(); setError != nil {
 		log.Error().Msg(setError.Error())
 	}
-}
-
-func (r *RedisCacheService) initClient() {
-	r.Client = redis.NewClient(&redis.Options{
-		Addr:     r.Address,
-		Password: r.Password,
-		DB:       r.Database,
-	})
 }
