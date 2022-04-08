@@ -24,14 +24,26 @@ ENDPOINT_LOOKUP = '/v1/lookup'
 
 YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
 
-spec_dict = None
-with open(YAML_FILE_PATH, 'r') as stream:
-    try:
-        spec_dict = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
 
-spec = create_spec(spec_dict)
+def parse_yaml(path):
+    with open(path, 'r') as stream:
+        try:
+            return yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print('HERE IS EXCPTION')
+            print(exc)
+
+
+spec = create_spec(parse_yaml(YAML_FILE_PATH))
+
+
+def ups_is_active():
+    try:
+        parse_yaml('config.yaml')['client']['userProfileService']
+        return True
+    except KeyError as e:
+        print(e)
+        return False
 
 
 def get_random_string():
