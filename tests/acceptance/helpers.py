@@ -38,6 +38,10 @@ spec = create_spec(parse_yaml(YAML_FILE_PATH))
 
 
 def ups_is_active():
+    """
+    Checks if field client.userProfileService is present in config.yaml
+    If yes, then this function assumes the Agent version has UPS support (>= v2.7.0)
+    """
     try:
         parse_yaml('config.yaml')['client']['userProfileService']
         return True
