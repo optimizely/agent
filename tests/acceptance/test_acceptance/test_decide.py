@@ -283,7 +283,7 @@ expected_flag_keys_no_ups = r"""[
     "ruleKey": "ab_test1",
     "flagKey": "flag_ab_test1",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
-      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+      "reasons": ["Audiences for experiment ab_test1 collectively evaluated to true."]},
   {
     "variationKey": "variation_1",
     "enabled": true,
