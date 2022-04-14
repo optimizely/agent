@@ -269,50 +269,167 @@ expected_flag_key__multiple_parameters = r"""[
     }
 ]"""
 
+expected_flag_keys_no_ups = r"""[
+  {
+    "variationKey": "16925940659",
+    "enabled": true,
+    "ruleKey": "16939051724",
+    "flagKey": "feature_4",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16939051724 collectively evaluated to true."]},
+  {
+    "variationKey": "variation_1",
+    "enabled": true,
+    "ruleKey": "ab_test1",
+    "flagKey": "flag_ab_test1",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+  {
+    "variationKey": "variation_1",
+    "enabled": true,
+    "ruleKey": "feature_2_test",
+    "flagKey": "feature_2",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+    "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+  {
+    "variationKey": "16927890136",
+    "enabled": true,
+    "ruleKey": "16932940705",
+    "flagKey": "feature_5",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+    "reasons": ["Audiences for experiment 16932940705 collectively evaluated to true."]},
+  {
+    "variationKey": "16906801184",
+    "enabled": true,
+    "ruleKey": "16941022436",
+    "flagKey": "feature_1",
+      "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+    "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
+    "variables": {"bool_var": true, "double_var": 5.6, "int_var": 1, "str_var": "hello"}
+  }
+]"""
 
-@pytest.mark.parametrize(
-    "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
-        ({}, expected_flag_keys, 200, True, True),
-        ({"keys": []}, expected_flag_keys, 200, True, True),
-        ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_key__multiple_parameters, 200, True, True),
-    ],
-    ids=["missig_flagkey_parameter", "no flag key specified", "multiple parameters"])
-def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,
-                                    bypass_validation_request,
-                                    bypass_validation_response):
-    """
-    Test validates:
-    That no required parameter and empty param return identical response.
-    Openapi spec specifies 400 for missing flagKey parameter. But We keep 400 status code in the openapi spec
-    for missing reuired parameter, even though when no flagKey parameter is supplied to the request,
-    Agent still responds with all decisions and status 200.
-    That is consistent with the behavior of activate and other api-s
-    :param session_obj: session obj
-    :param parameters:  sesison obj, params, expected, expected status code
-    :param expected_response: expected_flag_keys
-    :param expected_status_code: 200
-    """
-    payload = """
-        {
-          "userId": "matjaz",
-          "decideOptions": [
-              "ENABLED_FLAGS_ONLY",
-              "INCLUDE_REASONS"
-          ],
-          "userAttributes": {"attr_1": "hola"}
-        }
-    """
+expected_flag_key__multiple_parameters_no_ups = r"""[
+    {
+      "variationKey": "16906801184",
+      "enabled": true,
+      "ruleKey": "16941022436",
+      "flagKey": "feature_1",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
+      "variables": {"bool_var": true, "double_var": 5.6, "int_var": 1, "str_var": "hello"}},
+    {
+      "variationKey": "variation_1",
+      "enabled": true,
+      "ruleKey": "feature_2_test",
+      "flagKey": "feature_2",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
+    {
+      "variationKey": "16925940659",
+      "enabled": true,
+      "ruleKey": "16939051724",
+      "flagKey": "feature_4",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16939051724 collectively evaluated to true."]},
+    {
+      "variationKey": "16927890136",
+      "enabled": true,
+      "ruleKey": "16932940705",
+      "flagKey": "feature_5",
+        "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
+      "reasons": ["Audiences for experiment 16932940705 collectively evaluated to true."]
+    }
+]"""
 
-    params = parameters
-    resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, bypass_validation_request,
-                                                    bypass_validation_response,
-                                                    payload=payload,
-                                                    params=params)
+if url_points_to_cluster():
+    @pytest.mark.parametrize(
+        "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
+            ({}, expected_flag_keys_no_ups, 200, True, True),
+            ({"keys": []}, expected_flag_keys_no_ups, 200, True, True),
+            ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_key__multiple_parameters_no_ups, 200, True, True),
+        ],
+        ids=["missig_flagkey_parameter_no_ups", "no flag key specified_no_ups", "multiple parameters_no_ups"])
+    def test_decide__flag_key_parameter_no_ups(session_obj, parameters, expected_response, expected_status_code,
+                                        bypass_validation_request,
+                                        bypass_validation_response):
+        """
+        Test validates:
+        That no required parameter and empty param return identical response.
+        Openapi spec specifies 400 for missing flagKey parameter. But We keep 400 status code in the openapi spec
+        for missing reuired parameter, even though when no flagKey parameter is supplied to the request,
+        Agent still responds with all decisions and status 200.
+        That is consistent with the behavior of activate and other api-s
+        :param session_obj: session obj
+        :param parameters:  sesison obj, params, expected, expected status code
+        :param expected_response: expected_flag_keys
+        :param expected_status_code: 200
+        """
+        payload = """
+            {
+              "userId": "matjaz",
+              "decideOptions": [
+                  "ENABLED_FLAGS_ONLY",
+                  "INCLUDE_REASONS"
+              ],
+              "userAttributes": {"attr_1": "hola"}
+            }
+        """
 
-    sorted_actual = sort_response(resp.json(), "flagKey")
-    sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+        params = parameters
+        resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, bypass_validation_request,
+                                                        bypass_validation_response,
+                                                        payload=payload,
+                                                        params=params)
 
-    assert sorted_actual == sorted_expected
+        sorted_actual = sort_response(resp.json(), "flagKey")
+        sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+
+        assert sorted_actual == sorted_expected
+else:
+    @pytest.mark.parametrize(
+        "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
+            ({}, expected_flag_keys, 200, True, True),
+            ({"keys": []}, expected_flag_keys, 200, True, True),
+            ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_key__multiple_parameters, 200, True, True),
+        ],
+        ids=["missig_flagkey_parameter", "no flag key specified", "multiple parameters"])
+    def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,
+                                        bypass_validation_request,
+                                        bypass_validation_response):
+        """
+        Test validates:
+        That no required parameter and empty param return identical response.
+        Openapi spec specifies 400 for missing flagKey parameter. But We keep 400 status code in the openapi spec
+        for missing reuired parameter, even though when no flagKey parameter is supplied to the request,
+        Agent still responds with all decisions and status 200.
+        That is consistent with the behavior of activate and other api-s
+        :param session_obj: session obj
+        :param parameters:  sesison obj, params, expected, expected status code
+        :param expected_response: expected_flag_keys
+        :param expected_status_code: 200
+        """
+        payload = """
+                {
+                  "userId": "matjaz",
+                  "decideOptions": [
+                      "ENABLED_FLAGS_ONLY",
+                      "INCLUDE_REASONS"
+                  ],
+                  "userAttributes": {"attr_1": "hola"}
+                }
+            """
+
+        params = parameters
+        resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, bypass_validation_request,
+                                                        bypass_validation_response,
+                                                        payload=payload,
+                                                        params=params)
+
+        sorted_actual = sort_response(resp.json(), "flagKey")
+        sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+
+        assert sorted_actual == sorted_expected
 
 
 def test_decide_403(session_override_sdk_key):
