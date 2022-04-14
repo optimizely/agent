@@ -3,10 +3,10 @@ import json
 import pytest
 import requests
 
-from tests.acceptance.helpers import url_points_to_cluster
 from tests.acceptance.helpers import ENDPOINT_DECIDE
 from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
+from tests.acceptance.helpers import url_points_to_cluster
 
 expected_forced_decision_without_rule_key = {
     "variationKey": "variation_1",
@@ -347,12 +347,13 @@ if url_points_to_cluster():
         "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
             ({}, expected_flag_keys_no_ups, 200, True, True),
             ({"keys": []}, expected_flag_keys_no_ups, 200, True, True),
-            ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_key__multiple_parameters_no_ups, 200, True, True),
+            ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]},
+             expected_flag_key__multiple_parameters_no_ups, 200, True, True),
         ],
         ids=["missig_flagkey_parameter_no_ups", "no flag key specified_no_ups", "multiple parameters_no_ups"])
     def test_decide__flag_key_parameter_no_ups(session_obj, parameters, expected_response, expected_status_code,
-                                        bypass_validation_request,
-                                        bypass_validation_response):
+                                               bypass_validation_request,
+                                               bypass_validation_response):
         """
         Test validates:
         That no required parameter and empty param return identical response.
@@ -391,7 +392,10 @@ else:
         "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
             ({}, expected_flag_keys, 200, True, True),
             ({"keys": []}, expected_flag_keys, 200, True, True),
-            ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]}, expected_flag_key__multiple_parameters, 200, True, True),
+            (
+                    {"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]},
+                    expected_flag_key__multiple_parameters, 200,
+                    True, True),
         ],
         ids=["missig_flagkey_parameter", "no flag key specified", "multiple parameters"])
     def test_decide__flag_key_parameter(session_obj, parameters, expected_response, expected_status_code,
