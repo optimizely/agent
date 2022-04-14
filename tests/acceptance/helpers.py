@@ -1,6 +1,7 @@
 import json
 import os
 import string
+import sys
 from random import randint, choice
 
 import yaml
@@ -30,23 +31,32 @@ def parse_yaml(path):
         try:
             return yaml.safe_load(stream)
         except yaml.YAMLError as exc:
-            print('HERE IS EXCPTION')
             print(exc)
 
 
 spec = create_spec(parse_yaml(YAML_FILE_PATH))
 
 
-def ups_is_active():
+def url_points_to_cluster():
     """
-    Checks if field client.userProfileService is present in config.yaml
-    If yes, then this function assumes the Agent version has UPS support (>= v2.7.0)
+    Parses pytest comman and checks if the host contains URLs from AWS Fargate clusters.
     """
-    try:
-        parse_yaml('config.yaml')['client']['userProfileService']
+    # get url from pytest command arguments
+    command_url = ''
+    l = sys.argv
+    for arg in l:
+        if arg.startswith('http'):
+            command_url = arg
+            break
+
+    cluster_urls = ['https://testing2.fullstack.optimizelysmtp.com',
+                    'https://testing3.fullstack.optimizelysmtp.com',
+                    'https://agent.api.optimizely.com',
+                    'https://3p.api.optimizely.com']
+
+    if command_url in cluster_urls:
         return True
-    except KeyError as e:
-        print(e)
+    else:
         return False
 
 

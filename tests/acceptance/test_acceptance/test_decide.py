@@ -3,7 +3,7 @@ import json
 import pytest
 import requests
 
-from tests.acceptance.helpers import ups_is_active
+from tests.acceptance.helpers import url_points_to_cluster
 from tests.acceptance.helpers import ENDPOINT_DECIDE
 from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
@@ -88,41 +88,7 @@ expected_invalid_flag_key = r"""
     }
 """
 
-if ups_is_active():
-    @pytest.mark.parametrize(
-        "flag_key, expected_response, expected_status_code", [
-            ("feature_2", expected_single_flag_key, 200),
-            ("invalid_flag_key", expected_invalid_flag_key, 200),
-        ],
-        ids=["valid case with ups", "invalid_flag_key"])
-    def test_decide__feature(session_obj, flag_key, expected_response, expected_status_code):
-        """
-        Test validates:
-        Correct response for flag key when User profile service is enabled.
-        """
-        payload = """
-            {
-              "userId": "matjaz",
-              "decideOptions": [
-                  "ENABLED_FLAGS_ONLY",
-                  "INCLUDE_REASONS"
-              ],
-              "userAttributes": {"attr_1": "hola"}
-            }
-        """
-        print('==================================')
-        print('====    UPS IS SUPPORTED    ====')
-        print('==================================')
-
-        params = {"keys": flag_key}
-        resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, payload=payload,
-                                                        params=params)
-
-        # assert that expected response includes sticky variation from UPS (expected_single_flag_key_ups)
-        assert json.loads(expected_response) == resp.json()
-        assert resp.status_code == expected_status_code, resp.text
-        resp.raise_for_status()
-else:
+if url_points_to_cluster():
     @pytest.mark.parametrize(
         "flag_key, expected_response, expected_status_code", [
             ("feature_2", expected_single_flag_key_no_ups, 200),
@@ -144,38 +110,41 @@ else:
               "userAttributes": {"attr_1": "hola"}
             }
         """
-        print('==================================')
-        print('====    UPS NOT SUPPORTED     ====')
-        print('==================================')
-
         params = {"keys": flag_key}
         resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, payload=payload,
                                                         params=params)
 
-        # if response gives regular reasons (no fixed var -ups), then assert that reasons are same as with UPS
-        # this will pass in fargate acc tests (pre-UPS version of Agent), but not here in Agent v2.7.0 on (w ups)
-        # that's because we determin if UPS is active by looking into config.yaml file is field
-        # client.userProfileService is present. If it is, then that Agent version does have UPS active. If not,
-        # it doesn't.
-        # The problem we have is that Agent repo is on v2.7.0 with UPS and Fargate acc tests are on Agent v.2.6.0
-        # without UPS. So the if/else statement that determines if UPS is present will determine which of the two
-        # test sets will execute:
-        #   1. test_decide__feature_w_ups
-        #   2. test_decide__feature
-        # The if block with test_decide_w_ups__feature() will run on v2.7.0 that have ups, that is Agent repo) and
-        # the else block with test_decide__feature() will run on v2.6.0 and less, that is Fargate Agent.
-        # Important: else block will never get executed on Agent repo with v2.7.0+, so no worries if it doesn't run
-        # And else block will always execute on versions 2.6.0 or less whch is currently on Fargate. Until we
-        # upgrade Fargate to handle UPS. Then we can probably ditch this else block.
-        # TODO: current issue - else block fails the test_decide__feature test when the expected is not same as resp.
-        #   - that's because UPS in Agent 2.7.0 is AWLWAYS on REGARDLESS if we enable or disable field
-        #   client.userprofileService in config.yaml. This may not be a problem becasue this else block never runs
-        #   in Agent 2.7.0 (basically we need a way to completely and fully toggle whole UPS on or off) and then
-        #   use this in acc tests.
-        # TODO next: create a PR and run fargate acc tests with that branch, sidedoor-teraform travis should fetch
-        #            this new branch that can detect if UPS is present or not. It won't be present in v2.6.0 and
-        #            so acc tests in sidedoor-teraform should run the decide tests (what a mess)
         # assert that expected response doesn't include sticky variation from UPS (should be expected_single_flag_key)
+        assert json.loads(expected_response) == resp.json()
+        assert resp.status_code == expected_status_code, resp.text
+        resp.raise_for_status()
+else:
+    @pytest.mark.parametrize(
+        "flag_key, expected_response, expected_status_code", [
+            ("feature_2", expected_single_flag_key, 200),
+            ("invalid_flag_key", expected_invalid_flag_key, 200),
+        ],
+        ids=["valid case with ups", "invalid_flag_key"])
+    def test_decide__feature(session_obj, flag_key, expected_response, expected_status_code):
+        """
+        Test validates:
+        Correct response for flag key when User profile service is enabled.
+        """
+        payload = """
+            {
+              "userId": "matjaz",
+              "decideOptions": [
+                  "ENABLED_FLAGS_ONLY",
+                  "INCLUDE_REASONS"
+              ],
+              "userAttributes": {"attr_1": "hola"}
+            }
+        """
+        params = {"keys": flag_key}
+        resp = create_and_validate_request_and_response(ENDPOINT_DECIDE, "post", session_obj, payload=payload,
+                                                        params=params)
+
+        # assert that expected response includes sticky variation from UPS (expected_single_flag_key_ups)
         assert json.loads(expected_response) == resp.json()
         assert resp.status_code == expected_status_code, resp.text
         resp.raise_for_status()
