@@ -40,11 +40,11 @@ spec = create_spec(parse_yaml(YAML_FILE_PATH))
 def url_points_to_cluster():
     """
     Parses pytest comman and checks if the host contains URLs from AWS Fargate clusters.
+    if yes, this function will toggle tests that don't support UPS and those that do.
     """
-    # get url from pytest command arguments
+    # get host url from pytest command arguments
     command_url = ''
-    l = sys.argv
-    for arg in l:
+    for arg in sys.argv:
         if arg.startswith('http'):
             command_url = arg
             break
@@ -69,7 +69,7 @@ def get_random_string():
 
 def get_pretty_json(dictionary, spaces=4):
     """
-    Makes JSON output prettuer and readable.
+    Makes JSON output prettier and readable.
     :return: stringified JSON
     """
     return json.dumps(dictionary, indent=spaces)
