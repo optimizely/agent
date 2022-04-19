@@ -96,5 +96,6 @@ test-acceptance:
 	make setup && \
 	make run & \
 	bash scripts/wait_for_agent_to_start.sh && \
-	pytest -vv -rA --diff-symbols tests/acceptance/test_acceptance/ -k "$(TEST)" --host "$(MYHOST)" && \
+	pytest -vv -rA --diff-symbols tests/acceptance/test_acceptance/ \
+	-k "not test_decide__feature_no_ups and not test_decide__flag_key_parameter_no_ups" --host "$(MYHOST)" && \
 	make stop

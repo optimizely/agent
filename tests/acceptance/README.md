@@ -16,12 +16,5 @@ Run tests
 
 You can point `MYHOST` to any URL where agent service is located.
 
-If you want to run an individual test add TEST variable in front like so:
-`TEST="test_activate__disable_tracking" MYHOST="http://localhost:8080" make test-acceptance`  
-The TEST variable is based on Pytest's -k pattern matching flag so you can provide a full name of the test to only run that test, or a partial name which will run all tests that match that name pattern.
-
-Tests have a function `url_points_to_cluster()` which has the role of toggling between Agent versions that support user profile service and those that don't.  
-Optimizely runs Agent with these tests also on AWS clusters. UPS is not supported there. So we added this function  
-so that Agent on AWS clusters excludes UPS tests. See PR [#341](https://github.com/optimizely/agent/pull/341).
-
-When running all tests in one go with UPS they will pass. But running individual tests that require UPS may fail  (run all to be sure).
+Tests contain a few tests that don't support user profile service. Those tests are intended to be used 
+by Optimizely at a different place and are therefore excluded from the main test run.

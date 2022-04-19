@@ -1,7 +1,6 @@
 import json
 import os
 import string
-import sys
 from random import randint, choice
 
 import yaml
@@ -35,29 +34,6 @@ def parse_yaml(path):
 
 
 spec = create_spec(parse_yaml(YAML_FILE_PATH))
-
-
-def url_points_to_cluster():
-    """
-    Parses pytest comman and checks if the host contains URLs from AWS Fargate clusters.
-    if yes, this function will toggle tests that don't support UPS and those that do.
-    """
-    # get host url from pytest command arguments
-    command_url = ''
-    for arg in sys.argv:
-        if arg.startswith('http'):
-            command_url = arg
-            break
-
-    cluster_urls = ['https://testing2.fullstack.optimizelysmtp.com',
-                    'https://testing3.fullstack.optimizelysmtp.com',
-                    'https://agent.api.optimizely.com',
-                    'https://3p.api.optimizely.com']
-
-    if command_url in cluster_urls:
-        return True
-    else:
-        return False
 
 
 def get_random_string():
