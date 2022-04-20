@@ -24,14 +24,16 @@ ENDPOINT_LOOKUP = '/v1/lookup'
 
 YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
 
-spec_dict = None
-with open(YAML_FILE_PATH, 'r') as stream:
-    try:
-        spec_dict = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
 
-spec = create_spec(spec_dict)
+def parse_yaml(path):
+    with open(path, 'r') as stream:
+        try:
+            return yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
+spec = create_spec(parse_yaml(YAML_FILE_PATH))
 
 
 def get_random_string():
@@ -43,7 +45,7 @@ def get_random_string():
 
 def get_pretty_json(dictionary, spaces=4):
     """
-    Makes JSON output prettuer and readable.
+    Makes JSON output prettier and readable.
     :return: stringified JSON
     """
     return json.dumps(dictionary, indent=spaces)
