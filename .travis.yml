@@ -79,6 +79,7 @@ jobs:
       python: "3.7"
       install:
         - python3.7 -m pip install pip==21.3.1
+        - pip --version        
         - python3.7 -m pip install -r tests/acceptance/requirements.txt 
       script:
         - MYHOST="http://localhost:8080" make test-acceptance
