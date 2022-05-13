@@ -32,6 +32,7 @@ jobs:
         python-version: 3.7
     - name: hadolint
       run: |
+        make -e setup build
         make -e lint
         for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
     - name: coveralls
