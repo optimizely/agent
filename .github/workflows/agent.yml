@@ -47,7 +47,7 @@ jobs:
       if: steps.make_coverall.outcome == 'success'
       run: |
         go get github.com/mattn/goveralls
-        $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=github
+        goveralls -coverprofile=profile.cov -service=github
     - name: acceptance test
       run: |
         pip install -r ./tests/acceptance/requirements.txt
