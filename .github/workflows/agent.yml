@@ -39,7 +39,7 @@ jobs:
       run: |
         make -e cover COVER_FILE=coverage.txt
     - name: post coverall
-      if: step.make_coverall.outcome == 'success'
+      if: steps.make_coverall.outcome == 'success'
       run: |
         go get github.com/mattn/goveralls
         $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=github
