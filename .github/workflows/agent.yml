@@ -24,6 +24,8 @@ jobs:
         test -z "$(go fmt ./pkg/...)"
   tests:
     runs-on: ubuntu-latest
+    env: 
+      COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v2
