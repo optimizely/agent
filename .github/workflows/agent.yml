@@ -19,7 +19,6 @@ jobs:
       with:
         python-version: 3.7
     - name: Run acceptance tests
-      env:
       run: |
         make -e setup build
         test -z "$(go fmt ./pkg/...)"
