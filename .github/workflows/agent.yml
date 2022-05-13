@@ -10,6 +10,19 @@ on:
     branches: [ master ]
 
 jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.7
+    - name: Run acceptance tests
+      env:
+      run: |
+        make -e setup build
+        test -z "$(go fmt ./pkg/...)"
   acceptance-test:
     runs-on: ubuntu-latest
     steps:
