@@ -38,7 +38,7 @@ jobs:
       id: make_coverall
       run: |
         make -e cover COVER_FILE=coverage.txt
-      name: post coverall
+    - name: post coverall
       if: step.make_coverall.outcome == 'success'
       run: |
         go get github.com/mattn/goveralls
