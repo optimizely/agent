@@ -31,17 +31,11 @@ jobs:
       with:
         python-version: 3.7
     - name: hadolint
-      uses: actions/setup-python@v3
-      with:
-        python-version: 3.7
       run: |
         make -e lint
         for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
     - name: coveralls
       id: make_coverall
-      uses: actions/setup-python@v3
-      with:
-        python-version: 3.7
       run: |
         make -e cover COVER_FILE=coverage.txt
       name: post coverall
