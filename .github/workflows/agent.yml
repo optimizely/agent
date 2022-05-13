@@ -18,11 +18,11 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: 3.7
-    - name: Run acceptance tests
+    - name: fmt
       run: |
         make -e setup build
         test -z "$(go fmt ./pkg/...)"
-  acceptance-test:
+  tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -30,10 +30,27 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: 3.7
-    - name: Install dependencies
+    - name: hadolint
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.7
       run: |
-        pip install -r ./tests/acceptance/requirements.txt 
-    - name: Run acceptance tests
+        make -e lint
+        for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
+    - name: coveralls
+      id: make_coverall
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.7
       run: |
+        make -e cover COVER_FILE=coverage.txt
+      name: post coverall
+      if: step.make_coverall.outcome == 'success'
+      run: |
+        go get github.com/mattn/goveralls
+        $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=github
+    - name: acceptance test
+      run: |
+        pip install -r ./tests/acceptance/requirements.txt
         make -e setup build
         MYHOST="http://localhost:8080" make test-acceptance
