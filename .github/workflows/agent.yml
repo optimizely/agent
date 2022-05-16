@@ -1,0 +1,197 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+    branches: [ master ]
+  
+env:
+  GIMME_GO_VERSION: 1.13.x 
+  GIMME_OS: linux 
+  GIMME_ARCH: amd64
+  
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: fmt
+      run: |
+        make -e setup build
+        test -z "$(go fmt ./pkg/...)"
+  
+  tests_hadolint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: hadolint
+      run: |
+        make -e setup build
+        make -e lint
+        for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
+        
+   tests_coveralls:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: coveralls
+      id: coveralls
+      run: |
+        make -e cover COVER_FILE=coverage.txt
+    - name: success
+      if: steps.coveralls.outcome == 'success'
+      run: |
+        make -e setup build
+        go get github.com/mattn/goveralls
+        $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
+ 
+  tests_sourceclear:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: sourceclear
+      env:
+        SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
+      run: curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
+    - name: run  
+      run: |
+        make -e setup build
+        go get -v -d ./...
+        
+  tests_windows_build_ps1:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v3
+    - name: windows build.ps1 test
+      id: windows_build
+      shell: pwsh
+      run: |
+        PowerShell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+        PowerShell -File "scripts\build.ps1" noninteractive
+        PowerShell -File "scripts\check_exe.ps1"
+    - name: success
+      if: steps.windows_build.outcome == 'success'
+      run: |
+        scripts/upload_artifacts.sh
+        
+   tests_acceptance_test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
+    - name: acceptance test
+      run: |
+        make -e setup build
+        pip install -r ./tests/acceptance/requirements.txt
+        MYHOST="http://localhost:8080" make test-acceptance
+        
+  integration_tests:
+    uses: optimizely/agent/.github/workflows/integration_test.yml@mnoman/gitAction
+    secrets:
+      CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
+      TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
+  
+  tests_using_latest_tag_no_upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: set env
+      run: echo "APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')" >> $GITHUB_ENV
+    - name: test
+      run: |
+        make -e setup build
+        ./scripts/ci_create_packages.sh
+        ./scripts/ci_build_generate_secret.sh
+        
+  build_upload_publish_draft:
+    if: startsWith(github.ref, 'refs/tags/') && ${GITHUB_REF#refs/tags/} =~ 'v[0-9]+.[0-9]+.[0-9]+(-beta)?[0-9]+*
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: set env
+      run: |
+        echo "APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')" >> $GITHUB_ENV
+    - uses: actions/checkout@v2
+      with:
+        # You should create a personal access token and store it in your repository
+        token: ${{ secrets.CI_USER_TOKEN }}
+        repository: 'optimizely/travisci-tools'
+        path: 'home/runner/travisci-tools'
+        ref: 'master'
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+    - name: set the env
+      run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+    - name: Upload and publish draft
+      env:
+        HOME: 'home/runner'
+      run: |
+        # installs hub to ~/bin
+        $HOME/travisci-tools/release_github/install_hub.sh
+        echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
+    - name: run script
+      run: |
+        make -e setup build
+        # now we're going to create packages & upload packages
+        ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
+        # create the github release (draft)
+        release_github_v2.sh "$APP_VERSION"
+        # attach generate_secret to the github release
+        ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
+  
+  test_github_release_assets:
+    if: startsWith(github.ref, 'refs/tags/') && ${GITHUB_REF#refs/tags/} =~ 'v[0-9]+.[0-9]+.[0-9]+(-beta)?[0-9]+*
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2022]
+        include:
+        - os: macos-latest
+          TARGET: darwin-amd64
+        - os: ubuntu-latest
+          TARGET: linux-amd64
+        - os: windows-2022
+          TARGET: windows-amd64
+    steps:
+    - uses: actions/checkout@v3
+    - name: set env
+      run: |
+        echo "APP_VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')" >> $GITHUB_ENV
+    - uses: actions/checkout@v2
+      with:
+        # You should create a personal access token and store it in your repository
+        token: ${{ secrets.CI_USER_TOKEN }}
+        repository: 'optimizely/travisci-tools'
+        path: 'home/runner/travisci-tools'
+        ref: 'master'
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+    - name: set the env
+      run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+    - name: Upload and publish draft
+      env:
+        HOME: 'home/runner'
+      run: |
+        # installs hub to ~/bin
+        $HOME/travisci-tools/release_github/install_hub.sh
+        echo "$HOME/bin:$HOME/travisci-tools/slack" >> $GITHUB_PATH
+    - name: run script
+      id: script
+      run: |
+        hub release download $(git describe --abbrev=0 --tags) -i '*-${{ matrix.TARGET }}-*'
+        tar xvfz generate_secret-${{ matrix.TARGET }}-${APP_VERSION}.tar.gz -C /tmp
+        /tmp/generate_secret
+    - name: failure
+      if: steps.script.outcome != 'success'
+      run: |
+        SLACK_TEXT="${APP_VERSION} ${{ matrix.os }} assets failed verification." send_to_slack.sh
+ 
