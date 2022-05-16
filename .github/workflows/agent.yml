@@ -121,7 +121,7 @@ jobs:
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: test
       env:
-        TRAVIS_OS_NAME: 'ubuntu-latest'
+        TRAVIS_OS_NAME: 'linux'
       run: |
         make -e setup build
         ./scripts/ci_create_packages.sh
@@ -142,8 +142,13 @@ jobs:
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+    - name: Get current workspace path
+      id: get_workspace
+      run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
     - name: set the env
-      run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+      run: |
+        echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+        echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: Upload and publish draft
       env:
         HOME: 'home/runner'
@@ -153,7 +158,7 @@ jobs:
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
     - name: run script
       env:
-        TRAVIS_OS_NAME: 'ubuntu-latest'
+        TRAVIS_OS_NAME: 'linux'
       run: |
         make -e setup build
         # now we're going to create packages & upload packages
@@ -172,10 +177,13 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-2022]
         include:
         - os: macos-latest
+          os_name: osx
           TARGET: darwin-amd64
         - os: ubuntu-latest
           TARGET: linux-amd64
+          os_name: linux 
         - os: windows-2022
+          os_name: windows
           TARGET: windows-amd64
     steps:
     - uses: actions/checkout@v3
@@ -200,7 +208,7 @@ jobs:
         echo "$HOME/bin:$HOME/travisci-tools/slack" >> $GITHUB_PATH
     - name: run script
       env:
-        TRAVIS_OS_NAME: ${{ matrix.os }}
+        TRAVIS_OS_NAME: ${{ matrix.os_name }}
       id: script
       run: |
         hub release download $(git describe --abbrev=0 --tags) -i '*-${{ matrix.TARGET }}-*'
@@ -209,5 +217,5 @@ jobs:
     - name: failure
       if: steps.script.outcome != 'success'
       run: |
-        SLACK_TEXT="${APP_VERSION} ${{ matrix.os }} assets failed verification." send_to_slack.sh
+        SLACK_TEXT="${APP_VERSION} ${{ matrix.os_name }} assets failed verification." send_to_slack.sh
  
