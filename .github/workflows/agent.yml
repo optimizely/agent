@@ -27,6 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - name: hadolint
       run: |
         make -e setup build
@@ -37,6 +41,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - name: coveralls
       id: coveralls
       run: |
@@ -46,7 +54,7 @@ jobs:
       run: |
         make -e setup build
         go get github.com/mattn/goveralls
-        $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
+        goveralls -coverprofile=coverage.txt -service=travis-ci
  
   tests_sourceclear:
     runs-on: ubuntu-latest
@@ -107,6 +115,8 @@ jobs:
     - name: set the env
       run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
     - name: test
+      env:
+        TRAVIS_OS_NAME: 'ubuntu-latest'
       run: |
         make -e setup build
         ./scripts/ci_create_packages.sh
@@ -137,6 +147,8 @@ jobs:
         $HOME/travisci-tools/release_github/install_hub.sh
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
     - name: run script
+      env:
+        TRAVIS_OS_NAME: 'ubuntu-latest'
       run: |
         make -e setup build
         # now we're going to create packages & upload packages
@@ -182,6 +194,8 @@ jobs:
         $HOME/travisci-tools/release_github/install_hub.sh
         echo "$HOME/bin:$HOME/travisci-tools/slack" >> $GITHUB_PATH
     - name: run script
+      env:
+        TRAVIS_OS_NAME: ${{ matrix.os }}
       id: script
       run: |
         hub release download $(git describe --abbrev=0 --tags) -i '*-${{ matrix.TARGET }}-*'
