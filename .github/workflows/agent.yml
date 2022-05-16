@@ -112,12 +112,16 @@ jobs:
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+    - name: Get current workspace path
+      id: get_workspace
+      run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
     - name: set the env
-      run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+      run: |
+        echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+        echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: test
       env:
         TRAVIS_OS_NAME: 'ubuntu-latest'
-        TRAVIS_BUILD_DIR: ${GITHUB_WORKSPACE}
       run: |
         make -e setup build
         ./scripts/ci_create_packages.sh
