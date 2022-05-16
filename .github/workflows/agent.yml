@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Agent CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
     branches: [ master ]
-  
+
 env:
   GIMME_GO_VERSION: 1.13.x 
   GIMME_OS: linux 
@@ -33,7 +33,7 @@ jobs:
         make -e lint
         for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
         
-   tests_coveralls:
+  tests_coveralls:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -77,7 +77,7 @@ jobs:
       run: |
         scripts/upload_artifacts.sh
         
-   tests_acceptance_test:
+  tests_acceptance_test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
