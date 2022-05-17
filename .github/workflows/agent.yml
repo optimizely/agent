@@ -109,6 +109,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
     - name: "Extract data from tag: version, message, body"
       id: tag
       run: |
@@ -122,7 +125,8 @@ jobs:
       run: |
         echo $(git describe --abbrev=0 --tags | tr -d '^v')
         git fetch --tags --force
-        echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
+        echo $(git describe --abbrev=0 --tags | tr -d '^v')
+        echo ::set-output name=VERSION::${{ steps.tag.outputs.subject }}
     - name: Get current workspace path
       id: get_workspace
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
