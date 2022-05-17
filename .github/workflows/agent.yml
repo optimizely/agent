@@ -111,7 +111,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      run: echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
     - name: Get current workspace path
       id: get_workspace
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
