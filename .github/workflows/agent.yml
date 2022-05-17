@@ -109,9 +109,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: "Extract data from tag: version, message, body"
+      id: tag
+      run: |
+        git fetch --tags --force # Retrieve annotated tags. THIS TRICK REALLY HELPS
+        echo ::set-output name=subject::$(git for-each-ref $GITHUB_REF --format='%(contents:subject)')
+    - name: print tag test
+      run: |
+        echo ${{ steps.tag.outputs.subject }}
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
+      run: |
+        echo $(git describe --abbrev=0 --tags | tr -d '^v')
+        git fetch --tags --force
+        echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
     - name: Get current workspace path
       id: get_workspace
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
