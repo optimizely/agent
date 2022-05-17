@@ -31,8 +31,12 @@ jobs:
       with:
         go-version: '1.13'
         check-latest: true
+      
     - name: hadolint
+      env:
+        TRAVIS_OS_NAME: 'linux'
       run: |
+        eval "$(gimme)"
         make -e setup build
         make -e lint
         for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
@@ -51,6 +55,8 @@ jobs:
         make -e cover COVER_FILE=coverage.txt
     - name: success
       if: steps.coveralls.outcome == 'success'
+      env:
+        TRAVIS_OS_NAME: 'linux'
       run: |
         make -e setup build
         go get github.com/mattn/goveralls
