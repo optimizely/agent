@@ -61,7 +61,7 @@ jobs:
       if: steps.coveralls.outcome == 'success'
       run: |
         go get github.com/mattn/goveralls
-        goveralls -coverprofile=coverage.txt -service=travis-ci
+        goveralls -coverprofile=coverage.txt -service=github
  
   tests_sourceclear:
     runs-on: ubuntu-latest
