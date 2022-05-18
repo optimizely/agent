@@ -55,11 +55,11 @@ jobs:
     - name: coveralls
       id: coveralls
       run: |
+        make -e setup build
         make -e cover COVER_FILE=coverage.txt
     - name: success
       if: steps.coveralls.outcome == 'success'
       run: |
-        make -e setup build
         go get github.com/mattn/goveralls
         goveralls -coverprofile=coverage.txt -service=travis-ci
  
