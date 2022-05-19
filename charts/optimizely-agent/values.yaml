@@ -34,9 +34,11 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-env: []       
-#  - name: "sample_key"
-#    value: "sample_value"
+env:
+  variables: {}
+    # sample_key: sample_value
+  secrets: {}
+   # sample_key: sample_value
 
 service:
   type: ClusterIP

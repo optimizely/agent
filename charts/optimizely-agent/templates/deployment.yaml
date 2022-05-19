@@ -29,10 +29,21 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          env:          
-            {{- range .Values.env }}
-          - name: {{ .name }}
-            value: {{ .value }}
+          env:
+            {{- range $k, $v := .Values.env.variables }}
+              - name: {{ $k }}
+                valueFrom:
+                  configMapKeyRef:
+                    name: {{ template "optimizely-agent.fullname" $ }}
+                    key: {{ $k }}
+            {{- end }}
+            {{- range $k, $v := .Values.env.secrets }}
+              - name: {{ $k }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ template "optimizely-agent.fullname" $ }}
+                    key: {{ $k }}
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
