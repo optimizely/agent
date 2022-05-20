@@ -31,9 +31,9 @@ spec:
         - name: {{ .Chart.Name }}
           envFrom:
             - configMapRef:
-                name: optimizely-agent-config
+                name: {{ template "optimizely-agent.fullname" $ }}
             - secretRef:
-                name: optimizely-agent-secrets
+                name: {{ template "optimizely-agent.fullname" $ }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
