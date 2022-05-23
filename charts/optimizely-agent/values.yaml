@@ -38,7 +38,7 @@ env:
   variables: {}
     # sample_key: sample_value
   secrets: {}
-   # sample_key: sample_value
+    # sample_key: sample_value
 
 service:
   type: ClusterIP
