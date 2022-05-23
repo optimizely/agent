@@ -11,6 +11,7 @@ spec:
      - port: {{ .port }}
        protocol: {{ .protocol }}
        name: {{ .name }}
+       targetPort: {{ .targetPort }}
     {{- end }}
   selector:
     {{- include "optimizely-agent.selectorLabels" . | nindent 4 }}
