@@ -43,7 +43,7 @@ env:
 service:
   type: ClusterIP
   ports:
-   - port: 80
+   - port: 8080
      protocol: TCP
      name: api
      targetPort: 8080
@@ -61,15 +61,19 @@ ingress:
   annotations: {}
   hosts:
     - host: optimizely-agent.local
-      paths: []
+      paths: [
+        {
+          "path":"/api"
+        }
+      ]
   tls: []
 
 resources: {} # set your own resources
 
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 5
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 
