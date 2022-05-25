@@ -1,7 +1,7 @@
 name: agent
 apiVersion: v2
 appVersion: 1.3.0
-version: 0.1
+version: 0.1.0
 description: Optimizely Agent - use Optimizely Full Stack and Rollouts with a microservice
 type: application
 keywords:

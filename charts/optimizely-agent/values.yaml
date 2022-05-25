@@ -58,22 +58,27 @@ service:
 
 ingress:
   enabled: false
-  annotations: {}
-  hosts:
-    - host: optimizely-agent.local
-      paths: [
-        {
-          "path":"/api"
-        }
-      ]
-  tls: []
+  # annotations: {}
+  # hosts:
+  #   - host: optimizely-agent.local
+  #     paths:
+  #     - port: 8080
+  #       path: /api
+  #       pathType: Prefix
+  #     - port: 8085
+  #       path: /webhook
+  #       pathType: Prefix
+  #     - port: 8088
+  #       path: /admin
+  #       pathType: Prefix
+  # tls: []
 
 resources: {} # set your own resources
 
 autoscaling:
-  enabled: true
-  minReplicas: 3
-  maxReplicas: 5
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 
