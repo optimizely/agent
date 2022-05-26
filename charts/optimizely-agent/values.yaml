@@ -36,9 +36,11 @@ securityContext: {}
 
 env:
   variables: {}
-    # sample_key: sample_value
+    # OPTIMIZELY_SDKKEYS: sdk_keys
+    # OPTIMIZELY_CLIENT_FLUSHINTERVAL: flush_interval
   secrets: {}
-    # sample_key: sample_value
+    # OPTIMIZELY_ADMIN_AUTH_HMACSECRETS: hmac_secrets
+    # OPTIMIZELY_API_AUTH_HMACSECRETS: hmac_secrets
 
 service:
   type: ClusterIP
