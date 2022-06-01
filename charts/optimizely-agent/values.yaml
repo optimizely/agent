@@ -43,7 +43,7 @@ env:
     # OPTIMIZELY_API_AUTH_HMACSECRETS: hmac_secrets
 
 service:
-  type: ClusterIP
+  type: NodePort
   ports:
    - port: 8080
      protocol: TCP
@@ -95,154 +95,196 @@ tolerations: []
 
 affinity: {}
 
-# default optimizely-agent application settings
+logs:
+  level: debug
+  pretty: true
+  includeSdkKey: true
 
-## service author included in the /info response
-author: "Optimizely Inc."
-## name of the running application included in the /info response
-name: "optimizely"
-## version of the application included in the /info response and startup logs
-## Defaults to the latest git tag `git describe --tags`
-#version: custom-build
+# -- Config file contents
+# @default -- See https://github.com/optimizely/agent/blob/master/config.yaml
+config: |
+  ## config.yaml provides a default set of configuration options
 
-## list of SDK keys to be pre-fetched during startup (recommended for production)
-#sdkkeys:
-#    - <sdk-key-1>
-#    - <sdk-key-2>
+  ## service author included in the /info response
+  author: "Optimizely Inc."
+  ## name of the running application included in the /info response
+  name: "{{ include "optimizely-agent.fullname" . }}"
+  ## version of the application included in the /info response and startup logs
+  version: {{ .Chart.AppVersion }}
 
-##
-## log: logger configuration
-##
-log:
-    ## log level used to filter logs of lesser severity (from highest to lowest):
-    ## panic, fatal, error, warn, info, debug
-    level: info
-    ## enable pretty colorized console logging. setting to false will output
-    ## structured JSON logs. Recommended false in production.
-    pretty: true
+  ## list of SDK keys to be pre-fetched during startup (recommended for production)
+  #sdkkeys:
+  #    - <sdk-key-1>
+  #    - <sdk-key-2>
 
-##
-## http server configuration
-##
-server:
-    ## List of allowed request host values.
-    ## Requests whose host value does not match either the configured server.host, or one of these, will be rejected
-    ## with a 404 response.
-    ## Request host is determined in the following priority order:
-    ## 1. X-Forwarded-Host header value
-    ## 2. Forwarded header host= directive value
-    ## 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
-    allowedHosts:
-        - localhost
-    ## the maximum duration for reading the entire request, including the body.
-    ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    readTimeout: 5s
-    ## the maximum duration before timing out writes of the response.
-    ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    writeTimeout: 10s
-    ## path for the health status api
-    healthCheckPath: "/health"
-    ## the location of the TLS key file
-#    keyFile: <key-file>
-    ## the location of the TLS certificate file
-#    certFile: <cert-file>
-    ## IP of the host
-    host: "127.0.0.1"
+  ##
+  ## log: logger configuration
+  ##
+  log:
+      ## log level used to filter logs of lesser severity (from highest to lowest):
+      ## panic, fatal, error, warn, info, debug
+      level: {{ .Values.logs.level }}
+      ## enable pretty colorized console logging. setting to false will output
+      ## structured JSON logs. Recommended false in production.
+      pretty: {{ .Values.logs.pretty }}
+      ## to set whether or not the SDK key is included in the logging output.
+      includeSdkKey: {{ .Values.logs.includeSdkKey }}
 
-##
-## api service configuration
-##
-api:
-    ## the maximum number of concurrent requests handled by the api listener
-#    maxConns: 10000
-    ## http listener port
-    port: "8080"
-    ## set to true to enable subscribing to notifications via an SSE event-stream
-    enableNotifications: false
-    ## set to true to be able to override experiment bucketing. (recommended false in production)
-    enableOverrides: true
-    ## CORS support is provided via chi middleware
-    ## https://github.com/go-chi/cors
-    # cors:
-    #     ## If allowedOrigins is nil or empty, value is set to ["*"].
-    #     allowedOrigins: 
-    #         - ["*"]
-    #     ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
-    #     allowedMethods:
-    #         - "HEAD"
-    #         - "GET"
-    #         - "POST"
-    #         - "OPTIONS"
-    #     ## Default value is [] but "Origin" is always appended to the list.
-    #     allowedHeaders: []
-    #     exposedHeaders: []
-    #     allowedCredentials: false
-    #     maxAge: 300
-##
-## admin service configuration
-##
-admin:
-    ## http listener port
-    port: "8088"
-##
-## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will
-## trigger an immediate download of the datafile from the CDN
-##
-webhook:
-    ## http listener port
-    port: "8089"
-#    ## a map of Optimizely Projects to one or more SDK keys
-#    projects:
-#        ## <project-id>: Optimizely project id as an integer
-#        <project-id>:
-#            ## sdkKeys: a list of SDKs linked to this project
-#            sdkKeys:
-#                - <sdk-key-1>
-#                - <sdk-key-1>
-#            ## secret: webhook secret used the validate the notification
-#            secret: <secret-10000>
-#            ## skipSignatureCheck: override the signature check (not recommended for production)
-#            skipSignatureCheck: true
+  ##
+  ## http server configuration
+  ##
+  server:
+      ## List of allowed request host values.
+      ## Requests whose host value does not match either the configured server.host, or one of these, will be rejected
+      ## with a 404 response.
+      ## To match all subdomains, you can use a leading dot (for example .example.com matches my.example.com, hello.world.example.com, etc.).
+      ## You can use the value "." to disable allowed host checking, allowing requests with any host.
+      ## Request host is determined in the following priority order:
+      ## 1. X-Forwarded-Host header value
+      ## 2. Forwarded header host= directive value
+      ## 3. Host property of request (see Host under https://golang.org/pkg/net/http/#Request)
+      ## Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.
+      allowedHosts:
+          - "."
+      ## the maximum duration for reading the entire request, including the body.
+      ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
+      readTimeout: 5s
+      ## the maximum duration before timing out writes of the response.
+      ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
+      writeTimeout: 10s
+      ## path for the health status api
+      healthCheckPath: "/health"
+      ## the location of the TLS key file
+  #    keyFile: <key-file>
+      ## the location of the TLS certificate file
+  #    certFile: <cert-file>
+      ## IP of the host
+      host: "127.0.0.1"
+      ## configure optional Agent interceptors
+  #    interceptors:
+  #        httplog: {}
 
-##
-## optimizely client configurations (options passed to the underlying go-sdk)
-##
-client:
-    ## the time between successive polls for updated project configuration
-    pollingInterval: 1m
-    ## the number of events in a batch
-    batchSize: 10
-    ## the max number of events pending dispatch, setting this too low may result in events being dropped
-    queueSize: 1000
-    ## the maximum time between events being dispatched
-    flushInterval: 30s
-    ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
-    datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
-    ## URL for dispatching events.
-    eventURL: "https://logx.optimizely.com/v1/events"
-    ## Validation Regex on the request SDK Key
-    ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
-    ## https://github.com/google/re2/wiki/Syntax
-    sdkKeyRegex: "^\\w+(:\\w+)?$"
+  ##
+  ## api service configuration
+  ##
+  api:
+      ## the maximum number of concurrent requests handled by the api listener
+  #    maxConns: 10000
+      ## http listener port
+      {{ with index .Values.service.ports 0 }}
+      port: {{ .targetPort | quote }}
+      {{ end }}
+      ## set to true to enable subscribing to notifications via an SSE event-stream
+      enableNotifications: false
+      ## set to true to be able to override experiment bucketing. (recommended false in production)
+      enableOverrides: true
+      ## CORS support is provided via chi middleware
+      ## https://github.com/go-chi/cors
+  #    cors:
+  #      ## If allowedOrigins is nil or empty, value is set to ["*"].
+  #      allowedOrigins: ["*"]
+  #      ## If allowedMethods is nil or empty, value is set to (HEAD, GET and POST).
+  #      allowedMethods:
+  #      - "HEAD"
+  #      - "GET"
+  #      - "POST"
+  #      - "OPTIONS"
+  #      ## Default value is [] but "Origin" is always appended to the list.
+  #      allowedHeaders: ["*"]
+  #      exposedHeaders: []
+  #      allowedCredentials: false
+  #      maxAge: 300
 
-##
-## optimizely runtime configuration can be used for debugging and profiling the go runtime.
-## These should only be configured when debugging in a non-production environment.
-##
-runtime:
-    ## SetBlockProfileRate controls the fraction of goroutine blocking events
-    ## that are reported in the blocking profile. The profiler aims to sample
-    ## an average of one blocking event per rate nanoseconds spent blocked.
-    ##
-    ## To include every blocking event in the profile, pass rate = 1.
-    ## To turn off profiling entirely, pass rate <= 0.
-    blockProfileRate: 0
+  ##
+  ## admin service configuration
+  ##
+  admin:
+      ## http listener port
+      {{ with index .Values.service.ports 2 }}
+      port: {{ .targetPort | quote }}
+      {{ end }}
+  ##
+  ## webhook service receives update notifications to your Optimizely project. Receipt of the webhook will
+  ## trigger an immediate download of the datafile from the CDN
+  ##
+  webhook:
+      ## http listener port
+      {{ with index .Values.service.ports 1 }}
+      port: {{ .targetPort | quote }}
+      {{ end }}
+  #    ## a map of Optimizely Projects to one or more SDK keys
+  #    projects:
+  #        ## <project-id>: Optimizely project id as an integer
+  #        <project-id>:
+  #            ## sdkKeys: a list of SDKs linked to this project
+  #            sdkKeys:
+  #                - <sdk-key-1>
+  #                - <sdk-key-1>
+  #            ## secret: webhook secret used the validate the notification
+  #            secret: <secret-10000>
+  #            ## skipSignatureCheck: override the signature check (not recommended for production)
+  #            skipSignatureCheck: true
 
-    ## mutexProfileFraction controls the fraction of mutex contention events
-    ## that are reported in the mutex profile. On average 1/rate events are
-    ## reported. The previous rate is returned.
-    ##
-    ## To turn off profiling entirely, pass rate 0.
-    ## To just read the current rate, pass rate < 0.
-    ## (For n>1 the details of sampling may change.)
-    mutexProfileFraction: 0
+  ##
+  ## optimizely client configurations (options passed to the underlying go-sdk)
+  ##
+  client:
+      ## the time between successive polls for updated project configuration
+      pollingInterval: 1m
+      ## the number of events in a batch
+      batchSize: 10
+      ## the max number of events pending dispatch, setting this too low may result in events being dropped
+      queueSize: 1000
+      ## the maximum time between events being dispatched
+      flushInterval: 30s
+      ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
+      datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
+      ## URL for dispatching events.
+      eventURL: "https://logx.optimizely.com/v1/events"
+      ## Validation Regex on the request SDK Key
+      ## By default Agent assumes only alphanumeric characters as part of the SDK Key string.
+      ## https://github.com/google/re2/wiki/Syntax
+      sdkKeyRegex: "^\\w+(:\\w+)?$"
+      ## configure optional User profile service
+      userProfileService:
+        default: ""
+        services:
+          # in-memory: 
+          #   capacity: 0
+          #   storageStrategy: "fifo"
+          # redis: 
+          #   host: "localhost:6379"
+          #   password: ""
+          #   database: 0
+          # rest: 
+          #   host: "http://localhost"
+          #   lookupPath: "/ups/lookup"
+          #   lookupMethod: "POST"
+          #   savePath: "/ups/save"
+          #   saveMethod: "POST"
+          #   userIDKey: "user_id"
+          #   headers: 
+          #     Content-Type: "application/json"
+          #     Auth-Token: "12345"
+
+  ##
+  ## optimizely runtime configuration can be used for debugging and profiling the go runtime.
+  ## These should only be configured when debugging in a non-production environment.
+  ##
+  runtime:
+      ## SetBlockProfileRate controls the fraction of goroutine blocking events
+      ## that are reported in the blocking profile. The profiler aims to sample
+      ## an average of one blocking event per rate nanoseconds spent blocked.
+      ##
+      ## To include every blocking event in the profile, pass rate = 1.
+      ## To turn off profiling entirely, pass rate <= 0.
+      blockProfileRate: 0
+
+      ## mutexProfileFraction controls the fraction of mutex contention events
+      ## that are reported in the mutex profile. On average 1/rate events are
+      ## reported. The previous rate is returned.
+      ##
+      ## To turn off profiling entirely, pass rate 0.
+      ## To just read the current rate, pass rate < 0.
+      ## (For n>1 the details of sampling may change.)
+      mutexProfileFraction: 0

@@ -24,11 +24,18 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+      - name: {{ include "optimizely-agent.name" . }}-config
+        configMap:
+          name: {{ include "optimizely-agent.name" . }}-config
       serviceAccountName: {{ include "optimizely-agent.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
+          env:
+            - name: OPTIMIZELY_CONFIG_FILENAME
+              value: /etc/optimizely/config.yaml
           envFrom:
             - configMapRef:
                 name: {{ include "optimizely-agent.name" . }}-config
@@ -52,11 +59,12 @@ spec:
             httpGet:
               path: /health
               port: api
+          volumeMounts:
+            - name: "{{ include "optimizely-agent.name" . }}-config"
+              mountPath: /etc/optimizely/config.yaml
+              subPath: config.yaml
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        # volumeMounts: do we want to possibly put config.yaml here? 
-        #   - mountPath: /config.yaml
-        #     name: config-data-volume
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
