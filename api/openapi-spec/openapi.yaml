@@ -654,8 +654,8 @@ components:
         body:
           description: The body for the request as JSON
           type: object
-        parameters:
-          description: The parameters for the request as JSON
+        params:
+          description: The parameters for the request as JSON (value must be string)
           type: object
         headers:
           description: The headers for the request as JSON
@@ -663,9 +663,9 @@ components:
       example:   
         method: "POST"
         url: "/v1/activate"
-        operationID: 1
+        operationID: "1"
         body: {"userId": "user1"}
-        parameters: {
+        params: {
           "type": "feature",
           "experimentKey": "ab_test_experiment"}
         headers: {
