@@ -1,0 +1,57 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Agent package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.7
+    - name: fmt
+      run: |
+        make -e setup build
+        test -z "$(go fmt ./pkg/...)"
+  tests:
+    runs-on: ubuntu-latest
+    env: 
+      COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.7
+    - name: hadolint
+      run: |
+        make -e setup build
+        make -e lint
+        for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
+    - name: coveralls
+      id: make_coverall
+      run: |
+        make -e cover COVER_FILE=coverage.txt
+    - name: post coverall
+      if: steps.make_coverall.outcome == 'success'
+      run: |
+        go get github.com/mattn/goveralls
+        goveralls -coverprofile=coverage.txt -service=github
+    - name: acceptance test
+      run: |
+        pip install -r ./tests/acceptance/requirements.txt
+        make -e setup build
+        MYHOST="http://localhost:8080" make test-acceptance
