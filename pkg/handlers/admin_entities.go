@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/optimizely/agent/config"
 )
@@ -87,5 +88,11 @@ func (a Admin) AppInfoHeader(next http.Handler) http.Handler {
 
 // Metrics returns expvar info
 func (a Admin) Metrics(w http.ResponseWriter, r *http.Request) {
-	expvar.Handler().ServeHTTP(w, r)
+	switch a.Config.Admin.MetricsType {
+	case "prometheus":
+		promhttp.Handler().ServeHTTP(w, r)
+	default:
+		// expvar
+		expvar.Handler().ServeHTTP(w, r)
+	}
 }

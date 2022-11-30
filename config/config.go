@@ -39,7 +39,8 @@ func NewDefaultConfig() *AgentConfig {
 				JwksURL:            "",
 				JwksUpdateInterval: 0,
 			},
-			Port: "8088",
+			Port:        "8088",
+			MetricsType: "expvar",
 		},
 		API: APIConfig{
 			Auth: ServiceAuthConfig{
@@ -227,8 +228,9 @@ type CORSConfig struct {
 
 // AdminConfig holds the configuration for the admin web interface
 type AdminConfig struct {
-	Auth ServiceAuthConfig `json:"-"`
-	Port string            `json:"port"`
+	Auth        ServiceAuthConfig `json:"-"`
+	Port        string            `json:"port"`
+	MetricsType string            `json:"metricsType"`
 }
 
 // WebhookConfig holds configuration for Optimizely Webhooks

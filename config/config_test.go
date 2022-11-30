@@ -50,6 +50,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "info", conf.Log.Level)
 
 	assert.Equal(t, "8088", conf.Admin.Port)
+	assert.Equal(t, "expvar", conf.Admin.MetricsType)
 	assert.Equal(t, make([]OAuthClientCredentials, 0), conf.Admin.Auth.Clients)
 	assert.Equal(t, make([]string, 0), conf.Admin.Auth.HMACSecrets)
 	assert.Equal(t, time.Duration(0), conf.Admin.Auth.TTL)

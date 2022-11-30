@@ -78,6 +78,7 @@ Below is a comprehensive list of available configuration properties.
 |admin.auth.jwksURL|OPTIMIZELY_ADMIN_AUTH_JWKSURL|JWKS URL for validating access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |admin.auth.ttl|OPTIMIZELY_ADMIN_AUTH_TTL|Time-to-live of issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |admin.port|OPTIMIZELY_ADMIN_PORT|Admin listener port. Default: 8088|
+|admin.metricsType|OPTIMIZELY_ADMIN_METRICSTYPE|Admin metrics package type. Default: expvar|
 |api.auth.clients|N/A|Credentials for requesting access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.auth.hmacSecrets|OPTIMIZELY_API_AUTH_HMACSECRETS|Signing secret for issued access tokens. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
 |api.auth.jwksUpdateInterval|OPTIMIZELY_API_AUTH_JWKSUPDATEINTERVAL|JWKS Update Interval for caching the keys in the background. See: [Authorization Guide](https://docs.developers.optimizely.com/full-stack/docs/authorization)|
