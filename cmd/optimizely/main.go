@@ -157,7 +157,7 @@ func main() {
 	}()
 
 	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
-	adminRouter := routers.NewAdminRouter(*conf)
+	adminRouter := routers.NewAdminRouter(*conf, sdkMetricsRegistry)
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
 	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
