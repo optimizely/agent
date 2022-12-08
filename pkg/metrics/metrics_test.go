@@ -225,3 +225,18 @@ func TestTimerMultipleRetrievals(t *testing.T) {
 	assert.Equal(t, 23.0, expVarMap["timer.next_timer_metrics.responseTimeHist.p99"])
 
 }
+
+func TestToSnakeCase(t *testing.T) {
+	assert.Equal(t, "", toSnakeCase(""))
+	assert.Equal(t, "abc", toSnakeCase("abc"))
+	assert.Equal(t, "abc_123", toSnakeCase("abc_123"))
+	assert.Equal(t, "abc_efg", toSnakeCase("abcEfg"))
+	assert.Equal(t, "timer_activate_response_time", toSnakeCase("timer.activate.responseTime"))
+	assert.Equal(t, "timer_activate_response_time_hist_p95", toSnakeCase("timer.activate.responseTimeHist.p95"))
+	assert.Equal(t, "timer_create_api_access_token_response_time_hist_p50", toSnakeCase("timer.create-api-access-token.responseTimeHist.p50"))
+	assert.Equal(t, "timer_get_config_response_time_hist_p50", toSnakeCase("timer.get-config.responseTimeHist.p50"))
+	assert.Equal(t, "timer_track_event_response_time_hist_p50", toSnakeCase("timer.track-event.responseTimeHist.p50"))
+	assert.Equal(t, "counter_dispatcher_success_flush", toSnakeCase("counter.dispatcher.successFlush"))
+	assert.Equal(t, "timer_get_config_response_time", toSnakeCase("timer.get-config.responseTime"))
+	assert.Equal(t, "timer_get_config_hits", toSnakeCase("timer.get-config.hits"))
+}

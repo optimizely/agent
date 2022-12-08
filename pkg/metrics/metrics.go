@@ -43,7 +43,7 @@ const (
 	prometheusPackage = "prometheus"
 )
 
-// GetHandler returns handler for provided metrics package type
+// GetHandler returns request handler for provided metrics package type
 func GetHandler(packageType string) http.Handler {
 	switch packageType {
 	case prometheusPackage:
