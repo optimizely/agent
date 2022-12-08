@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2022, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,47 +18,44 @@
 package metrics
 
 import (
-	"encoding/json"
 	"expvar"
+	"io/ioutil"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type JSON map[string]interface{}
-
-func TestGetHandler(t *testing.T) {
-	assert.NotNil(t, GetHandler(""))
-	assert.NotNil(t, GetHandler("expvar"))
-	assert.NotNil(t, GetHandler("123131231"))
-}
-
-func TestCounterValid(t *testing.T) {
+func TestPrometheusCounterValid(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	counter := metricsRegistry.GetCounter("metrics")
 	counter.Add(12)
 	counter.Add(23)
 
 	expvar.Handler().ServeHTTP(rec, req)
 
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 35.0, expVarMap["counter.metrics"])
-
+	strResponse := string(resp)
+	strings.Contains(strResponse, "counter_metrics 35")
 }
 
-func TestCounterMultipleRetrievals(t *testing.T) {
+func TestPrometheusCounterMultipleRetrievals(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	counterKey := "next_counter_metrics"
 	counter := metricsRegistry.GetCounter(counterKey)
 	counter.Add(12)
@@ -66,162 +63,154 @@ func TestCounterMultipleRetrievals(t *testing.T) {
 	nextCounter := metricsRegistry.GetCounter(counterKey)
 	nextCounter.Add(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 35.0, expVarMap["counter."+counterKey])
+	strResponse := string(resp)
+	strings.Contains(strResponse, "counter_"+counterKey+"35")
 }
 
-func TestCounterEmptyKey(t *testing.T) {
+func TestPrometheusCounterEmptyKey(t *testing.T) {
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	counter := metricsRegistry.GetCounter("")
-
 	assert.Nil(t, counter)
-
 }
 
-func TestGaugeValid(t *testing.T) {
+func TestPrometheusGaugeValid(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	gauge := metricsRegistry.GetGauge("metrics")
 	gauge.Set(12)
 	gauge.Set(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 23.0, expVarMap["gauge.metrics"])
-
+	strResponse := string(resp)
+	strings.Contains(strResponse, "gauge_metrics")
 }
 
-func TestGaugeMultipleRetrievals(t *testing.T) {
+func TestPrometheusGaugeMultipleRetrievals(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	guageKey := "next_gauge_metrics"
 	gauge := metricsRegistry.GetGauge(guageKey)
 	gauge.Set(12)
 	nextGauge := metricsRegistry.GetGauge(guageKey)
 	nextGauge.Set(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 23.0, expVarMap["gauge."+guageKey])
-
+	strResponse := string(resp)
+	strings.Contains(strResponse, "gauge_"+guageKey+" 23")
 }
 
-func TestGaugeEmptyKey(t *testing.T) {
+func TestPrometheusGaugeEmptyKey(t *testing.T) {
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	gauge := metricsRegistry.GetGauge("")
-
 	assert.Nil(t, gauge)
-
 }
 
-func TestHistorgramValid(t *testing.T) {
+func TestPrometheusHistogramValid(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	histogram := metricsRegistry.GetHistogram("metrics")
 	histogram.Observe(12)
 	histogram.Observe(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 12.0, expVarMap["metrics.p50"])
-	assert.Equal(t, 23.0, expVarMap["metrics.p99"])
-
+	strResponse := string(resp)
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_sum 35")
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_count 2")
 }
 
-func TestHistogramMultipleRetrievals(t *testing.T) {
+func TestPrometheusHistogramMultipleRetrievals(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	histogramKey := "next_histogram_metrics"
 	histogram := metricsRegistry.GetHistogram(histogramKey)
 	histogram.Observe(12)
 	nextGauge := metricsRegistry.GetHistogram(histogramKey)
 	nextGauge.Observe(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 12.0, expVarMap["next_histogram_metrics.p50"])
-	assert.Equal(t, 23.0, expVarMap["next_histogram_metrics.p99"])
-
+	strResponse := string(resp)
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_sum 35")
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_count 2")
 }
 
-func TestHistogramEmptyKey(t *testing.T) {
+func TestPrometheusHistogramEmptyKey(t *testing.T) {
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	histogram := metricsRegistry.GetHistogram("")
 
 	assert.Nil(t, histogram)
-
 }
-func TestTimerValid(t *testing.T) {
+
+func TestPrometheusTimerValid(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	timer := metricsRegistry.NewTimer("metrics")
 	timer.Update(12)
 	timer.Update(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 2.0, expVarMap["timer.metrics.hits"])
-	assert.Equal(t, 35.0, expVarMap["timer.metrics.responseTime"])
-	assert.Equal(t, 12.0, expVarMap["timer.metrics.responseTimeHist.p50"])
-	assert.Equal(t, 23.0, expVarMap["timer.metrics.responseTimeHist.p99"])
+	strResponse := string(resp)
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_sum 35")
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_count 2")
+	strings.Contains(strResponse, `timer_metrics_response_time_hist_bucket{le="+Inf"} 2`)
 }
 
-func TestTimerMultipleRetrievals(t *testing.T) {
+func TestPrometheusTimerMultipleRetrievals(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
 	metricsRegistry := NewRegistry()
+	metricsRegistry.MetricsType = prometheusPackage
 	timerKey := "next_timer_metrics"
 	timer := metricsRegistry.NewTimer(timerKey)
 	timer.Update(12)
 	nextTimer := metricsRegistry.NewTimer(timerKey)
 	nextTimer.Update(23)
 
-	expvar.Handler().ServeHTTP(rec, req)
-
-	var expVarMap JSON
-	err := json.Unmarshal(rec.Body.Bytes(), &expVarMap)
+	promhttp.Handler().ServeHTTP(rec, req)
+	resp, err := ioutil.ReadAll(rec.Body)
 	assert.Nil(t, err)
-	assert.Equal(t, 2.0, expVarMap["timer.next_timer_metrics.hits"])
-	assert.Equal(t, 12.0, expVarMap["timer.next_timer_metrics.responseTimeHist.p50"])
-	assert.Equal(t, 23.0, expVarMap["timer.next_timer_metrics.responseTimeHist.p99"])
-
+	strResponse := string(resp)
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_sum 35")
+	strings.Contains(strResponse, "timer_metrics_response_time_hist_count 2")
+	strings.Contains(strResponse, `timer_metrics_response_time_hist_bucket{le="+Inf"} 2`)
 }

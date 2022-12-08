@@ -18,6 +18,8 @@
 package metrics
 
 import (
+	"expvar"
+	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -26,6 +28,7 @@ import (
 	go_kit_expvar "github.com/go-kit/kit/metrics/expvar"
 	go_kit_prometheus "github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -37,32 +40,25 @@ const (
 )
 
 const (
-	expVarPackage     = "expvar"
 	prometheusPackage = "prometheus"
 )
+
+// GetHandler returns handler for provided metrics package type
+func GetHandler(packageType string) http.Handler {
+	switch packageType {
+	case prometheusPackage:
+		return promhttp.Handler()
+	default:
+		// expvar
+		return expvar.Handler()
+	}
+}
 
 // Timer is the collection of some timers
 type Timer struct {
 	hits      go_kit_metrics.Counter
 	totalTime go_kit_metrics.Counter
 	histogram go_kit_metrics.Histogram
-}
-
-// NewTimer constructs Timer
-func (m *Registry) NewTimer(key string) *Timer {
-	if key == "" {
-		log.Warn().Msg("metrics timer key is empty")
-		return nil
-	}
-	combinedKey := TimerPrefix + "." + key
-
-	m.timerLock.Lock()
-	defer m.timerLock.Unlock()
-	if val, ok := m.metricsTimerVars[combinedKey]; ok {
-		return val
-	}
-
-	return m.createTimer(combinedKey)
 }
 
 // Update timer components
@@ -84,6 +80,23 @@ type Registry struct {
 	counterLock   sync.RWMutex
 	histogramLock sync.RWMutex
 	timerLock     sync.RWMutex
+}
+
+// NewTimer constructs Timer
+func (m *Registry) NewTimer(key string) *Timer {
+	if key == "" {
+		log.Warn().Msg("metrics timer key is empty")
+		return nil
+	}
+	combinedKey := TimerPrefix + "." + key
+
+	m.timerLock.Lock()
+	defer m.timerLock.Unlock()
+	if val, ok := m.metricsTimerVars[combinedKey]; ok {
+		return val
+	}
+
+	return m.createTimer(combinedKey)
 }
 
 // NewRegistry initializes metrics registry
@@ -131,7 +144,7 @@ func (m *Registry) GetGauge(key string) go_kit_metrics.Gauge {
 	return m.createGauge(combinedKey)
 }
 
-// GetHistogram gets go-kit expvar Histogram
+// GetHistogram gets go-kit Histogram
 func (m *Registry) GetHistogram(key string) go_kit_metrics.Histogram {
 	if key == "" {
 		log.Warn().Msg("metrics histogram key is empty")
@@ -155,6 +168,7 @@ func (m *Registry) createGauge(key string) (gaugeVar go_kit_metrics.Gauge) {
 			Name: name,
 		}, []string{})
 	default:
+		// Default expvar
 		gaugeVar = go_kit_expvar.NewGauge(name)
 	}
 	m.metricsGaugeVars[key] = gaugeVar
@@ -170,6 +184,7 @@ func (m *Registry) createCounter(key string) (counterVar go_kit_metrics.Counter)
 			Name: name,
 		}, []string{})
 	default:
+		// Default expvar
 		counterVar = go_kit_expvar.NewCounter(name)
 	}
 	m.metricsCounterVars[key] = counterVar
@@ -182,10 +197,10 @@ func (m *Registry) createHistogram(key string) (histogramVar go_kit_metrics.Hist
 	switch m.MetricsType {
 	case prometheusPackage:
 		histogramVar = go_kit_prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
-			Name:    name,
-			Buckets: []float64{50},
+			Name: name,
 		}, []string{})
 	default:
+		// Default expvar
 		histogramVar = go_kit_expvar.NewHistogram(name, 50)
 	}
 	m.metricsHistogramVars[key] = histogramVar
@@ -207,23 +222,24 @@ func (m *Registry) getPackageSupportedName(name string) string {
 	switch m.MetricsType {
 	case prometheusPackage:
 		// https://prometheus.io/docs/practices/naming/
-		v := strings.Replace(name, "-", "_", -1)
-		strArray := strings.Split(v, ".")
-		convertedArray := []string{}
-		for _, v := range strArray {
-			convertedArray = append(convertedArray, toSnakeCase(v))
-		}
-		return strings.Join(convertedArray, "_")
+		return toSnakeCase(name)
 	default:
+		// Default expvar
 		return name
 	}
 }
 
-func toSnakeCase(str string) string {
+func toSnakeCase(name string) string {
+	v := strings.Replace(name, "-", "_", -1)
+	strArray := strings.Split(v, ".")
 	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	convertedArray := []string{}
 
-	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
-	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
-	return strings.ToLower(snake)
+	for _, v := range strArray {
+		snake := matchFirstCap.ReplaceAllString(v, "${1}_${2}")
+		snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+		convertedArray = append(convertedArray, strings.ToLower(snake))
+	}
+	return strings.Join(convertedArray, "_")
 }
