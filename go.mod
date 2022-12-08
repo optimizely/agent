@@ -15,7 +15,7 @@ require (
 	github.com/lestrrat-go/jwx v0.9.0
 	github.com/optimizely/go-sdk v1.8.0
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.2.0
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.18.1-0.20200514152719-663cbb4c8469
 	github.com/spf13/viper v1.4.0
