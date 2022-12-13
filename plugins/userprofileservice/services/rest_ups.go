@@ -82,7 +82,7 @@ func (r *RestUserProfileService) Save(profile decision.UserProfile) {
 	if err != nil {
 		return
 	}
-	r.performRequest(requestURL, r.SaveMethod, convertUserProfileToMap(profile, r.getUserIDKey()))
+	go r.performRequest(requestURL, r.SaveMethod, convertUserProfileToMap(profile, r.getUserIDKey()))
 }
 
 func (r *RestUserProfileService) getURL(endpointPath string) (string, error) {
