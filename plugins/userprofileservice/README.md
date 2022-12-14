@@ -113,7 +113,7 @@ return the status code `200` with json response (keep in mind that when sending 
 ```
 - `save_endpoint` should accept the following parameters in its json body or query (depending upon the method type)   
 and return the status code `200` if successful (keep in mind that `user_id` should be substituted   
-with the value of`userIDKey` from config.yaml). Request will be synchronous by default which can configured using `async` property:  
+with the value of`userIDKey` from config.yaml). Request will be synchronous by default which can be configured using `async` property:  
 
 ```
 {
