@@ -35,7 +35,7 @@ func TestCounterValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := metrics.NewRegistry()
+	metricsRegistry := metrics.NewRegistry("")
 	metricsSDKRegistry := NewRegistry(metricsRegistry)
 
 	counter := metricsSDKRegistry.GetCounter("metrics")
@@ -56,7 +56,7 @@ func TestGaugeValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := metrics.NewRegistry()
+	metricsRegistry := metrics.NewRegistry("")
 	metricsSDKRegistry := NewRegistry(metricsRegistry)
 
 	gauge := metricsSDKRegistry.GetGauge("metrics")

@@ -34,8 +34,7 @@ func TestPrometheusCounterValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	counter := metricsRegistry.GetCounter("metrics")
 	counter.Add(12)
 	counter.Add(23)
@@ -54,8 +53,7 @@ func TestPrometheusCounterMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	counterKey := "next_counter_metrics"
 	counter := metricsRegistry.GetCounter(counterKey)
 	counter.Add(12)
@@ -72,8 +70,7 @@ func TestPrometheusCounterMultipleRetrievals(t *testing.T) {
 
 func TestPrometheusCounterEmptyKey(t *testing.T) {
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	counter := metricsRegistry.GetCounter("")
 	assert.Nil(t, counter)
 }
@@ -83,8 +80,7 @@ func TestPrometheusGaugeValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	gauge := metricsRegistry.GetGauge("metrics")
 	gauge.Set(12)
 	gauge.Set(23)
@@ -101,8 +97,7 @@ func TestPrometheusGaugeMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	guageKey := "next_gauge_metrics"
 	gauge := metricsRegistry.GetGauge(guageKey)
 	gauge.Set(12)
@@ -118,8 +113,7 @@ func TestPrometheusGaugeMultipleRetrievals(t *testing.T) {
 
 func TestPrometheusGaugeEmptyKey(t *testing.T) {
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	gauge := metricsRegistry.GetGauge("")
 	assert.Nil(t, gauge)
 }
@@ -129,8 +123,7 @@ func TestPrometheusHistogramValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	histogram := metricsRegistry.GetHistogram("metrics")
 	histogram.Observe(12)
 	histogram.Observe(23)
@@ -148,8 +141,7 @@ func TestPrometheusHistogramMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	histogramKey := "next_histogram_metrics"
 	histogram := metricsRegistry.GetHistogram(histogramKey)
 	histogram.Observe(12)
@@ -166,8 +158,7 @@ func TestPrometheusHistogramMultipleRetrievals(t *testing.T) {
 
 func TestPrometheusHistogramEmptyKey(t *testing.T) {
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	histogram := metricsRegistry.GetHistogram("")
 
 	assert.Nil(t, histogram)
@@ -178,8 +169,7 @@ func TestPrometheusTimerValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	timer := metricsRegistry.NewTimer("metrics")
 	timer.Update(12)
 	timer.Update(23)
@@ -198,8 +188,7 @@ func TestPrometheusTimerMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
-	metricsRegistry.MetricsType = prometheusPackage
+	metricsRegistry := NewRegistry(prometheusPackage)
 	timerKey := "next_timer_metrics"
 	timer := metricsRegistry.NewTimer(timerKey)
 	timer.Update(12)

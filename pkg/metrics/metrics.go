@@ -74,7 +74,7 @@ type Registry struct {
 	metricsGaugeVars     map[string]go_kit_metrics.Gauge
 	metricsHistogramVars map[string]go_kit_metrics.Histogram
 	metricsTimerVars     map[string]*Timer
-	MetricsType          string
+	metricsType          string
 
 	gaugeLock     sync.RWMutex
 	counterLock   sync.RWMutex
@@ -100,13 +100,14 @@ func (m *Registry) NewTimer(key string) *Timer {
 }
 
 // NewRegistry initializes metrics registry
-func NewRegistry() *Registry {
+func NewRegistry(metricsType string) *Registry {
 
 	return &Registry{
 		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
 		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
 		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
 		metricsTimerVars:     map[string]*Timer{},
+		metricsType:          metricsType,
 	}
 }
 
@@ -162,7 +163,7 @@ func (m *Registry) GetHistogram(key string) go_kit_metrics.Histogram {
 func (m *Registry) createGauge(key string) (gaugeVar go_kit_metrics.Gauge) {
 	// This is required since naming convention for every package differs
 	name := m.getPackageSupportedName(key)
-	switch m.MetricsType {
+	switch m.metricsType {
 	case prometheusPackage:
 		gaugeVar = go_kit_prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 			Name: name,
@@ -178,7 +179,7 @@ func (m *Registry) createGauge(key string) (gaugeVar go_kit_metrics.Gauge) {
 func (m *Registry) createCounter(key string) (counterVar go_kit_metrics.Counter) {
 	// This is required since naming convention for every package differs
 	name := m.getPackageSupportedName(key)
-	switch m.MetricsType {
+	switch m.metricsType {
 	case prometheusPackage:
 		counterVar = go_kit_prometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Name: name,
@@ -194,7 +195,7 @@ func (m *Registry) createCounter(key string) (counterVar go_kit_metrics.Counter)
 func (m *Registry) createHistogram(key string) (histogramVar go_kit_metrics.Histogram) {
 	// This is required since naming convention for every package differs
 	name := m.getPackageSupportedName(key)
-	switch m.MetricsType {
+	switch m.metricsType {
 	case prometheusPackage:
 		histogramVar = go_kit_prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 			Name: name,
@@ -219,7 +220,7 @@ func (m *Registry) createTimer(key string) *Timer {
 
 // getPackageSupportedName converts name to package supported type
 func (m *Registry) getPackageSupportedName(name string) string {
-	switch m.MetricsType {
+	switch m.metricsType {
 	case prometheusPackage:
 		// https://prometheus.io/docs/practices/naming/
 		return toSnakeCase(name)

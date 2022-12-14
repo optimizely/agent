@@ -39,7 +39,7 @@ func TestCounterValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	counter := metricsRegistry.GetCounter("metrics")
 	counter.Add(12)
 	counter.Add(23)
@@ -58,7 +58,7 @@ func TestCounterMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	counterKey := "next_counter_metrics"
 	counter := metricsRegistry.GetCounter(counterKey)
 	counter.Add(12)
@@ -76,7 +76,7 @@ func TestCounterMultipleRetrievals(t *testing.T) {
 
 func TestCounterEmptyKey(t *testing.T) {
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	counter := metricsRegistry.GetCounter("")
 
 	assert.Nil(t, counter)
@@ -88,7 +88,7 @@ func TestGaugeValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	gauge := metricsRegistry.GetGauge("metrics")
 	gauge.Set(12)
 	gauge.Set(23)
@@ -107,7 +107,7 @@ func TestGaugeMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	guageKey := "next_gauge_metrics"
 	gauge := metricsRegistry.GetGauge(guageKey)
 	gauge.Set(12)
@@ -125,7 +125,7 @@ func TestGaugeMultipleRetrievals(t *testing.T) {
 
 func TestGaugeEmptyKey(t *testing.T) {
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	gauge := metricsRegistry.GetGauge("")
 
 	assert.Nil(t, gauge)
@@ -137,7 +137,7 @@ func TestHistorgramValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	histogram := metricsRegistry.GetHistogram("metrics")
 	histogram.Observe(12)
 	histogram.Observe(23)
@@ -157,7 +157,7 @@ func TestHistogramMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	histogramKey := "next_histogram_metrics"
 	histogram := metricsRegistry.GetHistogram(histogramKey)
 	histogram.Observe(12)
@@ -176,7 +176,7 @@ func TestHistogramMultipleRetrievals(t *testing.T) {
 
 func TestHistogramEmptyKey(t *testing.T) {
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	histogram := metricsRegistry.GetHistogram("")
 
 	assert.Nil(t, histogram)
@@ -187,7 +187,7 @@ func TestTimerValid(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	timer := metricsRegistry.NewTimer("metrics")
 	timer.Update(12)
 	timer.Update(23)
@@ -208,7 +208,7 @@ func TestTimerMultipleRetrievals(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 
-	metricsRegistry := NewRegistry()
+	metricsRegistry := NewRegistry("")
 	timerKey := "next_timer_metrics"
 	timer := metricsRegistry.NewTimer(timerKey)
 	timer.Update(12)
