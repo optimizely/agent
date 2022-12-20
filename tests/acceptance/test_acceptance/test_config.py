@@ -9,7 +9,7 @@ from tests.acceptance.helpers import create_and_validate_request_and_response
 expected_config = """{
   "environmentKey": "production",
   "sdkKey": "KZbunNn9bVfBWLpZPq2XC4",
-  "revision": "130",
+  "revision": "131",
   "experimentsMap": {
     "ab_test1": {
       "id": "16911963060",
