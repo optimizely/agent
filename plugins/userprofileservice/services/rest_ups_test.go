@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/render"
 	"github.com/optimizely/agent/pkg/handlers"
@@ -175,9 +176,26 @@ func (rups *RestUPSTestSuite) TestSaveDefaultPOST() {
 	rups.Equal("POST", rups.MethodUsed)
 }
 
+func (rups *RestUPSTestSuite) TestSaveDefaultPOSTAsync() {
+	rups.ups.Async = true
+	rups.ups.Save(rups.userProfile)
+	time.Sleep(100 * time.Millisecond)
+	rups.Equal(rups.userProfile, rups.savedUserProfile)
+	rups.Equal("POST", rups.MethodUsed)
+}
+
 func (rups *RestUPSTestSuite) TestSaveWithGetMethod() {
 	rups.ups.SaveMethod = "GET"
 	rups.ups.Save(rups.userProfile)
+	rups.Equal(rups.userProfile, rups.savedUserProfile)
+	rups.Equal("GET", rups.MethodUsed)
+}
+
+func (rups *RestUPSTestSuite) TestSaveWithGetMethodAsync() {
+	rups.ups.Async = true
+	rups.ups.SaveMethod = "GET"
+	rups.ups.Save(rups.userProfile)
+	time.Sleep(100 * time.Millisecond)
 	rups.Equal(rups.userProfile, rups.savedUserProfile)
 	rups.Equal("GET", rups.MethodUsed)
 }
