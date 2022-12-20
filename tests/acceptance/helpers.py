@@ -4,7 +4,7 @@ import string
 from random import randint, choice
 
 import yaml
-from openapi_core import create_spec
+from openapi_core import OpenAPISpec as Spec
 from openapi_core.validation.request.datatypes import (OpenAPIRequest, RequestParameters)
 from openapi_core.validation.request.validators import RequestValidator
 from openapi_core.validation.response.datatypes import OpenAPIResponse
@@ -33,7 +33,7 @@ def parse_yaml(path):
             print(exc)
 
 
-spec = create_spec(parse_yaml(YAML_FILE_PATH))
+spec = Spec.create(parse_yaml(YAML_FILE_PATH))
 
 
 def get_random_string():
