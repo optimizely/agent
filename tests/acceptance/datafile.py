@@ -38,11 +38,11 @@ datafile = {'accountId': '10845721364', 'anonymizeIP': True, 'attributes': [{'id
                              {'experimentIds': [], 'id': '16907463855', 'key': 'feature_3', 'rolloutId': '16909553406',
                               'variables': []},
                              {'experimentIds': [], 'id': '16912161768', 'key': 'feature_4', 'rolloutId': '16943340293',
-                              'variables': []}], 'groups': [], 'projectId': '16931203314', 'revision': '130',
+                              'variables': []}], 'groups': [], 'projectId': '16931203314', 'revision': '131',
             'rollouts': [{'experiments': [{'audienceConditions': [], 'audienceIds': [], 'forcedVariations': {},
                                            'id': 'default-rollout-12672-16935023792',
                                            'key': 'default-rollout-12672-16935023792',
-                                           'layerId': 'default-layer-rollout-12672-16935023792', 'status': 'Running',
+                                           'layerId': 'rollout-12672-16935023792', 'status': 'Running',
                                            'trafficAllocation': [{'endOfRange': 10000, 'entityId': '35771'}],
                                            'variations': [{'featureEnabled': False, 'id': '35771', 'key': 'off',
                                                            'variables': []}]}], 'id': 'rollout-12672-16935023792'}, {
@@ -60,7 +60,7 @@ datafile = {'accountId': '10845721364', 'anonymizeIP': True, 'attributes': [{'id
                                       'variables': []}]},
                                  {'audienceConditions': [], 'audienceIds': [], 'forcedVariations': {},
                                   'id': 'default-16917900798', 'key': 'default-16917900798',
-                                  'layerId': 'default-layer-16917900798', 'status': 'Running',
+                                  'layerId': '16917900798', 'status': 'Running',
                                   'trafficAllocation': [{'endOfRange': 10000, 'entityId': '35770'}], 'variations': [
                                      {'featureEnabled': False, 'id': '35770', 'key': 'off', 'variables': []}]}],
                              'id': '16917900798'}, {'experiments': [
@@ -69,7 +69,7 @@ datafile = {'accountId': '10845721364', 'anonymizeIP': True, 'attributes': [{'id
                  'trafficAllocation': [{'endOfRange': 10000, 'entityId': '16927890136'}],
                  'variations': [{'featureEnabled': True, 'id': '16927890136', 'key': '16927890136', 'variables': []}]},
                 {'audienceConditions': [], 'audienceIds': [], 'forcedVariations': {}, 'id': 'default-16917103311',
-                 'key': 'default-16917103311', 'layerId': 'default-layer-16917103311', 'status': 'Running',
+                 'key': 'default-16917103311', 'layerId': '16917103311', 'status': 'Running',
                  'trafficAllocation': [{'endOfRange': 10000, 'entityId': '35769'}],
                  'variations': [{'featureEnabled': False, 'id': '35769', 'key': 'off', 'variables': []}]}],
                                                     'id': '16917103311'}, {'experiments': [
@@ -87,7 +87,7 @@ datafile = {'accountId': '10845721364', 'anonymizeIP': True, 'attributes': [{'id
                                                {'id': '16937161477', 'value': '1'},
                                                {'id': '16916052157', 'value': 'hello'}]}]},
                 {'audienceConditions': [], 'audienceIds': [], 'forcedVariations': {}, 'id': 'default-16928980969',
-                 'key': 'default-16928980969', 'layerId': 'default-layer-16928980969', 'status': 'Running',
+                 'key': 'default-16928980969', 'layerId': '16928980969', 'status': 'Running',
                  'trafficAllocation': [{'endOfRange': 10000, 'entityId': '35768'}], 'variations': [
                     {'featureEnabled': False, 'id': '35768', 'key': 'off',
                      'variables': [{'id': '16932993089', 'value': 'true'}, {'id': '16923002469', 'value': '5.6'},
@@ -97,7 +97,7 @@ datafile = {'accountId': '10845721364', 'anonymizeIP': True, 'attributes': [{'id
                  'key': '16907440927', 'layerId': '16909553406', 'status': 'Running', 'trafficAllocation': [],
                  'variations': [{'featureEnabled': True, 'id': '16908510336', 'key': '16908510336', 'variables': []}]},
                 {'audienceConditions': [], 'audienceIds': [], 'forcedVariations': {}, 'id': 'default-16909553406',
-                 'key': 'default-16909553406', 'layerId': 'default-layer-16909553406', 'status': 'Running',
+                 'key': 'default-16909553406', 'layerId': '16909553406', 'status': 'Running',
                  'trafficAllocation': [{'endOfRange': 10000, 'entityId': '35767'}],
                  'variations': [{'featureEnabled': False, 'id': '35767', 'key': 'off', 'variables': []}]}],
                                                                                                   'id': '16909553406'},
@@ -108,7 +108,7 @@ datafile = {'accountId': '10845721364', 'anonymizeIP': True, 'attributes': [{'id
                                  {'featureEnabled': True, 'id': '16925940659', 'key': '16925940659', 'variables': []}]},
                              {'audienceConditions': [], 'audienceIds': [], 'forcedVariations': {},
                               'id': 'default-16943340293', 'key': 'default-16943340293',
-                              'layerId': 'default-layer-16943340293', 'status': 'Running',
+                              'layerId': '16943340293', 'status': 'Running',
                               'trafficAllocation': [{'endOfRange': 10000, 'entityId': '35766'}],
                               'variations': [{'featureEnabled': False, 'id': '35766', 'key': 'off', 'variables': []}]}],
                           'id': '16943340293'}], 'sdkKey': 'KZbunNn9bVfBWLpZPq2XC4', 'typedAudiences': [],
