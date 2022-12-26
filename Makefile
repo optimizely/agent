@@ -51,7 +51,7 @@ cover-html: cover ## generates test coverage html report
 
 setup: check-go ## installs all dev and ci dependencies, but does not install golang
 ifeq (,$(wildcard $(GOLINT)))
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.50.1
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.44.2
 
 endif
 ifeq (,$(wildcard $(GOPATH)/bin/statik))
