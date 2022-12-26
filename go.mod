@@ -1,6 +1,6 @@
 module github.com/optimizely/agent
 
-go 1.13
+go 1.16
 
 require (
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
