@@ -157,6 +157,7 @@ client:
         #   savePath: "/ups/save"
         #   saveMethod: "POST"
         #   userIDKey: "user_id"
+        #   async: false
         #   headers: 
         #     Content-Type: "application/json"
         #     Auth-Token: "12345"
