@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/go-chi/render"
@@ -38,6 +39,7 @@ type RestUPSTestSuite struct {
 	userProfile      decision.UserProfile
 	MethodUsed       string
 	savedUserProfile decision.UserProfile
+	wg               *sync.WaitGroup
 }
 
 func (rups *RestUPSTestSuite) SetupTest() {
@@ -69,6 +71,9 @@ func (rups *RestUPSTestSuite) SetupTest() {
 			}
 			rups.savedUserProfile = convertToUserProfile(userProfile, rups.ups.getUserIDKey())
 			w.WriteHeader(http.StatusOK)
+			if rups.wg != nil {
+				rups.wg.Done()
+			}
 		case "/ups/lookup":
 			userProfileMap := convertUserProfileToMap(rups.userProfile, rups.ups.getUserIDKey())
 			w.Header().Set("Content-Type", "application/json")
@@ -175,9 +180,32 @@ func (rups *RestUPSTestSuite) TestSaveDefaultPOST() {
 	rups.Equal("POST", rups.MethodUsed)
 }
 
+func (rups *RestUPSTestSuite) TestSaveDefaultPOSTAsync() {
+	rups.ups.Async = true
+	rups.wg = &sync.WaitGroup{}
+	rups.wg.Add(1)
+	rups.ups.Save(rups.userProfile)
+	rups.wg.Wait()
+	rups.wg = nil
+	rups.Equal(rups.userProfile, rups.savedUserProfile)
+	rups.Equal("POST", rups.MethodUsed)
+}
+
 func (rups *RestUPSTestSuite) TestSaveWithGetMethod() {
 	rups.ups.SaveMethod = "GET"
 	rups.ups.Save(rups.userProfile)
+	rups.Equal(rups.userProfile, rups.savedUserProfile)
+	rups.Equal("GET", rups.MethodUsed)
+}
+
+func (rups *RestUPSTestSuite) TestSaveWithGetMethodAsync() {
+	rups.ups.Async = true
+	rups.wg = &sync.WaitGroup{}
+	rups.ups.SaveMethod = "GET"
+	rups.wg.Add(1)
+	rups.ups.Save(rups.userProfile)
+	rups.wg.Wait()
+	rups.wg = nil
 	rups.Equal(rups.userProfile, rups.savedUserProfile)
 	rups.Equal("GET", rups.MethodUsed)
 }

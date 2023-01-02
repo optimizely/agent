@@ -46,6 +46,7 @@ client:
         savePath: "/ups/save"
         headers: 
           content-type: "application/json"
+        async: true
       custom: 
         path: "http://test2.com"
       

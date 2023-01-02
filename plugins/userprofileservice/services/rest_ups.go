@@ -42,6 +42,7 @@ type RestUserProfileService struct {
 	SavePath     string            `json:"savePath"`
 	SaveMethod   string            `json:"saveMethod"`
 	UserIDKey    string            `json:"userIDKey"`
+	Async        bool              `json:"async"`
 }
 
 // Lookup is used to retrieve past bucketing decisions for users
@@ -82,7 +83,12 @@ func (r *RestUserProfileService) Save(profile decision.UserProfile) {
 	if err != nil {
 		return
 	}
-	r.performRequest(requestURL, r.SaveMethod, convertUserProfileToMap(profile, r.getUserIDKey()))
+	userProfileMap := convertUserProfileToMap(profile, r.getUserIDKey())
+	if r.Async {
+		go r.performRequest(requestURL, r.SaveMethod, userProfileMap)
+		return
+	}
+	r.performRequest(requestURL, r.SaveMethod, userProfileMap)
 }
 
 func (r *RestUserProfileService) getURL(endpointPath string) (string, error) {
