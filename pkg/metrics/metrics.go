@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
+ * Copyright 2019,2023 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,15 +28,17 @@ import (
 	go_kit_expvar "github.com/go-kit/kit/metrics/expvar"
 	go_kit_prometheus "github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
 // CounterPrefix stores the prefix for Counter
 const (
-	CounterPrefix = "counter"
-	GaugePrefix   = "gauge"
-	TimerPrefix   = "timer"
+	CounterPrefix   = "counter"
+	GaugePrefix     = "gauge"
+	TimerPrefix     = "timer"
+	ConstantsPrefix = "constants"
 )
 
 const (
@@ -102,13 +104,15 @@ func (m *Registry) NewTimer(key string) *Timer {
 // NewRegistry initializes metrics registry
 func NewRegistry(metricsType string) *Registry {
 
-	return &Registry{
+	registry := &Registry{
 		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
 		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
 		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
 		metricsTimerVars:     map[string]*Timer{},
 		metricsType:          metricsType,
 	}
+	registry.addDefaultConstantMetrics()
+	return registry
 }
 
 // GetCounter gets go-kit Counter
@@ -216,6 +220,33 @@ func (m *Registry) createTimer(key string) *Timer {
 	}
 	m.metricsTimerVars[key] = timerVar
 	return timerVar
+}
+
+func (m *Registry) addDefaultConstantMetrics() {
+	createCounterWithLabels := func(kv map[string]string) {
+		switch m.metricsType {
+		case prometheusPackage:
+			labelNames := []string{}
+			for k := range kv {
+				labelNames = append(labelNames, k)
+			}
+			promauto.NewCounterVec(stdprometheus.CounterOpts{
+				Name: ConstantsPrefix,
+				Help: "Agent constants.",
+			}, labelNames).With(kv)
+		default:
+			// Default expvar
+			for k, v := range kv {
+				expvar.NewString(k).Set(v)
+			}
+		}
+	}
+	// These can be retrieved from yaml configuration aswell
+	// Needs to be discussed before writing tests
+	sampleLabels := map[string]string{
+		"host": "www.apple.com", "host1": "www.apple.com",
+	}
+	createCounterWithLabels(sampleLabels)
 }
 
 // getPackageSupportedName converts name to package supported type
