@@ -186,7 +186,7 @@ expected_body_of_operationid_2 = """
             "variablesMap": {}
         }
     },
-    "revision": "20",
+    "revision": "21",
     "sdkKey": "TkB2xhu8WEAHa4LphN3xZ2"
 }"""
 
