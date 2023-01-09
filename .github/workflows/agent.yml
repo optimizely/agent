@@ -73,6 +73,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - name: sourceclear
       env:
         SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
@@ -102,6 +106,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
@@ -124,6 +132,10 @@ jobs:
       with:
         submodules: true
         fetch-depth: 0
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - name: Get the version
       id: get_version
       run: |
@@ -149,6 +161,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - uses: actions/checkout@v2
       with:
         # You should create a personal access token and store it in your repository
@@ -204,6 +220,10 @@ jobs:
           TARGET: windows-amd64
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '1.13'
+        check-latest: true
     - uses: actions/checkout@v2
       with:
         # You should create a personal access token and store it in your repository
