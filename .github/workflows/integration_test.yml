@@ -5,8 +5,7 @@ on:
     secrets:
       CI_USER_TOKEN:
         required: true
-      TRAVIS_COM_TOKEN:
-        required: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,12 +21,10 @@ jobs:
       if: ${{ github.event_name == 'pull_request' }}
       run: |
         echo "SDK_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
-        echo "TRAVIS_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
     - name: set SDK Branch if not pull request
       if: ${{ github.event_name != 'pull_request' }}
       run: |
         echo "SDK_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
-        echo "TRAVIS_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
     - name: Trigger build
       env:
         SDK: agent
@@ -41,7 +38,7 @@ jobs:
         PULL_REQUEST_SHA: ${{ github.event.pull_request.head.sha }}
         PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
         UPSTREAM_SHA: ${{ github.sha }}
-        TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
+        TOKEN: ${{ secrets.CI_USER_TOKEN }}
         EVENT_MESSAGE: ${{ github.event.message }}
         HOME: 'home/runner'
       run: |
