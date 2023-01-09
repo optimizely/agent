@@ -44,6 +44,8 @@ jobs:
     - name: run lint
       run: make -e lint
     - name: run for
+      env: 
+        GO_VERSION: '1.13'
       run: for f in `find scripts/dockerfiles -type f`; do echo $f; docker run --rm -i hadolint/hadolint:v2.1.0 < $f; done
         
   tests_coveralls:
