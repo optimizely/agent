@@ -107,10 +107,9 @@ jobs:
         MYHOST="http://localhost:8080" make test-acceptance
         
   integration_tests:
+    if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
     uses: optimizely/agent/.github/workflows/integration_test.yml@mnoman/gitAction
-    secrets:
-      CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
-      TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
+    secrets: inherit
   
   tests_using_latest_tag_no_upload:
     runs-on: ubuntu-latest
