@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -122,7 +122,7 @@ func (err *ClientCredentialsError) Error() string {
 func (h *OAuthHandler) verifyClientCredentials(r *http.Request) (*ClientCredentials, int, error) {
 	reqContentType := render.GetContentType(r.Header.Get("Content-Type"))
 	if reqContentType != render.ContentTypeForm {
-		return nil, http.StatusBadRequest, &ClientCredentialsError{
+		return nil, http.StatusUnsupportedMediaType, &ClientCredentialsError{
 			ErrorCode:        "invalid_request",
 			ErrorDescription: "Content-Type header value must be application/x-www-form-urlencoded",
 		}

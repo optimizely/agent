@@ -152,7 +152,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
-	r.With(createAccesstokenTimer, contentTypeMiddleware).Post("/oauth/token", opt.oAuthHandler)
+	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
 
 	statikFS, err := fs.New()
 	if err != nil {
