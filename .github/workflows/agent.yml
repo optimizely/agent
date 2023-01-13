@@ -38,6 +38,7 @@ jobs:
       with:
         recursive: true
         no-fail: true
+        ignore: "DL3018"
         dockerfile: scripts/dockerfiles/Dockerfile.*
         
 #   tests_coveralls:
