@@ -1,7 +1,7 @@
 ARG GO_VERSION
 FROM golang:$GO_VERSION as builder
-RUN addgroup -u 1000 agentgroup
-RUN useradd -u 1000 agentuser -g agentgroup
+RUN addgroup -u 1000 agentgroup &&\
+    useradd -u 1000 agentuser -g agentgroup
 WORKDIR /go/src/github.com/optimizely/agent
 COPY . .
 RUN make setup build &&\
