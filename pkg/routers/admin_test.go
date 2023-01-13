@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020,2022 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -43,7 +43,7 @@ func TestAdminAllowedContentTypeMiddleware(t *testing.T) {
 	// Testing supported content type
 	body = `{"email":"test@123.com"}`
 	req = httptest.NewRequest("POST", "/oauth/token", bytes.NewBuffer([]byte(body)))
-	req.Header.Add(contentTypeHeaderKey, "application/json")
+	req.Header.Add(contentTypeHeaderKey, "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
