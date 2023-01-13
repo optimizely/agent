@@ -37,7 +37,7 @@ jobs:
       uses: hadolint/hadolint-action@v2.0.0
       with:
         recursive: true
-        dockerfile: scripts/dockerfiles/Dockerfile.alpine
+        dockerfile: scripts/dockerfiles/Dockerfile.*
         
 #   tests_coveralls:
 #     runs-on: ubuntu-latest
