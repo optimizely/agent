@@ -36,7 +36,8 @@ jobs:
     - name: Lint dockerfiles
       uses: hadolint/hadolint-action@v2.0.0
       with:
-        dockerfile: scripts/dockerfiles/"Dockerfile"
+        recursive: true
+        dockerfile: scripts/dockerfiles
         
 #   tests_coveralls:
 #     runs-on: ubuntu-latest
