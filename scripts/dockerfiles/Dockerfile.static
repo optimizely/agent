@@ -4,8 +4,8 @@ RUN addgroup -u 1000 agentgroup
 RUN useradd -u 1000 agentuser -g agentgroup
 WORKDIR /go/src/github.com/optimizely/agent
 COPY . .
-RUN make setup build
-RUN make ci_build_static_binary
+RUN make setup build &&\
+    make ci_build_static_binary
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
