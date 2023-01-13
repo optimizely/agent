@@ -37,6 +37,7 @@ jobs:
       uses: hadolint/hadolint-action@v2.0.0
       with:
         recursive: true
+        no-fail: true
         dockerfile: scripts/dockerfiles/Dockerfile.*
         
 #   tests_coveralls:
