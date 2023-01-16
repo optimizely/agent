@@ -55,7 +55,7 @@ ifeq (,$(wildcard $(GOLINT)))
 
 endif
 ifeq (,$(wildcard $(GOPATH)/bin/statik))
-	go get github.com/rakyll/statik
+	GO111MODULE=off go get -u github.com/rakyll/statik
 endif
 
 lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
