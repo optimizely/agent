@@ -97,7 +97,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			}
 			err = nil
 		default:
-			err = fmt.Errorf(`type "%s" not supported`, value)
+			err = fmt.Errorf(`type %q not supported`, value)
 		}
 
 		if err != nil {
@@ -145,7 +145,7 @@ func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, kmap key
 				kmap[key] = "feature"
 			}
 		default:
-			return fmt.Errorf(`type "%s" not supported`, filterType)
+			return fmt.Errorf(`type %q not supported`, filterType)
 		}
 	}
 

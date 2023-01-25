@@ -218,7 +218,7 @@ func (c *TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error)
 		return group, nil
 	}
 
-	errMessage := fmt.Sprintf(`Group with ID "%s" not found`, groupID)
+	errMessage := fmt.Sprintf(`Group with ID %q not found`, groupID)
 	return entities.Group{}, errors.New(errMessage)
 }
 
