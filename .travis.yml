@@ -82,17 +82,25 @@ jobs:
       script:
         - MYHOST="http://localhost:8080" make test-acceptance
 
-    # - stage: 'Trigger FSC Tests'
-    #   if: (branch = master AND type = push) OR type = pull_request OR tag IS present
-    #   env:
-    #     SDK=agent
-    #     SDK_BRANCH=$(if [ -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then echo ${TRAVIS_BRANCH}; else echo "$TRAVIS_PULL_REQUEST_BRANCH"; fi)
-    #   cache: false
-    #   before_install:
-    #     ./scripts/pull_travis_ci_tools.sh
-    #   install: skip
-    #   script:
-    #     - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
+    - stage: 'Trigger FSC Tests'
+      if: (branch = master AND type = push) OR type = pull_request OR tag IS present
+      env:
+        SDK=agent
+        SDK_BRANCH=$(if [ -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then echo ${TRAVIS_BRANCH}; else echo "$TRAVIS_PULL_REQUEST_BRANCH"; fi)
+        EVENT_TYPE=$TRAVIS_EVENT_TYPE
+        PULL_REQUEST_SLUG=$TRAVIS_PULL_REQUEST_SLUG
+        PULL_REQUEST_SHA=$TRAVIS_PULL_REQUEST_SHA
+        GITHUB_REPOSITORY=$TRAVIS_REPO_SLUG
+        UPSTREAM_REPO=$TRAVIS_REPO_SLUG
+        UPSTREAM_SHA=$TRAVIS_COMMIT
+        PULL_REQUEST_NUMBER=$TRAVIS_PULL_REQUEST
+        TOKEN=$GITHUB_TOKEN
+      cache: false
+      before_install:
+        ./scripts/pull_travis_ci_tools.sh
+      install: skip
+      script:
+        - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
 
     - stage: 'Test Build using latest tag (no upload)'
       name: linux
