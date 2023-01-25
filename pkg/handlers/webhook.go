@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2023 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -23,10 +23,11 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/optimizely/agent/config"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/optimizely/agent/config"
 
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
@@ -94,7 +95,7 @@ func (h *OptlyWebhookHandler) validateSignature(requestSignature string, payload
 
 // HandleWebhook handles incoming webhook messages from Optimizely application
 func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Error().Msg("Unable to read webhook message body.")
 		render.Status(r, http.StatusBadRequest)

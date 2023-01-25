@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2021, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2021,2023 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -150,7 +150,7 @@ func (c *TestProjectConfig) GetAttributeByKey(key string) (entities.Attribute, e
 		return c.AttributeMap[attributeID], nil
 	}
 
-	errMessage := fmt.Sprintf(`Attribute with key "%s" not found`, key)
+	errMessage := fmt.Sprintf(`Attribute with key %q not found`, key)
 	return entities.Attribute{}, errors.New(errMessage)
 }
 
@@ -192,7 +192,7 @@ func (c *TestProjectConfig) GetAudienceByID(audienceID string) (entities.Audienc
 		return audience, nil
 	}
 
-	errMessage := fmt.Sprintf(`Audience with ID "%s" not found`, audienceID)
+	errMessage := fmt.Sprintf(`Audience with ID %q not found`, audienceID)
 	return entities.Audience{}, errors.New(errMessage)
 }
 
@@ -208,7 +208,7 @@ func (c *TestProjectConfig) GetExperimentByKey(experimentKey string) (entities.E
 		return experiment, nil
 	}
 
-	errMessage := fmt.Sprintf(`Experiment with key "%s" not found`, experimentKey)
+	errMessage := fmt.Sprintf(`Experiment with key %q not found`, experimentKey)
 	return entities.Experiment{}, errors.New(errMessage)
 }
 
