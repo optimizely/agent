@@ -59,7 +59,7 @@ func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
 }
 
 func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	panic("implement me")
+	return 0, nil
 }
 
 func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
