@@ -65,6 +65,10 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: (Jae) add parameter for fetch-qualified-sements
+	// check if with-odp-segment exists in the request body - same as function above or below?
+	// ...
+
 	decideOptions, err := decide.TranslateOptions(db.DecideOptions)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
@@ -72,6 +76,8 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
+
+	// TODO: (Jae) here add call fetch qual segments
 
 	// Setting up forced decisions
 	for _, fd := range db.ForcedDecisions {

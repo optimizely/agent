@@ -1,9 +1,9 @@
 /****************************************************************************
- * Copyright 2020-2022, Optimizely, Inc. and contributors                   *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
+* Copyright 2020-2022, Optimizely, Inc. and contributors                   *
+*                                                                          *
+* Licensed under the Apache License, Version 2.0 (the "License");          *
+* you may not use this file except in compliance with the License.         *
+* You may obtain a copy of the License at                                  *
  *                                                                          *
  *    http://www.apache.org/licenses/LICENSE-2.0                            *
  *                                                                          *
@@ -38,21 +38,23 @@ import (
 
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns        int
-	sdkMiddleware   func(next http.Handler) http.Handler
-	metricsRegistry *metrics.Registry
-	configHandler   http.HandlerFunc
-	datafileHandler http.HandlerFunc
-	activateHandler http.HandlerFunc
-	decideHandler   http.HandlerFunc
-	trackHandler    http.HandlerFunc
-	overrideHandler http.HandlerFunc
-	lookupHandler   http.HandlerFunc
-	saveHandler     http.HandlerFunc
-	nStreamHandler  http.HandlerFunc
-	oAuthHandler    http.HandlerFunc
-	oAuthMiddleware func(next http.Handler) http.Handler
-	corsHandler     func(next http.Handler) http.Handler
+	maxConns                      int
+	sdkMiddleware                 func(next http.Handler) http.Handler
+	metricsRegistry               *metrics.Registry
+	configHandler                 http.HandlerFunc
+	datafileHandler               http.HandlerFunc
+	activateHandler               http.HandlerFunc
+	decideHandler                 http.HandlerFunc
+	trackHandler                  http.HandlerFunc
+	overrideHandler               http.HandlerFunc
+	lookupHandler                 http.HandlerFunc
+	saveHandler                   http.HandlerFunc
+	fetchQualifiedSegmentsHandler http.HandlerFunc
+	sendOdpEventHandler           http.HandlerFunc
+	nStreamHandler                http.HandlerFunc
+	oAuthHandler                  http.HandlerFunc
+	oAuthMiddleware               func(next http.Handler) http.Handler
+	corsHandler                   func(next http.Handler) http.Handler
 }
 
 func forbiddenHandler(message string) http.HandlerFunc {
@@ -90,26 +92,29 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 	corsHandler := createCorsHandler(conf.CORS)
 
 	spec := &APIOptions{
-		maxConns:        conf.MaxConns,
-		metricsRegistry: metricsRegistry,
-		configHandler:   handlers.OptimizelyConfig,
-		datafileHandler: handlers.GetDatafile,
-		activateHandler: handlers.Activate,
-		decideHandler:   handlers.Decide,
-		overrideHandler: overrideHandler,
-		lookupHandler:   handlers.Lookup,
-		saveHandler:     handlers.Save,
-		trackHandler:    handlers.TrackEvent,
-		sdkMiddleware:   mw.ClientCtx,
-		nStreamHandler:  nStreamHandler,
-		oAuthHandler:    authHandler.CreateAPIAccessToken,
-		oAuthMiddleware: authProvider.AuthorizeAPI,
-		corsHandler:     corsHandler,
+		maxConns:                      conf.MaxConns,
+		metricsRegistry:               metricsRegistry,
+		configHandler:                 handlers.OptimizelyConfig,
+		datafileHandler:               handlers.GetDatafile,
+		activateHandler:               handlers.Activate,
+		decideHandler:                 handlers.Decide,
+		overrideHandler:               overrideHandler,
+		lookupHandler:                 handlers.Lookup,
+		saveHandler:                   handlers.Save,
+		trackHandler:                  handlers.TrackEvent,
+		fetchQualifiedSegmentsHandler: handlers.FetchQualifiedSegments,
+		sendOdpEventHandler:           handlers.SendOdpEvent,
+		sdkMiddleware:                 mw.ClientCtx,
+		nStreamHandler:                nStreamHandler,
+		oAuthHandler:                  authHandler.CreateAPIAccessToken,
+		oAuthMiddleware:               authProvider.AuthorizeAPI,
+		corsHandler:                   corsHandler,
 	}
 
 	return NewAPIRouter(spec)
 }
 
+// TODO: test
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
 func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
@@ -117,6 +122,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	return r
 }
 
+// TODO: NEXT - DEFINE ENDPOINT AND SCHEMA - ONE FILE PER ENDPOINT ????????
 // WithAPIRouter appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
 func WithAPIRouter(opt *APIOptions, r chi.Router) {
@@ -128,6 +134,8 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	lookupTimer := middleware.Metricize("lookup", opt.metricsRegistry)
 	saveTimer := middleware.Metricize("save", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
+	fetchQualifiedSegmentsTimer := middleware.Metricize("fetch-qualified-segments", opt.metricsRegistry) // TODO: fetch-qualified-segments
+	sendOdpEventTimer := middleware.Metricize("send-odp-event", opt.metricsRegistry)                     // TODO: send-odp-event
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 	contentTypeMiddleware := chimw.AllowContentType("application/json")
 
@@ -149,6 +157,8 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/override", opt.overrideHandler)
 		r.With(lookupTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/lookup", opt.lookupHandler)
 		r.With(saveTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/save", opt.saveHandler)
+		r.With(fetchQualifiedSegmentsTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/fetch-qualified-segments", opt.fetchQualifiedSegmentsHandler) // TODO: will go schema like dashes?
+		r.With(sendOdpEventTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/send-odp-event", opt.sendOdpEventHandler)                               // TODO: will go schema like dashes?
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
@@ -165,8 +175,9 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 
 func createCorsHandler(c config.CORSConfig) func(next http.Handler) http.Handler {
 	options := cors.Options{
-		AllowedOrigins:   c.AllowedOrigins,
-		AllowedMethods:   c.AllowedMethods,
+		AllowedOrigins: c.AllowedOrigins,
+		AllowedMethods: c.AllowedMethods,
+
 		AllowedHeaders:   c.AllowedHeaders,
 		ExposedHeaders:   c.ExposedHeaders,
 		AllowCredentials: c.AllowedCredentials,
