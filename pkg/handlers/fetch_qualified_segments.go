@@ -29,9 +29,9 @@ import (
 
 // FetchBody defines the request body for decide API
 type FetchBody struct {
-	UserID         string                            `json:"userId"`
-	UserAttributes map[string]interface{}            `json:"userAttributes"`
-	SegmentOptions []segment.OptimizelySegmentOption `json:"segmentOptions"`
+	UserID         string                 `json:"userId"`
+	UserAttributes map[string]interface{} `json:"userAttributes"`
+	SegmentOptions []string               `json:"segmentOptions"`
 }
 
 // FetchQualifiedSegments fetches qualified segments from ODP platform
@@ -49,23 +49,25 @@ func FetchQualifiedSegments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: MUST ADD OPTIONS FOR FETCH QUALIFIED SEGMENTS - REDO FOR FETCH QUAL SEGMENTS
-	// TODO: DO I NEED TRANSLATE FUNCTION/FILE (decide_options.go)? DO OPTIONS WORK THE SAME AS IN DECIDE OPTIONS?
-
-	// TODo: DON'T NEED TRANSLATE method, because OptimizelySegmentOption is much simpler than DecideOptions
-	// See segment_option.go file from go-sdk: https://github.com/optimizely/go-sdk/blob/master/pkg/odp/segment/segment_option.go
-	// need to mport this file
-
-	// decideOptions, err := decide.TranslateOptions(db.DecideOptions)
-	// if err != nil {
-	// 	RenderError(err, http.StatusBadRequest, w, r)
-	// 	return
-	// }
+	segmentOptions, err := segment.TranslateOptions(db.SegmentOptions)
+	if err != nil {
+		RenderError(err, http.StatusBadRequest, w, r)
+		return
+	}
 
 	// Fetch qualified segments
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
-	// optimizelyUserContext.FetchQualifiedSegments([]segment.OptimizelySegmentOption{db.SegmentOptions}) // TODO: replace []segment.OptimizelySegmentOption{} with db.SegmentOption
-	optimizelyUserContext.FetchQualifiedSegments([]segment.OptimizelySegmentOption{[]db.SegmentOptions}) // TODO: replace []segment.OptimizelySegmentOption{} with db.SegmentOption
+	optimizelyUserContext.FetchQualifiedSegments(segmentOptions) // TODO: NEXT: replace []segment.OptimizelySegmentOption{} with CORRECT VALUE/ARG - segmentOptions - dioen't work - look how it's done in decide????
+	// in decide it's an array of strings that is passed to Decide. What about here - are we also passing array of stings (options?) - check out gitpod example
+	// NEEDS TO LOOK LIKE THIS:
+	// user.FetchQualifiedSegments([]segment.OptimizelySegmentOption{segment.IgnoreCache, segment.ResetCache})
+
+	// for decide it looks like this:
+	// decisions = user.DecideAll([]decide.OptimizelyDecideOptions{decide.EnabledFlagsOnly})
+
+	// in decide.go code:
+	// d := optimizelyUserContext.Decide(key, decideOptions)
+
 	segments := optimizelyUserContext.GetQualifiedSegments()
 	print("RECEIVED SEGMENTS ", segments)
 
