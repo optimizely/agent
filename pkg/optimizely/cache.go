@@ -42,6 +42,7 @@ type OptlyCache struct {
 	loader                func(string) (*OptlyClient, error)
 	optlyMap              cmap.ConcurrentMap
 	userProfileServiceMap cmap.ConcurrentMap
+	odpCacheMap           cmap.ConcurrentMap
 	ctx                   context.Context
 	wg                    sync.WaitGroup
 }
@@ -55,12 +56,14 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 	}
 
 	userProfileServiceMap := cmap.New()
+	odpCacheMap := cmap.New()
 	cache := &OptlyCache{
 		ctx:                   ctx,
 		wg:                    sync.WaitGroup{},
 		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: userProfileServiceMap,
+		odpCacheMap:           odpCacheMap,
 	}
 
 	return cache

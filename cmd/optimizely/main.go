@@ -93,6 +93,11 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		conf.Client.UserProfileService = userProfileService
 	}
 
+	// Check if JSON string was set using OPTIMIZELY_CLIENT_ODPCACHE environment variable
+	if odpCache := v.GetStringMap("client.odpcache"); odpCache != nil {
+		conf.Client.ODPCache = odpCache
+	}
+
 	return conf
 }
 

@@ -157,6 +157,16 @@ client:
         #   headers: 
         #     Content-Type: "application/json"
         #     Auth-Token: "12345"
+    odpCache:
+      default: ""
+      services:
+        # in-memory: 
+        #   capacity: 0
+        #   storageStrategy: "fifo"
+        # redis: 
+        #   host: "localhost:6379"
+        #   password: ""
+        #   database: 0
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.

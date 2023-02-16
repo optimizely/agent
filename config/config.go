@@ -83,6 +83,10 @@ func NewDefaultConfig() *AgentConfig {
 				"default":  "",
 				"services": map[string]interface{}{},
 			},
+			ODPCache: ODPCacheConfigs{
+				"default":  "",
+				"services": map[string]interface{}{},
+			},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -153,6 +157,9 @@ func (ac *AgentConfig) LogConfigWarnings() {
 // UserProfileServiceConfigs defines the generic mapping of userprofileservice plugins
 type UserProfileServiceConfigs map[string]interface{}
 
+// ODPCacheConfigs defines the generic mapping of odp cache plugins
+type ODPCacheConfigs map[string]interface{}
+
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
 	PollingInterval     time.Duration             `json:"pollingInterval"`
@@ -163,6 +170,7 @@ type ClientConfig struct {
 	EventURL            string                    `json:"eventURL"`
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
+	ODPCache            ODPCacheConfigs           `json:"odpCache"`
 }
 
 // LogConfig holds the log configuration
