@@ -35,6 +35,7 @@ type DecideBody struct {
 	UserAttributes  map[string]interface{} `json:"userAttributes"`
 	DecideOptions   []string               `json:"decideOptions"`
 	ForcedDecisions []ForcedDecision       `json:"forcedDecisions,omitempty"`
+	withOdpSegment  bool                   `json:"withOdpSegment"`
 }
 
 // ForcedDecision defines Forced Decision
@@ -60,6 +61,10 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db, err := getUserContextWithOptions(r)
+	println("RESPONSE W SEG ", db.withOdpSegment)
+	println("RESPONSE userID ", db.UserID)
+	println("RESPONSE attr ", db.UserAttributes)
+	println("RESPONSE options ", db.DecideOptions)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
@@ -67,7 +72,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: (Jae) add parameter for fetch-qualified-sements
 	// check if with-odp-segment exists in the request body - same as function above or below?
-	// ...
+	// if it's true, then fetch segments, if false don't
 
 	decideOptions, err := decide.TranslateOptions(db.DecideOptions)
 	if err != nil {

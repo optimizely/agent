@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2021, Optimizely, Inc. and contributors                        *
+ * Copyright 2023, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -49,10 +49,8 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := optlyClient.SendOdpEvent(db.Action, db.Type, db.Identifiers, db.Data)
-	logger.Info().Bool("Success", success).Msg("Success. ODP event sent.")
-
+	logger.Debug().Msg("Sending ODP event")
 	render.JSON(w, r, success)
-
 }
 
 var ErrIdentifiers = errors.New(`missing "identifiers" in request payload`)
@@ -64,11 +62,9 @@ func getResponseBody(r *http.Request) (SendBody, error) {
 		return SendBody{}, err
 	}
 
-	if body.Identifiers == nil { // TODO: REPLACE NIL WITH EMPTY VALUE???
+	if body.Identifiers == nil {
 		return SendBody{}, ErrIdentifiers
 	}
-
-	// TODO: add any other error catching (for missing action, type, data?)
 
 	return body, nil
 }

@@ -13,7 +13,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/lestrrat-go/jwx v0.9.0
-	github.com/optimizely/go-sdk v1.8.4-0.20230117172806-a96c3071c921
+	github.com/optimizely/go-sdk v1.8.4-0.20230216074708-27b2772ccf33
 	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.18.1-0.20200514152719-663cbb4c8469
