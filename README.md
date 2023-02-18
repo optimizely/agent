@@ -10,7 +10,7 @@ Optimizely Full Stack is A/B testing and feature flag management for product dev
 To get started with Optimizely Agent, follow the [Quickstart guide](https://docs.developers.optimizely.com/full-stack/docs/) and view example usage in our [examples folder](./examples).
 
 ## Prerequisites
-Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.13+ is required for developing and compiling from source.
+Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.17+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://golang.org/dl/) page.
 
 ## Running from source (Linux / OSX)
