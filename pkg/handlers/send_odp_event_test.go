@@ -81,7 +81,6 @@ func (suite *SendOdpEventTestSuite) TestInvalidPayload() {
 	suite.assertError(rec, `missing "action" in request payload`, http.StatusBadRequest)
 }
 
-// TODO: FAILING! probably missing some odp elements added to the agent code (config.yaml?, other?)
 func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 	db := SendBody{
 		Action:      "any",
@@ -107,7 +106,6 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 
 }
 
-// TEST SHOULD PASS, TYPE AND DATA ARE OPTIONAL IN THE PAYLOAD
 func (suite *SendOdpEventTestSuite) TestSendOdpEventMissingTypeAndData() {
 	db := SendBody{
 		Action:      "any",

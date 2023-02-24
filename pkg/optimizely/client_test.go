@@ -283,6 +283,7 @@ func (e ErrorConfigManager) SyncConfig() {
 
 type MockConfigManager struct {
 	config config.ProjectConfig
+	sdkKey string
 }
 
 func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
@@ -290,14 +291,13 @@ func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
 }
 
 func (m MockConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	notificationCenter := registry.GetNotificationCenter(m.config.GetSdkKey())
+	notificationCenter := registry.GetNotificationCenter(m.sdkKey)
 	handler := func(payload interface{}) {
 		if projectConfigUpdateNotification, ok := payload.(notification.ProjectConfigUpdateNotification); ok {
 			callback(projectConfigUpdateNotification)
 		}
 	}
 	return notificationCenter.AddHandler(notification.ProjectConfigUpdate, handler)
-	// return 1, nil
 }
 
 func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
