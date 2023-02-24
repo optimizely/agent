@@ -19,6 +19,7 @@ package handlers
 
 import (
 	"errors"
+	// "fmt"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -53,7 +54,12 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, success)
 }
 
-var ErrIdentifiers = errors.New(`missing "identifiers" in request payload`)
+func str(success bool) {
+	panic("unimplemented")
+}
+
+var ErrAction = errors.New(`missing "action" in request payload`)
+var ErrIdentifiers = errors.New(`missing or empty "identifiers" in request payload`)
 
 func getResponseBody(r *http.Request) (SendBody, error) {
 	var body SendBody
@@ -62,7 +68,11 @@ func getResponseBody(r *http.Request) (SendBody, error) {
 		return SendBody{}, err
 	}
 
-	if body.Identifiers == nil {
+	if body.Action == "" {
+		return SendBody{}, ErrAction
+	}
+
+	if body.Identifiers == nil || len(body.Identifiers) == 0 {
 		return SendBody{}, ErrIdentifiers
 	}
 

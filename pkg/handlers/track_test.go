@@ -31,6 +31,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -59,7 +60,7 @@ func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
 }
 
 func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	panic("implement me")
+	return 0, fmt.Errorf("config error")
 }
 
 func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
@@ -83,7 +84,13 @@ func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
 }
 
 func (m MockConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	panic("implement me")
+	notificationCenter := registry.GetNotificationCenter(m.config.GetSdkKey())
+	handler := func(payload interface{}) {
+		if projectConfigUpdateNotification, ok := payload.(notification.ProjectConfigUpdateNotification); ok {
+			callback(projectConfigUpdateNotification)
+		}
+	}
+	return notificationCenter.AddHandler(notification.ProjectConfigUpdate, handler)
 }
 
 func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {
