@@ -33,6 +33,30 @@ const (
 	TimerPrefix   = "timer"
 )
 
+// Registry initializes expvar metrics registry
+type Registry struct {
+	metricsCounterVars   map[string]go_kit_metrics.Counter
+	metricsGaugeVars     map[string]go_kit_metrics.Gauge
+	metricsHistogramVars map[string]go_kit_metrics.Histogram
+	metricsTimerVars     map[string]*Timer
+
+	gaugeLock     sync.RWMutex
+	counterLock   sync.RWMutex
+	histogramLock sync.RWMutex
+	timerLock     sync.RWMutex
+}
+
+// NewRegistry initializes metrics registry
+func NewRegistry() *Registry {
+
+	return &Registry{
+		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
+		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
+		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
+		metricsTimerVars:     map[string]*Timer{},
+	}
+}
+
 // Timer is the collection of some timers
 type Timer struct {
 	hits      go_kit_metrics.Counter
@@ -62,30 +86,6 @@ func (t *Timer) Update(delta float64) {
 	t.hits.Add(1)
 	t.totalTime.Add(delta)
 	t.histogram.Observe(delta)
-}
-
-// Registry initializes expvar metrics registry
-type Registry struct {
-	metricsCounterVars   map[string]go_kit_metrics.Counter
-	metricsGaugeVars     map[string]go_kit_metrics.Gauge
-	metricsHistogramVars map[string]go_kit_metrics.Histogram
-	metricsTimerVars     map[string]*Timer
-
-	gaugeLock     sync.RWMutex
-	counterLock   sync.RWMutex
-	histogramLock sync.RWMutex
-	timerLock     sync.RWMutex
-}
-
-// NewRegistry initializes metrics registry
-func NewRegistry() *Registry {
-
-	return &Registry{
-		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
-		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
-		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
-		metricsTimerVars:     map[string]*Timer{},
-	}
 }
 
 // GetCounter gets go-kit expvar Counter

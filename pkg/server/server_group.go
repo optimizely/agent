@@ -57,7 +57,7 @@ func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
 
 	if port == "0" {
-		log.Info().Msg(fmt.Sprintf(`"%s" not enabled`, name))
+		log.Info().Msg(fmt.Sprintf(`%q not enabled`, name))
 		return
 	}
 

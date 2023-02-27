@@ -51,7 +51,7 @@ type HealthInfo struct {
 func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
 
 	if handler == nil {
-		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
+		return Server{}, fmt.Errorf(`%q handler is not initialized`, name)
 	}
 
 	handler = middleware.BatchRouter(conf.BatchRequests)(handler)
