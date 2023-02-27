@@ -64,8 +64,8 @@ function buildOptimizelyAgent {
         Write-Host "Optimizely Agent needs to build from its own git repository in order to determine its version." -ForegroundColor Red
         exit 1
     }
-    $env:GO111MODULE = "on"
     $VERSION = (git describe --tags)
+    Write-Host "Version: $VERSION" -ForegroundColor Green
     go build -ldflags "-s -w -X main.Version=$VERSION" -o bin\optimizely.exe cmd\optimizely\main.go
     if (!$?) {
         exit 1
@@ -105,7 +105,7 @@ function main($mode) {
     # check if go is installed, if not, install it.
     checkPrereq 'Go Programming Language amd64 go1.20.1' https://dl.google.com/go/go1.20.1.windows-amd64.msi f06fdfa56f3aba62cbf80dacddbcc1150f4990cc117a9477047d3a3529ee3e80 $mode
     # same but with git
-    checkPrereq 'Git version 2.24.1.2' https://github.com/git-for-windows/git/releases/download/v2.24.1.windows.2/Git-2.24.1.2-64-bit.exe 34e484936105713e7d0c2f421bf62e4cfe652f6638a9ecb5df2186c1918753e2 $mode
+    checkPrereq 'Git version 2.39.2' https://github.com/git-for-windows/git/releases/download/v2.39.2.windows.1/Git-2.39.2-64-bit.exe d7608fbd854b3689102ff48b03c8cc77b35138f9f7350d134306da0ba5751464 $mode
 
     # refresh $PATH
     refreshPath
