@@ -12,7 +12,7 @@ updatedAt: "2021-03-15T23:02:34.056Z"
 
 To develop and compile Optimizely Agent from source:
 
-1. Install  [Golang](https://golang.org/dl/)  version 1.17+ .
+1. Install  [Golang](https://golang.org/dl/)  version 1.20+ .
 2. Clone the [Optimizely Agent repo](https://github.com/optimizely/agent). 
 3. From the repo directory, open a terminal and start Optimizely Agent:
 
