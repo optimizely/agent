@@ -81,8 +81,8 @@ function refreshPath {
 
 function installDeps {
     Write-Host "Installing build dependencies for Optimizely Agent..." -ForegroundColor Green
-    $Env:GO111MODULE = off
-    go get -u github.com/rakyll/statik
+    go env -w GO111MODULE=off
+	go get -u github.com/rakyll/statik
     statik -src=api/openapi-spec
 }
 
