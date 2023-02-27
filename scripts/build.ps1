@@ -65,7 +65,6 @@ function buildOptimizelyAgent {
         exit 1
     }
     $VERSION = (git describe --tags)
-    Write-Host "Version: $VERSION" -ForegroundColor Green
     go build -ldflags "-s -w -X main.Version=$VERSION" -o bin\optimizely.exe cmd\optimizely\main.go
     if (!$?) {
         exit 1
