@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020,2021-2022 Optimizely, Inc. and contributors               *
+ * Copyright 2020-2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/agent/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

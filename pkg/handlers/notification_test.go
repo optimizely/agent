@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -19,18 +19,19 @@ package handlers
 
 import (
 	"context"
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
+
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )

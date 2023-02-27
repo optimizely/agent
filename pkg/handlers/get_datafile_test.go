@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2021, Optimizely, Inc. and contributors                        *
+ * Copyright 2021,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -23,7 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
