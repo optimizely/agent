@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // BuildAPIAccessToken returns a token for accessing the API service using the argument SDK keys and TTL. It also returns the expiration timestamp.

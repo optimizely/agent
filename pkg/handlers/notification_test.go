@@ -19,18 +19,19 @@ package handlers
 
 import (
 	"context"
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
+
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )

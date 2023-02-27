@@ -25,7 +25,7 @@ import (
 	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/middleware"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )

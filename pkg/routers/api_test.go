@@ -23,7 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -172,7 +172,7 @@ func (suite *APIV1TestSuite) TestStaticContent() {
 		path   string
 	}{
 		{"GET", "/"},
-		{"POST", "/openapi.yaml"},
+		{"GET", "/openapi.yaml"},
 	}
 
 	for _, route := range routes {

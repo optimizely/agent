@@ -21,8 +21,8 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
 
-	"github.com/go-chi/chi"
-	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 
 	"github.com/optimizely/agent/pkg/optimizely"
