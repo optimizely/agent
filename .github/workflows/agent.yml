@@ -4,15 +4,16 @@ on:
   push:
     branches: [ master ]
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+(-beta)?[0-9]*'
+    # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'v*.*.*'
   pull_request:
     branches: [ master ]
 
 env:
   GIMME_GO_VERSION: 1.20.1
-  GIMME_OS: linux 
+  GIMME_OS: linux
   GIMME_ARCH: amd64
-  
+
 jobs:
   fmt:
     runs-on: ubuntu-latest
@@ -39,10 +40,10 @@ jobs:
         recursive: true
         ignore: "DL3018"
         dockerfile: scripts/dockerfiles/Dockerfile.*
-        
+
   tests_coveralls:
     runs-on: ubuntu-latest
-    env: 
+    env:
       COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v3
@@ -60,7 +61,7 @@ jobs:
       run: |
         go get github.com/mattn/goveralls@latest
         goveralls -coverprofile=coverage.txt -service=github
- 
+
   tests_sourceclear:
     runs-on: ubuntu-latest
     steps:
@@ -73,11 +74,11 @@ jobs:
       env:
         SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
       run: curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
-    - name: run  
+    - name: run
       run: |
         make -e setup build
         go get -v -d ./...
-        
+
   tests_windows_build_ps1:
     runs-on: windows-2022
     steps:
@@ -93,7 +94,7 @@ jobs:
       if: steps.windows_build.outcome == 'success'
       run: |
         scripts/upload_artifacts.sh
-        
+
   tests_acceptance_test:
     runs-on: ubuntu-latest
     steps:
@@ -111,12 +112,12 @@ jobs:
         make -e setup build
         pip install -r ./tests/acceptance/requirements.txt
         MYHOST="http://localhost:8080" make test-acceptance
-        
+
   integration_tests:
     if: ${{ startsWith(github.ref, 'refs/tags/') != true }}
     uses: optimizely/agent/.github/workflows/integration_test.yml@master
     secrets: inherit
-  
+
   tests_using_latest_tag_no_upload:
     runs-on: ubuntu-latest
     steps:
@@ -147,7 +148,7 @@ jobs:
         make -e setup build
         ./scripts/ci_create_packages.sh
         ./scripts/ci_build_generate_secret.sh
-        
+
   build_upload_publish_draft:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
@@ -192,7 +193,7 @@ jobs:
         release_github_v2.sh "$APP_VERSION"
         # attach generate_secret to the github release
         ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
-  
+
   test_github_release_assets:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ${{ matrix.os }}
@@ -206,7 +207,7 @@ jobs:
           TARGET: darwin-amd64
         - os: ubuntu-latest
           TARGET: linux-amd64
-          os_name: linux 
+          os_name: linux
         - os: windows-2022
           os_name: windows
           TARGET: windows-amd64
@@ -247,4 +248,4 @@ jobs:
       if: steps.script.outcome != 'success'
       run: |
         SLACK_TEXT="${APP_VERSION} ${{ matrix.os_name }} assets failed verification." send_to_slack.sh
- 
+
