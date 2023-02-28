@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+(-beta)?[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+(-beta)?[0-9]*'
   pull_request:
     branches: [ master ]
 
@@ -166,7 +166,7 @@ jobs:
         ref: 'master'
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
     - name: Get current workspace path
       id: get_workspace
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
@@ -225,7 +225,7 @@ jobs:
         ref: 'master'
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
     - name: set the env
       run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
     - name: Upload and publish draft
