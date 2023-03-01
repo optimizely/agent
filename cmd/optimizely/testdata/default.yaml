@@ -53,7 +53,8 @@ client:
     default: "in-memory"
     services:
       in-memory: 
-        storageStrategy: "fifo"
+        size: 100
+        timeout: 5
       redis: 
         host: "localhost:6379"
         password: ""

@@ -23,6 +23,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/odp/cache"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -37,6 +38,7 @@ type OptlyClient struct {
 	ConfigManager      SyncedConfigManager
 	ForcedVariations   *decision.MapExperimentOverridesStore
 	UserProfileService decision.UserProfileService
+	ODPCache           cache.Cache
 }
 
 // Decision Model

@@ -51,6 +51,10 @@ func (m *MockCache) SetUserProfileService(sdkKey, userProfileService string) {
 	m.Called(sdkKey, userProfileService)
 }
 
+func (m *MockCache) SetODPCache(sdkKey, odpCache string) {
+	m.Called(sdkKey, odpCache)
+}
+
 type OptlyMiddlewareTestSuite struct {
 	suite.Suite
 	mw *CachedOptlyMiddleware
@@ -130,6 +134,20 @@ func (suite *OptlyMiddlewareTestSuite) TestGetClientWithUserProfileService() {
 	handler.ServeHTTP(rec, req)
 	suite.Equal(http.StatusOK, rec.Code)
 	suite.mw.Cache.(*MockCache).AssertCalled(suite.T(), "SetUserProfileService", "EXPECTED", "in-memory")
+}
+
+func (suite *OptlyMiddlewareTestSuite) TestGetClientWithODPCache() {
+	handler := suite.mw.ClientCtx(AssertOptlyClientHandler(suite, &expectedClient))
+	req := httptest.NewRequest("GET", "/", nil)
+	suite.mw.Cache.(*MockCache).On("SetODPCache", "EXPECTED", "in-memory")
+
+	req.Header.Add(OptlySDKHeader, "EXPECTED")
+	req.Header.Add(OptlyODPCacheHeader, "in-memory")
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.mw.Cache.(*MockCache).AssertCalled(suite.T(), "SetODPCache", "EXPECTED", "in-memory")
 }
 
 // ErrorHandler will panic if reached.

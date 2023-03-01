@@ -27,6 +27,8 @@ type Cache interface {
 	UpdateConfigs(sdkKey string)
 	// SetUserProfileService sets userProfileService to be used for the given sdkKey
 	SetUserProfileService(sdkKey, userProfileService string)
+	// SetODPCache sets odpCache to be used for the given sdkKey
+	SetODPCache(sdkKey, odpCache string)
 }
 
 // SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates

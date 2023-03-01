@@ -161,8 +161,8 @@ client:
       default: ""
       services:
         # in-memory: 
-        #   capacity: 0
-        #   storageStrategy: "fifo"
+        #   size: 0
+        #   timeout: 0 # seconds
         # redis: 
         #   host: "localhost:6379"
         #   password: ""

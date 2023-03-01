@@ -27,15 +27,18 @@ import (
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/odp/cache"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/stretchr/testify/suite"
 
+	odpCacheServices "github.com/optimizely/agent/plugins/odpcache/services"
 	"github.com/optimizely/agent/plugins/userprofileservice/services"
 )
 
@@ -54,6 +57,7 @@ func (suite *CacheTestSuite) SetupTest() {
 		loader:                mockLoader,
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: cmap.New(),
+		odpCacheMap:           cmap.New(),
 		ctx:                   ctx,
 	}
 
@@ -125,6 +129,19 @@ func (suite *CacheTestSuite) TestSetUserProfileService() {
 	suite.Equal("a", actual)
 }
 
+func (suite *CacheTestSuite) TestSetODPCache() {
+	suite.cache.SetODPCache("one", "a")
+
+	actual, ok := suite.cache.odpCacheMap.Get("one")
+	suite.True(ok)
+	suite.Equal("a", actual)
+
+	suite.cache.SetODPCache("one", "b")
+	actual, ok = suite.cache.odpCacheMap.Get("one")
+	suite.True(ok)
+	suite.Equal("a", actual)
+}
+
 func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{"services": map[string]interface{}{
@@ -149,6 +166,30 @@ func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 	suite.Nil(userProfileService)
 }
 
+func (suite *CacheTestSuite) TestGetODPCacheJSONErrorCases() {
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"size": []string{"dummy"},
+			}},
+		},
+	}
+
+	// json unmarshal error case
+	suite.cache.SetODPCache("one", "in-memory")
+	odpcache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	suite.Nil(odpcache)
+
+	// json marshal error case
+	conf.ODPCache = map[string]interface{}{"services": map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size": make(chan int),
+		}},
+	}
+	odpcache = getODPCache("one", suite.cache.odpCacheMap, conf)
+	suite.Nil(odpcache)
+}
+
 func (suite *CacheTestSuite) TestNoUserProfileServicesProvidedInConfig() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{},
@@ -156,6 +197,15 @@ func (suite *CacheTestSuite) TestNoUserProfileServicesProvidedInConfig() {
 	suite.cache.SetUserProfileService("one", "in-memory")
 	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
+}
+
+func (suite *CacheTestSuite) TestNoODPCacheProvidedInConfig() {
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{},
+	}
+	suite.cache.SetODPCache("one", "in-memory")
+	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	suite.Nil(odpCache)
 }
 
 func (suite *CacheTestSuite) TestUPSForSDKKeyNotProvidedInConfig() {
@@ -172,6 +222,20 @@ func (suite *CacheTestSuite) TestUPSForSDKKeyNotProvidedInConfig() {
 	suite.Nil(userProfileService)
 }
 
+func (suite *CacheTestSuite) TestODPCacheForSDKKeyNotProvidedInConfig() {
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"size":    0,
+				"timeout": 0,
+			}},
+		},
+	}
+	suite.cache.SetODPCache("one", "dummy")
+	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	suite.Nil(odpCache)
+}
+
 func (suite *CacheTestSuite) TestNoCreatorAddedforUPS() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
@@ -184,6 +248,20 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforUPS() {
 	suite.cache.SetUserProfileService("one", "dummy")
 	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
 	suite.Nil(userProfileService)
+}
+
+func (suite *CacheTestSuite) TestNoCreatorAddedforODPCache() {
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+			"dummy": map[string]interface{}{
+				"size":    0,
+				"timeout": 0,
+			}},
+		},
+	}
+	suite.cache.SetODPCache("one", "dummy")
+	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	suite.Nil(odpCache)
 }
 
 func (suite *CacheTestSuite) TestNilCreatorAddedforUPS() {
@@ -205,6 +283,25 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforUPS() {
 	suite.Nil(userProfileService)
 }
 
+func (suite *CacheTestSuite) TestNilCreatorAddedforODPCache() {
+	cacheCreator := func() cache.Cache {
+		return nil
+	}
+	odpcache.Add("dummy", cacheCreator)
+
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+			"dummy": map[string]interface{}{
+				"size":    0,
+				"timeout": 0,
+			}},
+		},
+	}
+	suite.cache.SetODPCache("one", "dummy")
+	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	suite.Nil(odpCache)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCacheTestSuite(t *testing.T) {
@@ -220,7 +317,7 @@ func mockLoader(sdkKey string) (*OptlyClient, error) {
 	tc := optimizelytest.NewClient()
 	tc.ProjectConfig.ProjectID = sdkKey
 
-	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations, nil}, nil
+	return &OptlyClient{tc.OptimizelyClient, nil, tc.ForcedVariations, nil, nil}, nil
 }
 
 type MockUserProfileService struct {
@@ -238,15 +335,34 @@ func (u *MockUserProfileService) Lookup(userID string) decision.UserProfile {
 func (u *MockUserProfileService) Save(profile decision.UserProfile) {
 }
 
+type MockODPCache struct {
+	Path string `json:"path"`
+	Addr string `json:"addr"`
+	Port int    `json:"port"`
+}
+
+// Lookup is used to retrieve segments
+func (i *MockODPCache) Lookup(key string) (segments interface{}) {
+	return nil
+}
+
+// Save is used to save segments
+func (i *MockODPCache) Save(key string, value interface{}) {
+}
+
+// Reset is used to reset segments
+func (i *MockODPCache) Reset() {
+}
+
 var doOnce sync.Once // required since we only need to read datafile once
 
 type DefaultLoaderTestSuite struct {
 	suite.Suite
-	registry  *MetricsRegistry
-	bp        *event.BatchEventProcessor
-	upsMap    cmap.ConcurrentMap
-	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor
-	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
+	registry            *MetricsRegistry
+	bp                  *event.BatchEventProcessor
+	upsMap, odpCacheMap cmap.ConcurrentMap
+	bpFactory           func(options ...event.BPOptionConfig) *event.BatchEventProcessor
+	pcFactory           func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
 }
 
 func (s *DefaultLoaderTestSuite) SetupTest() {
@@ -255,6 +371,7 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 		s.registry = &MetricsRegistry{metrics.NewRegistry()}
 	})
 	s.upsMap = cmap.New()
+	s.odpCacheMap = cmap.New()
 	s.bpFactory = func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
 		s.bp = event.NewBatchEventProcessor(options...)
 		return s.bp
@@ -279,9 +396,15 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 				"storageStrategy": "fifo",
 			}},
 		},
+		ODPCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"size":    100,
+				"timeout": 5,
+			}},
+		},
 	}
 
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -290,17 +413,23 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	s.Equal(conf.QueueSize, s.bp.MaxQueueSize)
 	s.Equal(conf.EventURL, s.bp.EventEndPoint)
 	s.NotNil(client.UserProfileService)
+	s.NotNil(client.ODPCache)
 
 	inMemoryUps, ok := client.UserProfileService.(*services.InMemoryUserProfileService)
 	s.True(ok)
 	s.Equal(0, inMemoryUps.Capacity)
 	s.Equal("fifo", inMemoryUps.StorageStrategy)
 
+	inMemoryODPCache, ok := client.ODPCache.(*odpCacheServices.InMemoryCache)
+	s.True(ok)
+	s.Equal(100, inMemoryODPCache.Size)
+	s.Equal(5, inMemoryODPCache.Timeout)
+
 	_, err = loader("invalid!")
 	s.Error(err)
 }
 
-func (s *DefaultLoaderTestSuite) TestUPSHeaderOverridesDefaultKey() {
+func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 	conf := config.ClientConfig{
 		FlushInterval: 321 * time.Second,
 		BatchSize:     1234,
@@ -313,12 +442,21 @@ func (s *DefaultLoaderTestSuite) TestUPSHeaderOverridesDefaultKey() {
 				"storageStrategy": "fifo",
 			}},
 		},
+		ODPCache: map[string]interface{}{"default": "", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"size":    100,
+				"timeout": 5,
+			}},
+		},
 	}
 
 	tmpUPSMap := cmap.New()
 	tmpUPSMap.Set("sdkkey", "in-memory")
 
-	loader := defaultLoader(conf, s.registry, tmpUPSMap, s.pcFactory, s.bpFactory)
+	tmpOdpCacheMap := cmap.New()
+	tmpOdpCacheMap.Set("sdkkey", "in-memory")
+
+	loader := defaultLoader(conf, s.registry, tmpUPSMap, tmpOdpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -327,14 +465,20 @@ func (s *DefaultLoaderTestSuite) TestUPSHeaderOverridesDefaultKey() {
 	s.Equal(conf.QueueSize, s.bp.MaxQueueSize)
 	s.Equal(conf.EventURL, s.bp.EventEndPoint)
 	s.NotNil(client.UserProfileService)
+	s.NotNil(client.ODPCache)
 
 	inMemoryUps, ok := client.UserProfileService.(*services.InMemoryUserProfileService)
 	s.True(ok)
 	s.Equal(100, inMemoryUps.Capacity)
 	s.Equal("fifo", inMemoryUps.StorageStrategy)
+
+	inMemoryODPCache, ok := client.ODPCache.(*odpCacheServices.InMemoryCache)
+	s.True(ok)
+	s.Equal(100, inMemoryODPCache.Size)
+	s.Equal(5, inMemoryODPCache.Timeout)
 }
 
-func (s *DefaultLoaderTestSuite) TestAddedByDefaultProfileServices() {
+func (s *DefaultLoaderTestSuite) TestAddedByDefaultProfileServicesAndODPCache() {
 	s.NotNil(userprofileservice.Creators["in-memory"])
 	_, ok := (userprofileservice.Creators["in-memory"]()).(*services.InMemoryUserProfileService)
 	s.True(ok)
@@ -346,9 +490,17 @@ func (s *DefaultLoaderTestSuite) TestAddedByDefaultProfileServices() {
 	s.NotNil(userprofileservice.Creators["rest"])
 	_, ok = (userprofileservice.Creators["rest"]()).(*services.RestUserProfileService)
 	s.True(ok)
+
+	s.NotNil(odpcache.Creators["redis"])
+	_, ok = (odpcache.Creators["redis"]()).(*odpCacheServices.RedisCache)
+	s.True(ok)
+
+	s.NotNil(odpcache.Creators["in-memory"])
+	_, ok = (odpcache.Creators["in-memory"]()).(*odpCacheServices.InMemoryCache)
+	s.True(ok)
 }
 
-func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
+func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPCache() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
 			"redis": map[string]interface{}{
@@ -357,12 +509,19 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 				"database": 1,
 			},
 		}},
+		ODPCache: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "100",
+				"password": "10",
+				"database": 1,
+			},
+		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
-
+	s.NotNil(client.ODPCache)
 	profile := decision.UserProfile{
 		ID: "1",
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{
@@ -371,6 +530,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 	}
 	// Should initialize redis client on first save call
 	client.UserProfileService.Save(profile)
+	client.ODPCache.Save("1", profile)
 
 	if testRedisUPS, ok := client.UserProfileService.(*services.RedisUserProfileService); ok {
 		s.Equal("100", testRedisUPS.Address)
@@ -382,10 +542,59 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPS() {
 		s.Equal(testRedisUPS.Address, testRedisUPS.Client.Options().Addr)
 		s.Equal(testRedisUPS.Password, testRedisUPS.Client.Options().Password)
 		s.Equal(testRedisUPS.Database, testRedisUPS.Client.Options().DB)
-
 		return
+	} else {
+		s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
 	}
-	s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
+
+	if testRedisODPCache, ok := client.ODPCache.(*odpCacheServices.RedisCache); ok {
+		s.Equal("100", testRedisODPCache.Address)
+		s.Equal("10", testRedisODPCache.Password)
+		s.Equal(1, testRedisODPCache.Database)
+
+		// Check if redis client was instantiated with updated config
+		s.NotNil(testRedisODPCache.Client)
+		s.Equal(testRedisODPCache.Address, testRedisODPCache.Client.Options().Addr)
+		s.Equal(testRedisODPCache.Password, testRedisODPCache.Client.Options().Password)
+		s.Equal(testRedisODPCache.Database, testRedisODPCache.Client.Options().DB)
+		return
+	} else {
+		s.Failf("ODPCache not registered", "%s DNE in registry", "redis")
+	}
+}
+
+func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache() {
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			"in-memory": map[string]interface{}{
+				"size":    100,
+				"timeout": 10,
+			},
+		}},
+	}
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+	s.NotNil(client.ODPCache)
+
+	profile := decision.UserProfile{
+		ID: "1",
+		ExperimentBucketMap: map[decision.UserDecisionKey]string{
+			decision.NewUserDecisionKey("1"): "1",
+		},
+	}
+	client.ODPCache.Save("1", profile)
+
+	if testInMemoryODPCache, ok := client.ODPCache.(*odpCacheServices.InMemoryCache); ok {
+		s.Equal(100, testInMemoryODPCache.Size)
+		s.Equal(10, testInMemoryODPCache.Timeout)
+
+		// Check if lru cache was instantiated
+		s.NotNil(testInMemoryODPCache.LRUCache)
+		return
+	} else {
+		s.Failf("ODPCache not registered", "%s DNE in registry", "redis")
+	}
 }
 
 func (s *DefaultLoaderTestSuite) TestHttpClientInitializesByDefaultRestUPS() {
@@ -394,7 +603,7 @@ func (s *DefaultLoaderTestSuite) TestHttpClientInitializesByDefaultRestUPS() {
 			"rest": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -422,7 +631,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 			},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -436,6 +645,35 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 	s.Failf("UserProfileService not registered", "%s DNE in registry", "mock2")
 }
 
+func (s *DefaultLoaderTestSuite) TestLoaderWithValidODPCache() {
+	odpCacheCreator := func() cache.Cache {
+		return &MockODPCache{}
+	}
+	odpcache.Add("mock2", odpCacheCreator)
+
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"default": "mock2", "services": map[string]interface{}{
+			"mock2": map[string]interface{}{
+				"path": "http://test.com",
+				"addr": "1.2.1.2-abc",
+				"port": 8080,
+			},
+		}},
+	}
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+
+	s.NotNil(client.ODPCache)
+	if mockODPCache, ok := client.ODPCache.(*MockODPCache); ok {
+		s.Equal("http://test.com", mockODPCache.Path)
+		s.Equal("1.2.1.2-abc", mockODPCache.Addr)
+		s.Equal(8080, mockODPCache.Port)
+		return
+	}
+	s.Failf("ODPCache not registered", "%s DNE in registry", "mock2")
+}
+
 func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	upCreator := func() decision.UserProfileService {
 		return &MockUserProfileService{}
@@ -445,11 +683,25 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
-
 	s.Nil(client.UserProfileService)
+}
+
+func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyODPCache() {
+	odpCacheCreator := func() cache.Cache {
+		return &MockODPCache{}
+	}
+	odpcache.Add("mock", odpCacheCreator)
+
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{},
+	}
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+	s.Nil(client.ODPCache)
 }
 
 func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
@@ -463,10 +715,27 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 			"mock3": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(conf, s.registry, s.upsMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
+}
+
+func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultODPCache() {
+	odpCacheCreator := func() cache.Cache {
+		return &MockODPCache{}
+	}
+	odpcache.Add("mock3", odpCacheCreator)
+
+	conf := config.ClientConfig{
+		ODPCache: map[string]interface{}{"default": "", "services": map[string]interface{}{
+			"mock3": map[string]interface{}{},
+		}},
+	}
+	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+	s.NoError(err)
+	s.Nil(client.ODPCache)
 }
 
 func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {

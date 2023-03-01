@@ -10,10 +10,11 @@ odpCache:
   default: "in-memory"
   services:
     in-memory: 
-      ## 0 means no limit on capacity
-      capacity: 0
-      ## supports lifo/fifo
-      storageStrategy: "fifo"
+      ## 0 means cache will be disabled
+      size: 0
+      ## timeout after which least recently used records will be deleted
+      ## 0 means records will never be deleted
+      timeout: 0
 ```
 
 2. To use the redis `ODPCache`, update the `config.yaml` as shown below:

@@ -63,6 +63,10 @@ func (tc *TestCache) UpdateConfigs(_ string) {
 func (tc *TestCache) SetUserProfileService(sdkKey, userProfileService string) {
 }
 
+// SetODPCache sets odpCache to be used for the given sdkKey
+func (tc *TestCache) SetODPCache(sdkKey, odpCache string) {
+}
+
 func TestHandleWebhookInvalidMessage(t *testing.T) {
 	jsonValue, _ := json.Marshal("Invalid message")
 	req := httptest.NewRequest("POST", "/optimizely/webhook", bytes.NewBuffer(jsonValue))

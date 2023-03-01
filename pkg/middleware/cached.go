@@ -73,12 +73,12 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 			mw.Cache.SetUserProfileService(sdkKey, upsKey)
 		}
 
-		// upsKey := r.Header.Get(OptlyUPSHeader)
-		// // Storing Provided UserProfileService Key in cache, to be used for requests with the given sdkKey.
-		// // This UserProfileService Key will override the default UserProfileService provided in Client Config.
-		// if upsKey != "" {
-		// 	mw.Cache.SetUserProfileService(sdkKey, upsKey)
-		// }
+		odpCacheKey := r.Header.Get(OptlyODPCacheHeader)
+		// Storing Provided odpCache Key in cache, to be used for requests with the given sdkKey.
+		// This odpCache Key will override the default odpCache provided in Client Config.
+		if odpCacheKey != "" {
+			mw.Cache.SetODPCache(sdkKey, odpCacheKey)
+		}
 
 		optlyClient, err := mw.Cache.GetClient(sdkKey)
 		if err != nil {

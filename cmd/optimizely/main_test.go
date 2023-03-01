@@ -92,7 +92,8 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	odpCacheServices := map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			// Viper.set is case in-sensitive
-			"storagestrategy": "fifo",
+			"size":    100,
+			"timeout": 5,
 		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
@@ -244,7 +245,8 @@ func TestViperProps(t *testing.T) {
 
 	odpCacheServices := map[string]interface{}{
 		"in-memory": map[string]interface{}{
-			"storageStrategy": "fifo",
+			"size":    100,
+			"timeout": 5,
 		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
@@ -258,7 +260,7 @@ func TestViperProps(t *testing.T) {
 		"default":  "in-memory",
 		"services": odpCacheServices,
 	}
-	v.Set("client.odpCach", odpCache)
+	v.Set("client.odpCache", odpCache)
 
 	v.Set("log.pretty", true)
 	v.Set("log.includeSdkKey", false)
@@ -346,7 +348,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"},"async":true},"custom":{"path":"http://test2.com"}}}`)
-	_ = os.Setenv("OPTIMIZELY_CLIENT_ODPCACHE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODPCACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")

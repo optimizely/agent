@@ -26,12 +26,16 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/odp"
+	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
 
+	"github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
 )
@@ -60,7 +64,7 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 	cache := &OptlyCache{
 		ctx:                   ctx,
 		wg:                    sync.WaitGroup{},
-		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
+		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, odpCacheMap, cmLoader, event.NewBatchEventProcessor),
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: userProfileServiceMap,
 		odpCacheMap:           odpCacheMap,
@@ -132,6 +136,11 @@ func (c *OptlyCache) SetUserProfileService(sdkKey, userProfileService string) {
 	c.userProfileServiceMap.SetIfAbsent(sdkKey, userProfileService)
 }
 
+// SetODPCache sets odpCache to be used for the given sdkKey
+func (c *OptlyCache) SetODPCache(sdkKey, odpCache string) {
+	c.odpCacheMap.SetIfAbsent(sdkKey, odpCache)
+}
+
 // Wait for all optimizely clients to gracefully shutdown
 func (c *OptlyCache) Wait() {
 	c.wg.Wait()
@@ -153,6 +162,7 @@ func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
 	userProfileServiceMap cmap.ConcurrentMap,
+	odpCacheMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
 	validator := regexValidator(conf.SdkKeyRegex)
@@ -233,10 +243,20 @@ func defaultLoader(
 			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
 		}
 
+		var clientODPCache cache.Cache
+		if clientODPCache = getODPCache(sdkKey, odpCacheMap, conf); clientODPCache != nil {
+			odpSegmentOptions := []odpSegmentPkg.SMOptionFunc{odpSegmentPkg.WithSegmentsCache(clientODPCache)}
+			segmentManager := odpSegmentPkg.NewSegmentManager(sdkKey, odpSegmentOptions...)
+			odpOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager)}
+			odpManager := odp.NewOdpManager(sdkKey,
+				false, odpOptions...)
+			clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
+		}
+
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,
 		)
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService}, err
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService, clientODPCache}, err
 	}
 }
 
@@ -279,6 +299,49 @@ func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentM
 	// Check if any default user profile service was provided and if it exists in client config
 	if upsNameStr, ok := conf.UserProfileService["default"].(string); ok && upsNameStr != "" {
 		return intializeUPSWithName(upsNameStr)
+	}
+	return nil
+}
+
+// Returns the registered odpCache against the sdkKey
+func getODPCache(sdkKey string, odpCacheMap cmap.ConcurrentMap, conf config.ClientConfig) cache.Cache {
+
+	intializeODPCacheWithName := func(odpCacheName string) cache.Cache {
+		if clientConfigODPCacheMap, ok := conf.ODPCache["services"].(map[string]interface{}); ok {
+			if odpCacheConfig, ok := clientConfigODPCacheMap[odpCacheName].(map[string]interface{}); ok {
+				// Check if any such odp cache was added using `Add` method
+				if creator, ok := odpcache.Creators[odpCacheName]; ok {
+					if odpCacheInstance := creator(); odpCacheInstance != nil {
+						success := true
+						// Trying to map odpCache from client config to struct
+						if odpCacheConfig, err := json.Marshal(odpCacheConfig); err != nil {
+							log.Warn().Err(err).Msgf(`Error marshaling odp cache config: "%s"`, odpCacheName)
+							success = false
+						} else if err := json.Unmarshal(odpCacheConfig, odpCacheInstance); err != nil {
+							log.Warn().Err(err).Msgf(`Error unmarshalling odp cache config: "%s"`, odpCacheName)
+							success = false
+						}
+						if success {
+							log.Info().Msgf(`ODP Cache of type: "%s" created for sdkKey: "%s"`, odpCacheName, sdkKey)
+							return odpCacheInstance
+						}
+					}
+				}
+			}
+		}
+		return nil
+	}
+
+	// Check if odp cache name was provided in the request headers
+	if odpCache, ok := odpCacheMap.Get(sdkKey); ok {
+		if odpCacheNameStr, ok := odpCache.(string); ok && odpCacheNameStr != "" {
+			return intializeODPCacheWithName(odpCacheNameStr)
+		}
+	}
+
+	// Check if any default odp cache was provided and if it exists in client config
+	if odpCacheNameStr, ok := conf.ODPCache["default"].(string); ok && odpCacheNameStr != "" {
+		return intializeODPCacheWithName(odpCacheNameStr)
 	}
 	return nil
 }
