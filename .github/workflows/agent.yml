@@ -53,6 +53,8 @@ jobs:
     - name: run script
       env:
         TRAVIS_OS_NAME: 'linux'
+        DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       run: |
         make -e setup build
         # now we're going to create packages & upload packages
