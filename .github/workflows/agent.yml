@@ -31,7 +31,7 @@ jobs:
         token: ${{ secrets.CI_USER_TOKEN }}
         repository: 'optimizely/travisci-tools'
         path: 'home/runner/travisci-tools'
-        ref: 'master'
+        ref: 'mnoman/agentfix'
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
@@ -46,6 +46,7 @@ jobs:
       env:
         HOME: 'home/runner'
       run: |
+        mkdir -p $HOME/bin
         # installs hub to ~/bin
         $HOME/travisci-tools/release_github/install_hub.sh
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
