@@ -2,7 +2,7 @@ name: Agent CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ mnoman/gitactionFix ]
     tags:
     # Making sure this doesn't trigger when tags are pushed
       - 'v[0-9]+.[0-9]+.[0-9]+(-beta)?[0-9]*'
