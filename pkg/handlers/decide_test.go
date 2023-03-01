@@ -609,6 +609,127 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
 }
 
+func (suite *DecideTestSuite) TestDecideWithFetchSegments() {
+	audienceID := "odp-audience-1"
+	variationKey := "variation-a"
+	featureKey := "flag-segment"
+	experimentKey := "experiment-segment"
+
+	experiment := entities.Experiment{
+		ID:  experimentKey,
+		Key: experimentKey,
+		TrafficAllocation: []entities.Range{
+			{
+				EntityID:   variationKey,
+				EndOfRange: 10000,
+			},
+		},
+		Variations: map[string]entities.Variation{
+			variationKey: {
+				ID:             variationKey,
+				Key:            variationKey,
+				FeatureEnabled: true,
+			}},
+
+		AudienceConditionTree: &entities.TreeNode{
+			Operator: "or",
+			Nodes:    []*entities.TreeNode{{Item: audienceID}},
+		},
+	}
+
+	feature := entities.Feature{
+		Key:                featureKey,
+		FeatureExperiments: []entities.Experiment{experiment},
+	}
+	suite.tc.AddFeature(feature)
+
+	audience := entities.Audience{
+		ID:   audienceID,
+		Name: audienceID,
+		ConditionTree: &entities.TreeNode{
+			Operator: "and",
+			Nodes: []*entities.TreeNode{{
+				Operator: "or",
+				Nodes: []*entities.TreeNode{{
+					Operator: "or",
+					Nodes: []*entities.TreeNode{
+						{
+							Item: entities.Condition{
+								Name:  "odp.audiences",
+								Match: "qualified",
+								Type:  "third_party_dimension",
+								Value: "odp-segment-1",
+							},
+						},
+					},
+				}},
+			}},
+		},
+	}
+	suite.tc.AddAudience(audience)
+
+	suite.tc.AddSegments([]string{"odp-segment-1", "odp-segment-2", "odp-segment-3"})
+
+	db := DecideBody{
+		UserID:         "testUser",
+		UserAttributes: nil,
+		DecideOptions:  []string{},
+		FetchSegments:  true,
+	}
+
+	payload, err := json.Marshal(db)
+	suite.NoError(err)
+
+	suite.body = payload
+
+	req := httptest.NewRequest("POST", "/decide?keys=flag-segment", bytes.NewBuffer(suite.body))
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual client.OptimizelyDecision
+	err = json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	expected := client.OptimizelyDecision{
+		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+		FlagKey:      featureKey,
+		RuleKey:      experimentKey,
+		Enabled:      true,
+		VariationKey: variationKey,
+		Reasons:      []string{},
+	}
+
+	suite.Equal(1, len(suite.tc.GetProcessedEvents()))
+	suite.Equal(expected, actual)
+}
+
+func (suite *DecideTestSuite) TestFetchQualifiedSegmentsFailure() {
+	suite.tc.AddSegments([]string{"odp-segment-1", "odp-segment-2", "odp-segment-3"})
+	suite.tc.SetSegmentApiErrorMode(true)
+
+	db := DecideBody{
+		UserID:         "testUser",
+		UserAttributes: nil,
+		DecideOptions:  []string{},
+		FetchSegments:  true,
+	}
+
+	payload, err := json.Marshal(db)
+	suite.NoError(err)
+
+	suite.body = payload
+
+	req := httptest.NewRequest("POST", "/decide?keys=flag-segment", bytes.NewBuffer(suite.body))
+
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+
+	suite.assertError(rec, `failed to fetch qualified segments`, http.StatusInternalServerError)
+}
+
 func TestDecideTestSuite(t *testing.T) {
 	suite.Run(t, new(DecideTestSuite))
 }
