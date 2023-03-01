@@ -90,11 +90,6 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 
 	assert.Equal(t, "in-memory", actual.ODPCache["default"])
 	odpCacheServices := map[string]interface{}{
-		"in-memory": map[string]interface{}{
-			// Viper.set is case in-sensitive
-			"size":    100,
-			"timeout": 5,
-		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
 			"password": "",
@@ -103,7 +98,14 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 			"path": "http://test2.com",
 		},
 	}
-	assert.Equal(t, odpCacheServices, actual.ODPCache["services"])
+	actualCacheServices := actual.ODPCache["services"].(map[string]interface{})
+
+	assert.Equal(t, odpCacheServices["redis"], actualCacheServices["redis"])
+	assert.Equal(t, odpCacheServices["custom"], actualCacheServices["custom"])
+
+	actualInMemoryService := actualCacheServices["in-memory"].(map[string]interface{})
+	assert.EqualValues(t, 100, actualInMemoryService["size"])
+	assert.EqualValues(t, 5, actualInMemoryService["timeout"])
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
