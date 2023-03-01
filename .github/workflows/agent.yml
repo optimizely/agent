@@ -191,9 +191,9 @@ jobs:
         # now we're going to create packages & upload packages
         ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
         # create the github release (draft)
-        #release_github_v2.sh "$APP_VERSION"
+        release_github_v2.sh "$APP_VERSION"
         # attach generate_secret to the github release
-        #./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
+        ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
 
   test_github_release_assets:
     if: startsWith(github.ref, 'refs/tags/')
