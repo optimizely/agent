@@ -498,6 +498,11 @@ func (c *TestProjectConfig) AddFlagVariation(f entities.Feature, v entities.Vari
 	}
 }
 
+// AddAudience Adds an Audience to the ProjectConfig
+func (c *TestProjectConfig) AddAudience(a entities.Audience) {
+	c.AudienceMap[a.ID] = a
+}
+
 func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
@@ -519,7 +524,7 @@ func NewConfig() *TestProjectConfig {
 		AccountID:            "accountId",
 		AnonymizeIP:          true,
 		AttributeKeyToIDMap:  make(map[string]string),
-		AudienceMap:          make(map[string]entities.Audience),
+		AudienceMap:          map[string]entities.Audience{},
 		AttributeMap:         make(map[string]entities.Attribute),
 		BotFiltering:         true,
 		ExperimentKeyToIDMap: make(map[string]string),
@@ -530,6 +535,9 @@ func NewConfig() *TestProjectConfig {
 		Revision:             "revision",
 		RolloutMap:           make(map[string]entities.Rollout),
 		flagVariationsMap:    make(map[string][]entities.Variation),
+		PublicKeyForODP:      "publicKeyForODP",
+		HostForODP:           "hostForODP",
+		sdkKey:               "sdkKey",
 	}
 
 	return config
