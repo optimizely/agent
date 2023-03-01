@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2021, Optimizely, Inc. and contributors                        *
+ * Copyright 2021,2023, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,6 +18,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -25,16 +26,19 @@ import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decide"
 	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/odp/segment"
 
 	"github.com/go-chi/render"
 )
 
 // DecideBody defines the request body for decide API
 type DecideBody struct {
-	UserID          string                 `json:"userId"`
-	UserAttributes  map[string]interface{} `json:"userAttributes"`
-	DecideOptions   []string               `json:"decideOptions"`
-	ForcedDecisions []ForcedDecision       `json:"forcedDecisions,omitempty"`
+	UserID               string                            `json:"userId"`
+	UserAttributes       map[string]interface{}            `json:"userAttributes"`
+	DecideOptions        []string                          `json:"decideOptions"`
+	ForcedDecisions      []ForcedDecision                  `json:"forcedDecisions,omitempty"`
+	FetchSegments        bool                              `json:"fetchSegments"`
+	FetchSegmentsOptions []segment.OptimizelySegmentOption `json:"fetchSegmentsOptions,omitempty"`
 }
 
 // ForcedDecision defines Forced Decision
@@ -72,6 +76,15 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
+
+	if db.FetchSegments {
+		success := optimizelyUserContext.FetchQualifiedSegments(db.FetchSegmentsOptions)
+		if !success {
+			err := errors.New("failed to fetch qualified segments")
+			RenderError(err, http.StatusInternalServerError, w, r)
+			return
+		}
+	}
 
 	// Setting up forced decisions
 	for _, fd := range db.ForcedDecisions {
