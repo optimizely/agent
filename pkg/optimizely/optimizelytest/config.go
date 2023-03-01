@@ -29,6 +29,8 @@ import (
 // TestProjectConfig is a project config backed by a datafile
 type TestProjectConfig struct {
 	Datafile             string
+	HostForODP           string
+	PublicKeyForODP      string
 	AccountID            string
 	ProjectID            string
 	Revision             string
@@ -42,12 +44,24 @@ type TestProjectConfig struct {
 	GroupMap             map[string]entities.Group
 	RolloutMap           map[string]entities.Rollout
 	nextID               int
+	Integrations         []entities.Integration
+	Segments             []string
 	AnonymizeIP          bool
 	BotFiltering         bool
 	sendFlagDecisions    bool
 	sdkKey               string
 	environmentKey       string
 	flagVariationsMap    map[string][]entities.Variation
+}
+
+// GetHostForODP returns hostForODP
+func (c *TestProjectConfig) GetHostForODP() string {
+	return c.HostForODP
+}
+
+// GetPublicKeyForODP returns publicKeyForODP
+func (c *TestProjectConfig) GetPublicKeyForODP() string {
+	return c.PublicKeyForODP
 }
 
 // GetDatafile returns a string representation of the environment's datafile
@@ -168,6 +182,16 @@ func (c *TestProjectConfig) GetExperimentList() (experimentList []entities.Exper
 		experimentList = append(experimentList, experiment)
 	}
 	return experimentList
+}
+
+// GetIntegrationList returns an array of all the integrations
+func (c *TestProjectConfig) GetIntegrationList() (integrationList []entities.Integration) {
+	return c.Integrations
+}
+
+// GetSegmentList returns an array of all the segments
+func (c *TestProjectConfig) GetSegmentList() (segmentList []string) {
+	return c.Segments
 }
 
 // GetRolloutList returns an array of all the rollouts

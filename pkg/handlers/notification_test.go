@@ -86,7 +86,13 @@ func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	ctx1, _ := context.WithTimeout(ctx, 1*time.Second)
 
 	go func() {
-		suite.tc.OptimizelyClient.IsFeatureEnabled("one", entities.UserContext{"testUser", make(map[string]interface{})})
+		suite.tc.OptimizelyClient.IsFeatureEnabled(
+			"one",
+			entities.UserContext{
+				ID:                "testUser",
+				Attributes:        make(map[string]interface{}),
+				QualifiedSegments: make([]string, 0)},
+		)
 	}()
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
