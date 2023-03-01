@@ -4,7 +4,6 @@ on:
   push:
     branches: [ master ]
     tags:
-    # Making sure this doesn't trigger when tags are pushed
       - 'v*.*.*'
   pull_request:
     branches: [ master ]
