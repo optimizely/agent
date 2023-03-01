@@ -14,11 +14,61 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package all //
-package all
+// Package odpcache //
+package odpcache
 
 import (
-	// Register your odpCache here if it is created outside the odpcache/services package
-	// Also, make sure your odpCache calls `odpcache.Add()` in its init() method
-	_ "github.com/optimizely/agent/plugins/odpcache/services"
+	"testing"
+
+	"github.com/optimizely/go-sdk/pkg/odp/cache"
+	"github.com/stretchr/testify/assert"
 )
+
+type MockODPCache struct {
+}
+
+// Lookup is used to retrieve segments
+func (i *MockODPCache) Lookup(key string) (segments interface{}) {
+	return nil
+}
+
+// Save is used to save segments
+func (i *MockODPCache) Save(key string, value interface{}) {
+}
+
+// Reset is used to reset segments
+func (i *MockODPCache) Reset() {
+}
+
+func TestAdd(t *testing.T) {
+	mockODPCacheCreator := func() cache.Cache {
+		return &MockODPCache{}
+	}
+
+	Add("mock", mockODPCacheCreator)
+	creator := Creators["mock"]()
+	if _, ok := creator.(*MockODPCache); !ok {
+		assert.Fail(t, "Cannot convert to type InMemoryODPCache")
+	}
+}
+
+func TestDuplicateKeys(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			assert.Fail(t, "Should have recovered")
+		}
+	}()
+
+	mockODPCacheCreator := func() cache.Cache {
+		return &MockODPCache{}
+	}
+
+	Add("mock", mockODPCacheCreator)
+	Add("mock", mockODPCacheCreator)
+	assert.Fail(t, "Should have panicked")
+}
+
+func TestDoesNotExist(t *testing.T) {
+	dne := Creators["DNE"]
+	assert.Nil(t, dne)
+}

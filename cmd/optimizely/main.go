@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2019,2022-2023 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -41,6 +41,8 @@ import (
 
 	// Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
+	// Initiate the loading of the odpCache plugins
+	_ "github.com/optimizely/agent/plugins/odpcache/all"
 	"github.com/optimizely/go-sdk/pkg/logging"
 )
 

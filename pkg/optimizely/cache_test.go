@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
+ * Copyright 2019,2021,2023 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -413,14 +413,14 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	s.Equal(conf.QueueSize, s.bp.MaxQueueSize)
 	s.Equal(conf.EventURL, s.bp.EventEndPoint)
 	s.NotNil(client.UserProfileService)
-	s.NotNil(client.ODPCache)
+	s.NotNil(client.odpCache)
 
 	inMemoryUps, ok := client.UserProfileService.(*services.InMemoryUserProfileService)
 	s.True(ok)
 	s.Equal(0, inMemoryUps.Capacity)
 	s.Equal("fifo", inMemoryUps.StorageStrategy)
 
-	inMemoryODPCache, ok := client.ODPCache.(*odpCacheServices.InMemoryCache)
+	inMemoryODPCache, ok := client.odpCache.(*odpCacheServices.InMemoryCache)
 	s.True(ok)
 	s.Equal(100, inMemoryODPCache.Size)
 	s.Equal(5, inMemoryODPCache.Timeout)
@@ -465,14 +465,14 @@ func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 	s.Equal(conf.QueueSize, s.bp.MaxQueueSize)
 	s.Equal(conf.EventURL, s.bp.EventEndPoint)
 	s.NotNil(client.UserProfileService)
-	s.NotNil(client.ODPCache)
+	s.NotNil(client.odpCache)
 
 	inMemoryUps, ok := client.UserProfileService.(*services.InMemoryUserProfileService)
 	s.True(ok)
 	s.Equal(100, inMemoryUps.Capacity)
 	s.Equal("fifo", inMemoryUps.StorageStrategy)
 
-	inMemoryODPCache, ok := client.ODPCache.(*odpCacheServices.InMemoryCache)
+	inMemoryODPCache, ok := client.odpCache.(*odpCacheServices.InMemoryCache)
 	s.True(ok)
 	s.Equal(100, inMemoryODPCache.Size)
 	s.Equal(5, inMemoryODPCache.Timeout)
@@ -521,7 +521,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
-	s.NotNil(client.ODPCache)
+	s.NotNil(client.odpCache)
 	profile := decision.UserProfile{
 		ID: "1",
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{
@@ -530,7 +530,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 	}
 	// Should initialize redis client on first save call
 	client.UserProfileService.Save(profile)
-	client.ODPCache.Save("1", profile)
+	client.odpCache.Save("1", profile)
 
 	if testRedisUPS, ok := client.UserProfileService.(*services.RedisUserProfileService); ok {
 		s.Equal("100", testRedisUPS.Address)
@@ -547,7 +547,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 		s.Failf("UserProfileService not registered", "%s DNE in registry", "redis")
 	}
 
-	if testRedisODPCache, ok := client.ODPCache.(*odpCacheServices.RedisCache); ok {
+	if testRedisODPCache, ok := client.odpCache.(*odpCacheServices.RedisCache); ok {
 		s.Equal("100", testRedisODPCache.Address)
 		s.Equal("10", testRedisODPCache.Password)
 		s.Equal(1, testRedisODPCache.Database)
@@ -575,7 +575,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache
 	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
-	s.NotNil(client.ODPCache)
+	s.NotNil(client.odpCache)
 
 	profile := decision.UserProfile{
 		ID: "1",
@@ -583,9 +583,9 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache
 			decision.NewUserDecisionKey("1"): "1",
 		},
 	}
-	client.ODPCache.Save("1", profile)
+	client.odpCache.Save("1", profile)
 
-	if testInMemoryODPCache, ok := client.ODPCache.(*odpCacheServices.InMemoryCache); ok {
+	if testInMemoryODPCache, ok := client.odpCache.(*odpCacheServices.InMemoryCache); ok {
 		s.Equal(100, testInMemoryODPCache.Size)
 		s.Equal(10, testInMemoryODPCache.Timeout)
 
@@ -664,8 +664,8 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidODPCache() {
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
-	s.NotNil(client.ODPCache)
-	if mockODPCache, ok := client.ODPCache.(*MockODPCache); ok {
+	s.NotNil(client.odpCache)
+	if mockODPCache, ok := client.odpCache.(*MockODPCache); ok {
 		s.Equal("http://test.com", mockODPCache.Path)
 		s.Equal("1.2.1.2-abc", mockODPCache.Addr)
 		s.Equal(8080, mockODPCache.Port)
@@ -701,7 +701,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyODPCache() {
 	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
-	s.Nil(client.ODPCache)
+	s.Nil(client.odpCache)
 }
 
 func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
@@ -735,7 +735,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultODPCache() {
 	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
-	s.Nil(client.ODPCache)
+	s.Nil(client.odpCache)
 }
 
 func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {
