@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022 Optimizely, Inc. and contributors               *
+ * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -25,7 +25,7 @@ import (
 	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/middleware"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )

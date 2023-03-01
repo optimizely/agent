@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -20,7 +20,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -44,11 +44,11 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 // into the provided interface. Note that we're sanitizing the returned error
 // so that it is not leaked back to the requestor.
 func ParseRequestBody(r *http.Request, v interface{}) error {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		msg := "error reading request body"
 		middleware.GetLogger(r).Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)
+		return fmt.Errorf("%s", msg)
 	}
 
 	if len(body) == 0 {
@@ -60,7 +60,7 @@ func ParseRequestBody(r *http.Request, v interface{}) error {
 	if err != nil {
 		msg := "error parsing request body"
 		middleware.GetLogger(r).Error().Err(err).Msg(msg)
-		return fmt.Errorf(msg)
+		return fmt.Errorf("%s", msg)
 	}
 
 	return nil

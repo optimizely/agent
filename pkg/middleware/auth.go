@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2020,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,7 +28,7 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/jwtauth"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/rs/zerolog/log"
 )

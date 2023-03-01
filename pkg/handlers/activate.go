@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -97,7 +97,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 			}
 			err = nil
 		default:
-			err = fmt.Errorf(`type "%s" not supported`, value)
+			err = fmt.Errorf(`type %q not supported`, value)
 		}
 
 		if err != nil {
@@ -145,7 +145,7 @@ func parseTypeParameter(types []string, oConf *config.OptimizelyConfig, kmap key
 				kmap[key] = "feature"
 			}
 		default:
-			return fmt.Errorf(`type "%s" not supported`, filterType)
+			return fmt.Errorf(`type %q not supported`, filterType)
 		}
 	}
 
