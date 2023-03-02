@@ -133,7 +133,7 @@ jobs:
         # You should create a personal access token and store it in your repository
         token: ${{ secrets.CI_USER_TOKEN }}
         repository: 'optimizely/travisci-tools'
-        path: 'home/runner/travisci-tools'
+        path: '/home/runner/travisci-tools'
         ref: 'master'
     - name: Get the version
       id: get_version
@@ -172,7 +172,7 @@ jobs:
         # You should create a personal access token and store it in your repository
         token: ${{ secrets.CI_USER_TOKEN }}
         repository: 'optimizely/travisci-tools'
-        path: 'home/runner/travisci-tools'
+        path: '/home/runner/travisci-tools'
         ref: 'master'
     - name: Get the version
       id: get_version
@@ -186,14 +186,14 @@ jobs:
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: Upload and publish draft
       env:
-        HOME: 'home/runner'
+        HOME: '/home/runner'
       run: |
         # installs hub to ~/bin
         $HOME/travisci-tools/release_github/install_hub.sh
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
     - name: run script
       env:
-        HOME: 'home/runner'
+        HOME: '/home/runner'
         TRAVIS_OS_NAME: 'linux'
         DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
         DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
@@ -235,7 +235,7 @@ jobs:
         # You should create a personal access token and store it in your repository
         token: ${{ secrets.CI_USER_TOKEN }}
         repository: 'optimizely/travisci-tools'
-        path: 'home/runner/travisci-tools'
+        path: '/home/runner/travisci-tools'
         ref: 'master'
     - name: Get the version
       id: get_version
@@ -245,7 +245,7 @@ jobs:
     - name: Upload and publish draft
       shell: bash
       env:
-        HOME: 'home/runner'
+        HOME: '/home/runner'
       run: |
         # installs hub to ~/bin
         $HOME/travisci-tools/release_github/install_hub.sh
