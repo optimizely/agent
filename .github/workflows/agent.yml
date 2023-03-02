@@ -147,6 +147,8 @@ jobs:
         make -e setup build
         ./scripts/ci_create_packages.sh
         ./scripts/ci_build_generate_secret.sh
+        cp $HOME/travisci-tools/release_github/release_github_v2.sh .
+        ./release_github_v2.sh "$APP_VERSION"
 
   build_upload_publish_draft:
     if: startsWith(github.ref, 'refs/tags/')
@@ -192,7 +194,8 @@ jobs:
         # now we're going to create packages & upload packages
         ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
         # create the github release (draft)
-        $HOME/travisci-tools/release_github/release_github_v2.sh "$APP_VERSION"
+        cp $HOME/travisci-tools/release_github/release_github_v2.sh .
+        ./release_github_v2.sh "$APP_VERSION"  
         # attach generate_secret to the github release
         ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
 
