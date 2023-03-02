@@ -151,6 +151,7 @@ jobs:
       env:
         HOME: 'home/runner'
         TRAVIS_OS_NAME: 'linux'
+        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
       run: |
         # create the github release (draft)
         cp $HOME/travisci-tools/release_github/release_github_v2.sh .
