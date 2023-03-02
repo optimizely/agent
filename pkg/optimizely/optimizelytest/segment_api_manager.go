@@ -30,7 +30,7 @@ type TestSegmentAPIManager struct {
 
 // FetchQualifiedSegments returns the segments that were set by SetQualifiedSegments
 func (s *TestSegmentAPIManager) FetchQualifiedSegments(apiKey, apiHost, userID string, segmentsToCheck []string) ([]string, error) {
-	s.callCount += 1
+	s.callCount++
 	if s.errorMode {
 		return nil, errors.New("failed to fetch qualified segments")
 	}

@@ -34,7 +34,7 @@ type TestClient struct {
 	ProjectConfig     *TestProjectConfig
 	OptimizelyClient  *client.OptimizelyClient
 	ForcedVariations  *decision.MapExperimentOverridesStore
-	SegmentApiManager *TestSegmentAPIManager
+	SegmentAPIManager *TestSegmentAPIManager
 }
 
 // NewClient provides an instance of OptimizelyClient backed by a TestProjectConfig
@@ -43,8 +43,8 @@ func NewClient() *TestClient {
 	eventProcessor := new(TestEventProcessor)
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 
-	segmentApiManager := new(TestSegmentAPIManager)
-	segmentOptions := []segment.SMOptionFunc{segment.WithAPIManager(segmentApiManager)}
+	segmentAPIManager := new(TestSegmentAPIManager)
+	segmentOptions := []segment.SMOptionFunc{segment.WithAPIManager(segmentAPIManager)}
 	segmentManager := segment.NewSegmentManager(projectConfig.sdkKey, segmentOptions...)
 
 	odpManagerOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager)}
@@ -63,7 +63,7 @@ func NewClient() *TestClient {
 		ProjectConfig:     projectConfig,
 		OptimizelyClient:  optlyClient,
 		ForcedVariations:  forcedVariations,
-		SegmentApiManager: segmentApiManager,
+		SegmentAPIManager: segmentAPIManager,
 	}
 }
 
@@ -94,13 +94,13 @@ func (t *TestClient) AddFlagVariation(f entities.Feature, v entities.Variation) 
 
 // AddSegments is a helper method for adding segments to the TestSegmentAPIManager and OdpConfig to facilitate testing.
 func (t *TestClient) AddSegments(s []string) {
-	t.SegmentApiManager.SetQualifiedSegments(s)
+	t.SegmentAPIManager.SetQualifiedSegments(s)
 	t.OptimizelyClient.OdpManager.Update(t.ProjectConfig.PublicKeyForODP, t.ProjectConfig.HostForODP, s)
 }
 
-// SetSegmentApiErrorMode is a helper method for changing the TestSegmentAPIManager into error mode for error testing.
-func (t *TestClient) SetSegmentApiErrorMode(m bool) {
-	t.SegmentApiManager.SetErrorMode(m)
+// SetSegmentAPIErrorMode is a helper method for changing the TestSegmentAPIManager into error mode for error testing.
+func (t *TestClient) SetSegmentAPIErrorMode(m bool) {
+	t.SegmentAPIManager.SetErrorMode(m)
 }
 
 // AddAudience is a helper method for adding audiences to the ProjectConfig to facilitate testing.

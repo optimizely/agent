@@ -717,7 +717,7 @@ func (suite *DecideTestSuite) TestFetchQualifiedSegmentsUtilizesCache() {
 	DecideWithFetchSegments(suite, "testUser")
 
 	// api manager should not have been used on the second call
-	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 1)
+	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 1)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoresCache() {
@@ -725,7 +725,7 @@ func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoresCache() {
 	DecideWithFetchSegments(suite, "testUser", segment.IgnoreCache)
 
 	// api manager should have been used on both calls
-	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 2)
+	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 2)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsResetsCache() {
@@ -734,7 +734,7 @@ func (suite *DecideTestSuite) TestFetchQualifiedSegmentsResetsCache() {
 	DecideWithFetchSegments(suite, "testUser", segment.ResetCache)
 	DecideWithFetchSegments(suite, "secondUser")
 	// api manager should have been used on all calls
-	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 4)
+	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 4)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoreAndResetsCache() {
@@ -743,12 +743,12 @@ func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoreAndResetsCache() {
 	DecideWithFetchSegments(suite, "testUser", segment.ResetCache, segment.IgnoreCache)
 	DecideWithFetchSegments(suite, "secondUser")
 	// api manager should have been used on all calls
-	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 4)
+	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 4)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsFailure() {
 	suite.tc.AddSegments([]string{"odp-segment-1", "odp-segment-2", "odp-segment-3"})
-	suite.tc.SetSegmentApiErrorMode(true)
+	suite.tc.SetSegmentAPIErrorMode(true)
 
 	db := DecideBody{
 		UserID:         "testUser",
