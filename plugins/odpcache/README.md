@@ -19,7 +19,7 @@ odpCache:
 
 2. To use the redis `ODPCache`, update the `config.yaml` as shown below:
 ```
-## configure optional User profile service
+## configure optional ODP Cache
 odpCache:
   default: "redis"
   services:

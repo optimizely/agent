@@ -29,7 +29,6 @@ type RedisCacheTestSuite struct {
 }
 
 func (r *RedisCacheTestSuite) SetupTest() {
-	// To check if lifo is used by default
 	r.cache = RedisCache{
 		Address:  "100",
 		Password: "10",

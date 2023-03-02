@@ -30,7 +30,6 @@ type RedisUPSTestSuite struct {
 }
 
 func (r *RedisUPSTestSuite) SetupTest() {
-	// To check if lifo is used by default
 	r.ups = RedisUserProfileService{
 		Address:  "100",
 		Password: "10",
