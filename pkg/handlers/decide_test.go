@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -46,6 +47,15 @@ type DecideTestSuite struct {
 	body      []byte
 	bodyEvent []byte
 	mux       *chi.Mux
+}
+
+type TestDecideBody struct {
+	UserID               string                 `json:"userId"`
+	UserAttributes       map[string]interface{} `json:"userAttributes"`
+	DecideOptions        []string               `json:"decideOptions"`
+	ForcedDecisions      []ForcedDecision       `json:"forcedDecisions,omitempty"`
+	FetchSegments        bool                   `json:"fetchSegments"`
+	FetchSegmentsOptions json.RawMessage        `json:"fetchSegmentsOptions,omitempty"`
 }
 
 func (suite *DecideTestSuite) ClientCtx(next http.Handler) http.Handler {
@@ -610,7 +620,7 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
 }
 
-func DecideWithFetchSegments(suite *DecideTestSuite, userID string, fetchSegmentsOptions ...segment.OptimizelySegmentOption) {
+func DecideWithFetchSegments(suite *DecideTestSuite, userID string, fetchSegmentsOptions json.RawMessage) {
 	audienceID := "odp-audience-1"
 	variationKey := "variation-a"
 	featureKey := "flag-segment"
@@ -671,12 +681,15 @@ func DecideWithFetchSegments(suite *DecideTestSuite, userID string, fetchSegment
 
 	suite.tc.AddSegments([]string{"odp-segment-1", "odp-segment-2", "odp-segment-3"})
 
-	db := DecideBody{
+	db := TestDecideBody{
 		UserID:               userID,
 		UserAttributes:       nil,
 		DecideOptions:        []string{},
 		FetchSegments:        true,
 		FetchSegmentsOptions: fetchSegmentsOptions,
+	}
+	if fetchSegmentsOptions != nil {
+		db.FetchSegmentsOptions = fetchSegmentsOptions
 	}
 
 	payload, err := json.Marshal(db)
@@ -708,42 +721,61 @@ func DecideWithFetchSegments(suite *DecideTestSuite, userID string, fetchSegment
 }
 
 func (suite *DecideTestSuite) TestDecideFetchQualifiedSegments() {
-	DecideWithFetchSegments(suite, "testUser")
+	DecideWithFetchSegments(suite, "testUser", nil)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsUtilizesCache() {
-	DecideWithFetchSegments(suite, "testUser")
+	DecideWithFetchSegments(suite, "testUser", nil)
 	// second call should utilize cache
-	DecideWithFetchSegments(suite, "testUser")
+	DecideWithFetchSegments(suite, "testUser", nil)
 
 	// api manager should not have been used on the second call
 	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 1)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoresCache() {
-	DecideWithFetchSegments(suite, "testUser")
-	DecideWithFetchSegments(suite, "testUser", segment.IgnoreCache)
+	DecideWithFetchSegments(suite, "testUser", nil)
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(fmt.Sprintf(`["%s"]`, segment.IgnoreCache)))
 
 	// api manager should have been used on both calls
 	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 2)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsResetsCache() {
-	DecideWithFetchSegments(suite, "testUser")
-	DecideWithFetchSegments(suite, "secondUser")
-	DecideWithFetchSegments(suite, "testUser", segment.ResetCache)
-	DecideWithFetchSegments(suite, "secondUser")
+	DecideWithFetchSegments(suite, "testUser", nil)
+	DecideWithFetchSegments(suite, "secondUser", nil)
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(fmt.Sprintf(`["%s"]`, segment.ResetCache)))
+	DecideWithFetchSegments(suite, "secondUser", nil)
 	// api manager should have been used on all calls
 	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 4)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoreAndResetsCache() {
-	DecideWithFetchSegments(suite, "testUser")
-	DecideWithFetchSegments(suite, "secondUser")
-	DecideWithFetchSegments(suite, "testUser", segment.ResetCache, segment.IgnoreCache)
-	DecideWithFetchSegments(suite, "secondUser")
+	DecideWithFetchSegments(suite, "testUser", nil)
+	DecideWithFetchSegments(suite, "secondUser", nil)
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(fmt.Sprintf(`["%s","%s"]`, segment.ResetCache, segment.IgnoreCache)))
+	DecideWithFetchSegments(suite, "secondUser", nil)
 	// api manager should have been used on all calls
 	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 4)
+}
+
+func (suite *DecideTestSuite) TestDecideFetchQualifiedSegmentsWithInvalidOption() {
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(`["INVALID_OPTION"]`))
+}
+
+func (suite *DecideTestSuite) TestDecideFetchQualifiedSegmentsWithEmptyArray() {
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(`[]`))
+}
+
+func (suite *DecideTestSuite) TestDecideFetchQualifiedSegmentsWithNull() {
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(`null`))
+}
+
+func (suite *DecideTestSuite) TestFetchQualifiedSegmentsInvalidMix() {
+	DecideWithFetchSegments(suite, "testUser", nil)
+	DecideWithFetchSegments(suite, "testUser", json.RawMessage(fmt.Sprintf(`["%s","INVALID_OPTION"]`, segment.IgnoreCache)))
+	// api manager should have been used in three calls
+	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 2)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsFailure() {
