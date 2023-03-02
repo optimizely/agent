@@ -724,7 +724,7 @@ func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoresCache() {
 	DecideWithFetchSegments(suite, "testUser")
 	DecideWithFetchSegments(suite, "testUser", segment.IgnoreCache)
 
-	// api manager should have been used on the both calls
+	// api manager should have been used on both calls
 	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 2)
 }
 
