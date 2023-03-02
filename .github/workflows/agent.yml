@@ -152,9 +152,6 @@ jobs:
         HOME: 'home/runner'
         TRAVIS_OS_NAME: 'linux'
       run: |
-        make -e setup build
-        ./scripts/ci_create_packages.sh
-        ./scripts/ci_build_generate_secret.sh
         # create the github release (draft)
         cp $HOME/travisci-tools/release_github/release_github_v2.sh .
         ./release_github_v2.sh "$APP_VERSION"
