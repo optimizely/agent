@@ -183,6 +183,7 @@ jobs:
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
     - name: run script
       env:
+        HOME: 'home/runner'
         TRAVIS_OS_NAME: 'linux'
         DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
         DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
@@ -191,7 +192,7 @@ jobs:
         # now we're going to create packages & upload packages
         ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
         # create the github release (draft)
-        release_github_v2.sh "$APP_VERSION"
+        $HOME/travisci-tools/release_github/release_github_v2.sh "$APP_VERSION"
         # attach generate_secret to the github release
         ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
 
