@@ -25,10 +25,12 @@ import (
 type TestSegmentAPIManager struct {
 	segments  []string
 	errorMode bool
+	callCount int
 }
 
 // FetchQualifiedSegments returns the segments that were set by SetQualifiedSegments
 func (s *TestSegmentAPIManager) FetchQualifiedSegments(apiKey, apiHost, userID string, segmentsToCheck []string) ([]string, error) {
+	s.callCount += 1
 	if s.errorMode {
 		return nil, errors.New("failed to fetch qualified segments")
 	}
@@ -43,4 +45,9 @@ func (s *TestSegmentAPIManager) SetQualifiedSegments(segments []string) {
 // SetErrorMode determines if FetchQualifiedSegments returns an error or not.
 func (s *TestSegmentAPIManager) SetErrorMode(errorMode bool) {
 	s.errorMode = errorMode
+}
+
+// GetCallCount returns the number of times FetchQualifiedSegments has been called.
+func (s *TestSegmentAPIManager) GetCallCount() int {
+	return s.callCount
 }

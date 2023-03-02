@@ -32,6 +32,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decide"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/odp/segment"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -609,7 +610,7 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 	suite.Equal(2, len(suite.tc.GetProcessedEvents()))
 }
 
-func (suite *DecideTestSuite) TestDecideWithFetchSegments() {
+func DecideWithFetchSegments(suite *DecideTestSuite, userID string, fetchSegmentsOptions ...segment.OptimizelySegmentOption) {
 	audienceID := "odp-audience-1"
 	variationKey := "variation-a"
 	featureKey := "flag-segment"
@@ -671,10 +672,11 @@ func (suite *DecideTestSuite) TestDecideWithFetchSegments() {
 	suite.tc.AddSegments([]string{"odp-segment-1", "odp-segment-2", "odp-segment-3"})
 
 	db := DecideBody{
-		UserID:         "testUser",
-		UserAttributes: nil,
-		DecideOptions:  []string{},
-		FetchSegments:  true,
+		UserID:               userID,
+		UserAttributes:       nil,
+		DecideOptions:        []string{},
+		FetchSegments:        true,
+		FetchSegmentsOptions: fetchSegmentsOptions,
 	}
 
 	payload, err := json.Marshal(db)
@@ -694,7 +696,7 @@ func (suite *DecideTestSuite) TestDecideWithFetchSegments() {
 	suite.NoError(err)
 
 	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+		UserContext:  client.OptimizelyUserContext{UserID: userID, Attributes: map[string]interface{}{}},
 		FlagKey:      featureKey,
 		RuleKey:      experimentKey,
 		Enabled:      true,
@@ -702,8 +704,46 @@ func (suite *DecideTestSuite) TestDecideWithFetchSegments() {
 		Reasons:      []string{},
 	}
 
-	suite.Equal(1, len(suite.tc.GetProcessedEvents()))
 	suite.Equal(expected, actual)
+}
+
+func (suite *DecideTestSuite) TestDecideFetchQualifiedSegments() {
+	DecideWithFetchSegments(suite, "testUser")
+}
+
+func (suite *DecideTestSuite) TestFetchQualifiedSegmentsUtilizesCache() {
+	DecideWithFetchSegments(suite, "testUser")
+	// second call should utilize cache
+	DecideWithFetchSegments(suite, "testUser")
+
+	// api manager should not have been used on the second call
+	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 1)
+}
+
+func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoresCache() {
+	DecideWithFetchSegments(suite, "testUser")
+	DecideWithFetchSegments(suite, "testUser", segment.IgnoreCache)
+
+	// api manager should have been used on the both calls
+	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 2)
+}
+
+func (suite *DecideTestSuite) TestFetchQualifiedSegmentsResetsCache() {
+	DecideWithFetchSegments(suite, "testUser")
+	DecideWithFetchSegments(suite, "secondUser")
+	DecideWithFetchSegments(suite, "testUser", segment.ResetCache)
+	DecideWithFetchSegments(suite, "secondUser")
+	// api manager should have been used on all calls
+	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 4)
+}
+
+func (suite *DecideTestSuite) TestFetchQualifiedSegmentsIgnoreAndResetsCache() {
+	DecideWithFetchSegments(suite, "testUser")
+	DecideWithFetchSegments(suite, "secondUser")
+	DecideWithFetchSegments(suite, "testUser", segment.ResetCache, segment.IgnoreCache)
+	DecideWithFetchSegments(suite, "secondUser")
+	// api manager should have been used on all calls
+	assert.Equal(suite.T(), suite.tc.SegmentApiManager.GetCallCount(), 4)
 }
 
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsFailure() {
