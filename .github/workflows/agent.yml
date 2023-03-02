@@ -154,7 +154,7 @@ jobs:
       run: |
         # create the github release (draft)
         cp $HOME/travisci-tools/release_github/release_github_v2.sh .
-        ./release_github_v2.sh "$APP_VERSION"
+        ./release_github_v2.sh "v$APP_VERSION"
     
   build_upload_publish_draft:
     if: startsWith(github.ref, 'refs/tags/')
