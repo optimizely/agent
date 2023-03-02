@@ -128,13 +128,6 @@ jobs:
       with:
         go-version: '1.20'
         check-latest: true
-    - uses: actions/checkout@v2
-      with:
-        # You should create a personal access token and store it in your repository
-        token: ${{ secrets.CI_USER_TOKEN }}
-        repository: 'optimizely/travisci-tools'
-        path: 'home/runner/travisci-tools'
-        ref: 'master'
     - name: Get the version
       id: get_version
       run: |
@@ -149,14 +142,12 @@ jobs:
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: test
       env:
-        HOME: 'home/runner'
         TRAVIS_OS_NAME: 'linux'
-        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
       run: |
-        # create the github release (draft)
-        cp $HOME/travisci-tools/release_github/release_github_v2.sh .
-        ./release_github_v2.sh "v$APP_VERSION"
-    
+        make -e setup build
+        ./scripts/ci_create_packages.sh
+        ./scripts/ci_build_generate_secret.sh
+
   build_upload_publish_draft:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
@@ -193,6 +184,7 @@ jobs:
     - name: run script
       env:
         HOME: 'home/runner'
+        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
         TRAVIS_OS_NAME: 'linux'
         DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
         DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
@@ -202,7 +194,7 @@ jobs:
         ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
         # create the github release (draft)
         cp $HOME/travisci-tools/release_github/release_github_v2.sh .
-        ./release_github_v2.sh "$APP_VERSION"
+        ./release_github_v2.sh "$APP_VERSION"  
         # attach generate_secret to the github release
         ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
 
