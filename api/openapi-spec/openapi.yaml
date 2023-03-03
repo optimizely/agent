@@ -78,6 +78,8 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
+        '500':
+          description: 'Failed to fetch qualified segments'
   /v1/lookup:
     post:
       summary: Lookup returns saved user profile.
@@ -578,6 +580,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ForcedDecision'
+        fetchSegments:
+          type: boolean
+        fetchSegmentsOptions:
+          type: array
+          items:
+            type: string
+            enum:
+              - IGNORE_CACHE
+              - RESET_CACHE
       required:
         - userId
     ForcedDecision:
