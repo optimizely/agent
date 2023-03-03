@@ -153,7 +153,7 @@ func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 
 	// json unmarshal error case
 	suite.cache.SetUserProfileService("one", "in-memory")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getServiceWithType(userProfileServicePlugin, "one", suite.cache.userProfileServiceMap, conf.UserProfileService)
 	suite.Nil(userProfileService)
 
 	// json marshal error case
@@ -162,7 +162,7 @@ func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 			"capacity": make(chan int),
 		}},
 	}
-	userProfileService = getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService = getServiceWithType(userProfileServicePlugin, "one", suite.cache.userProfileServiceMap, conf.UserProfileService)
 	suite.Nil(userProfileService)
 }
 
@@ -177,7 +177,7 @@ func (suite *CacheTestSuite) TestGetODPCacheJSONErrorCases() {
 
 	// json unmarshal error case
 	suite.cache.SetODPCache("one", "in-memory")
-	odpcache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	odpcache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODPCache)
 	suite.Nil(odpcache)
 
 	// json marshal error case
@@ -186,7 +186,7 @@ func (suite *CacheTestSuite) TestGetODPCacheJSONErrorCases() {
 			"size": make(chan int),
 		}},
 	}
-	odpcache = getODPCache("one", suite.cache.odpCacheMap, conf)
+	odpcache = getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODPCache)
 	suite.Nil(odpcache)
 }
 
@@ -195,7 +195,7 @@ func (suite *CacheTestSuite) TestNoUserProfileServicesProvidedInConfig() {
 		UserProfileService: map[string]interface{}{},
 	}
 	suite.cache.SetUserProfileService("one", "in-memory")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getServiceWithType(userProfileServicePlugin, "one", suite.cache.userProfileServiceMap, conf.UserProfileService)
 	suite.Nil(userProfileService)
 }
 
@@ -204,7 +204,7 @@ func (suite *CacheTestSuite) TestNoODPCacheProvidedInConfig() {
 		ODPCache: map[string]interface{}{},
 	}
 	suite.cache.SetODPCache("one", "in-memory")
-	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODPCache)
 	suite.Nil(odpCache)
 }
 
@@ -218,7 +218,7 @@ func (suite *CacheTestSuite) TestUPSForSDKKeyNotProvidedInConfig() {
 		},
 	}
 	suite.cache.SetUserProfileService("one", "dummy")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getServiceWithType(userProfileServicePlugin, "one", suite.cache.userProfileServiceMap, conf.UserProfileService)
 	suite.Nil(userProfileService)
 }
 
@@ -232,7 +232,7 @@ func (suite *CacheTestSuite) TestODPCacheForSDKKeyNotProvidedInConfig() {
 		},
 	}
 	suite.cache.SetODPCache("one", "dummy")
-	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODPCache)
 	suite.Nil(odpCache)
 }
 
@@ -246,7 +246,7 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforUPS() {
 		},
 	}
 	suite.cache.SetUserProfileService("one", "dummy")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getServiceWithType(userProfileServicePlugin, "one", suite.cache.userProfileServiceMap, conf.UserProfileService)
 	suite.Nil(userProfileService)
 }
 
@@ -260,7 +260,7 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforODPCache() {
 		},
 	}
 	suite.cache.SetODPCache("one", "dummy")
-	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODPCache)
 	suite.Nil(odpCache)
 }
 
@@ -279,7 +279,7 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforUPS() {
 		},
 	}
 	suite.cache.SetUserProfileService("one", "dummy")
-	userProfileService := getUserProfileService("one", suite.cache.userProfileServiceMap, conf)
+	userProfileService := getServiceWithType(userProfileServicePlugin, "one", suite.cache.userProfileServiceMap, conf.UserProfileService)
 	suite.Nil(userProfileService)
 }
 
@@ -298,7 +298,7 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforODPCache() {
 		},
 	}
 	suite.cache.SetODPCache("one", "dummy")
-	odpCache := getODPCache("one", suite.cache.odpCacheMap, conf)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODPCache)
 	suite.Nil(odpCache)
 }
 
