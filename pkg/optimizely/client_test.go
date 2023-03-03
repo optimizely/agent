@@ -265,7 +265,7 @@ func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
 }
 
 func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	return 0, nil
+	return 0, fmt.Errorf("config update error")
 }
 
 func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
@@ -289,7 +289,7 @@ func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
 }
 
 func (m MockConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	return 0, nil
+	return 0, fmt.Errorf("method OnProjectConfigUpdate does not have any effect on MockConfigManager")
 }
 
 func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {

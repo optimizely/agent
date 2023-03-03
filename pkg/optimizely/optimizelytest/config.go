@@ -43,20 +43,15 @@ type TestProjectConfig struct {
 	FeatureMap           map[string]entities.Feature
 	GroupMap             map[string]entities.Group
 	RolloutMap           map[string]entities.Rollout
+	nextID               int
 	Integrations         []entities.Integration
 	Segments             []string
-	nextID               int
 	AnonymizeIP          bool
 	BotFiltering         bool
 	sendFlagDecisions    bool
 	sdkKey               string
 	environmentKey       string
 	flagVariationsMap    map[string][]entities.Variation
-}
-
-// GetDatafile returns a string representation of the environment's datafile
-func (c *TestProjectConfig) GetDatafile() string {
-	return c.Datafile
 }
 
 // GetHostForODP returns hostForODP
@@ -67,6 +62,11 @@ func (c *TestProjectConfig) GetHostForODP() string {
 // GetPublicKeyForODP returns publicKeyForODP
 func (c *TestProjectConfig) GetPublicKeyForODP() string {
 	return c.PublicKeyForODP
+}
+
+// GetDatafile returns a string representation of the environment's datafile
+func (c *TestProjectConfig) GetDatafile() string {
+	return c.Datafile
 }
 
 // GetProjectID returns projectID
@@ -498,6 +498,11 @@ func (c *TestProjectConfig) AddFlagVariation(f entities.Feature, v entities.Vari
 	}
 }
 
+// AddAudience Adds an Audience to the ProjectConfig
+func (c *TestProjectConfig) AddAudience(a entities.Audience) {
+	c.AudienceMap[a.ID] = a
+}
+
 func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
@@ -519,7 +524,7 @@ func NewConfig() *TestProjectConfig {
 		AccountID:            "accountId",
 		AnonymizeIP:          true,
 		AttributeKeyToIDMap:  make(map[string]string),
-		AudienceMap:          make(map[string]entities.Audience),
+		AudienceMap:          map[string]entities.Audience{},
 		AttributeMap:         make(map[string]entities.Attribute),
 		BotFiltering:         true,
 		ExperimentKeyToIDMap: make(map[string]string),
@@ -532,6 +537,9 @@ func NewConfig() *TestProjectConfig {
 		Segments:             []string{},
 		Integrations:         []entities.Integration{},
 		flagVariationsMap:    make(map[string][]entities.Variation),
+		PublicKeyForODP:      "publicKeyForODP",
+		HostForODP:           "hostForODP",
+		sdkKey:               "sdkKey",
 	}
 
 	return config
