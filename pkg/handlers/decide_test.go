@@ -774,7 +774,7 @@ func (suite *DecideTestSuite) TestDecideFetchQualifiedSegmentsWithNull() {
 func (suite *DecideTestSuite) TestFetchQualifiedSegmentsInvalidMix() {
 	DecideWithFetchSegments(suite, "testUser", nil)
 	DecideWithFetchSegments(suite, "testUser", json.RawMessage(fmt.Sprintf(`["%s","INVALID_OPTION"]`, segment.IgnoreCache)))
-	// api manager should have been used in three calls
+	// api manager should have been used in both calls
 	assert.Equal(suite.T(), suite.tc.SegmentAPIManager.GetCallCount(), 2)
 }
 
