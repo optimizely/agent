@@ -42,8 +42,8 @@ import (
 
 // User plugin strings required for internal usage
 const (
-	userProfileServicePlugin string = "UserProfileService"
-	odpCachePlugin                  = "ODP Cache"
+	userProfileServicePlugin = "UserProfileService"
+	odpCachePlugin           = "ODP Cache"
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -245,7 +245,7 @@ func defaultLoader(
 		}
 
 		var clientUserProfileService decision.UserProfileService
-		var rawUPS interface{} = getServiceWithType(userProfileServicePlugin, sdkKey, userProfileServiceMap, conf.UserProfileService)
+		var rawUPS = getServiceWithType(userProfileServicePlugin, sdkKey, userProfileServiceMap, conf.UserProfileService)
 		// Check if ups was provided by user
 		if rawUPS != nil {
 			// convert ups to UserProfileService interface
@@ -256,7 +256,7 @@ func defaultLoader(
 		}
 
 		var clientODPCache odpCachePkg.Cache
-		var rawODPCache interface{} = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, conf.ODPCache)
+		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, conf.ODPCache)
 		// Check if odp cache was provided by user
 		if rawODPCache != nil {
 			// convert odpCache to Cache interface
@@ -278,7 +278,7 @@ func defaultLoader(
 	}
 }
 
-func getServiceWithType(serviceType string, sdkKey string, serviceMap cmap.ConcurrentMap, serviceConf map[string]interface{}) interface{} {
+func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMap, serviceConf map[string]interface{}) interface{} {
 
 	intializeServiceWithName := func(serviceName string) interface{} {
 		if clientConfigMap, ok := serviceConf["services"].(map[string]interface{}); ok {
