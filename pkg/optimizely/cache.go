@@ -284,37 +284,26 @@ func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMa
 		if clientConfigMap, ok := serviceConf["services"].(map[string]interface{}); ok {
 			if serviceConfig, ok := clientConfigMap[serviceName].(map[string]interface{}); ok {
 				// Check if any such service was added using `Add` method
-				createServiceInstance := func() interface{} {
-					switch serviceType {
-					case userProfileServicePlugin:
-						if upsCreator, ok := userprofileservice.Creators[serviceName]; ok {
-							if upsInstance := upsCreator(); upsInstance != nil {
-								return upsInstance
-							}
-						}
-					case odpCachePlugin:
-						if odpCreator, ok := odpcache.Creators[serviceName]; ok {
-							if odpInstance := odpCreator(); odpInstance != nil {
-								return odpInstance
-							}
-						}
-					default:
+				var serviceInstance interface{}
+				switch serviceType {
+				case userProfileServicePlugin:
+					if upsCreator, ok := userprofileservice.Creators[serviceName]; ok {
+						serviceInstance = upsCreator()
 					}
-					return nil
+				case odpCachePlugin:
+					if odpCreator, ok := odpcache.Creators[serviceName]; ok {
+						serviceInstance = odpCreator()
+					}
+				default:
 				}
 
-				serviceInstance := createServiceInstance()
 				if serviceInstance != nil {
-					success := true
 					// Trying to map service from client config to struct
 					if serviceConfig, err := json.Marshal(serviceConfig); err != nil {
 						log.Warn().Err(err).Msgf(`Error marshaling %s config: %q`, serviceType, serviceName)
-						success = false
 					} else if err := json.Unmarshal(serviceConfig, serviceInstance); err != nil {
 						log.Warn().Err(err).Msgf(`Error unmarshalling %s config: %q`, serviceType, serviceName)
-						success = false
-					}
-					if success {
+					} else {
 						log.Info().Msgf(`%s of type: %q created for sdkKey: %q`, serviceType, serviceName, sdkKey)
 						return serviceInstance
 					}
@@ -333,8 +322,7 @@ func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMa
 	}
 
 	// Check if any default service was provided and if it exists in client config
-	defaultServiceName, isDefaultServiceAvailable := serviceConf["default"].(string)
-	if isDefaultServiceAvailable && defaultServiceName != "" {
+	if defaultServiceName, isAvailable := serviceConf["default"].(string); isAvailable && defaultServiceName != "" {
 		return intializeServiceWithName(defaultServiceName)
 	}
 	return nil
