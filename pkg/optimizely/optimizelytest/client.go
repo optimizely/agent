@@ -18,12 +18,16 @@
 package optimizelytest
 
 import (
+	"time"
+
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
+	"github.com/optimizely/go-sdk/pkg/odp"
+	odp_event "github.com/optimizely/go-sdk/pkg/odp/event"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
@@ -32,6 +36,7 @@ type TestClient struct {
 	ProjectConfig    *TestProjectConfig
 	OptimizelyClient *client.OptimizelyClient
 	ForcedVariations *decision.MapExperimentOverridesStore
+	EventApiManager  *TestEventApiManager
 }
 
 // NewClient provides an instance of OptimizelyClient backed by a TestProjectConfig
@@ -40,11 +45,19 @@ func NewClient() *TestClient {
 	eventProcessor := new(TestEventProcessor)
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 
+	eventApiManager := new(TestEventApiManager)
+
+	eventOptions := []odp_event.EMOptionFunc{odp_event.WithAPIManager(eventApiManager), odp_event.WithFlushInterval(time.Duration(0))}
+	eventManager := odp_event.NewBatchEventManager(eventOptions...)
+	odpManagerOptions := []odp.OMOptionFunc{odp.WithEventManager(eventManager)}
+	odpManager := odp.NewOdpManager(projectConfig.sdkKey, false, odpManagerOptions...)
+
 	factory := client.OptimizelyFactory{}
 	optlyClient, _ := factory.Client(
 		client.WithConfigManager(config.NewStaticProjectConfigManager(projectConfig, logging.GetLogger("test", "test"))),
 		client.WithEventProcessor(eventProcessor),
 		client.WithExperimentOverrides(forcedVariations),
+		client.WithOdpManager(odpManager),
 	)
 
 	return &TestClient{
@@ -52,6 +65,7 @@ func NewClient() *TestClient {
 		ProjectConfig:    projectConfig,
 		OptimizelyClient: optlyClient,
 		ForcedVariations: forcedVariations,
+		EventApiManager:  eventApiManager,
 	}
 }
 

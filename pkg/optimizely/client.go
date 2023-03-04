@@ -67,6 +67,12 @@ type Track struct {
 	Error    string `json:"error,omitempty"`
 }
 
+// SendOdpEvent response model
+type SendOdpEvent struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
 // UpdateConfig uses config manager to sync and set project config
 func (c *OptlyClient) UpdateConfig() {
 	if c.ConfigManager != nil {

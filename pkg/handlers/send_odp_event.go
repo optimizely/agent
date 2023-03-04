@@ -19,61 +19,58 @@ package handlers
 
 import (
 	"errors"
-	// "fmt"
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/optimizely/agent/pkg/middleware"
-)
+	"github.com/optimizely/go-sdk/pkg/odp/event"
 
-// SendBody defines the request body for decide API
-type SendBody struct {
-	Action      string                 `json:"action"`
-	Type        string                 `json:"type"`
-	Identifiers map[string]string      `json:"identifiers"`
-	Data        map[string]interface{} `json:"data"`
-}
+	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/pkg/optimizely"
+)
 
 // SendOdpEvent sends event to ODP platform
 func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
-	logger := middleware.GetLogger(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	db, err := getResponseBody(r)
+	body, err := getResponseBody(r)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
 	}
 
-	success := optlyClient.SendOdpEvent(db.Action, db.Type, db.Identifiers, db.Data)
-	logger.Debug().Msg("Sending ODP event")
-	render.JSON(w, r, success)
-}
+	success := optlyClient.SendOdpEvent(body.Action, body.Type, body.Identifiers, body.Data)
+	if err != nil {
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
 
-func str(success bool) {
-	panic("unimplemented")
+	returnResult := optimizely.SendOdpEvent{
+		Success: success,
+	}
+
+	render.JSON(w, r, returnResult)
 }
 
 var ErrAction = errors.New(`missing "action" in request payload`)
 var ErrIdentifiers = errors.New(`missing or empty "identifiers" in request payload`)
 
-func getResponseBody(r *http.Request) (SendBody, error) {
-	var body SendBody
+func getResponseBody(r *http.Request) (event.Event, error) {
+	var body event.Event
 	err := ParseRequestBody(r, &body)
 	if err != nil {
-		return SendBody{}, err
+		return event.Event{}, err
 	}
 
 	if body.Action == "" {
-		return SendBody{}, ErrAction
+		return event.Event{}, ErrAction
 	}
 
 	if body.Identifiers == nil || len(body.Identifiers) == 0 {
-		return SendBody{}, ErrIdentifiers
+		return event.Event{}, ErrIdentifiers
 	}
 
 	return body, nil
