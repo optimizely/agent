@@ -138,6 +138,22 @@ paths:
           $ref: '#/components/responses/Forbidden'
       requestBody:
         $ref: '#/components/requestBodies/TrackContext'
+  /v1/send-odp-event:
+    post:
+      summary: Send event to Optimizely Data Platform (ODP).
+      operationId: sendOdpEvent
+      description: Send ODP event to Optimizely Data Platform. Clients can send arbitrary events to the ODP server. For instance, they can bind an email to the FS userId via this API.
+      responses:
+        '200':
+          description: Valid response, event received
+        '400':
+          description: Missing required parameters
+        '401':
+          description: Unauthorized, invalid JWT
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      requestBody:
+        $ref: '#/components/requestBodies/SendOdpEventContext'
   /v1/activate:
     parameters:
       - $ref: '#/components/parameters/featureKeyParam'
@@ -294,6 +310,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TrackContext'
+    SendOdpEventContext:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SendOdpEventContext'
     LookupContext:
       required: true
       content:
