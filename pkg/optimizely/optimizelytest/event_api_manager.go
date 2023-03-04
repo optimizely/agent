@@ -7,21 +7,20 @@ import (
 	"github.com/optimizely/go-sdk/pkg/odp/event"
 )
 
-// ErrNotImplemented indicates that the error was returned since the functionality was not implemented
-var ErrSendingOdpEvent = errors.New("Error with sending odp event")
-
-// TestEventProcessor implements an Optimizely Processor to aid in testing
-type TestEventApiManager struct {
+// TestEventAPIManager implements Event API Manager to aid in testing
+type TestEventAPIManager struct {
 	events []event.Event
 }
 
-func (e *TestEventApiManager) SendOdpEvents(apiKey, apiHost string, events []event.Event) (canRetry bool, err error) {
+// SendOdpEvents appends an event to a slice of events and returns a boolean false that retrying didn't take place,
+// meaning that event was added to the evnts slice
+func (e *TestEventAPIManager) SendOdpEvents(apiKey, apiHost string, events []event.Event) (canRetry bool, err error) {
 	e.events = append(e.events, events...)
-	return false, ErrSendingOdpEvent
+	return false, errors.New("failed to send odp event")
 }
 
 // GetEvents returns a copy of the events received by the TestEventApiManager
-func (e *TestEventApiManager) GetEvents() []event.Event {
+func (e *TestEventAPIManager) GetEvents() []event.Event {
 	c := make([]event.Event, len(e.events))
 	copy(c, e.events)
 

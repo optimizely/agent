@@ -37,7 +37,7 @@ type TestClient struct {
 	ProjectConfig     *TestProjectConfig
 	OptimizelyClient  *client.OptimizelyClient
 	ForcedVariations  *decision.MapExperimentOverridesStore
-	EventApiManager   *TestEventApiManager
+	EventAPIManager   *TestEventAPIManager
 	SegmentAPIManager *TestSegmentAPIManager
 }
 
@@ -48,11 +48,11 @@ func NewClient() *TestClient {
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 
 	segmentAPIManager := new(TestSegmentAPIManager)
-	eventApiManager := new(TestEventApiManager)
+	eventAPIManager := new(TestEventAPIManager)
 
 	segmentOptions := []segment.SMOptionFunc{segment.WithAPIManager(segmentAPIManager)}
 	segmentManager := segment.NewSegmentManager(projectConfig.sdkKey, segmentOptions...)
-	eventOptions := []odp_event.EMOptionFunc{odp_event.WithAPIManager(eventApiManager), odp_event.WithFlushInterval(time.Duration(0))}
+	eventOptions := []odp_event.EMOptionFunc{odp_event.WithAPIManager(eventAPIManager), odp_event.WithFlushInterval(time.Duration(0))}
 	eventManager := odp_event.NewBatchEventManager(eventOptions...)
 	odpManagerOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager), odp.WithEventManager(eventManager)}
 	odpManager := odp.NewOdpManager(projectConfig.sdkKey, false, odpManagerOptions...)
@@ -70,7 +70,7 @@ func NewClient() *TestClient {
 		ProjectConfig:     projectConfig,
 		OptimizelyClient:  optlyClient,
 		ForcedVariations:  forcedVariations,
-		EventApiManager:   eventApiManager,
+		EventAPIManager:   eventAPIManager,
 		SegmentAPIManager: segmentAPIManager,
 	}
 }

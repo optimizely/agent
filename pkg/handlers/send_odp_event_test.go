@@ -158,7 +158,7 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 
 	suite.Equal(expected, actual)
 
-	events := suite.tc.EventApiManager.GetEvents()
+	events := suite.tc.EventAPIManager.GetEvents()
 	suite.Equal(1, len(events))
 
 	actualEvent := events[0]

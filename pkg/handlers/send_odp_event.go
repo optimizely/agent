@@ -55,9 +55,6 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, returnResult)
 }
 
-var ErrAction = errors.New(`missing "action" in request payload`)
-var ErrIdentifiers = errors.New(`missing or empty "identifiers" in request payload`)
-
 func getResponseBody(r *http.Request) (event.Event, error) {
 	var body event.Event
 	err := ParseRequestBody(r, &body)
@@ -66,11 +63,11 @@ func getResponseBody(r *http.Request) (event.Event, error) {
 	}
 
 	if body.Action == "" {
-		return event.Event{}, ErrAction
+		return event.Event{}, errors.New(`missing "action" in request payload`)
 	}
 
 	if body.Identifiers == nil || len(body.Identifiers) == 0 {
-		return event.Event{}, ErrIdentifiers
+		return event.Event{}, errors.New(`missing or empty "identifiers" in request payload`)
 	}
 
 	return body, nil
