@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -26,12 +26,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
@@ -60,7 +59,7 @@ func (e ErrorConfigManager) RemoveOnProjectConfigUpdate(id int) error {
 }
 
 func (e ErrorConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	return 0, fmt.Errorf("config error")
+	return 0, fmt.Errorf("config update error")
 }
 
 func (e ErrorConfigManager) GetConfig() (config.ProjectConfig, error) {
@@ -85,13 +84,7 @@ func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {
 }
 
 func (m MockConfigManager) OnProjectConfigUpdate(callback func(notification.ProjectConfigUpdateNotification)) (int, error) {
-	notificationCenter := registry.GetNotificationCenter(m.sdkKey)
-	handler := func(payload interface{}) {
-		if projectConfigUpdateNotification, ok := payload.(notification.ProjectConfigUpdateNotification); ok {
-			callback(projectConfigUpdateNotification)
-		}
-	}
-	return notificationCenter.AddHandler(notification.ProjectConfigUpdate, handler)
+	return 0, fmt.Errorf("method OnProjectConfigUpdate does not have any effect on MockConfigManager")
 }
 
 func (m MockConfigManager) GetConfig() (config.ProjectConfig, error) {

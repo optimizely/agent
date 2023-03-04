@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2021, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2021,2023, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -54,11 +54,6 @@ type TestProjectConfig struct {
 	flagVariationsMap    map[string][]entities.Variation
 }
 
-// GetDatafile returns a string representation of the environment's datafile
-func (c *TestProjectConfig) GetDatafile() string {
-	return c.Datafile
-}
-
 // GetHostForODP returns hostForODP
 func (c *TestProjectConfig) GetHostForODP() string {
 	return c.HostForODP
@@ -67,6 +62,11 @@ func (c *TestProjectConfig) GetHostForODP() string {
 // GetPublicKeyForODP returns publicKeyForODP
 func (c *TestProjectConfig) GetPublicKeyForODP() string {
 	return c.PublicKeyForODP
+}
+
+// GetDatafile returns a string representation of the environment's datafile
+func (c *TestProjectConfig) GetDatafile() string {
+	return c.Datafile
 }
 
 // GetProjectID returns projectID
@@ -164,7 +164,7 @@ func (c *TestProjectConfig) GetAttributeByKey(key string) (entities.Attribute, e
 		return c.AttributeMap[attributeID], nil
 	}
 
-	errMessage := fmt.Sprintf(`Attribute with key "%s" not found`, key)
+	errMessage := fmt.Sprintf(`Attribute with key %q not found`, key)
 	return entities.Attribute{}, errors.New(errMessage)
 }
 
@@ -216,7 +216,7 @@ func (c *TestProjectConfig) GetAudienceByID(audienceID string) (entities.Audienc
 		return audience, nil
 	}
 
-	errMessage := fmt.Sprintf(`Audience with ID "%s" not found`, audienceID)
+	errMessage := fmt.Sprintf(`Audience with ID %q not found`, audienceID)
 	return entities.Audience{}, errors.New(errMessage)
 }
 
@@ -232,7 +232,7 @@ func (c *TestProjectConfig) GetExperimentByKey(experimentKey string) (entities.E
 		return experiment, nil
 	}
 
-	errMessage := fmt.Sprintf(`Experiment with key "%s" not found`, experimentKey)
+	errMessage := fmt.Sprintf(`Experiment with key %q not found`, experimentKey)
 	return entities.Experiment{}, errors.New(errMessage)
 }
 
@@ -242,7 +242,7 @@ func (c *TestProjectConfig) GetGroupByID(groupID string) (entities.Group, error)
 		return group, nil
 	}
 
-	errMessage := fmt.Sprintf(`Group with ID "%s" not found`, groupID)
+	errMessage := fmt.Sprintf(`Group with ID %q not found`, groupID)
 	return entities.Group{}, errors.New(errMessage)
 }
 
@@ -498,6 +498,11 @@ func (c *TestProjectConfig) AddFlagVariation(f entities.Feature, v entities.Vari
 	}
 }
 
+// AddAudience Adds an Audience to the ProjectConfig
+func (c *TestProjectConfig) AddAudience(a entities.Audience) {
+	c.AudienceMap[a.ID] = a
+}
+
 func (c *TestProjectConfig) getNextID() (nextID string) {
 	c.nextID++
 	return strconv.Itoa(c.nextID)
@@ -519,7 +524,7 @@ func NewConfig() *TestProjectConfig {
 		AccountID:            "accountId",
 		AnonymizeIP:          true,
 		AttributeKeyToIDMap:  make(map[string]string),
-		AudienceMap:          make(map[string]entities.Audience),
+		AudienceMap:          map[string]entities.Audience{},
 		AttributeMap:         make(map[string]entities.Attribute),
 		BotFiltering:         true,
 		ExperimentKeyToIDMap: make(map[string]string),
@@ -530,10 +535,9 @@ func NewConfig() *TestProjectConfig {
 		Revision:             "revision",
 		RolloutMap:           make(map[string]entities.Rollout),
 		flagVariationsMap:    make(map[string][]entities.Variation),
-		PublicKeyForODP:      "publidKeyOdp",
-		HostForODP:           "hostOdp",
-		Integrations:         []entities.Integration{},
-		Segments:             []string{},
+		PublicKeyForODP:      "publicKeyForODP",
+		HostForODP:           "hostForODP",
+		sdkKey:               "sdkKey",
 	}
 
 	return config

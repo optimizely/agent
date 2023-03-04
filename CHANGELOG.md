@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - February 28, 2023
+
+- Upgrade golang version to `1.20` ([#357](https://github.com/optimizely/agent/pull/357)).
+- Fix an issue with oauth/token API denying client access ([#346](https://github.com/optimizely/agent/pull/346)).
+
+### Breaking Changes
+
+- Minimum required golang version for agent has been upgraded to `1.20` to fix vulnerabilities.
+
 ## [2.7.1] - December 20, 2022
 
 - Add support for asynchronous `Save` using `rest` UPS by setting `async` boolean value inside `config.yaml` ([#350](https://github.com/optimizely/agent/pull/350)).

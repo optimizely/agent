@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, 2021 Optimizely, Inc. and contributors                   *
+ * Copyright 2020-2021,2023, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // BuildAPIAccessToken returns a token for accessing the API service using the argument SDK keys and TTL. It also returns the expiration timestamp.

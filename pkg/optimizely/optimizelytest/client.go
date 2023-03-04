@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2021 Optimizely, Inc. and contributors                    *
+ * Copyright 2019,2021,2023 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,15 +28,17 @@ import (
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/optimizely/go-sdk/pkg/odp"
 	odp_event "github.com/optimizely/go-sdk/pkg/odp/event"
+	"github.com/optimizely/go-sdk/pkg/odp/segment"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient
 type TestClient struct {
-	EventProcessor   *TestEventProcessor
-	ProjectConfig    *TestProjectConfig
-	OptimizelyClient *client.OptimizelyClient
-	ForcedVariations *decision.MapExperimentOverridesStore
-	EventApiManager  *TestEventApiManager
+	EventProcessor    *TestEventProcessor
+	ProjectConfig     *TestProjectConfig
+	OptimizelyClient  *client.OptimizelyClient
+	ForcedVariations  *decision.MapExperimentOverridesStore
+	EventApiManager   *TestEventApiManager
+	SegmentAPIManager *TestSegmentAPIManager
 }
 
 // NewClient provides an instance of OptimizelyClient backed by a TestProjectConfig
@@ -45,11 +47,14 @@ func NewClient() *TestClient {
 	eventProcessor := new(TestEventProcessor)
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 
+	segmentAPIManager := new(TestSegmentAPIManager)
 	eventApiManager := new(TestEventApiManager)
 
+	segmentOptions := []segment.SMOptionFunc{segment.WithAPIManager(segmentAPIManager)}
+	segmentManager := segment.NewSegmentManager(projectConfig.sdkKey, segmentOptions...)
 	eventOptions := []odp_event.EMOptionFunc{odp_event.WithAPIManager(eventApiManager), odp_event.WithFlushInterval(time.Duration(0))}
 	eventManager := odp_event.NewBatchEventManager(eventOptions...)
-	odpManagerOptions := []odp.OMOptionFunc{odp.WithEventManager(eventManager)}
+	odpManagerOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager), odp.WithEventManager(eventManager)}
 	odpManager := odp.NewOdpManager(projectConfig.sdkKey, false, odpManagerOptions...)
 
 	factory := client.OptimizelyFactory{}
@@ -61,11 +66,12 @@ func NewClient() *TestClient {
 	)
 
 	return &TestClient{
-		EventProcessor:   eventProcessor,
-		ProjectConfig:    projectConfig,
-		OptimizelyClient: optlyClient,
-		ForcedVariations: forcedVariations,
-		EventApiManager:  eventApiManager,
+		EventProcessor:    eventProcessor,
+		ProjectConfig:     projectConfig,
+		OptimizelyClient:  optlyClient,
+		ForcedVariations:  forcedVariations,
+		EventApiManager:   eventApiManager,
+		SegmentAPIManager: segmentAPIManager,
 	}
 }
 
@@ -92,6 +98,22 @@ func (t *TestClient) AddFeatureTest(f entities.Feature) {
 // AddFlagVariation is a helper method for adding flag variation to the ProjectConfig to facilitate testing.
 func (t *TestClient) AddFlagVariation(f entities.Feature, v entities.Variation) {
 	t.ProjectConfig.AddFlagVariation(f, v)
+}
+
+// AddSegments is a helper method for adding segments to the TestSegmentAPIManager and OdpConfig to facilitate testing.
+func (t *TestClient) AddSegments(s []string) {
+	t.SegmentAPIManager.SetQualifiedSegments(s)
+	t.OptimizelyClient.OdpManager.Update(t.ProjectConfig.PublicKeyForODP, t.ProjectConfig.HostForODP, s)
+}
+
+// SetSegmentAPIErrorMode is a helper method for changing the TestSegmentAPIManager into error mode for error testing.
+func (t *TestClient) SetSegmentAPIErrorMode(m bool) {
+	t.SegmentAPIManager.SetErrorMode(m)
+}
+
+// AddAudience is a helper method for adding audiences to the ProjectConfig to facilitate testing.
+func (t *TestClient) AddAudience(a entities.Audience) {
+	t.ProjectConfig.AddAudience(a)
 }
 
 // GetProcessedEvents returns the UserEvent objects sent to the event processor.

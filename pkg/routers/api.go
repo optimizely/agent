@@ -1,9 +1,9 @@
 /****************************************************************************
-* Copyright 2020-2022, Optimizely, Inc. and contributors                   *
-*                                                                          *
-* Licensed under the Apache License, Version 2.0 (the "License");          *
-* you may not use this file except in compliance with the License.         *
-* You may obtain a copy of the License at                                  *
+ * Copyright 2020-2023, Optimizely, Inc. and contributors                   *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
  *                                                                          *
  *    http://www.apache.org/licenses/LICENSE-2.0                            *
  *                                                                          *
@@ -30,8 +30,8 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	_ "github.com/optimizely/agent/statik" // Required to serve openapi.yaml
 
-	"github.com/go-chi/chi"
-	chimw "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 )
@@ -120,7 +120,7 @@ func NewAPIRouter(opt *APIOptions) *chi.Mux {
 }
 
 // WithAPIRouter appends routes and middleware to the given router.
-// See https://godoc.org/github.com/go-chi/chi#Mux.Group for usage
+// See https://godoc.org/github.com/go-chi/chi/v5#Mux.Group for usage
 func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	getDatafileTimer := middleware.Metricize("get-datafile", opt.metricsRegistry)
