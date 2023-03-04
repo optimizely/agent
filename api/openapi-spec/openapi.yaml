@@ -573,6 +573,20 @@ components:
         userAttributes:
           type: object
           additionalProperties: true
+    SendOdpEventContext:
+      properties:
+        action:
+          type: string
+        type:
+          type: string
+        identifiers:
+          type: object
+          additionalProperties: true
+        data:
+          type: object
+      required:
+        - action
+        - identifiers
     LookupContext:
       properties:
         userId:
