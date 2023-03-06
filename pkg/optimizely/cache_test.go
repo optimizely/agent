@@ -385,11 +385,14 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 
 func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	conf := config.ClientConfig{
-		FlushInterval: 321 * time.Second,
-		BatchSize:     1234,
-		QueueSize:     5678,
-		EventURL:      "https://localhost/events",
-		SdkKeyRegex:   "sdkkey",
+		FlushInterval:        321 * time.Second,
+		BatchSize:            1234,
+		QueueSize:            5678,
+		EventURL:             "https://localhost/events",
+		SdkKeyRegex:          "sdkkey",
+		DisableOdp:           true,
+		SegmentsCacheTimeout: 5 * time.Minute,
+		SegmentsCacheSize:    100,
 		UserProfileService: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 			"in-memory": map[string]interface{}{
 				"capacity":        0,

@@ -64,6 +64,9 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
+	assert.True(t, actual.DisableOdp)
+	assert.Equal(t, 100, actual.SegmentsCacheSize)
+	assert.Equal(t, 1*time.Minute, actual.SegmentsCacheTimeout)
 
 	assert.Equal(t, "in-memory", actual.UserProfileService["default"])
 	userProfileServices := map[string]interface{}{
@@ -220,6 +223,9 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
 	v.Set("client.sdkKeyRegex", "custom-regex")
+	v.Set("client.disableOdp", true)
+	v.Set("client.segmentsCacheSize", 100)
+	v.Set("client.segmentsCacheTimeout", 1*time.Minute)
 	upsServices := map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			"storageStrategy": "fifo",
@@ -349,6 +355,10 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_DISABLEODP", "true")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_SEGMENTSCACHESIZE", "100")
+	_ = os.Setenv("OPTIMIZELY_CLIENT_SEGMENTSCACHETIMEOUT", "1m")
+
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"},"async":true},"custom":{"path":"http://test2.com"}}}`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODPCACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
 

@@ -242,6 +242,9 @@ func defaultLoader(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
+			client.WithOdpDisabled(conf.DisableOdp),
+			client.WithSegmentsCacheSize(conf.SegmentsCacheSize),
+			client.WithSegmentsCacheTimeout(conf.SegmentsCacheTimeout),
 		}
 
 		var clientUserProfileService decision.UserProfileService
