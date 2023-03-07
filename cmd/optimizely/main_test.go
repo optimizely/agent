@@ -64,6 +64,12 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
+	assert.True(t, actual.ODP.Disable)
+	assert.Equal(t, 5*time.Second, actual.ODP.EventsFlushInterval)
+	assert.Equal(t, 5*time.Second, actual.ODP.EventsRequestTimeout)
+	assert.Equal(t, 100, actual.ODP.SegmentsCacheSize)
+	assert.Equal(t, 1*time.Minute, actual.ODP.SegmentsCacheTimeout)
+	assert.Equal(t, 5*time.Second, actual.ODP.SegmentsRequestTimeout)
 
 	assert.Equal(t, "in-memory", actual.UserProfileService["default"])
 	userProfileServices := map[string]interface{}{
@@ -262,8 +268,16 @@ func TestViperProps(t *testing.T) {
 		"default":  "in-memory",
 		"services": odpCacheServices,
 	}
-	v.Set("client.odp.cache", odpCache)
-
+	odpConfig := map[string]interface{}{
+		"disable":                true,
+		"eventsRequestTimeout":   5 * time.Second,
+		"eventsFlushInterval":    5 * time.Second,
+		"segmentsCacheSize":      100,
+		"segmentsCacheTimeout":   1 * time.Minute,
+		"segmentsRequestTimeout": 5 * time.Second,
+		"cache":                  odpCache,
+	}
+	v.Set("client.odp", odpConfig)
 	v.Set("log.pretty", true)
 	v.Set("log.includeSdkKey", false)
 	v.Set("log.level", "debug")
@@ -349,8 +363,15 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
+
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"},"async":true},"custom":{"path":"http://test2.com"}}}`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_CACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_DISABLE", `true`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_EVENTSREQUESTTIMEOUT", `5s`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_EVENTSFLUSHINTERVAL", `5s`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHESIZE", `100`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHETIMEOUT", `1m`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSREQUESTTIMEOUT", `5s`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")

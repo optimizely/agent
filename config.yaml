@@ -158,6 +158,19 @@ client:
         #     Content-Type: "application/json"
         #     Auth-Token: "12345"
     odp:
+      ## Disable odp
+      disable: false
+      ## Timeout in seconds after which event requests will timeout.
+      eventsRequestTimeout: 10s
+      ## Flush interval in seconds for odp events
+      eventsFlushInterval: 1s
+      ## Max number of items that can be stored in odp segments cache.
+      segmentsCacheSize: 10000
+      ## Timeout in seconds after which an item stored in odp segments cache will be deleted.
+      segmentsCacheTimeout: 600s
+      ## Timeout in seconds after which segment requests will timeout.
+      segmentsRequestTimeout: 10s
+      ## This will override all other settings
       cache:
         default: ""
         services:

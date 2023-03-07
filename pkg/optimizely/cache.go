@@ -33,7 +33,9 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/odp"
+	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
+	"github.com/optimizely/go-sdk/pkg/utils"
 
 	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
@@ -242,6 +244,7 @@ func defaultLoader(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
+			client.WithOdpDisabled(conf.ODP.Disable),
 		}
 
 		var clientUserProfileService decision.UserProfileService
@@ -262,14 +265,38 @@ func defaultLoader(
 			// convert odpCache to Cache interface
 			if convertedODPCache, ok := rawODPCache.(odpCachePkg.Cache); ok && convertedODPCache != nil {
 				clientODPCache = convertedODPCache
-				odpSegmentOptions := []odpSegmentPkg.SMOptionFunc{odpSegmentPkg.WithSegmentsCache(clientODPCache)}
-				segmentManager := odpSegmentPkg.NewSegmentManager(sdkKey, odpSegmentOptions...)
-				odpOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager)}
-				odpManager := odp.NewOdpManager(sdkKey,
-					false, odpOptions...)
-				clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
 			}
 		}
+
+		// Create segment manager with odpConfig and custom cache
+		segmentManager := odpSegmentPkg.NewSegmentManager(
+			sdkKey,
+			odpSegmentPkg.WithAPIManager(
+				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(nil, utils.Timeout(conf.ODP.SegmentsRequestTimeout))),
+			),
+			odpSegmentPkg.WithSegmentsCacheSize(conf.ODP.SegmentsCacheSize),
+			odpSegmentPkg.WithSegmentsCacheTimeout(conf.ODP.SegmentsCacheTimeout),
+			odpSegmentPkg.WithSegmentsCache(clientODPCache),
+		)
+
+		// Create event manager with odpConfig
+		eventManager := odpEventPkg.NewBatchEventManager(
+			odpEventPkg.WithAPIManager(
+				odpEventPkg.NewEventAPIManager(
+					sdkKey, utils.NewHTTPRequester(nil, utils.Timeout(conf.ODP.EventsRequestTimeout)),
+				),
+			),
+			odpEventPkg.WithFlushInterval(conf.ODP.EventsFlushInterval),
+		)
+
+		// Create odp manager with custom segment and event manager
+		odpManager := odp.NewOdpManager(
+			sdkKey,
+			conf.ODP.Disable,
+			odp.WithSegmentManager(segmentManager),
+			odp.WithEventManager(eventManager),
+		)
+		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,

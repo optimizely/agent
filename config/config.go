@@ -84,6 +84,12 @@ func NewDefaultConfig() *AgentConfig {
 				"services": map[string]interface{}{},
 			},
 			ODP: OdpConfig{
+				Disable:                false,
+				EventsRequestTimeout:   10 * time.Second,
+				EventsFlushInterval:    1 * time.Second,
+				SegmentsCacheSize:      10000,
+				SegmentsCacheTimeout:   600 * time.Second,
+				SegmentsRequestTimeout: 10 * time.Second,
 				Cache: ODPCacheConfigs{
 					"default":  "",
 					"services": map[string]interface{}{},
@@ -177,7 +183,13 @@ type ClientConfig struct {
 
 // OdpConfig holds the odp configuration
 type OdpConfig struct {
-	Cache ODPCacheConfigs `json:"cache"`
+	EventsRequestTimeout   time.Duration   `json:"eventsRequestTimeout"`
+	EventsFlushInterval    time.Duration   `json:"eventsFlushInterval"`
+	Disable                bool            `json:"disable"`
+	SegmentsCacheSize      int             `json:"segmentsCacheSize"`
+	SegmentsCacheTimeout   time.Duration   `json:"segmentsCacheTimeout"`
+	SegmentsRequestTimeout time.Duration   `json:"segmentsRequestTimeout"`
+	Cache                  ODPCacheConfigs `json:"cache"`
 }
 
 // LogConfig holds the log configuration
