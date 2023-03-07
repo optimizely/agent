@@ -23,7 +23,7 @@ func (e *TestEventAPIManager) SendOdpEvents(apiKey, apiHost string, events []eve
 
 	e.events = append(e.events, events...)
 
-	return false, errors.New("failed to send odp event") // <<< STOPS HERE
+	return false, errors.New("failed to send odp event")
 }
 
 // GetEvents returns a copy of the events received by the TestEventApiManager

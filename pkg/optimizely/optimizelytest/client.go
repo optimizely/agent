@@ -27,7 +27,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/optimizely/go-sdk/pkg/odp"
-	odp_event "github.com/optimizely/go-sdk/pkg/odp/event"
+	pkgOdpEvent "github.com/optimizely/go-sdk/pkg/odp/event"
 	"github.com/optimizely/go-sdk/pkg/odp/segment"
 )
 
@@ -52,8 +52,8 @@ func NewClient() *TestClient {
 
 	segmentOptions := []segment.SMOptionFunc{segment.WithAPIManager(segmentAPIManager)}
 	segmentManager := segment.NewSegmentManager(projectConfig.sdkKey, segmentOptions...)
-	eventOptions := []odp_event.EMOptionFunc{odp_event.WithAPIManager(eventAPIManager), odp_event.WithFlushInterval(time.Duration(0))}
-	eventManager := odp_event.NewBatchEventManager(eventOptions...)
+	eventOptions := []pkgOdpEvent.EMOptionFunc{pkgOdpEvent.WithAPIManager(eventAPIManager), pkgOdpEvent.WithFlushInterval(time.Duration(0))}
+	eventManager := pkgOdpEvent.NewBatchEventManager(eventOptions...)
 	odpManagerOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager), odp.WithEventManager(eventManager)}
 	odpManager := odp.NewOdpManager(projectConfig.sdkKey, false, odpManagerOptions...)
 
