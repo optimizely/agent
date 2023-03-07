@@ -38,21 +38,22 @@ import (
 
 // APIOptions defines the configuration parameters for Router.
 type APIOptions struct {
-	maxConns        int
-	sdkMiddleware   func(next http.Handler) http.Handler
-	metricsRegistry *metrics.Registry
-	configHandler   http.HandlerFunc
-	datafileHandler http.HandlerFunc
-	activateHandler http.HandlerFunc
-	decideHandler   http.HandlerFunc
-	trackHandler    http.HandlerFunc
-	overrideHandler http.HandlerFunc
-	lookupHandler   http.HandlerFunc
-	saveHandler     http.HandlerFunc
-	nStreamHandler  http.HandlerFunc
-	oAuthHandler    http.HandlerFunc
-	oAuthMiddleware func(next http.Handler) http.Handler
-	corsHandler     func(next http.Handler) http.Handler
+	maxConns            int
+	sdkMiddleware       func(next http.Handler) http.Handler
+	metricsRegistry     *metrics.Registry
+	configHandler       http.HandlerFunc
+	datafileHandler     http.HandlerFunc
+	activateHandler     http.HandlerFunc
+	decideHandler       http.HandlerFunc
+	trackHandler        http.HandlerFunc
+	overrideHandler     http.HandlerFunc
+	lookupHandler       http.HandlerFunc
+	saveHandler         http.HandlerFunc
+	sendOdpEventHandler http.HandlerFunc
+	nStreamHandler      http.HandlerFunc
+	oAuthHandler        http.HandlerFunc
+	oAuthMiddleware     func(next http.Handler) http.Handler
+	corsHandler         func(next http.Handler) http.Handler
 }
 
 func forbiddenHandler(message string) http.HandlerFunc {
@@ -90,21 +91,22 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 	corsHandler := createCorsHandler(conf.CORS)
 
 	spec := &APIOptions{
-		maxConns:        conf.MaxConns,
-		metricsRegistry: metricsRegistry,
-		configHandler:   handlers.OptimizelyConfig,
-		datafileHandler: handlers.GetDatafile,
-		activateHandler: handlers.Activate,
-		decideHandler:   handlers.Decide,
-		overrideHandler: overrideHandler,
-		lookupHandler:   handlers.Lookup,
-		saveHandler:     handlers.Save,
-		trackHandler:    handlers.TrackEvent,
-		sdkMiddleware:   mw.ClientCtx,
-		nStreamHandler:  nStreamHandler,
-		oAuthHandler:    authHandler.CreateAPIAccessToken,
-		oAuthMiddleware: authProvider.AuthorizeAPI,
-		corsHandler:     corsHandler,
+		maxConns:            conf.MaxConns,
+		metricsRegistry:     metricsRegistry,
+		configHandler:       handlers.OptimizelyConfig,
+		datafileHandler:     handlers.GetDatafile,
+		activateHandler:     handlers.Activate,
+		decideHandler:       handlers.Decide,
+		overrideHandler:     overrideHandler,
+		lookupHandler:       handlers.Lookup,
+		saveHandler:         handlers.Save,
+		trackHandler:        handlers.TrackEvent,
+		sendOdpEventHandler: handlers.SendOdpEvent,
+		sdkMiddleware:       mw.ClientCtx,
+		nStreamHandler:      nStreamHandler,
+		oAuthHandler:        authHandler.CreateAPIAccessToken,
+		oAuthMiddleware:     authProvider.AuthorizeAPI,
+		corsHandler:         corsHandler,
 	}
 
 	return NewAPIRouter(spec)
@@ -128,6 +130,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	lookupTimer := middleware.Metricize("lookup", opt.metricsRegistry)
 	saveTimer := middleware.Metricize("save", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
+	sendOdpEventTimer := middleware.Metricize("send-odp-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 	contentTypeMiddleware := chimw.AllowContentType("application/json")
 
@@ -149,6 +152,7 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/override", opt.overrideHandler)
 		r.With(lookupTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/lookup", opt.lookupHandler)
 		r.With(saveTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/save", opt.saveHandler)
+		r.With(sendOdpEventTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/send-odp-event", opt.sendOdpEventHandler)
 		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
@@ -165,8 +169,9 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 
 func createCorsHandler(c config.CORSConfig) func(next http.Handler) http.Handler {
 	options := cors.Options{
-		AllowedOrigins:   c.AllowedOrigins,
-		AllowedMethods:   c.AllowedMethods,
+		AllowedOrigins: c.AllowedOrigins,
+		AllowedMethods: c.AllowedMethods,
+
 		AllowedHeaders:   c.AllowedHeaders,
 		ExposedHeaders:   c.ExposedHeaders,
 		AllowCredentials: c.AllowedCredentials,

@@ -76,6 +76,7 @@ func (e ErrorConfigManager) SyncConfig() {
 
 type MockConfigManager struct {
 	config config.ProjectConfig
+	sdkKey string
 }
 
 func (m MockConfigManager) RemoveOnProjectConfigUpdate(int) error {

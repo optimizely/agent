@@ -112,20 +112,21 @@ func (suite *APIV1TestSuite) SetupTest() {
 	suite.tc = testClient
 
 	opts = &APIOptions{
-		maxConns:        1,
-		sdkMiddleware:   testOptlyMiddleware,
-		configHandler:   testHandler("config"),
-		datafileHandler: testHandler("datafile"),
-		activateHandler: testHandler("activate"),
-		overrideHandler: testHandler("override"),
-		lookupHandler:   testHandler("lookup"),
-		saveHandler:     testHandler("save"),
-		trackHandler:    testHandler("track"),
-		nStreamHandler:  testHandler("notifications/event-stream"),
-		oAuthHandler:    testHandler("oauth/token"),
-		oAuthMiddleware: testAuthMiddleware,
-		metricsRegistry: metricsRegistry,
-		corsHandler:     testCorsHandler,
+		maxConns:            1,
+		sdkMiddleware:       testOptlyMiddleware,
+		configHandler:       testHandler("config"),
+		datafileHandler:     testHandler("datafile"),
+		activateHandler:     testHandler("activate"),
+		overrideHandler:     testHandler("override"),
+		lookupHandler:       testHandler("lookup"),
+		saveHandler:         testHandler("save"),
+		trackHandler:        testHandler("track"),
+		sendOdpEventHandler: testHandler("send-odp-event"),
+		nStreamHandler:      testHandler("notifications/event-stream"),
+		oAuthHandler:        testHandler("oauth/token"),
+		oAuthMiddleware:     testAuthMiddleware,
+		metricsRegistry:     metricsRegistry,
+		corsHandler:         testCorsHandler,
 	}
 
 	suite.mux = NewAPIRouter(opts)
@@ -153,6 +154,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		{"POST", "override"},
 		{"POST", "lookup"},
 		{"POST", "save"},
+		{"POST", "send-odp-event"},
 		{"GET", "notifications/event-stream"},
 	}
 
@@ -169,6 +171,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 	}
 }
 
+// TODO: this test fails because odp hasn't been added to the open api schema yet?
 func (suite *APIV1TestSuite) TestStaticContent() {
 	routes := []struct {
 		method string
@@ -182,6 +185,7 @@ func (suite *APIV1TestSuite) TestStaticContent() {
 		req := httptest.NewRequest(route.method, route.path, nil)
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
+
 		suite.Equal(http.StatusOK, rec.Code)
 	}
 }

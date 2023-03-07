@@ -18,6 +18,8 @@
 package optimizelytest
 
 import (
+	"time"
+
 	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
@@ -25,6 +27,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/optimizely/go-sdk/pkg/odp"
+	pkgOdpEvent "github.com/optimizely/go-sdk/pkg/odp/event"
 	"github.com/optimizely/go-sdk/pkg/odp/segment"
 )
 
@@ -34,6 +37,7 @@ type TestClient struct {
 	ProjectConfig     *TestProjectConfig
 	OptimizelyClient  *client.OptimizelyClient
 	ForcedVariations  *decision.MapExperimentOverridesStore
+	EventAPIManager   *TestEventAPIManager
 	SegmentAPIManager *TestSegmentAPIManager
 }
 
@@ -44,10 +48,13 @@ func NewClient() *TestClient {
 	forcedVariations := decision.NewMapExperimentOverridesStore()
 
 	segmentAPIManager := new(TestSegmentAPIManager)
+	eventAPIManager := new(TestEventAPIManager)
+
 	segmentOptions := []segment.SMOptionFunc{segment.WithAPIManager(segmentAPIManager)}
 	segmentManager := segment.NewSegmentManager(projectConfig.sdkKey, segmentOptions...)
-
-	odpManagerOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager)}
+	eventOptions := []pkgOdpEvent.EMOptionFunc{pkgOdpEvent.WithAPIManager(eventAPIManager), pkgOdpEvent.WithFlushInterval(time.Duration(0))}
+	eventManager := pkgOdpEvent.NewBatchEventManager(eventOptions...)
+	odpManagerOptions := []odp.OMOptionFunc{odp.WithSegmentManager(segmentManager), odp.WithEventManager(eventManager)}
 	odpManager := odp.NewOdpManager(projectConfig.sdkKey, false, odpManagerOptions...)
 
 	factory := client.OptimizelyFactory{}
@@ -63,6 +70,7 @@ func NewClient() *TestClient {
 		ProjectConfig:     projectConfig,
 		OptimizelyClient:  optlyClient,
 		ForcedVariations:  forcedVariations,
+		EventAPIManager:   eventAPIManager,
 		SegmentAPIManager: segmentAPIManager,
 	}
 }
