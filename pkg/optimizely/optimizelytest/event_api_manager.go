@@ -23,18 +23,20 @@ func (e *TestEventAPIManager) SendOdpEvents(apiKey, apiHost string, events []eve
 
 	e.events = append(e.events, events...)
 
-	return false, errors.New("failed to send odp event")
+	return false, errors.New("failed to send odp event") // <<< STOPS HERE
 }
 
 // GetEvents returns a copy of the events received by the TestEventApiManager
 // This method will wait until events are greater or equal to the number of expected events.
 func (e *TestEventAPIManager) GetEvents() []event.Event {
 	for {
+		e.mutex.Lock()
 		if len(e.events) >= e.expectedEventCount {
 			break
 		}
+		e.mutex.Unlock()
 	}
-	e.mutex.Lock()
+
 	c := make([]event.Event, len(e.events))
 	copy(c, e.events)
 	e.mutex.Unlock()
