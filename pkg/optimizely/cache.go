@@ -242,9 +242,9 @@ func defaultLoader(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
-			client.WithOdpDisabled(conf.DisableOdp),
-			client.WithSegmentsCacheSize(conf.SegmentsCacheSize),
-			client.WithSegmentsCacheTimeout(conf.SegmentsCacheTimeout),
+			client.WithOdpDisabled(conf.ODP.Disable),
+			client.WithSegmentsCacheSize(conf.ODP.SegmentsCacheSize),
+			client.WithSegmentsCacheTimeout(conf.ODP.SegmentsCacheTimeout),
 		}
 
 		var clientUserProfileService decision.UserProfileService
@@ -259,7 +259,7 @@ func defaultLoader(
 		}
 
 		var clientODPCache odpCachePkg.Cache
-		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, conf.ODPCache)
+		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, conf.ODP.Cache)
 		// Check if odp cache was provided by user
 		if rawODPCache != nil {
 			// convert odpCache to Cache interface

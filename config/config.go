@@ -78,17 +78,19 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex:          "^\\w+(:\\w+)?$",
-			DisableOdp:           false,
-			SegmentsCacheSize:    10000,
-			SegmentsCacheTimeout: 600 * time.Second,
+			SdkKeyRegex: "^\\w+(:\\w+)?$",
 			UserProfileService: UserProfileServiceConfigs{
 				"default":  "",
 				"services": map[string]interface{}{},
 			},
-			ODPCache: ODPCacheConfigs{
-				"default":  "",
-				"services": map[string]interface{}{},
+			ODP: OdpConfig{
+				Cache: ODPCacheConfigs{
+					"default":  "",
+					"services": map[string]interface{}{},
+				},
+				Disable:              false,
+				SegmentsCacheSize:    10000,
+				SegmentsCacheTimeout: 600 * time.Second,
 			},
 		},
 		Runtime: RuntimeConfig{
@@ -165,18 +167,23 @@ type ODPCacheConfigs map[string]interface{}
 
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
-	PollingInterval      time.Duration             `json:"pollingInterval"`
-	BatchSize            int                       `json:"batchSize" default:"10"`
-	QueueSize            int                       `json:"queueSize" default:"1000"`
-	FlushInterval        time.Duration             `json:"flushInterval" default:"30s"`
-	DatafileURLTemplate  string                    `json:"datafileURLTemplate"`
-	EventURL             string                    `json:"eventURL"`
-	SdkKeyRegex          string                    `json:"sdkKeyRegex"`
-	DisableOdp           bool                      `json:"disableOdp"`
-	SegmentsCacheSize    int                       `json:"segmentsCacheSize"`
-	SegmentsCacheTimeout time.Duration             `json:"segmentsCacheTimeout"`
-	UserProfileService   UserProfileServiceConfigs `json:"userProfileService"`
-	ODPCache             ODPCacheConfigs           `json:"odpCache"`
+	PollingInterval     time.Duration             `json:"pollingInterval"`
+	BatchSize           int                       `json:"batchSize" default:"10"`
+	QueueSize           int                       `json:"queueSize" default:"1000"`
+	FlushInterval       time.Duration             `json:"flushInterval" default:"30s"`
+	DatafileURLTemplate string                    `json:"datafileURLTemplate"`
+	EventURL            string                    `json:"eventURL"`
+	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
+	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
+	ODP                 OdpConfig                 `json:"odp"`
+}
+
+// OdpConfig holds the odp configuration
+type OdpConfig struct {
+	Cache                ODPCacheConfigs `json:"cache"`
+	Disable              bool            `json:"disable"`
+	SegmentsCacheSize    int             `json:"segmentsCacheSize"`
+	SegmentsCacheTimeout time.Duration   `json:"segmentsCacheTimeout"`
 }
 
 // LogConfig holds the log configuration

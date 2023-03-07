@@ -64,9 +64,9 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	assert.Equal(t, "https://localhost/v1/%s.json", actual.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.localhost.com/v1", actual.EventURL)
 	assert.Equal(t, "custom-regex", actual.SdkKeyRegex)
-	assert.True(t, actual.DisableOdp)
-	assert.Equal(t, 100, actual.SegmentsCacheSize)
-	assert.Equal(t, 1*time.Minute, actual.SegmentsCacheTimeout)
+	assert.True(t, actual.ODP.Disable)
+	assert.Equal(t, 100, actual.ODP.SegmentsCacheSize)
+	assert.Equal(t, 1*time.Minute, actual.ODP.SegmentsCacheTimeout)
 
 	assert.Equal(t, "in-memory", actual.UserProfileService["default"])
 	userProfileServices := map[string]interface{}{
@@ -91,7 +91,7 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	}
 	assert.Equal(t, userProfileServices, actual.UserProfileService["services"])
 
-	assert.Equal(t, "in-memory", actual.ODPCache["default"])
+	assert.Equal(t, "in-memory", actual.ODP.Cache["default"])
 	odpCacheServices := map[string]interface{}{
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
@@ -101,7 +101,7 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 			"path": "http://test2.com",
 		},
 	}
-	actualCacheServices := actual.ODPCache["services"].(map[string]interface{})
+	actualCacheServices := actual.ODP.Cache["services"].(map[string]interface{})
 
 	assert.Equal(t, odpCacheServices["redis"], actualCacheServices["redis"])
 	assert.Equal(t, odpCacheServices["custom"], actualCacheServices["custom"])
@@ -223,9 +223,6 @@ func TestViperProps(t *testing.T) {
 	v.Set("client.datafileURLTemplate", "https://localhost/v1/%s.json")
 	v.Set("client.eventURL", "https://logx.localhost.com/v1")
 	v.Set("client.sdkKeyRegex", "custom-regex")
-	v.Set("client.disableOdp", true)
-	v.Set("client.segmentsCacheSize", 100)
-	v.Set("client.segmentsCacheTimeout", 1*time.Minute)
 	upsServices := map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			"storageStrategy": "fifo",
@@ -268,8 +265,13 @@ func TestViperProps(t *testing.T) {
 		"default":  "in-memory",
 		"services": odpCacheServices,
 	}
-	v.Set("client.odpCache", odpCache)
-
+	odpConfig := map[string]interface{}{
+		"cache":                odpCache,
+		"disable":              true,
+		"segmentsCacheSize":    100,
+		"segmentsCacheTimeout": 1 * time.Minute,
+	}
+	v.Set("client.odp", odpConfig)
 	v.Set("log.pretty", true)
 	v.Set("log.includeSdkKey", false)
 	v.Set("log.level", "debug")
@@ -355,12 +357,12 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_DATAFILEURLTEMPLATE", "https://localhost/v1/%s.json")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_EVENTURL", "https://logx.localhost.com/v1")
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
-	_ = os.Setenv("OPTIMIZELY_CLIENT_DISABLEODP", "true")
-	_ = os.Setenv("OPTIMIZELY_CLIENT_SEGMENTSCACHESIZE", "100")
-	_ = os.Setenv("OPTIMIZELY_CLIENT_SEGMENTSCACHETIMEOUT", "1m")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"},"async":true},"custom":{"path":"http://test2.com"}}}`)
-	_ = os.Setenv("OPTIMIZELY_CLIENT_ODPCACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_CACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_DISABLE", `true`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHESIZE", `100`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHETIMEOUT", `1m`)
 
 	_ = os.Setenv("OPTIMIZELY_LOG_PRETTY", "true")
 	_ = os.Setenv("OPTIMIZELY_LOG_INCLUDESDKKEY", "false")
