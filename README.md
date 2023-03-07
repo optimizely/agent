@@ -96,7 +96,7 @@ Below is a comprehensive list of available configuration properties.
 |client.queueSize|OPTIMIZELY_CLIENT_QUEUESIZE|The max number of events pending dispatch. Default: 1000|
 |client.sdkKeyRegex|OPTIMIZELY_CLIENT_SDKKEYREGEX|Regex to validate SDK keys provided in request header. Default: ^\\w+(:\\w+)?$|
 |client.userProfileService|OPTIMIZELY_CLIENT_USERPROFILESERVICE| Property used to enable and set UserProfileServices. Default: ./config.yaml|
-|client.odpCache|OPTIMIZELY_CLIENT_ODPCACHE| Property used to enable and set cache service for odp. Default: ./config.yaml|
+|client.odp.cache|OPTIMIZELY_CLIENT_ODP_CACHE| Property used to enable and set cache service for odp. Default: ./config.yaml|
 |config.filename|OPTIMIZELY_CONFIG_FILENAME|Location of the configuration YAML file. Default: ./config.yaml|
 |log.level|OPTIMIZELY_LOG_LEVEL|The log [level](https://github.com/rs/zerolog#leveled-logging) for the agent. Default: info|
 |log.pretty|OPTIMIZELY_LOG_PRETTY|Flag used to set colorized console output as opposed to structured json logs. Default: false|

@@ -6,27 +6,29 @@ Use a ODP Cache to persist segments and ensure they are sticky.
 1. To use the in-memory `ODPCache`, update the `config.yaml` as shown below:
 ```
 ## configure optional ODP Cache
-odpCache:
-  default: "in-memory"
-  services:
-    in-memory: 
-      ## 0 means cache will be disabled
-      size: 0
-      ## timeout after which least recently used records will be deleted
-      ## 0 means records will never be deleted
-      timeout: 0
+odp:
+  cache:
+    default: "in-memory"
+    services:
+      in-memory: 
+        ## 0 means cache will be disabled
+        size: 0
+        ## timeout after which least recently used records will be deleted
+        ## 0 means records will never be deleted
+        timeout: 0
 ```
 
 2. To use the redis `ODPCache`, update the `config.yaml` as shown below:
 ```
 ## configure optional ODP Cache
-odpCache:
-  default: "redis"
-  services:
-    redis: 
-      host: "your_host"
-      password: "your_password"
-      database: 0 ## your database
+odp:
+  cache:
+    default: "redis"
+    services:
+      redis: 
+        host: "your_host"
+        password: "your_password"
+        database: 0 ## your database
 ```
 
 ## Custom ODPCache Implementation
@@ -47,14 +49,15 @@ func init() {
 
 ```
 ## configure optional ODPCache
-odpCache:
-  default: "my_cache_name"
-  services:
-    my_cache_name: 
-      ## Add those parameters here that need to be mapped to the ODPCache
-      ## For example, if the ODP struct has a json mappable property called `host`
-      ## it can updated with value `abc.com` as shown
-      host: “abc.com”
+odp
+  cache:
+    default: "my_cache_name"
+    services:
+      my_cache_name: 
+        ## Add those parameters here that need to be mapped to the ODPCache
+        ## For example, if the ODP struct has a json mappable property called `host`
+        ## it can updated with value `abc.com` as shown
+        host: “abc.com”
 ```
 - If a user has created multiple `ODPCache` services and wants to override the `default` `ODPCache` for a specific `sdkKey`, they can do so by providing the `ODPCache` name in the request Header `X-Optimizely-ODP-Cache-Name`.
 

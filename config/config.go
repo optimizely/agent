@@ -83,9 +83,11 @@ func NewDefaultConfig() *AgentConfig {
 				"default":  "",
 				"services": map[string]interface{}{},
 			},
-			ODPCache: ODPCacheConfigs{
-				"default":  "",
-				"services": map[string]interface{}{},
+			ODP: OdpConfig{
+				Cache: ODPCacheConfigs{
+					"default":  "",
+					"services": map[string]interface{}{},
+				},
 			},
 		},
 		Runtime: RuntimeConfig{
@@ -170,7 +172,12 @@ type ClientConfig struct {
 	EventURL            string                    `json:"eventURL"`
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
-	ODPCache            ODPCacheConfigs           `json:"odpCache"`
+	ODP                 OdpConfig                 `json:"odp"`
+}
+
+// OdpConfig holds the odp configuration
+type OdpConfig struct {
+	Cache ODPCacheConfigs `json:"cache"`
 }
 
 // LogConfig holds the log configuration
