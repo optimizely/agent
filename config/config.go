@@ -90,7 +90,7 @@ func NewDefaultConfig() *AgentConfig {
 				SegmentsCacheSize:      10000,
 				SegmentsCacheTimeout:   600 * time.Second,
 				SegmentsRequestTimeout: 10 * time.Second,
-				Cache: ODPCacheConfigs{
+				SegmentsCache: ODPCacheConfigs{
 					"default":  "",
 					"services": map[string]interface{}{},
 				},
@@ -189,7 +189,7 @@ type OdpConfig struct {
 	SegmentsCacheSize      int             `json:"segmentsCacheSize"`
 	SegmentsCacheTimeout   time.Duration   `json:"segmentsCacheTimeout"`
 	SegmentsRequestTimeout time.Duration   `json:"segmentsRequestTimeout"`
-	Cache                  ODPCacheConfigs `json:"cache"`
+	SegmentsCache          ODPCacheConfigs `json:"segmentsCache"`
 }
 
 // LogConfig holds the log configuration

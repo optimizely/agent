@@ -169,7 +169,7 @@ func (suite *CacheTestSuite) TestGetUserProfileServiceJSONErrorCases() {
 func (suite *CacheTestSuite) TestGetODPCacheJSONErrorCases() {
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size": []string{"dummy"},
 				}},
@@ -179,16 +179,16 @@ func (suite *CacheTestSuite) TestGetODPCacheJSONErrorCases() {
 
 	// json unmarshal error case
 	suite.cache.SetODPCache("one", "in-memory")
-	odpcache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.Cache)
+	odpcache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.SegmentsCache)
 	suite.Nil(odpcache)
 
 	// json marshal error case
-	conf.ODP.Cache = map[string]interface{}{"services": map[string]interface{}{
+	conf.ODP.SegmentsCache = map[string]interface{}{"services": map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			"size": make(chan int),
 		}},
 	}
-	odpcache = getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.Cache)
+	odpcache = getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.SegmentsCache)
 	suite.Nil(odpcache)
 }
 
@@ -204,11 +204,11 @@ func (suite *CacheTestSuite) TestNoUserProfileServicesProvidedInConfig() {
 func (suite *CacheTestSuite) TestNoODPCacheProvidedInConfig() {
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{},
+			SegmentsCache: map[string]interface{}{},
 		},
 	}
 	suite.cache.SetODPCache("one", "in-memory")
-	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.Cache)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.SegmentsCache)
 	suite.Nil(odpCache)
 }
 
@@ -229,7 +229,7 @@ func (suite *CacheTestSuite) TestUPSForSDKKeyNotProvidedInConfig() {
 func (suite *CacheTestSuite) TestODPCacheForSDKKeyNotProvidedInConfig() {
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    0,
 					"timeout": 0,
@@ -238,7 +238,7 @@ func (suite *CacheTestSuite) TestODPCacheForSDKKeyNotProvidedInConfig() {
 		},
 	}
 	suite.cache.SetODPCache("one", "dummy")
-	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.Cache)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.SegmentsCache)
 	suite.Nil(odpCache)
 }
 
@@ -259,7 +259,7 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforUPS() {
 func (suite *CacheTestSuite) TestNoCreatorAddedforODPCache() {
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
 				"dummy": map[string]interface{}{
 					"size":    0,
 					"timeout": 0,
@@ -268,7 +268,7 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforODPCache() {
 		},
 	}
 	suite.cache.SetODPCache("one", "dummy")
-	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.Cache)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.SegmentsCache)
 	suite.Nil(odpCache)
 }
 
@@ -299,7 +299,7 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforODPCache() {
 
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
 				"dummy": map[string]interface{}{
 					"size":    0,
 					"timeout": 0,
@@ -308,7 +308,7 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforODPCache() {
 		},
 	}
 	suite.cache.SetODPCache("one", "dummy")
-	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.Cache)
+	odpCache := getServiceWithType(odpCachePlugin, "one", suite.cache.odpCacheMap, conf.ODP.SegmentsCache)
 	suite.Nil(odpCache)
 }
 
@@ -409,7 +409,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		ODP: config.OdpConfig{
 			EventsRequestTimeout: 10 * time.Second,
 			EventsFlushInterval:  1 * time.Second,
-			Cache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
 					"timeout": 5,
@@ -461,7 +461,7 @@ func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 			}},
 		},
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
 					"timeout": 5,
@@ -530,7 +530,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 			},
 		}},
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "redis", "services": map[string]interface{}{
 				"redis": map[string]interface{}{
 					"host":     "100",
 					"password": "10",
@@ -588,7 +588,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache() {
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
 					"timeout": 10,
@@ -677,7 +677,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidODPCache() {
 
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "mock2", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "mock2", "services": map[string]interface{}{
 				"mock2": map[string]interface{}{
 					"path": "http://test.com",
 					"addr": "1.2.1.2-abc",
@@ -723,7 +723,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyODPCache() {
 
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{},
+			SegmentsCache: map[string]interface{}{},
 		},
 	}
 	loader := defaultLoader(conf, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
@@ -757,7 +757,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultODPCache() {
 
 	conf := config.ClientConfig{
 		ODP: config.OdpConfig{
-			Cache: map[string]interface{}{"default": "", "services": map[string]interface{}{
+			SegmentsCache: map[string]interface{}{"default": "", "services": map[string]interface{}{
 				"mock3": map[string]interface{}{},
 			}},
 		},

@@ -56,7 +56,7 @@ client:
     segmentsCacheSize: 100
     segmentsCacheTimeout: 1m
     segmentsRequestTimeout: 5s
-    cache:
+    segmentsCache:
       default: "in-memory"
       services:
         in-memory: 

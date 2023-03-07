@@ -90,8 +90,8 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 600*time.Second, conf.Client.ODP.SegmentsCacheTimeout)
 	assert.Equal(t, 10*time.Second, conf.Client.ODP.SegmentsRequestTimeout)
 	assert.Equal(t, map[string]interface{}{}, conf.Client.UserProfileService["services"])
-	assert.Equal(t, "", conf.Client.ODP.Cache["default"])
-	assert.Equal(t, map[string]interface{}{}, conf.Client.ODP.Cache["services"])
+	assert.Equal(t, "", conf.Client.ODP.SegmentsCache["default"])
+	assert.Equal(t, map[string]interface{}{}, conf.Client.ODP.SegmentsCache["services"])
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)

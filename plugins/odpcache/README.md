@@ -7,7 +7,7 @@ Use a ODP Cache to persist segments and ensure they are sticky.
 ```
 ## configure optional ODP Cache
 odp:
-  cache:
+  segmentsCache:
     default: "in-memory"
     services:
       in-memory: 
@@ -22,7 +22,7 @@ odp:
 ```
 ## configure optional ODP Cache
 odp:
-  cache:
+  segmentsCache:
     default: "redis"
     services:
       redis: 
@@ -50,7 +50,7 @@ func init() {
 ```
 ## configure optional ODPCache
 odp
-  cache:
+  segmentsCache:
     default: "my_cache_name"
     services:
       my_cache_name: 

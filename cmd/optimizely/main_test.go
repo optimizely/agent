@@ -94,7 +94,7 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	}
 	assert.Equal(t, userProfileServices, actual.UserProfileService["services"])
 
-	assert.Equal(t, "in-memory", actual.ODP.Cache["default"])
+	assert.Equal(t, "in-memory", actual.ODP.SegmentsCache["default"])
 	odpCacheServices := map[string]interface{}{
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
@@ -104,7 +104,7 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 			"path": "http://test2.com",
 		},
 	}
-	actualCacheServices := actual.ODP.Cache["services"].(map[string]interface{})
+	actualCacheServices := actual.ODP.SegmentsCache["services"].(map[string]interface{})
 
 	assert.Equal(t, odpCacheServices["redis"], actualCacheServices["redis"])
 	assert.Equal(t, odpCacheServices["custom"], actualCacheServices["custom"])
@@ -275,7 +275,7 @@ func TestViperProps(t *testing.T) {
 		"segmentsCacheSize":      100,
 		"segmentsCacheTimeout":   1 * time.Minute,
 		"segmentsRequestTimeout": 5 * time.Second,
-		"cache":                  odpCache,
+		"segmentsCache":          odpCache,
 	}
 	v.Set("client.odp", odpConfig)
 	v.Set("log.pretty", true)
@@ -365,7 +365,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"},"async":true},"custom":{"path":"http://test2.com"}}}`)
-	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_CACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":""},"custom":{"path":"http://test2.com"}}}`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_DISABLE", `true`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_EVENTSREQUESTTIMEOUT", `5s`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_EVENTSFLUSHINTERVAL", `5s`)

@@ -171,7 +171,7 @@ client:
       ## Timeout in seconds after which segment requests will timeout.
       segmentsRequestTimeout: 10s
       ## This will override all other settings
-      cache:
+      segmentsCache:
         default: ""
         services:
         #   in-memory: 
