@@ -164,6 +164,7 @@ client:
       segmentsCacheSize: 10000
       ## Timeout in seconds after which an item stored in odp segments cache will be deleted.
       segmentsCacheTimeout: 600s
+      ## This will override all other settings
       cache:
         default: ""
         services:
