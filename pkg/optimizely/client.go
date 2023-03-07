@@ -67,8 +67,8 @@ type Track struct {
 	Error    string `json:"error,omitempty"`
 }
 
-// SendOdpEvent response model
-type SendOdpEvent struct {
+// SendOdpEventResponseModel response model
+type SendOdpEventResponseModel struct {
 	Success bool   `json:"success"`
 	Error   string `json:"error,omitempty"`
 }

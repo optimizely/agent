@@ -581,9 +581,16 @@ components:
           type: string
         identifiers:
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: string
         data:
           type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: integer
+              - type: number
+              - type: boolean
       required:
         - action
         - identifiers

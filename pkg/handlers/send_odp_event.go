@@ -36,26 +36,26 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := getResponseBody(r)
+	body, err := getRequestOdpEvent(r)
 	if err != nil {
 		RenderError(err, http.StatusBadRequest, w, r)
 		return
 	}
 
 	success := optlyClient.SendOdpEvent(body.Action, body.Type, body.Identifiers, body.Data)
-	if err != nil {
+	if !success {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
-	returnResult := optimizely.SendOdpEvent{
+	returnResult := optimizely.SendOdpEventResponseModel{
 		Success: success,
 	}
 
 	render.JSON(w, r, returnResult)
 }
 
-func getResponseBody(r *http.Request) (event.Event, error) {
+func getRequestOdpEvent(r *http.Request) (event.Event, error) {
 	var body event.Event
 	err := ParseRequestBody(r, &body)
 	if err != nil {

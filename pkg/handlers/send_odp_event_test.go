@@ -143,16 +143,18 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 	body, err := json.Marshal(sb)
 	suite.NoError(err)
 
+	suite.tc.EventAPIManager.SetExpectedNumberEvents(1)
+
 	req := httptest.NewRequest("POST", "/send-odp-event", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 	suite.mux.ServeHTTP(rec, req)
 
 	suite.Equal(http.StatusOK, rec.Code)
 
-	var actual optimizely.SendOdpEvent
+	var actual optimizely.SendOdpEventResponseModel
 	suite.NoError(json.Unmarshal(rec.Body.Bytes(), &actual))
 
-	expected := optimizely.SendOdpEvent{
+	expected := optimizely.SendOdpEventResponseModel{
 		Success: true,
 	}
 
