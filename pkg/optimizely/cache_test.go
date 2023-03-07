@@ -407,15 +407,18 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 			}},
 		},
 		ODP: config.OdpConfig{
+			EventsRequestTimeout: 10 * time.Second,
+			EventsFlushInterval:  1 * time.Second,
 			Cache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
 					"timeout": 5,
 				}},
 			},
-			Disable:              true,
-			SegmentsCacheTimeout: 5 * time.Minute,
-			SegmentsCacheSize:    100,
+			Disable:                true,
+			SegmentsCacheTimeout:   5 * time.Minute,
+			SegmentsCacheSize:      100,
+			SegmentsRequestTimeout: 10 * time.Second,
 		},
 	}
 

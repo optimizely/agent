@@ -51,8 +51,11 @@ client:
         path: "http://test2.com"
   odp:
     disable: true
+    eventsRequestTimeout: 5s
+    eventsFlushInterval: 5s
     segmentsCacheSize: 100
     segmentsCacheTimeout: 1m
+    segmentsRequestTimeout: 5s
     cache:
       default: "in-memory"
       services:
