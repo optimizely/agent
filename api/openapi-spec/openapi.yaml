@@ -154,6 +154,8 @@ paths:
           description: Unauthorized, invalid JWT
         '403':
           $ref: '#/components/responses/Forbidden'
+        '500':
+          description: 'Failed to send odp event'
       requestBody:
         $ref: '#/components/requestBodies/SendOdpEventContext'
   /v1/activate:

@@ -42,14 +42,14 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := optlyClient.SendOdpEvent(body.Action, body.Type, body.Identifiers, body.Data)
-	if !success {
+	err = optlyClient.SendOdpEvent(body.Action, body.Type, body.Identifiers, body.Data)
+	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
 
 	returnResult := optimizely.SendOdpEventResponseModel{
-		Success: success,
+		Success: true,
 	}
 
 	render.JSON(w, r, returnResult)
