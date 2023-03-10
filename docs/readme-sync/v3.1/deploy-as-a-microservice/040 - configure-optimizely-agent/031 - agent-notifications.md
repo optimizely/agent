@@ -1,17 +1,17 @@
 ---
-title:  Agent Notifications
+title: Agent Notifications
 excerpt: ""
 slug: "agent-notifications"
 hidden: false
-metadata: 
-  title: "Agent notifications - Optimizely Full Stack"
+metadata:
+  title: "Agent notifications - Optimizely Feature Experimentation"
 createdAt: "2020-05-21T20:35:58.387Z"
 updatedAt: "2020-07-14T20:51:52.458Z"
 ---
 
 Agent provides an endpoint that sends notifications to subscribers via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events). This is Agent's equivalent of Notification Listeners found in Optimizely SDKs.
 
-For details on the notification types, what causes them to be triggered, and the data they provide, see the [Notification Listeners documentation](https://docs.developers.optimizely.com/full-stack/docs/set-up-notification-listener-go).
+For details on the notification types, what causes them to be triggered, and the data they provide, see the [Notification Listeners documentation](https://docs.developers.optimizely.com/full-stack/v4.0/docs/set-up-notification-listener-go).
 
 ## Configuration
 
@@ -40,7 +40,6 @@ curl -N -H "Accept:text/event-stream" -H "X-Optimizely-Sdk-Key:<YOUR SDK KEY>"\
 ```
 
 This connection will remain open, and any notifications triggered by other requests received by Agent are pushed as events to this stream. Try sending requests to `/v1/activate` or `/v1/track` to see notifications being triggered.
-
 
 ### Filtering
 

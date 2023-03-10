@@ -3,8 +3,8 @@ title: "Quickstart for Agent"
 excerpt: ""
 slug: "quickstart-for-agent"
 hidden: false
-metadata: 
-  title: "Quickstart for Agent - Optimizely Full Stack"
+metadata:
+  title: "Quickstart for Agent - Optimizely Feature Experimentation"
 createdAt: "2020-05-21T20:35:58.387Z"
 updatedAt: "2020-08-17T20:51:52.458Z"
 ---
@@ -15,11 +15,10 @@ This brief quickstart describes how to run Agent, using two examples:
 
 - To get started using example Node microservices, see the following video link.
 
-
-
 ## Running locally via Node
-| Resource                                                     | Description                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
+
+| Resource                                                                                                                   | Description                                                                |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [Implementing feature flags across microservices with Optimizely Agent](https://www.youtube.com/watch?v=kwNVdSXMGX8&t=20s) | 4-minute video on implementing Optimizely Agent with example microservices |
 
 ## Running locally via Docker
@@ -38,8 +37,9 @@ Then start the service in the foreground with the following command:
 ```bash
 docker run -p 8080:8080 --env OPTIMIZELY_LOG_PRETTY=true optimizely/agent
 ```
+
 Note that we're enabling "pretty" logs which provide colorized and human readable formatting.
-The default log output format is structured JSON. 
+The default log output format is structured JSON.
 
 ## Evaluating REST APIs
 
@@ -85,4 +85,4 @@ resp = s.post(url = 'http://localhost:8080/v1/activate', params=params, json=pay
 print(resp.json())
 ```
 
-The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout. 
+The activate API is a POST to signal to the caller that there are side-effects. Namely, activation results in a "decision" event sent to Optimizely analytics for the purpose of analyzing Feature Test results. A "decision" will NOT be sent if the feature is simply part of a rollout.
