@@ -3,8 +3,8 @@ title: "Advanced configuration"
 excerpt: ""
 slug: "advanced-config-agent"
 hidden: false
-metadata: 
-  title: "advanced config - Agent microservice - Optimizely Full Stack"
+metadata:
+  title: "advanced config - Agent microservice - Optimizely Feature Experimentation"
 createdAt: "2020-05-21T20:35:58.387Z"
 updatedAt: "2021-03-15T23:02:34.056Z"
 ---
