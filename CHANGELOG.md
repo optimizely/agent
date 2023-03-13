@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - March 13, 2023
+
+- Update README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack. ([#369](https://github.com/optimizely/agent/pull/369)).
+
 ## [3.0.0] - February 28, 2023
 
 - Upgrade golang version to `1.20` ([#357](https://github.com/optimizely/agent/pull/357)).
@@ -29,18 +33,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Introduce `Forced Decisions` property into the `decide` API for overriding and managing user-level flag, experiment and delivery rule decisions. Forced decisions can be used for QA and automated testing purposes ([#324](https://github.com/optimizely/agent/pull/324), [#325](https://github.com/optimizely/agent/pull/325)).
 
-    - For details, refer to our API documentation page: https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide.  
+    - For details, refer to our API documentation page: https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide.
     - Upgrade to use [Go SDK v1.8.0](https://github.com/optimizely/go-sdk/releases/tag/v1.8.0). This adds support for Forced Decisions.
 
 ## [2.5.0] - Sep 24, 2021
 
-  - Add new fields (sdkKey, environmentKey, attributes, audiences, events, experimentRules, deliveryRules) to `/config` endpoint ([PR #322](https://github.com/optimizely/agent/pull/322)):  
+  - Add new fields (sdkKey, environmentKey, attributes, audiences, events, experimentRules, deliveryRules) to `/config` endpoint ([PR #322](https://github.com/optimizely/agent/pull/322)):
 
 ## [2.4.0] - March 3, 2021
 ## New Features
-- Introduce `/decide` endpoint as a new primary interface for Decide APIs, that is for retrieving feature flag status, configuration and associated experiment decisions for users ([#292](https://github.com/optimizely/agent/pull/292)).   
+- Introduce `/decide` endpoint as a new primary interface for Decide APIs, that is for retrieving feature flag status, configuration and associated experiment decisions for users ([#292](https://github.com/optimizely/agent/pull/292)).
 
-- For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.  
+- For details about this Agent release, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizely-agent.
 Upgrade to use [Go SDK v1.6.1](https://github.com/optimizely/go-sdk/tree/v1.6.1). This adds support for OptimizelyDecision.
 
 ## [2.3.1] - November 17, 2020
@@ -56,12 +60,12 @@ Upgrade to use [Go SDK v1.6.1](https://github.com/optimizely/go-sdk/tree/v1.6.1)
 ## [2.1.0] - September 23, 2020
 - For `server.allowedHosts` configuration property, add support for matching all subdomains of a host, or all hosts
 - Adding batching for agent (/v1/batch endpoint), including requests in parallel
-- Removed vulnerable version coreos/etcd 
+- Removed vulnerable version coreos/etcd
 
 ## [2.0.0] - August 27, 2020
 - Add SDK key validation configuration
 - Reject request with invalid host (excluding port)
-- Block content type other than application/json 
+- Block content type other than application/json
 - Introducing support for authenticated datafiles
 
 ### Breaking Changes
