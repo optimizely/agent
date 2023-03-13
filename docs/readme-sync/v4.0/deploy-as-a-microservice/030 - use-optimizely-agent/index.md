@@ -3,16 +3,15 @@ title: "Use Optimizely Agent"
 excerpt: ""
 slug: "use-optimizely-agent"
 hidden: false
-metadata: 
-  title: "How to use Optimizely Agent - Optimizely Full Stack"
+metadata:
+  title: "How to use Optimizely Agent - Optimizely Feature Experimentation"
 createdAt: "2020-02-21T17:44:28.054Z"
 updatedAt: "2021-03-15T23:02:34.056Z"
 ---
 
-Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable running feature flag rules, such as A/B tests and targeted flag deliveries. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk). 
+Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v1/index.html) that enable running feature flag rules, such as A/B tests and targeted flag deliveries. Agent provides equivalent functionality to all our SDKs. At its core is the [Optimizely Go SDK](doc:go-sdk).
 
 ### Running feature flag rules
-
 
 The Decide [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/decide) buckets a user into a feature flag variation as part of a flag rule. It chooses between multiple enabled or one disabled variation for a flag. Flag rules include A/B tests and targeted feature flag deliveries. To run a flag rule, use:
 
@@ -35,16 +34,12 @@ curl --location --request POST 'http://localhost:8080/v1/decide?keys=YOUR_FLAG_1
 }'
 ```
 
-
-
-
-
 This returns an array of OptimizelyDecision objects that contains all the information you need to run your flag rule, such as:
 
-- the decision to bucket this user into an enabled or disabled feature flag variation. 
-- any corresponding feature flag variable values. 
+- the decision to bucket this user into an enabled or disabled feature flag variation.
+- any corresponding feature flag variable values.
 
-For example: 
+For example:
 
 ```json
 {
@@ -67,23 +62,22 @@ For example:
 }
 ```
 
-The response is determined by the [A/B tests](https://docs.developers.optimizely.com/full-stack/v4.0/docs/run-a-b-tests) and [deliveries](https://docs.developers.optimizely.com/full-stack/v4.0/docs/run-flag-deliveries) defined for the supplied feature key, following the same rules as any Full Stack SDK. 
+The response is determined by the [A/B tests](https://docs.developers.optimizely.com/full-stack/v4.0/docs/run-a-b-tests) and [deliveries](https://docs.developers.optimizely.com/full-stack/v4.0/docs/run-flag-deliveries) defined for the supplied feature key, following the same rules as any Feature Experimentation SDK.
 
 Note: If the user is bucketed into an A/B test, this endpoint dispatches a decision event.
 
 ### Authentication
 
-
-To authenticate,  [pass your SDK key](https://docs.developers.optimizely.com/full-stack/docs/evaluate-rest-apis#section-start-an-http-session) as a header named ```X-Optimizely-SDK-Key``` in your API calls to Optimizely Agent. You can find your SDK key in app.optimizely.com under Settings > Environments > SDK Key. Remember you have a different SDK key for each environment. 
+To authenticate, [pass your SDK key](https://docs.developers.optimizely.com/full-stack/v4.0/docs/quickstart-for-agent#start-an-http-session) as a header named `X-Optimizely-SDK-Key` in your API calls to Optimizely Agent. You can find your SDK key in app.optimizely.com under Settings > Environments > SDK Key. Remember you have a different SDK key for each environment.
 
 ### Get All Decisions
+
 - To get all feature flag decisions for a visitor in a single request, omit the feature flag parameter:
   `POST /v1/decide`
 - To get decisions for multiple keys, specify multiple keys parameters, for example:
   `keys=flag_key_1&keys=flag_key_2`
-  
 
-- To receive only the enabled feature flags for a visitor use a decide option in the `application/json` request body: 
+- To receive only the enabled feature flags for a visitor use a decide option in the `application/json` request body:
 
 ```curl
 --header 'Content-Type: application/json' \
@@ -98,16 +92,14 @@ To authenticate,  [pass your SDK key](https://docs.developers.optimizely.com/ful
 }'
 ```
 
-
-
 ### Tracking conversions
 
-To track events, use the same  [tracking endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/trackEvent) you use in the [SDKs' track API](doc:track-javascript):
+To track events, use the same [tracking endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/trackEvent) you use in the [SDKs' track API](doc:track-javascript):
 
 `POST /v1/track?eventKey={eventKey}`
 
 There is no response body for successful conversion event requests.
 
-### API reference 
+### API reference
 
- For more  details on Optimizely Agent’s APIs, see the [complete API Reference](https://library.optimizely.com/docs/api/agent/v1/index.html).
+For more details on Optimizely Agent’s APIs, see the [complete API Reference](https://library.optimizely.com/docs/api/agent/v1/index.html).
