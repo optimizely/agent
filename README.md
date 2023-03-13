@@ -1,5 +1,4 @@
-<!-- [![Build Status](https://travis-ci.com/optimizely/agent.svg?token=y3xM1z7bQsqHX2NTEhps&branch=master)](https://travis-ci.com/optimizely/agent) -->
-
+[![Build Status](https://github.com/optimizely/agent/actions/workflows/agent.yml/badge.svg?branch=master)](https://github.com/optimizely/agent/actions/workflows/agent.yml?query=branch%3Amaster)
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/agent/badge.svg)](https://coveralls.io/github/optimizely/agent)
 
 # Optimizely Agent
