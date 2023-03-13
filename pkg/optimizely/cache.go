@@ -274,8 +274,6 @@ func defaultLoader(
 			odpSegmentPkg.WithAPIManager(
 				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(nil, utils.Timeout(conf.ODP.SegmentsRequestTimeout))),
 			),
-			odpSegmentPkg.WithSegmentsCacheSize(conf.ODP.SegmentsCacheSize),
-			odpSegmentPkg.WithSegmentsCacheTimeout(conf.ODP.SegmentsCacheTimeout),
 			odpSegmentPkg.WithSegmentsCache(clientODPCache),
 		)
 

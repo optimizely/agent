@@ -164,23 +164,20 @@ client:
       eventsRequestTimeout: 10s
       ## Flush interval in seconds for odp events
       eventsFlushInterval: 1s
-      ## Max number of items that can be stored in odp segments cache.
-      segmentsCacheSize: 10000
-      ## Timeout in seconds after which an item stored in odp segments cache will be deleted.
-      segmentsCacheTimeout: 600s
       ## Timeout in seconds after which segment requests will timeout.
       segmentsRequestTimeout: 10s
       ## This will override all other settings
       segmentsCache:
-        default: ""
+        default: "in-memory"
         services:
-        #   in-memory: 
-        #     size: 0
-        #     timeout: 0 # seconds
+          in-memory: 
+            size: 10000
+            timeout: 600 # seconds
         #   redis: 
         #     host: "localhost:6379"
         #     password: ""
         #     database: 0
+        #     timeout: 0 # seconds
       
 
 ##

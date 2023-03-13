@@ -1,5 +1,5 @@
 # ODP Cache
-Use a ODP Cache to persist segments and ensure they are sticky. 
+Use a ODP Cache to cache user segments fetched from the ODP server.
 
 ## Out of Box Cache Usage
 
@@ -15,7 +15,7 @@ odp:
         size: 0
         ## timeout after which least recently used records will be deleted
         ## 0 means records will never be deleted
-        timeout: 0
+        timeout: 0 ## seconds
 ```
 
 2. To use the redis `ODPCache`, update the `config.yaml` as shown below:
@@ -29,6 +29,7 @@ odp:
         host: "your_host"
         password: "your_password"
         database: 0 ## your database
+        timeout: 0 ## seconds
 ```
 
 ## Custom ODPCache Implementation

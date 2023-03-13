@@ -33,6 +33,7 @@ func (r *RedisCacheTestSuite) SetupTest() {
 		Address:  "100",
 		Password: "10",
 		Database: 1,
+		Timeout:  100,
 	}
 }
 

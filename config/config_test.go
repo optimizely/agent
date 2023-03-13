@@ -86,12 +86,15 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, false, conf.Client.ODP.Disable)
 	assert.Equal(t, 1*time.Second, conf.Client.ODP.EventsFlushInterval)
 	assert.Equal(t, 10*time.Second, conf.Client.ODP.EventsRequestTimeout)
-	assert.Equal(t, 10000, conf.Client.ODP.SegmentsCacheSize)
-	assert.Equal(t, 600*time.Second, conf.Client.ODP.SegmentsCacheTimeout)
 	assert.Equal(t, 10*time.Second, conf.Client.ODP.SegmentsRequestTimeout)
 	assert.Equal(t, map[string]interface{}{}, conf.Client.UserProfileService["services"])
-	assert.Equal(t, "", conf.Client.ODP.SegmentsCache["default"])
-	assert.Equal(t, map[string]interface{}{}, conf.Client.ODP.SegmentsCache["services"])
+	assert.Equal(t, "in-memory", conf.Client.ODP.SegmentsCache["default"])
+	assert.Equal(t, map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size":    10000,
+			"timeout": 600, // seconds
+		},
+	}, conf.Client.ODP.SegmentsCache["services"])
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)

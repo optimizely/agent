@@ -416,8 +416,6 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 				}},
 			},
 			Disable:                true,
-			SegmentsCacheTimeout:   5 * time.Minute,
-			SegmentsCacheSize:      100,
 			SegmentsRequestTimeout: 10 * time.Second,
 		},
 	}
@@ -535,6 +533,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 					"host":     "100",
 					"password": "10",
 					"database": 1,
+					"timeout":  1,
 				},
 			}},
 		},
@@ -573,6 +572,8 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 		s.Equal("100", testRedisODPCache.Address)
 		s.Equal("10", testRedisODPCache.Password)
 		s.Equal(1, testRedisODPCache.Database)
+		s.Equal(1, testRedisODPCache.Timeout)
+		s.Equal(1*time.Second, testRedisODPCache.Expiration)
 
 		// Check if redis client was instantiated with updated config
 		s.NotNil(testRedisODPCache.Client)

@@ -37,6 +37,7 @@ type RedisCache struct {
 	Address    string `json:"host"`
 	Password   string `json:"password"`
 	Database   int    `json:"database"`
+	Timeout    int    `json:"timeout"`
 }
 
 // Lookup is used to retrieve segments
@@ -99,13 +100,12 @@ func (r *RedisCache) initClient() {
 		Password: r.Password,
 		DB:       r.Database,
 	})
+	r.Expiration = time.Duration(r.Timeout * int(time.Second))
 }
 
 func init() {
 	redisCacheCreator := func() cache.Cache {
-		return &RedisCache{
-			Expiration: 0 * time.Second,
-		}
+		return &RedisCache{}
 	}
 	odpcache.Add("redis", redisCacheCreator)
 }
