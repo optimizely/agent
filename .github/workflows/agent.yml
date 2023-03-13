@@ -4,8 +4,7 @@ on:
   push:
     branches: [ master ]
     tags:
-    # Making sure this doesn't trigger when tags are pushed
-      - 'v[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]'
+      - 'v*.*.*'
   pull_request:
     branches: [ master ]
 
@@ -184,13 +183,18 @@ jobs:
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
     - name: run script
       env:
+        HOME: 'home/runner'
+        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
         TRAVIS_OS_NAME: 'linux'
+        DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       run: |
         make -e setup build
         # now we're going to create packages & upload packages
         ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
         # create the github release (draft)
-        release_github_v2.sh "$APP_VERSION"
+        cp $HOME/travisci-tools/release_github/release_github_v2.sh .
+        ./release_github_v2.sh "$APP_VERSION"  
         # attach generate_secret to the github release
         ./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
 
@@ -230,6 +234,7 @@ jobs:
     - name: set the env
       run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
     - name: Upload and publish draft
+      shell: bash
       env:
         HOME: 'home/runner'
       run: |
@@ -239,7 +244,10 @@ jobs:
     - name: run script
       env:
         TRAVIS_OS_NAME: ${{ matrix.os_name }}
+        DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       id: script
+      shell: bash
       run: |
         hub release download $(git describe --abbrev=0 --tags) -i '*-${{ matrix.TARGET }}-*'
         tar xvfz generate_secret-${{ matrix.TARGET }}-${APP_VERSION}.tar.gz -C /tmp
