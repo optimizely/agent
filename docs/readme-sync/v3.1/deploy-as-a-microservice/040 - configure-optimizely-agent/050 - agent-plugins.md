@@ -4,7 +4,7 @@ excerpt: ""
 slug: "agent-plugins"
 hidden: false
 metadata:
-  title: "Agent plugins - Optimizely Full Stack"
+  title: "Agent plugins - Optimizely Feature Experimentation"
 createdAt: "2020-09-21T20:30:00.000Z"
 updatedAt: "2020-09-21T20:30:00.000Z"
 ---
@@ -19,9 +19,10 @@ Interceptors can be added to Agent to customize the request and/or response by i
 This interface defines a `Handler()` method that returns a standard net/http middleware handler based on [http.Handler](https://golang.org/pkg/net/http/#Handler).
 The interceptor struct can also include a set of fields that can be configured via `config.yaml`.
 
-* [httplog](https://github.com/optimizely/agent/tree/master/plugins/interceptors/httplog) - Adds HTTP request logging based on [go-chi/httplog](https://github.com/go-chi/httplog).
+- [httplog](https://github.com/optimizely/agent/tree/master/plugins/interceptors/httplog) - Adds HTTP request logging based on [go-chi/httplog](https://github.com/go-chi/httplog).
 
 ### Example Interceptor definition
+
 ```go
 package example
 
@@ -66,6 +67,7 @@ func init() {
 ```
 
 To make the interceptor available to Agent, add the plugin as an anonymous import into [all.go](./interceptors/all/all.go).
+
 ```go
 package all
 
@@ -76,6 +78,7 @@ import (
 ```
 
 Enable the example interceptor by adding to `server.interceptors` within your `config.yaml`. Note that the yaml fields should match the struct definition of your plugin.
+
 ```yaml
 server:
   interceptors:
