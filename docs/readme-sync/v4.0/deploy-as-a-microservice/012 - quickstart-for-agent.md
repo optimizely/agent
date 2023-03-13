@@ -3,8 +3,8 @@ title: "Quickstart for Agent"
 excerpt: ""
 slug: "quickstart-for-agent"
 hidden: false
-metadata: 
-  title: "Quickstart for Agent - Optimizely Full Stack"
+metadata:
+  title: "Quickstart for Agent - Optimizely Feature Experimentation"
 createdAt: "2020-05-21T20:35:58.387Z"
 updatedAt: "2021-03-15T23:02:34.056Z"
 ---
@@ -15,11 +15,10 @@ This brief quickstart describes how to run Agent, using two examples:
 
 - To get started using example Node microservices, see the following video link.
 
-
-
 ## Running locally via Node
-| Resource                                                     | Description                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
+
+| Resource                                                                                                                   | Description                                                                |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [Implementing feature flags across microservices with Optimizely Agent](https://www.youtube.com/watch?v=kwNVdSXMGX8&t=20s) | 4-minute video on implementing Optimizely Agent with example microservices |
 
 ## Running locally via Docker
@@ -38,8 +37,9 @@ Then start the service in the foreground with the following command:
 ```bash
 docker run -p 8080:8080 --env OPTIMIZELY_LOG_PRETTY=true optimizely/agent
 ```
+
 Note that we're enabling "pretty" logs which provide colorized and human readable formatting.
-The default log output format is structured JSON. 
+The default log output format is structured JSON.
 
 ## Evaluating REST APIs
 
@@ -73,7 +73,7 @@ for key in env['featuresMap']:
 
 ### Run a feature flag rule
 
-The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user. You can decide multiple flags with this syntax:  `/v1/decide?keys=flagA&keys=flagB`.  We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule and flag variation the user buckets into.  Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience. 
+The `/decide?keys={keys}` endpoint decides whether to enable a feature flag or flags for a given user. You can decide multiple flags with this syntax: `/v1/decide?keys=flagA&keys=flagB`. We'll provide a `userId` via the request body. The API evaluates the `userId` to determine which flag rule and flag variation the user buckets into. Rule types include A/B tests, in which flag variations are measured against one another, or a flag delivery, which progressively make the flag available to the selected audience.
 
 This endpoint returns an array of `OptimizelyDecision` objects, which contains information about the flag and rule the user bucketed into.
 
@@ -91,4 +91,4 @@ resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=paylo
 print(resp.json())
 ```
 
-The decide API is a POST to signal to the caller that there are side-effects. Namely, this endpoint results in a "decision" event sent to Optimizely analytics for the purpose of analyzing A/B test results. By default a "decision"  is not sent if the feature flag is simply part of a delivery. 
+The decide API is a POST to signal to the caller that there are side-effects. Namely, this endpoint results in a "decision" event sent to Optimizely analytics for the purpose of analyzing A/B test results. By default a "decision" is not sent if the feature flag is simply part of a delivery.
