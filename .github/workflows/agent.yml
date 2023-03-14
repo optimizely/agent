@@ -53,11 +53,13 @@ jobs:
       with:	
           submodules: true	
           fetch-depth: 0
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.20'
+        check-latest: true
     - name: Get the version
       id: get_version
-      run: |
-        git fetch --tags --force
-        echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
+      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
     - name: Get current workspace path
       id: get_workspace
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
@@ -65,17 +67,6 @@ jobs:
       run: |
         echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
-    - uses: actions/checkout@v3
-      with:
-        # You should create a personal access token and store it in your repository
-        token: ${{ secrets.CI_USER_TOKEN }}
-        repository: 'optimizely/travisci-tools'
-        path: 'home/runner/travisci-tools'
-        ref: 'master'
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '1.20'
-        check-latest: true
     - name: run script
       env:
         HOME: 'home/runner'
