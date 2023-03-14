@@ -153,6 +153,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
     - uses: actions/setup-go@v3
       with:
         go-version: '1.20'
@@ -181,15 +184,19 @@ jobs:
         # installs hub to ~/bin
         $HOME/travisci-tools/release_github/install_hub.sh
         echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
-    - name: run script
+    - name: run make
       env:
+        TRAVIS_OS_NAME: 'linux'
+      run: |
+        make -e setup build
+    - name: create and upload packages
+      env: 
         HOME: 'home/runner'
         GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
         TRAVIS_OS_NAME: 'linux'
         DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
         DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       run: |
-        make -e setup build
         # now we're going to create packages & upload packages
         ./scripts/ci_create_packages.sh && ./scripts/ci_upload_packages.sh
         # create the github release (draft)
@@ -243,6 +250,7 @@ jobs:
         echo "$HOME/bin:$HOME/travisci-tools/slack" >> $GITHUB_PATH
     - name: run script
       env:
+        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
         TRAVIS_OS_NAME: ${{ matrix.os_name }}
         DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
         DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
