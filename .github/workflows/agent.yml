@@ -76,5 +76,9 @@ jobs:
         TAG=${{ steps.get_version.outputs.VERSION }}
         echo "APP_VERSION=${TAG#v}" >> $GITHUB_ENV
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
-
+    - name: test
+      env:
+        TRAVIS_OS_NAME: 'linux'
+      run: |
+        make -e setup build
 
