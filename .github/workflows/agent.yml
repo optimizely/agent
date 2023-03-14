@@ -50,9 +50,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-      with:	
-          submodules: true	
-          fetch-depth: 0
+      with:
+        submodules: true
+        fetch-depth: 0
     - uses: actions/setup-go@v3
       with:
         go-version: '1.20'
@@ -67,13 +67,9 @@ jobs:
       run: |
         echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
-    - name: run script
+    - name: test
       env:
-        HOME: 'home/runner'
-        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
         TRAVIS_OS_NAME: 'linux'
-        DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
-        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       run: |
         make -e setup build
         # now we're going to create packages & upload packages
@@ -83,12 +79,5 @@ jobs:
         #./release_github_v2.sh "$APP_VERSION"  
         # attach generate_secret to the github release
         #./scripts/ci_build_generate_secret.sh && ./scripts/ci_attach_generate_secret.sh
-    - name: Upload and publish draft
-      env:
-        HOME: 'home/runner'
-      run: |
-        # installs hub to ~/bin
-        $HOME/travisci-tools/release_github/install_hub.sh
-        echo "$HOME/bin:$HOME/travisci-tools/release_github" >> $GITHUB_PATH
-
+    
 
