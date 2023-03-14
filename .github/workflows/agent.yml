@@ -1,4 +1,4 @@
-name: Agent CI
+name: build
 
 on:
   push:

@@ -3,11 +3,12 @@ title: "Admin API"
 excerpt: ""
 slug: "admin-api"
 hidden: false
-metadata: 
-  title: "Admin APIs - Optimizely Full Stack"
+metadata:
+  title: "Admin APIs - Optimizely Feature Experimentation"
 createdAt: "2020-02-21T17:44:28.054Z"
 updatedAt: "2020-02-21T23:09:19.274Z"
 ---
+
 The Admin API provides system information about the running process. This can be used to check the availability of the service, runtime information and operational metrics. By default the admin listener is configured on port 8088.
 
 ## Info
@@ -15,16 +16,18 @@ The Admin API provides system information about the running process. This can be
 The `/info` endpoint provides basic information about the Optimizely Agent instance.
 
 Example Request:
+
 ```bash
 curl localhost:8088/info
 ```
 
 Example Response:
+
 ```json
 {
-    "version": "v0.10.0",
-    "author": "Optimizely Inc.",
-    "app_name": "optimizely"
+  "version": "v0.10.0",
+  "author": "Optimizely Inc.",
+  "app_name": "optimizely"
 }
 ```
 
@@ -33,14 +36,16 @@ Example Response:
 The `/health` endpoint is used to determine service availability.
 
 Example Request:
+
 ```bash
 curl localhost:8088/health
 ```
 
 Example Response:
+
 ```json
 {
-    "status": "ok"
+  "status": "ok"
 }
 ```
 
@@ -54,11 +59,13 @@ This endpoint can used when placing Agent behind a load balancer to indicate whe
 The `/metrics` endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://golang.org/src/runtime/mstats.go) package.
 
 Example Request:
+
 ```bash
 curl localhost:8088/metrics
 ```
 
 Example Response:
+
 ```json
 {
     "cmdline": [
@@ -77,6 +84,7 @@ Example Response:
     ...
 }
 ```
+
 Custom metrics are also provided for the individual service endpoints and follow the pattern of:
 
 ```bash

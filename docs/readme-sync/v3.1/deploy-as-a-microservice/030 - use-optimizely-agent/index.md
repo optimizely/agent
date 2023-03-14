@@ -3,8 +3,8 @@ title: "Use Optimizely Agent"
 excerpt: ""
 slug: "use-optimizely-agent"
 hidden: false
-metadata: 
-  title: "How to use Optimizely Agent - Optimizely Full Stack"
+metadata:
+  title: "How to use Optimizely Agent - Optimizely Feature Experimentation"
 createdAt: "2020-02-21T17:44:28.054Z"
 updatedAt: "2020-04-08T21:26:30.308Z"
 ---
@@ -13,15 +13,14 @@ Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v
 
 ### Manage features
 
- Optimizely Agent simplifies the core feature management of our [SDK APIs](doc:sdk-reference-guides).  It consolidates the following endpoints:
+Optimizely Agent simplifies the core feature management of our [SDK APIs](doc:sdk-reference-guides). It consolidates the following endpoints:
 
 - [isFeatureEnabled](doc:is-feature-enabled-go)
 - [getFeatureVariableBoolean](doc:get-feature-variable-go#section-boolean)
 - [getFeatureVariableDouble](doc:get-feature-variable-go#section-double)
 - [getFeatureVariableInteger](doc:get-feature-variable-go#section-integer)
-- [getFeatureVariableString](doc:get-feature-variable-go#section-string) 
+- [getFeatureVariableString](doc:get-feature-variable-go#section-string)
 - [getEnabledFeatures](doc:get-enabled-features-go)
-
 
 ... into one, convenient endpoint:
 
@@ -30,33 +29,30 @@ Optimizely Agent provides [APIs](https://library.optimizely.com/docs/api/agent/v
 This [endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/activate) returns:
 
 - the decision for this feature for this user
-- any corresponding feature variable values. 
+- any corresponding feature variable values.
 
-For example: 
+For example:
 
 ```json
 {
-	"featureKey": "feature-key-1",
-	"enabled": true,
-	"variables": {
-		"my-var-1": "cust-val-1",
-		"my-var-2": "cust-va1-2"
-	}
+  "featureKey": "feature-key-1",
+  "enabled": true,
+  "variables": {
+    "my-var-1": "cust-val-1",
+    "my-var-2": "cust-va1-2"
+  }
 }
 ```
 
-The response is determined by the [feature tests](doc:run-feature-tests) and [feature rollouts](doc:use-feature-flags) defined for the supplied feature key, following the same rules as any Full Stack SDK. 
+The response is determined by the [feature tests](doc:run-feature-tests) and [feature rollouts](doc:use-feature-flags) defined for the supplied feature key, following the same rules as any Feature Experimentation SDK.
 
 Note: If the user is assigned to a feature test, this API will dispatch an impression.
 
 ### Authentication
 
-
-To authenticate,  [pass your SDK key](https://docs.developers.optimizely.com/full-stack/docs/evaluate-rest-apis#section-start-an-http-session) as a header named ```X-Optimizely-SDK-Key``` in your API calls to Optimizely Agent. You can find your SDK key in app.optimizely.com under Settings > Environments > SDK Key. Remember you have a different SDK key for each environment. 
-
+To authenticate, [pass your SDK key](https://docs.developers.optimizely.com/full-stack/v4.0/docs/quickstart-for-agent#start-an-http-session) as a header named `X-Optimizely-SDK-Key` in your API calls to Optimizely Agent. You can find your SDK key in app.optimizely.com under Settings > Environments > SDK Key. Remember you have a different SDK key for each environment.
 
 ### Running A/B tests
-
 
 To activate an A/B test, use:
 
@@ -67,33 +63,34 @@ This dispatches an impression and return the user’s assigned variation:
 `POST /v1/activate?experimentKey={experimentKey}`
 
 This dispatches an impression and return the user’s assigned variation:
+
 ```json
 {
   "experimentKey": "experiment-key-1",
   "variationKey": "variation-key-1"
 }
 ```
+
 ### Get All Decisions
+
 To get all Feature decisions for a visitor in a single request use:
 `POST /v1/activate?type=feature`
 
-To receive only the enabled features for a visitor use: 
+To receive only the enabled features for a visitor use:
 
 `POST /v1/activate?type=feature&enabled=true`
 
 To get all Experiment decisions for a visitor in a single request use:
 `POST /v1/activate?type=experiment`
 
-
-
 ### Tracking conversions
 
-To track events, use the same  [tracking endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/trackEvent) you use in the [SDKs' track API](doc:track-javascript):
+To track events, use the same [tracking endpoint](https://library.optimizely.com/docs/api/agent/v1/index.html#operation/trackEvent) you use in the [SDKs' track API](doc:track-javascript):
 
 `POST /v1/track?eventKey={eventKey}`
 
 There is no response body for successful conversion event requests.
 
-### API reference 
+### API reference
 
- For more  details on Optimizely Agent’s APIs, see the [complete API Reference](https://library.optimizely.com/docs/api/agent/v1/index.html).
+For more details on Optimizely Agent’s APIs, see the [complete API Reference](https://library.optimizely.com/docs/api/agent/v1/index.html).
