@@ -55,7 +55,9 @@ jobs:
           fetch-depth: 0
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
+      run: |
+        git fetch --tags --force
+        echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
     - name: Get current workspace path
       id: get_workspace
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
