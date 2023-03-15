@@ -175,7 +175,8 @@ jobs:
       run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
     - name: set the env
       run: |
-        echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+        TAG=${{ steps.get_version.outputs.VERSION }}
+        echo "APP_VERSION=${TAG#v}" >> $GITHUB_ENV
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: Upload and publish draft
       env:
@@ -239,7 +240,9 @@ jobs:
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
     - name: set the env
-      run: echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+      run: |
+        TAG=${{ steps.get_version.outputs.VERSION }}
+        echo "APP_VERSION=${TAG#v}" >> $GITHUB_ENV
     - name: Upload and publish draft
       shell: bash
       env:
@@ -264,4 +267,3 @@ jobs:
       if: steps.script.outcome != 'success'
       run: |
         SLACK_TEXT="${APP_VERSION} ${{ matrix.os_name }} assets failed verification." send_to_slack.sh
-
