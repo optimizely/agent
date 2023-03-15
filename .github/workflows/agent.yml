@@ -19,6 +19,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup tmate session
+      env:
+        GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
+        TEST: 'test'
+        DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       uses: mxschmitt/action-tmate@v3
     - uses: actions/setup-go@v3
       with:
