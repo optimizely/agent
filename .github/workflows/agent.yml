@@ -177,6 +177,7 @@ jobs:
       run: |
         TAG=${{ steps.get_version.outputs.VERSION }}
         echo "APP_VERSION=${TAG#v}" >> $GITHUB_ENV
+        echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: Upload and publish draft
       env:
