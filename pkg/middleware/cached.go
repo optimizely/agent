@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2019,2022-2023 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -47,6 +47,9 @@ const OptlySDKHeader = "X-Optimizely-SDK-Key"
 // OptlyUPSHeader is the header key for an ad-hoc UserProfileService name
 const OptlyUPSHeader = "X-Optimizely-UPS-Name"
 
+// OptlyODPCacheHeader is the header key for an ad-hoc ODP Cache name
+const OptlyODPCacheHeader = "X-Optimizely-ODP-Cache-Name"
+
 // CachedOptlyMiddleware implements OptlyMiddleware backed by a cache
 type CachedOptlyMiddleware struct {
 	Cache optimizely.Cache
@@ -68,6 +71,13 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		// This UserProfileService Key will override the default UserProfileService provided in Client Config.
 		if upsKey != "" {
 			mw.Cache.SetUserProfileService(sdkKey, upsKey)
+		}
+
+		odpCacheKey := r.Header.Get(OptlyODPCacheHeader)
+		// Storing Provided odpCache Key in cache, to be used for requests with the given sdkKey.
+		// This odpCache Key will override the default odpCache provided in Client Config.
+		if odpCacheKey != "" {
+			mw.Cache.SetODPCache(sdkKey, odpCacheKey)
 		}
 
 		optlyClient, err := mw.Cache.GetClient(sdkKey)

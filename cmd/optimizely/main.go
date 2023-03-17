@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2019,2022-2023 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -41,6 +41,8 @@ import (
 
 	// Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
+	// Initiate the loading of the odpCache plugins
+	_ "github.com/optimizely/agent/plugins/odpcache/all"
 	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
@@ -91,6 +93,11 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	// Check if JSON string was set using OPTIMIZELY_CLIENT_USERPROFILESERVICE environment variable
 	if userProfileService := v.GetStringMap("client.userprofileservice"); userProfileService != nil {
 		conf.Client.UserProfileService = userProfileService
+	}
+
+	// Check if JSON string was set using OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE environment variable
+	if odpSegmentsCache := v.GetStringMap("client.odp.segmentsCache"); odpSegmentsCache != nil {
+		conf.Client.ODP.SegmentsCache = odpSegmentsCache
 	}
 
 	return conf

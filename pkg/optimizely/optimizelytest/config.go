@@ -534,6 +534,8 @@ func NewConfig() *TestProjectConfig {
 		ProjectID:            "projectId",
 		Revision:             "revision",
 		RolloutMap:           make(map[string]entities.Rollout),
+		Segments:             []string{},
+		Integrations:         []entities.Integration{},
 		flagVariationsMap:    make(map[string][]entities.Variation),
 		PublicKeyForODP:      "publicKeyForODP",
 		HostForODP:           "hostForODP",

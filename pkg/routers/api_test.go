@@ -69,6 +69,9 @@ func (m MockCache) UpdateConfigs(_ string) {
 func (m MockCache) SetUserProfileService(sdkKey, userProfileService string) {
 }
 
+func (m MockCache) SetODPCache(sdkKey, odpCache string) {
+}
+
 var testHandler = func(val string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(methodHeaderKey, val)

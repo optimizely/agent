@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2022, Optimizely, Inc. and contributors                        *
+ * Copyright 2023, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -19,59 +19,47 @@ package services
 
 import (
 	"testing"
+	"time"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/agent/plugins/utils"
 	"github.com/stretchr/testify/suite"
 )
 
-type RedisUPSTestSuite struct {
+type RedisCacheTestSuite struct {
 	suite.Suite
-	ups RedisUserProfileService
+	cache RedisCache
 }
 
-func (r *RedisUPSTestSuite) SetupTest() {
-	r.ups = RedisUserProfileService{
+func (r *RedisCacheTestSuite) SetupTest() {
+	r.cache = RedisCache{
 		Address:  "100",
 		Password: "10",
 		Database: 1,
+		Timeout:  utils.Duration{Duration: 100 * time.Second},
 	}
 }
 
-func (r *RedisUPSTestSuite) TestFirstSaveOrLookupConfiguresClient() {
-	r.Nil(r.ups.Client)
+func (r *RedisCacheTestSuite) TestFirstSaveOrLookupConfiguresClient() {
+	r.Nil(r.cache.Client)
 
-	profile := decision.UserProfile{
-		ID: "1",
-		ExperimentBucketMap: map[decision.UserDecisionKey]string{
-			decision.NewUserDecisionKey("1"): "1",
-		},
-	}
 	// Should initialize redis client on first save call
-	r.ups.Save(profile)
-	r.NotNil(r.ups.Client)
+	r.cache.Save("1", []string{"1"})
+	r.NotNil(r.cache.Client)
 
-	r.ups.Client = nil
+	r.cache.Client = nil
 	// Should initialize redis client on first save call
-	r.ups.Lookup("")
-	r.NotNil(r.ups.Client)
+	r.cache.Lookup("")
+	r.NotNil(r.cache.Client)
 }
 
-func (r *RedisUPSTestSuite) TestLookupEmptyProfileID() {
-	expectedProfile := decision.UserProfile{
-		ID:                  "",
-		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
-	}
-	r.Equal(expectedProfile, r.ups.Lookup(""))
+func (r *RedisCacheTestSuite) TestLookupEmptyKey() {
+	r.Nil(r.cache.Lookup(""))
 }
 
-func (r *RedisUPSTestSuite) TestLookupNotSavedProfileID() {
-	expectedProfile := decision.UserProfile{
-		ID:                  "",
-		ExperimentBucketMap: map[decision.UserDecisionKey]string{},
-	}
-	r.Equal(expectedProfile, r.ups.Lookup("123"))
+func (r *RedisCacheTestSuite) TestLookupNotSavedKey() {
+	r.Nil(r.cache.Lookup("123"))
 }
 
-func TestRedisUPSTestSuite(t *testing.T) {
-	suite.Run(t, new(RedisUPSTestSuite))
+func TestRedisCacheTestSuite(t *testing.T) {
+	suite.Run(t, new(RedisCacheTestSuite))
 }

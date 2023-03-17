@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022-2023, Optimizely, Inc. and contributors              *
+ * Copyright 2023, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -14,25 +14,40 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
-package optimizely
+// Package utils //
+package utils
 
 import (
-	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+	"encoding/json"
+	"fmt"
+	"time"
 )
 
-// Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
-type Cache interface {
-	GetClient(sdkKey string) (*OptlyClient, error)
-	UpdateConfigs(sdkKey string)
-	// SetUserProfileService sets userProfileService to be used for the given sdkKey
-	SetUserProfileService(sdkKey, userProfileService string)
-	// SetODPCache sets odpCache to be used for the given sdkKey
-	SetODPCache(sdkKey, odpCache string)
+// Duration represents json unmarshallable implementation of time.Duration
+type Duration struct {
+	time.Duration
 }
 
-// SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates
-type SyncedConfigManager interface {
-	optimizelyconfig.ProjectConfigManager
-	SyncConfig()
+// UnmarshalJSON unmarshal json bytes to time duration
+func (duration *Duration) UnmarshalJSON(b []byte) error {
+	var unmarshalledJSON interface{}
+
+	err := json.Unmarshal(b, &unmarshalledJSON)
+	if err != nil {
+		return err
+	}
+
+	switch value := unmarshalledJSON.(type) {
+	case float64:
+		duration.Duration = time.Duration(value)
+	case string:
+		duration.Duration, err = time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid duration: %#v", unmarshalledJSON)
+	}
+
+	return nil
 }

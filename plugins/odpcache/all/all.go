@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022-2023, Optimizely, Inc. and contributors              *
+ * Copyright 2023, Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -14,25 +14,11 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package optimizely wraps the Optimizely SDK
-package optimizely
+// Package all //
+package all
 
 import (
-	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+	// Register your odpCache here if it is created outside the odpcache/services package
+	// Also, make sure your odpCache calls `odpcache.Add()` in its init() method
+	_ "github.com/optimizely/agent/plugins/odpcache/services"
 )
-
-// Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key
-type Cache interface {
-	GetClient(sdkKey string) (*OptlyClient, error)
-	UpdateConfigs(sdkKey string)
-	// SetUserProfileService sets userProfileService to be used for the given sdkKey
-	SetUserProfileService(sdkKey, userProfileService string)
-	// SetODPCache sets odpCache to be used for the given sdkKey
-	SetODPCache(sdkKey, odpCache string)
-}
-
-// SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates
-type SyncedConfigManager interface {
-	optimizelyconfig.ProjectConfigManager
-	SyncConfig()
-}
