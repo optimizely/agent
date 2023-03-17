@@ -14,53 +14,51 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package services //
-package services
+// Package utils //
+package utils
 
 import (
-	"github.com/optimizely/agent/plugins/odpcache"
-	"github.com/optimizely/agent/plugins/utils"
-	"github.com/optimizely/go-sdk/pkg/odp/cache"
+	"encoding/json"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// InMemoryCache represents the in-memory implementation of Cache interface
-type InMemoryCache struct {
-	Size    int            `json:"size"`
-	Timeout utils.Duration `json:"timeout"`
-	*cache.LRUCache
+type testDurationStruct struct {
+	D Duration `json:"duration"`
 }
 
-// Lookup is used to retrieve segments
-func (i *InMemoryCache) Lookup(key string) (segments interface{}) {
-	if i.LRUCache == nil {
-		i.initClient()
-		return
-	}
-	return i.LRUCache.Lookup(key)
+func TestValidValues(t *testing.T) {
+
+	testStruct := testDurationStruct{}
+	testJSON := `{"duration": "5s"}`
+	e := json.Unmarshal([]byte(testJSON), &testStruct)
+	assert.NoError(t, e)
+	assert.Equal(t, 5*time.Second, testStruct.D.Duration)
+
+	testJSON = `{"duration": "5m"}`
+	e = json.Unmarshal([]byte(testJSON), &testStruct)
+	assert.NoError(t, e)
+	assert.Equal(t, 5*time.Minute, testStruct.D.Duration)
+
+	testJSON = `{"duration": 5}`
+	e = json.Unmarshal([]byte(testJSON), &testStruct)
+	assert.NoError(t, e)
+	assert.Equal(t, 5*time.Nanosecond, testStruct.D.Duration)
+
+	testJSON = `{}`
+	testStruct = testDurationStruct{}
+	e = json.Unmarshal([]byte(testJSON), &testStruct)
+	assert.NoError(t, e)
+	assert.Equal(t, time.Duration(0), testStruct.D.Duration)
 }
 
-// Save is used to save segments
-func (i *InMemoryCache) Save(key string, value interface{}) {
-	if i.LRUCache == nil {
-		i.initClient()
-	}
-	i.LRUCache.Save(key, value)
-}
+func TestInvalidValues(t *testing.T) {
 
-// Reset is used to reset segments
-func (i *InMemoryCache) Reset() {
-	if i.LRUCache != nil {
-		i.LRUCache.Reset()
-	}
-}
-
-func (i *InMemoryCache) initClient() {
-	i.LRUCache = cache.NewLRUCache(i.Size, i.Timeout.Duration)
-}
-
-func init() {
-	inMemoryCacheCreator := func() cache.Cache {
-		return &InMemoryCache{}
-	}
-	odpcache.Add("in-memory", inMemoryCacheCreator)
+	// Time without unit
+	testStruct := testDurationStruct{}
+	testJSON := `{"duration": "5"}`
+	e := json.Unmarshal([]byte(testJSON), &testStruct)
+	assert.Error(t, e)
 }

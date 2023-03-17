@@ -20,10 +20,10 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/plugins/odpcache"
+	"github.com/optimizely/agent/plugins/utils"
 	"github.com/optimizely/go-sdk/pkg/odp/cache"
 	"github.com/rs/zerolog/log"
 )
@@ -32,12 +32,11 @@ var ctx = context.Background()
 
 // RedisCache represents the redis implementation of Cache interface
 type RedisCache struct {
-	Client     *redis.Client
-	Expiration time.Duration
-	Address    string `json:"host"`
-	Password   string `json:"password"`
-	Database   int    `json:"database"`
-	Timeout    int    `json:"timeout"`
+	Client   *redis.Client
+	Address  string         `json:"host"`
+	Password string         `json:"password"`
+	Database int            `json:"database"`
+	Timeout  utils.Duration `json:"timeout"`
 }
 
 // Lookup is used to retrieve segments
@@ -81,7 +80,7 @@ func (r *RedisCache) Save(key string, value interface{}) {
 
 	if finalSegments, err := json.Marshal(value); err == nil {
 		// Log error message if something went wrong
-		if setError := r.Client.Set(ctx, key, finalSegments, r.Expiration).Err(); setError != nil {
+		if setError := r.Client.Set(ctx, key, finalSegments, r.Timeout.Duration).Err(); setError != nil {
 			log.Error().Msg(setError.Error())
 		}
 	}
@@ -100,7 +99,6 @@ func (r *RedisCache) initClient() {
 		Password: r.Password,
 		DB:       r.Database,
 	})
-	r.Expiration = time.Duration(r.Timeout * int(time.Second))
 }
 
 func init() {

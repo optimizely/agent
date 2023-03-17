@@ -105,12 +105,12 @@ func assertClient(t *testing.T, actual config.ClientConfig) {
 	redisCacheService := actualCacheServices["redis"].(map[string]interface{})
 	assert.EqualValues(t, "localhost:6379", redisCacheService["host"])
 	assert.EqualValues(t, "", redisCacheService["password"])
-	assert.EqualValues(t, 5, redisCacheService["timeout"])
+	assert.EqualValues(t, "5s", redisCacheService["timeout"])
 	assert.EqualValues(t, "123", redisCacheService["database"])
 
 	actualInMemoryService := actualCacheServices["in-memory"].(map[string]interface{})
 	assert.EqualValues(t, 100, actualInMemoryService["size"])
-	assert.EqualValues(t, 5, actualInMemoryService["timeout"])
+	assert.EqualValues(t, "5s", actualInMemoryService["timeout"])
 }
 
 func assertLog(t *testing.T, actual config.LogConfig) {
@@ -253,12 +253,12 @@ func TestViperProps(t *testing.T) {
 	odpCacheServices := map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			"size":    100,
-			"timeout": 5,
+			"timeout": "5s",
 		},
 		"redis": map[string]interface{}{
 			"host":     "localhost:6379",
 			"password": "",
-			"timeout":  5,
+			"timeout":  "5s",
 			"database": "123",
 		},
 		"custom": map[string]interface{}{
@@ -364,7 +364,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CLIENT_SDKKEYREGEX", "custom-regex")
 
 	_ = os.Setenv("OPTIMIZELY_CLIENT_USERPROFILESERVICE", `{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"},"redis":{"host":"localhost:6379","password":""},"rest":{"host":"http://localhost","lookuppath":"/ups/lookup","savepath":"/ups/save","headers":{"content-type":"application/json"},"async":true},"custom":{"path":"http://test2.com"}}}`)
-	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":5},"redis":{"host":"localhost:6379","password":"","timeout":5,"database": "123"},"custom":{"path":"http://test2.com"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE", `{"default":"in-memory","services":{"in-memory":{"size":100,"timeout":"5s"},"redis":{"host":"localhost:6379","password":"","timeout":"5s","database": "123"},"custom":{"path":"http://test2.com"}}}`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_DISABLE", `true`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_EVENTSREQUESTTIMEOUT", `5s`)
 	_ = os.Setenv("OPTIMIZELY_CLIENT_ODP_EVENTSFLUSHINTERVAL", `5s`)

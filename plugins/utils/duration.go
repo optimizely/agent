@@ -14,53 +14,40 @@
  * limitations under the License.                                           *
  ***************************************************************************/
 
-// Package services //
-package services
+// Package utils //
+package utils
 
 import (
-	"github.com/optimizely/agent/plugins/odpcache"
-	"github.com/optimizely/agent/plugins/utils"
-	"github.com/optimizely/go-sdk/pkg/odp/cache"
+	"encoding/json"
+	"fmt"
+	"time"
 )
 
-// InMemoryCache represents the in-memory implementation of Cache interface
-type InMemoryCache struct {
-	Size    int            `json:"size"`
-	Timeout utils.Duration `json:"timeout"`
-	*cache.LRUCache
+// Duration represents json unmarshallable implementation of time.Duration
+type Duration struct {
+	time.Duration
 }
 
-// Lookup is used to retrieve segments
-func (i *InMemoryCache) Lookup(key string) (segments interface{}) {
-	if i.LRUCache == nil {
-		i.initClient()
-		return
+// UnmarshalJSON unmarshal json bytes to time duration
+func (duration *Duration) UnmarshalJSON(b []byte) error {
+	var unmarshalledJSON interface{}
+
+	err := json.Unmarshal(b, &unmarshalledJSON)
+	if err != nil {
+		return err
 	}
-	return i.LRUCache.Lookup(key)
-}
 
-// Save is used to save segments
-func (i *InMemoryCache) Save(key string, value interface{}) {
-	if i.LRUCache == nil {
-		i.initClient()
+	switch value := unmarshalledJSON.(type) {
+	case float64:
+		duration.Duration = time.Duration(value)
+	case string:
+		duration.Duration, err = time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid duration: %#v", unmarshalledJSON)
 	}
-	i.LRUCache.Save(key, value)
-}
 
-// Reset is used to reset segments
-func (i *InMemoryCache) Reset() {
-	if i.LRUCache != nil {
-		i.LRUCache.Reset()
-	}
-}
-
-func (i *InMemoryCache) initClient() {
-	i.LRUCache = cache.NewLRUCache(i.Size, i.Timeout.Duration)
-}
-
-func init() {
-	inMemoryCacheCreator := func() cache.Cache {
-		return &InMemoryCache{}
-	}
-	odpcache.Add("in-memory", inMemoryCacheCreator)
+	return nil
 }

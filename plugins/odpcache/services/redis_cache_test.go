@@ -19,7 +19,9 @@ package services
 
 import (
 	"testing"
+	"time"
 
+	"github.com/optimizely/agent/plugins/utils"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -33,7 +35,7 @@ func (r *RedisCacheTestSuite) SetupTest() {
 		Address:  "100",
 		Password: "10",
 		Database: 1,
-		Timeout:  100,
+		Timeout:  utils.Duration{Duration: 100 * time.Second},
 	}
 }
 

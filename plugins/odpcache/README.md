@@ -15,7 +15,7 @@ odp:
         size: 0
         ## timeout after which least recently used records will be deleted
         ## 0 means records will never be deleted
-        timeout: 0 ## seconds
+        timeout: 0s
 ```
 
 2. To use the redis `ODPCache`, update the `config.yaml` as shown below:
@@ -29,7 +29,7 @@ odp:
         host: "your_host"
         password: "your_password"
         database: 0 ## your database
-        timeout: 0 ## seconds
+        timeout: 0s
 ```
 
 ## Custom ODPCache Implementation

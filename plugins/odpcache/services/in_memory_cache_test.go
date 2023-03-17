@@ -19,7 +19,9 @@ package services
 
 import (
 	"testing"
+	"time"
 
+	"github.com/optimizely/agent/plugins/utils"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -31,7 +33,7 @@ type InMemoryCacheTestSuite struct {
 func (im *InMemoryCacheTestSuite) SetupTest() {
 	im.cache = InMemoryCache{
 		Size:    10000,
-		Timeout: 600,
+		Timeout: utils.Duration{Duration: 600 * time.Second},
 	}
 }
 

@@ -232,7 +232,7 @@ func (suite *CacheTestSuite) TestODPCacheForSDKKeyNotProvidedInConfig() {
 			SegmentsCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    0,
-					"timeout": 0,
+					"timeout": "0s",
 				}},
 			},
 		},
@@ -262,7 +262,7 @@ func (suite *CacheTestSuite) TestNoCreatorAddedforODPCache() {
 			SegmentsCache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
 				"dummy": map[string]interface{}{
 					"size":    0,
-					"timeout": 0,
+					"timeout": "0s",
 				}},
 			},
 		},
@@ -302,7 +302,7 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforODPCache() {
 			SegmentsCache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
 				"dummy": map[string]interface{}{
 					"size":    0,
-					"timeout": 0,
+					"timeout": "0s",
 				}},
 			},
 		},
@@ -412,7 +412,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 			SegmentsCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
-					"timeout": 5,
+					"timeout": "5s",
 				}},
 			},
 			Disable:                true,
@@ -439,7 +439,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 	inMemoryODPCache, ok := client.odpCache.(*odpCacheServices.InMemoryCache)
 	s.True(ok)
 	s.Equal(100, inMemoryODPCache.Size)
-	s.Equal(5, inMemoryODPCache.Timeout)
+	s.Equal(5*time.Second, inMemoryODPCache.Timeout.Duration)
 
 	_, err = loader("invalid!")
 	s.Error(err)
@@ -462,7 +462,7 @@ func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 			SegmentsCache: map[string]interface{}{"default": "", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
-					"timeout": 5,
+					"timeout": "5s",
 				}},
 			},
 		},
@@ -493,7 +493,7 @@ func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 	inMemoryODPCache, ok := client.odpCache.(*odpCacheServices.InMemoryCache)
 	s.True(ok)
 	s.Equal(100, inMemoryODPCache.Size)
-	s.Equal(5, inMemoryODPCache.Timeout)
+	s.Equal(5*time.Second, inMemoryODPCache.Timeout.Duration)
 }
 
 func (s *DefaultLoaderTestSuite) TestAddedByDefaultProfileServicesAndODPCache() {
@@ -533,7 +533,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 					"host":     "100",
 					"password": "10",
 					"database": 1,
-					"timeout":  1,
+					"timeout":  "1s",
 				},
 			}},
 		},
@@ -572,8 +572,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 		s.Equal("100", testRedisODPCache.Address)
 		s.Equal("10", testRedisODPCache.Password)
 		s.Equal(1, testRedisODPCache.Database)
-		s.Equal(1, testRedisODPCache.Timeout)
-		s.Equal(1*time.Second, testRedisODPCache.Expiration)
+		s.Equal(1*time.Second, testRedisODPCache.Timeout.Duration)
 
 		// Check if redis client was instantiated with updated config
 		s.NotNil(testRedisODPCache.Client)
@@ -592,7 +591,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache
 			SegmentsCache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
 				"in-memory": map[string]interface{}{
 					"size":    100,
-					"timeout": 10,
+					"timeout": "10s",
 				},
 			}},
 		},
@@ -612,7 +611,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache
 
 	if testInMemoryODPCache, ok := client.odpCache.(*odpCacheServices.InMemoryCache); ok {
 		s.Equal(100, testInMemoryODPCache.Size)
-		s.Equal(10, testInMemoryODPCache.Timeout)
+		s.Equal(10*time.Second, testInMemoryODPCache.Timeout.Duration)
 
 		// Check if lru cache was instantiated
 		s.NotNil(testInMemoryODPCache.LRUCache)

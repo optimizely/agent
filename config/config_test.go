@@ -92,7 +92,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{
 		"in-memory": map[string]interface{}{
 			"size":    10000,
-			"timeout": 600, // seconds
+			"timeout": "600s",
 		},
 	}, conf.Client.ODP.SegmentsCache["services"])
 

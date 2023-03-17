@@ -171,12 +171,12 @@ client:
         services:
           in-memory: 
             size: 10000
-            timeout: 600 # seconds
+            timeout: 600s
         #   redis: 
         #     host: "localhost:6379"
         #     password: ""
         #     database: 0
-        #     timeout: 0 # seconds
+        #     timeout: 0s
       
 
 ##
