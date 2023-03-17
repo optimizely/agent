@@ -7,13 +7,14 @@ Use a ODP Cache to cache user segments fetched from the ODP server.
 ```
 ## configure optional ODP Cache
 odp:
+  ## If no segmentsCache is defined (or no default is defined), we will use the default in-memory with default size and timeout
   segmentsCache:
     default: "in-memory"
     services:
       in-memory: 
         ## 0 means cache will be disabled
         size: 0
-        ## timeout after which least recently used records will be deleted
+        ## timeout after which the cached item will become invalid.
         ## 0 means records will never be deleted
         timeout: 0s
 ```
@@ -22,6 +23,7 @@ odp:
 ```
 ## configure optional ODP Cache
 odp:
+  ## If no segmentsCache is defined (or no default is defined), we will use the default in-memory with default size and timeout
   segmentsCache:
     default: "redis"
     services:

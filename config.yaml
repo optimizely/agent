@@ -166,6 +166,7 @@ client:
       eventsFlushInterval: 1s
       ## Timeout in seconds after which segment requests will timeout.
       segmentsRequestTimeout: 10s
+      ## If no segmentsCache is defined (or no default is defined), we will use the default in-memory with default size and timeout
       segmentsCache:
         default: "in-memory"
         services:
