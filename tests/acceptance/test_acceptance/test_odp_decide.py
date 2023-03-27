@@ -8,57 +8,59 @@ from tests.acceptance.helpers import create_and_validate_request_and_response
 from tests.acceptance.helpers import sort_response
 
 expected_fetch_disabled = {
-    "variationKey": "on",
-    "enabled": True,
-    "ruleKey": "flag1_targeted_delivery",
+    "variationKey": "off",
+    "enabled": False,
+    "ruleKey": "default-rollout-52207-23726430538",
     "flagKey": "flag1",
     "userContext": {
         "userId": "fs-id-1",
         "attributes": {}
     },
-    "reasons": ['an error occurred while evaluating nested tree for audience ID "22725221898"',
-                'Audiences for experiment flag1_experiment collectively evaluated to false.',
-                'User "fs-id-1" does not meet conditions to be in experiment "flag1_experiment".',
-                'Audiences for experiment flag1_targeted_delivery collectively evaluated to true.']
+    "reasons": ['an error occurred while evaluating nested tree for audience ID "23783030150"',
+                'Audiences for experiment ab_experiment collectively evaluated to false.',
+                'User "fs-id-1" does not meet conditions to be in experiment "ab_experiment".',
+                'Audiences for experiment default-rollout-52207-23726430538 collectively evaluated to true.',
+                'User "fs-id-1" meets conditions for targeting rule "Everyone Else".']
 }
 
 expected_no_segments_fetched = {
-    "variationKey": "on",
-    "enabled": True,
-    "ruleKey": "flag1_targeted_delivery",
+    "variationKey": "off",
+    "enabled": False,
+    "ruleKey": "default-rollout-52207-23726430538",
     "flagKey": "flag1",
     "userContext": {
         "userId": "test_user",
         "attributes": {}
     },
-    "reasons": ['an error occurred while evaluating nested tree for audience ID "22725221898"',
-                'Audiences for experiment flag1_experiment collectively evaluated to false.',
-                'User "test_user" does not meet conditions to be in experiment "flag1_experiment".',
-                'Audiences for experiment flag1_targeted_delivery collectively evaluated to true.']
+    "reasons": ['an error occurred while evaluating nested tree for audience ID "23783030150"',
+                'Audiences for experiment ab_experiment collectively evaluated to false.',
+                'User "test_user" does not meet conditions to be in experiment "ab_experiment".',
+                'Audiences for experiment default-rollout-52207-23726430538 collectively evaluated to true.',
+                'User "test_user" meets conditions for targeting rule "Everyone Else".']
 }
 
 expected_fetch_enabled = {
-    "variationKey": "variation_a",
+    "variationKey": "variation_b",
     "enabled": True,
-    "ruleKey": "flag1_experiment",
+    "ruleKey": "ab_experiment",
     "flagKey": "flag1",
     "userContext": {
         "userId": "fs-id-1",
         "attributes": {}
     },
-    "reasons": ["Audiences for experiment flag1_experiment collectively evaluated to true."]
+    "reasons": ["Audiences for experiment ab_experiment collectively evaluated to true."]
 }
 
 expected_fetch_enabled_default_rollout = {
     "variationKey": "off",
     "enabled": False,
-    "ruleKey": "default-rollout-34903-22583870382",
+    "ruleKey": "default-rollout-52231-23726430538",
     "flagKey": "flag2",
     "userContext": {
         "userId": "fs-id-1",
         "attributes": {}
     },
-    "reasons": ['Audiences for experiment default-rollout-34903-22583870382 collectively evaluated to true.',
+    "reasons": ['Audiences for experiment default-rollout-52231-23726430538 collectively evaluated to true.',
                 'User "fs-id-1" meets conditions for targeting rule "Everyone Else".']
 }
 
@@ -74,7 +76,7 @@ expected_fetch_failed = {
         ("flag2", expected_fetch_enabled_default_rollout, 200, True, 'fs-id-1'),
         ("flag1", expected_no_segments_fetched, 200, True, 'test_user'),
     ])
-def test_decide_with_fetch_segments(session_override_sdk_key_odp, flag_key, expected_response, expected_status_code, fetch_segments, user_id):
+def test_decide_fetch_qualified_segments(session_override_sdk_key_odp, flag_key, expected_response, expected_status_code, fetch_segments, user_id):
     """
     Test validates:
     Correct response with fetch_segments enabled and disabled.
@@ -110,7 +112,7 @@ def test_decide_with_fetch_segments(session_override_sdk_key_odp, flag_key, expe
     "flag_key, expected_response, expected_status_code", [
         ("flag1", expected_fetch_failed, 500),
     ])
-def test_decide_with_fetch_odp_not_integrated(session_obj, flag_key, expected_response, expected_status_code):
+def test_decide_fetch_qualified_segments_odp_not_integrated(session_obj, flag_key, expected_response, expected_status_code):
     """
     Test validates:
     Correct response when odp not integrated.

@@ -6,8 +6,8 @@ import requests
 # sdk key of the project "Agent Acceptance", under QA account
 sdk_key = "KZbunNn9bVfBWLpZPq2XC4"
 
-# Temporary sdk key for odp testing, need to discuss
-sdk_key_odp = "TbrfRLeKvLyWGusqANoeR"
+# sdk key of the project "Agent Acceptance w ODP", under QA account
+sdk_key_odp = "91GuiKYH8ZF1hLLXR7DR1"
 
 @pytest.fixture
 def session_obj():
