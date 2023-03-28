@@ -32,6 +32,7 @@ import (
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/optimizely/go-sdk/pkg/odp"
 	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
@@ -272,7 +273,7 @@ func defaultLoader(
 		segmentManager := odpSegmentPkg.NewSegmentManager(
 			sdkKey,
 			odpSegmentPkg.WithAPIManager(
-				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(nil, utils.Timeout(conf.ODP.SegmentsRequestTimeout))),
+				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "SegmentAPIManager"), utils.Timeout(conf.ODP.SegmentsRequestTimeout))),
 			),
 			odpSegmentPkg.WithSegmentsCache(clientODPCache),
 		)
@@ -281,7 +282,7 @@ func defaultLoader(
 		eventManager := odpEventPkg.NewBatchEventManager(
 			odpEventPkg.WithAPIManager(
 				odpEventPkg.NewEventAPIManager(
-					sdkKey, utils.NewHTTPRequester(nil, utils.Timeout(conf.ODP.EventsRequestTimeout)),
+					sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "EventAPIManager"), utils.Timeout(conf.ODP.EventsRequestTimeout)),
 				),
 			),
 			odpEventPkg.WithFlushInterval(conf.ODP.EventsFlushInterval),
