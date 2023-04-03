@@ -18,7 +18,7 @@ expected_redis_save = {
         "userId": "fs-id-1",
         "attributes": {}
     },
-    "reasons": ["Audiences for experiment ab_experiment collectively evaluated to true."]
+    "reasons": ['User "fs-id-1" was previously bucketed into variation "variation_b" of experiment "ab_experiment".']
 }
 
 expected_redis_lookup = {
@@ -54,6 +54,8 @@ def test_redis_save(session_override_sdk_key_odp):
     expected_segments = ["atsbugbashsegmentdob", "atsbugbashsegmentgender"]
     uId = "fs_user_id-$-fs-id-1"
     r = redis.Redis(host='localhost', port=6379, db=0)
+    # clean redis before testing since several tests use same user_id
+    r.flushdb()
 
     payload = {
         "userId": "fs-id-1",
