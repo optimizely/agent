@@ -93,6 +93,7 @@ help: ## help
 test-acceptance:
 	export OPTIMIZELY_SERVER_BATCHREQUESTS_OPERATIONSLIMIT='3' && \
 	export OPTIMIZELY_CLIENT_USERPROFILESERVICE='{"default":"in-memory","services":{"in-memory":{"storagestrategy":"fifo"}}}' && \
+	export OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE='{"default":"redis","services":{"redis":{"host":"localhost:6379","password":"","timeout":"0s","database": 0}}}' && \
 	make clean && \
 	make setup && \
 	make run & \
