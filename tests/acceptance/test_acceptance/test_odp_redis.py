@@ -15,31 +15,31 @@ expected_redis_save = {
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
     "userContext": {
-        "userId": "fs-id-1",
+        "userId": "matjaz-user-1",
         "attributes": {}
     },
-    "reasons": ['User "fs-id-1" was previously bucketed into variation "variation_b" of experiment "ab_experiment".']
+    "reasons": ['User "matjaz-user-1" was previously bucketed into variation "variation_b" of experiment "ab_experiment".']
 }
 
 expected_redis_lookup = {
-    "variationKey": "variation_b",
+    "variationKey": "variation_a",
     "enabled": True,
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
     "userContext": {
-        "userId": "fs-id-2",
+        "userId": "matjaz-user-2",
         "attributes": {}
     },
     "reasons": ["Audiences for experiment ab_experiment collectively evaluated to true."]
 }
 
 expected_redis_reset = {
-    "variationKey": "variation_a",
+    "variationKey": "variation_b",
     "enabled": True,
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
     "userContext": {
-        "userId": "fs-id-3",
+        "userId": "matjaz-user-4",
         "attributes": {}
     },
     "reasons": ["Audiences for experiment ab_experiment collectively evaluated to true."]
@@ -51,14 +51,14 @@ def test_redis_save(session_override_sdk_key_odp):
     :param session_override_sdk_key_odp: sdk key to override the session using odp key
     """
     
-    expected_segments = ["atsbugbashsegmentdob", "atsbugbashsegmentgender"]
-    uId = "fs_user_id-$-fs-id-1"
+    expected_segments = ["atsbugbashsegmenthaspurchased", "atsbugbashsegmentdob"]
+    uId = "fs_user_id-$-matjaz-user-1"
     r = redis.Redis(host='localhost', port=6379, db=0)
     # clean redis before testing since several tests use same user_id
     r.flushdb()
 
     payload = {
-        "userId": "fs-id-1",
+        "userId": "matjaz-user-1",
         "decideOptions": [
             "ENABLED_FLAGS_ONLY",
             "INCLUDE_REASONS"
@@ -85,13 +85,13 @@ def test_redis_lookup(session_override_sdk_key_odp):
     :param session_override_sdk_key_odp: sdk key to override the session using odp key
     """
     
-    expected_segments = ["atsbugbashsegmentdob", "atsbugbashsegmentgender"]
-    uId = "fs_user_id-$-fs-id-2"
+    expected_segments = ["atsbugbashsegmenthaspurchased", "atsbugbashsegmentdob"]
+    uId = "fs_user_id-$-matjaz-user-2"
     r = redis.Redis(host='localhost', port=6379, db=0)
     r.set(uId, json.dumps(expected_segments))
 
     payload = {
-        "userId": "fs-id-2",
+        "userId": "matjaz-user-2",
         "decideOptions": [
             "ENABLED_FLAGS_ONLY",
             "INCLUDE_REASONS"
@@ -118,17 +118,17 @@ def test_redis_reset(session_override_sdk_key_odp):
     :param session_override_sdk_key_odp: sdk key to override the session using odp key
     """
     
-    expected_segments_after_reset = ["atsbugbashsegmentdob", "atsbugbashsegmentgender"]
-    uId = "fs_user_id-$-fs-id-3"
+    expected_segments_after_reset = ['atsbugbashsegmentdob', 'atsbugbashsegmentgender']
+    uId = "fs_user_id-$-matjaz-user-4"
     r = redis.Redis(host='localhost', port=6379, db=0)
 
-    # Manually add invalid segments for fs-id-3 in redis
+    # Manually add invalid segments for matjaz-user-4 in redis
     r.set(uId, json.dumps(["invalid_segments"]))
     # Check invalid segments were saved
     assert json.loads(json.dumps(["invalid_segments"])) == json.loads(r.get(uId))
 
     payload = {
-        "userId": "fs-id-3",
+        "userId": "matjaz-user-4",
         "decideOptions": [
             "ENABLED_FLAGS_ONLY",
             "INCLUDE_REASONS"
