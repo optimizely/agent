@@ -13,14 +13,14 @@ expected_fetch_disabled = {
     "ruleKey": "default-rollout-52207-23726430538",
     "flagKey": "flag1",
     "userContext": {
-        "userId": "fs-id-1",
+        "userId": "matjaz-user-1",
         "attributes": {}
     },
     "reasons": ['an error occurred while evaluating nested tree for audience ID "23783030150"',
                 'Audiences for experiment ab_experiment collectively evaluated to false.',
-                'User "fs-id-1" does not meet conditions to be in experiment "ab_experiment".',
+                'User "matjaz-user-1" does not meet conditions to be in experiment "ab_experiment".',
                 'Audiences for experiment default-rollout-52207-23726430538 collectively evaluated to true.',
-                'User "fs-id-1" meets conditions for targeting rule "Everyone Else".']
+                'User "matjaz-user-1" meets conditions for targeting rule "Everyone Else".']
 }
 
 expected_no_segments_fetched = {
@@ -45,7 +45,7 @@ expected_fetch_enabled = {
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
     "userContext": {
-        "userId": "fs-id-1",
+        "userId": "matjaz-user-1",
         "attributes": {}
     },
     "reasons": ["Audiences for experiment ab_experiment collectively evaluated to true."]
@@ -57,11 +57,11 @@ expected_fetch_enabled_default_rollout = {
     "ruleKey": "default-rollout-52231-23726430538",
     "flagKey": "flag2",
     "userContext": {
-        "userId": "fs-id-1",
+        "userId": "matjaz-user-1",
         "attributes": {}
     },
     "reasons": ['Audiences for experiment default-rollout-52231-23726430538 collectively evaluated to true.',
-                'User "fs-id-1" meets conditions for targeting rule "Everyone Else".']
+                'User "matjaz-user-1" meets conditions for targeting rule "Everyone Else".']
 }
 
 expected_fetch_failed = {
@@ -71,9 +71,9 @@ expected_fetch_failed = {
 
 @pytest.mark.parametrize(
     "flag_key, expected_response, expected_status_code, fetch_segments, user_id", [
-        ("flag1", expected_fetch_disabled, 200, False, 'fs-id-1'),
-        ("flag1", expected_fetch_enabled, 200, True, 'fs-id-1'),
-        ("flag2", expected_fetch_enabled_default_rollout, 200, True, 'fs-id-1'),
+        ("flag1", expected_fetch_disabled, 200, False, 'matjaz-user-1'),
+        ("flag1", expected_fetch_enabled, 200, True, 'matjaz-user-1'),
+        ("flag2", expected_fetch_enabled_default_rollout, 200, True, 'matjaz-user-1'),
         ("flag1", expected_no_segments_fetched, 200, True, 'test_user'),
     ])
 def test_decide_fetch_qualified_segments(session_override_sdk_key_odp, flag_key, expected_response, expected_status_code, fetch_segments, user_id):
@@ -124,7 +124,7 @@ def test_decide_fetch_qualified_segments_odp_not_integrated(session_obj, flag_ke
     """
 
     payload = {
-        "userId": "fs-id-1",
+        "userId": "matjaz-user-1",
         "decideOptions": [
             "ENABLED_FLAGS_ONLY",
             "INCLUDE_REASONS"

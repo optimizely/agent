@@ -57,13 +57,14 @@ func (r *RedisCache) Lookup(key string) (segments interface{}) {
 		return
 	}
 
+	var fSegments []string
 	// Check if result was unmarshalled successfully
-	err := json.Unmarshal([]byte(result), &segments)
+	err := json.Unmarshal([]byte(result), &fSegments)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return
 	}
-	return segments
+	return fSegments
 }
 
 // Save is used to save segments
