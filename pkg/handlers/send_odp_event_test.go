@@ -166,7 +166,7 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 	actualEvent := events[0]
 	suite.Equal("any", actualEvent.Action)
 	suite.Equal("any", actualEvent.Type)
-	suite.Equal(map[string]string{"email": "test@email.com", "fs-user-id": "test-user"}, actualEvent.Identifiers)
+	suite.Equal(map[string]string{"email": "test@email.com", "fs_user_id": "test-user"}, actualEvent.Identifiers)
 	suite.Equal("go-sdk", actualEvent.Data["data_source"])
 	suite.Equal("sdk", actualEvent.Data["data_source_type"])
 	_, exists := actualEvent.Data["data_source_version"]
