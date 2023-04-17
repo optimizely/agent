@@ -73,8 +73,7 @@ jobs:
       env:
         SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
       run: |
-        go mod tidy
-        curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
+        curl -sSL https://download.sourceclear.com/ci.sh | sh
     - name: run
       run: |
         make -e setup build
