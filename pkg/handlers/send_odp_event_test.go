@@ -134,8 +134,8 @@ func (suite *SendOdpEventTestSuite) assertError(rec *httptest.ResponseRecorder, 
 
 func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 	sb := event.Event{
-		Action:      "any",
-		Type:        "any",
+		Action:      "1",
+		Type:        "2",
 		Identifiers: map[string]string{"fs-user-id": "test-user", "email": "test@email.com"},
 		Data:        nil,
 	}
@@ -164,8 +164,8 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 	suite.Equal(1, len(events))
 
 	actualEvent := events[0]
-	suite.Equal("any", actualEvent.Action)
-	suite.Equal("any", actualEvent.Type)
+	suite.Equal("1", actualEvent.Action)
+	suite.Equal("2", actualEvent.Type)
 	suite.Equal(map[string]string{"email": "test@email.com", "fs_user_id": "test-user"}, actualEvent.Identifiers)
 	suite.Equal("go-sdk", actualEvent.Data["data_source"])
 	suite.Equal("sdk", actualEvent.Data["data_source_type"])
@@ -177,7 +177,7 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEvent() {
 
 func (suite *SendOdpEventTestSuite) TestSendOdpEventMissingAction() {
 	db := event.Event{
-		Type:        "any",
+		Type:        "1",
 		Identifiers: map[string]string{"fs-user-id": "testUser", "email": "test@email.com"},
 		Data:        nil,
 	}
@@ -196,7 +196,7 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEventMissingAction() {
 func (suite *SendOdpEventTestSuite) TestSendOdpEventEmptyAction() {
 	db := event.Event{
 		Action:      "",
-		Type:        "any",
+		Type:        "1",
 		Identifiers: map[string]string{"fs-user-id": "testUser", "email": "test@email.com"},
 		Data:        nil,
 	}
@@ -214,8 +214,8 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEventEmptyAction() {
 
 func (suite *SendOdpEventTestSuite) TestSendOdpEventMissingIdentifiers() {
 	db := event.Event{
-		Action: "any",
-		Type:   "any",
+		Action: "1",
+		Type:   "2",
 		Data:   nil,
 	}
 
@@ -232,8 +232,8 @@ func (suite *SendOdpEventTestSuite) TestSendOdpEventMissingIdentifiers() {
 
 func (suite *SendOdpEventTestSuite) TestSendOdpEventEmptyIdentifiers() {
 	db := event.Event{
-		Action:      "any",
-		Type:        "any",
+		Action:      "1",
+		Type:        "2",
 		Identifiers: map[string]string{},
 		Data:        nil,
 	}

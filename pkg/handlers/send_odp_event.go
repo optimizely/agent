@@ -42,7 +42,7 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = optlyClient.SendOdpEvent(body.Action, body.Type, body.Identifiers, body.Data)
+	err = optlyClient.SendOdpEvent(body.Type, body.Action, body.Identifiers, body.Data)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
