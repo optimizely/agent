@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta] - May 10, 2023
+
+- Fix issue with parameters for send-odp-event. ([#386](https://github.com/optimizely/agent/pull/386))
+- Update go-sdk version to fix Null and Empty Values in sendOdpEvent. ([#385](https://github.com/optimizely/agent/pull/385))
+- Add tests for redis cache. ([#384](https://github.com/optimizely/agent/pull/384))
+- Add acceptance tests for send-odp-event. ([#383](https://github.com/optimizely/agent/pull/383))
+
 ## [3.0.1] - March 16, 2023
 
 - Update README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack. ([#369](https://github.com/optimizely/agent/pull/369)).
