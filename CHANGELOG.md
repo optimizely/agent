@@ -4,12 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.0.0-beta] - May 10, 2023
+## [4.0.0-beta] - May 9, 2023
 
-- Fix issue with parameters for send-odp-event. ([#386](https://github.com/optimizely/agent/pull/386))
-- Update go-sdk version to fix Null and Empty Values in sendOdpEvent. ([#385](https://github.com/optimizely/agent/pull/385))
-- Add tests for redis cache. ([#384](https://github.com/optimizely/agent/pull/384))
-- Add acceptance tests for send-odp-event. ([#383](https://github.com/optimizely/agent/pull/383))
+### New Features
+
+The 4.0.0-beta release uses the [go-sdk](https://github.com/optimizely/go-sdk) version [2.0.0-beta](https://github.com/optimizely/go-sdk/releases/tag/v2.0.0-beta) which has a new primary feature, [Advanced Audience Targeting]( https://docs.developers.optimizely.com/feature-experimentation/docs/optimizely-data-platform-advanced-audience-targeting) enabled through integration with [Optimizely Data Platform (ODP)](https://docs.developers.optimizely.com/optimizely-data-platform/docs) ([#350](https://github.com/optimizely/go-sdk/pull/350), [#353](https://github.com/optimizely/go-sdk/pull/353), [#354](https://github.com/optimizely/go-sdk/pull/354), [#355](https://github.com/optimizely/go-sdk/pull/355)).
+
+New APIs added:
+
+- `FetchQualifiedSegments()` API has been added to the `/decide` endpoint. this API will retrieve user segments from the ODP server. The fetched segments will be used for audience evaluation. The fetched data will be stored in the local cache to avoid repeated network delays.
+
+- `SendOdpEvent()` API has been added with the `/send-opd-event` endpoint. Customers can build/send arbitrary ODP events that will bind user identifiers and data to user profiles in ODP.
+
+For details, refer to our documentation pages:
+
+* [Advanced Audience Targeting segment qualification methods](https://docs.developers.optimizely.com/feature-experimentation/v1.0/docs/advanced-audience-targeting-segment-qualification-methods-go) 
+
+* [Send Optimizely Data Platform data using Advanced Audience Targeting](https://docs.developers.optimizely.com/feature-experimentation/v1.0/docs/send-odp-data-using-advanced-audience-targeting-go) 
+
+### Bug Fix
+
+- Issue with parameter, null and empty values in `send-odp-event` have been fixed. ([#385](https://github.com/optimizely/agent/pull/385), [#386](https://github.com/optimizely/agent/pull/386))
+
+### Test Improvement
+
+- Tests for redis cache & acceptance tests for send-odp-event have been added. ([#383](https://github.com/optimizely/agent/pull/383), [#384](https://github.com/optimizely/agent/pull/384))
 
 ## [3.0.1] - March 16, 2023
 
