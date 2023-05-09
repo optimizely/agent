@@ -16,7 +16,7 @@ With ODP accounts integrated into Optimizely projects, you can build audiences u
 
 This version includes the following changes:
 
-- `FetchQualifiedSegments()` API has been added to the `/decide` endpoint. This API will retrieve user segments from the ODP server. Fetched segments will be used for audience evaluation. The fetched data will be stored in the local cache to avoid repeated network delays.
+- `FetchQualifiedSegments()` API has been added to the `/decide` endpoint. This API will retrieve user segments from the ODP server. The fetched segments will be used for audience evaluation. Fetched data will be stored in the local cache to avoid repeated network delays.
 
 - `SendOdpEvent()` API has been added with the `/send-opd-event` endpoint. Customers can build/send arbitrary ODP events that will bind user identifiers and data to user profiles in ODP.
 
