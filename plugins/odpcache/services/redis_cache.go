@@ -89,6 +89,12 @@ func (r *RedisCache) Save(key string, value interface{}) {
 
 // Reset is used to reset segments
 func (r *RedisCache) Reset() {
+
+	// This is required since reset can be called before lookup and save for fetchQualifiedSegments
+	if r.Client == nil {
+		r.initClient()
+	}
+
 	if r.Client != nil {
 		r.Client.FlushDB(ctx)
 	}
