@@ -20,15 +20,7 @@ For details, refer to our documentation pages:
 
 * [Advanced Audience Targeting segment qualification methods](https://docs.developers.optimizely.com/feature-experimentation/v1.0/docs/advanced-audience-targeting-segment-qualification-methods-go) 
 
-* [Send Optimizely Data Platform data using Advanced Audience Targeting](https://docs.developers.optimizely.com/feature-experimentation/v1.0/docs/send-odp-data-using-advanced-audience-targeting-go) 
-
-### Bug Fix
-
-- Issue with parameter, null and empty values in `send-odp-event` have been fixed. ([#385](https://github.com/optimizely/agent/pull/385), [#386](https://github.com/optimizely/agent/pull/386))
-
-### Test Improvement
-
-- Tests for redis cache & acceptance tests for send-odp-event have been added. ([#383](https://github.com/optimizely/agent/pull/383), [#384](https://github.com/optimizely/agent/pull/384))
+* [Send Optimizely Data Platform data using Advanced Audience Targeting](https://docs.developers.optimizely.com/feature-experimentation/v1.0/docs/send-odp-data-using-advanced-audience-targeting-go)
 
 ## [3.0.1] - March 16, 2023
 
