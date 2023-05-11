@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta] - May 9, 2023
+
+### New Features
+
+The 4.0.0-beta release introduces a new primary feature, [Advanced Audience Targeting](https://docs.developers.optimizely.com/feature-experimentation/docs/optimizely-data-platform-advanced-audience-targeting) enabled through integration with [Optimizely Data Platform (ODP)](https://docs.developers.optimizely.com/optimizely-data-platform/docs) ([#356](https://github.com/optimizely/agent/pull/356), [#364](https://github.com/optimizely/agent/pull/364), [#365](https://github.com/optimizely/agent/pull/365), [#366](https://github.com/optimizely/agent/pull/366)).
+
+You can use ODP, a high-performance [Customer Data Platform (CDP)](https://www.optimizely.com/optimization-glossary/customer-data-platform/), to easily create complex real-time segments (RTS) using first-party and 50+ third-party data sources out of the box. You can create custom schemas that support the user attributes important for your business, and stitch together user behavior done on different devices to better understand and target your customers for personalized user experiences. ODP can be used as a single source of truth for these segments in any Optimizely or 3rd party tool.
+
+With ODP accounts integrated into Optimizely projects, you can build audiences using segments pre-defined in ODP. The SDK will fetch the segments for given users and make decisions using the segments. For access to ODP audience targeting in your Feature Experimentation account, please contact your Optimizely Customer Success Manager.
+
+This version includes the following changes:
+
+- `FetchQualifiedSegments()` API has been added to the `/decide` endpoint. This API will retrieve user segments from the ODP server. The fetched segments will be used for audience evaluation. Fetched data will be stored in the local cache to avoid repeated network delays.
+
+- `SendOdpEvent()` API has been added with the `/send-opd-event` endpoint. Customers can build/send arbitrary ODP events that will bind user identifiers and data to user profiles in ODP.
+
+For details, refer to our documentation pages:
+
+* [Advanced Audience Targeting](https://docs.developers.optimizely.com/feature-experimentation/docs/optimizely-data-platform-advanced-audience-targeting) 
+
+* [Server SDK Support](https://docs.developers.optimizely.com/feature-experimentation/docs/advanced-audience-targeting-for-server-side-sdks)
+
+* [Use Optimizely Agent](https://docs.developers.optimizely.com/feature-experimentation/docs/use-optimizely-agent)
+
+* [Configure Optimizely Agent](https://docs.developers.optimizely.com/feature-experimentation/docs/configure-optimizely-agent)
+
+### Breaking Changes
+
+- ODPManager in the SDK is enabled by default. Unless an ODP account is integrated into the Optimizely projects, most ODPManager functions will be ignored. If needed, ODPManager can be disabled when OptimizelyClient is instantiated. From Agent, it can be switched off from config.yaml or env variables.
+
 ## [3.0.1] - March 16, 2023
 
 - Update README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack. ([#369](https://github.com/optimizely/agent/pull/369)).
