@@ -72,7 +72,9 @@ jobs:
     - name: sourceclear
       env:
         SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
-      run: curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
+      run: |
+        make -e setup build
+        curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
     - name: run
       run: |
         make -e setup build
@@ -136,10 +138,10 @@ jobs:
       id: get_version
       run: |
         git fetch --tags --force
-        echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
+        echo "VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')" >> $GITHUB_OUTPUT
     - name: Get current workspace path
       id: get_workspace
-      run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
+      run: echo "WORKSPACE=${GITHUB_WORKSPACE}" >> $GITHUB_OUTPUT
     - name: set the env
       run: |
         echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
@@ -173,10 +175,10 @@ jobs:
         ref: 'master'
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
+      run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
     - name: Get current workspace path
       id: get_workspace
-      run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
+      run: echo "WORKSPACE=${GITHUB_WORKSPACE}" >> $GITHUB_OUTPUT
     - name: set the env
       run: |
         TAG=${{ steps.get_version.outputs.VERSION }}
@@ -244,7 +246,7 @@ jobs:
         ref: 'master'
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
+      run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
     - name: set the env
       run: |
         TAG=${{ steps.get_version.outputs.VERSION }}
