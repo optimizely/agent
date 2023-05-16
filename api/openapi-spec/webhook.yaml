@@ -1,8 +1,12 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:  
   title: Optimizely Server API
   description: Optimizely.
   termsOfService: http://optimizely.com/terms/
+  contact:
+    name: Optimizely Support
+    url: https://www.optimizely.com/support/
+    email: support@optimizely.com
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
@@ -53,7 +57,7 @@ components:
           enum:
             - project.datafile_updated
         data:
-          $ref: '#/components/schemas/DatafileUpdateData    '
+          $ref: '#/components/schemas/DatafileUpdateData'
       required:
         - project_id
         - timestamp
