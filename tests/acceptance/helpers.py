@@ -4,7 +4,7 @@ import string
 from random import randint, choice
 
 import yaml
-from openapi_core import create_spec
+from openapi_core.spec.shortcuts import create_spec
 from openapi_core.validation.request.datatypes import (OpenAPIRequest, RequestParameters)
 from openapi_core.validation.request.validators import RequestValidator
 from openapi_core.validation.response.datatypes import OpenAPIResponse
