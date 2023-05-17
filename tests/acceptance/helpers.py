@@ -5,10 +5,10 @@ from random import randint, choice
 
 import yaml
 from openapi_core.spec.shortcuts import create_spec
-from openapi_core.validation.request.datatypes import (OpenAPIRequest, RequestParameters)
-from openapi_core.validation.request.validators import RequestValidator
-from openapi_core.validation.response.datatypes import OpenAPIResponse
-from openapi_core.validation.response.validators import ResponseValidator
+from openapi_core.protocols import (Request, Response)
+from openapi_core.datatypes import RequestParameters
+from openapi_core.validation.request.validators import V31RequestValidator
+from openapi_core.validation.response.validators import V31ResponseValidator
 from werkzeug.datastructures import ImmutableMultiDict
 
 ENDPOINT_ACTIVATE = '/v1/activate'
@@ -116,7 +116,7 @@ def create_and_validate_request(endpoint, method, payload='', params=[], headers
         header=headers
     )
 
-    request = OpenAPIRequest(
+    request = Request(
         full_url_pattern=endpoint,
         method=method,
         parameters=parameters,
@@ -124,7 +124,7 @@ def create_and_validate_request(endpoint, method, payload='', params=[], headers
         mimetype='application/json',
     )
 
-    validator = RequestValidator(spec)
+    validator = V31RequestValidator(spec)
     request_result = validator.validate(request)
 
     return request, request_result
@@ -138,13 +138,13 @@ def create_and_validate_response(request, response):
     :return:
         - result: result of response validation
     """
-    response = OpenAPIResponse(
+    response = Response(
         data=response.content,
         status_code=response.status_code,
         mimetype='application/json'
     )
 
-    validator = ResponseValidator(spec)
+    validator = V31ResponseValidator(spec)
     result = validator.validate(request, response)
     return result
 
