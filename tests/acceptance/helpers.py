@@ -4,12 +4,16 @@ import string
 from random import randint, choice
 
 import yaml
+from requests import Request, Response
 from openapi_core.spec.shortcuts import create_spec
-from openapi_core.protocols import (Request, Response)
+from openapi_core.contrib.requests import RequestsOpenAPIRequest
+from openapi_core.contrib.requests import RequestsOpenAPIResponse
 from openapi_core.datatypes import RequestParameters
+from openapi_core import unmarshal_response
 from openapi_core.validation.request.validators import V31RequestValidator
 from openapi_core.validation.response.validators import V31ResponseValidator
 from werkzeug.datastructures import ImmutableMultiDict
+from openapi_core import unmarshal_request
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
@@ -116,21 +120,25 @@ def create_and_validate_request(endpoint, method, payload='', params=[], headers
         header=headers
     )
 
+    req_header = {
+        "Content-Type": "application/json",
+    }
+
     request = Request(
-        full_url_pattern=endpoint,
+        url=endpoint,
         method=method,
-        parameters=parameters,
-        body=payload,
-        mimetype='application/json',
+        params=parameters,
+        data=payload,
+        headers=req_header,
     )
 
-    validator = V31RequestValidator(spec)
-    request_result = validator.validate(request)
+    openapi_request = RequestsOpenAPIRequest(request)
+    request_result = unmarshal_request(openapi_request, spec=spec)
 
     return request, request_result
 
 
-def create_and_validate_response(request, response):
+def create_and_validate_response(openapi_request, response):
     """
     Helper function to create OpenAPIResponse and validate it
     :param request: OpenAPIRequest
@@ -138,14 +146,17 @@ def create_and_validate_response(request, response):
     :return:
         - result: result of response validation
     """
+    res_header = {
+        "Content-Type": "application/json",
+    }
     response = Response(
-        data=response.content,
+        raw=response.content,
         status_code=response.status_code,
-        mimetype='application/json'
+        header=res_header,
     )
+    openapi_response = RequestsOpenAPIResponse(response)
 
-    validator = V31ResponseValidator(spec)
-    result = validator.validate(request, response)
+    result = result = unmarshal_response(openapi_request, openapi_response, spec=spec)
     return result
 
 
@@ -163,14 +174,15 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
     :return:
         - response: API response object
     """
+    base_url = os.getenv('host')
+    
     request, request_result = create_and_validate_request(
-        endpoint, method, payload, params, dict(session.headers)
+        base_url + endpoint, method, payload, params, dict(session.headers)
     )
 
     if not bypass_validation_request:
         request_result.raise_for_errors()
 
-    base_url = os.getenv('host')
 
     if method == 'post':
         response = session.post(base_url + endpoint, params=params, data=payload)
