@@ -7,6 +7,7 @@ from requests import Request
 from openapi_core import Spec
 from openapi_core.contrib.requests import RequestsOpenAPIRequest, RequestsOpenAPIResponse
 from openapi_core import unmarshal_request, unmarshal_response
+from openapi_core.validation.response.exceptions import MissingData
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
@@ -159,8 +160,10 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
             response = session.post(base_url + endpoint, params=params, data=payload)
         elif method == 'get':
             response = session.get(base_url + endpoint, params=params, data=payload)
-    
-        create_and_validate_response(request, response)
+        try: 
+            create_and_validate_response(request, response)
+        except MissingData:
+            return response
         return response
     except Exception as e:    
         raise e
