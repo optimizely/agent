@@ -86,7 +86,7 @@ def override_variation(sess, override_with):
     return resp
 
 
-def create_and_validate_request(endpoint, method, payload='', params=[], headers=[]):
+def create_and_validate_request(request):
     """
     Helper function to create OpenAPIRequest and validate it
     :param endpoint: API endpoint
@@ -98,16 +98,6 @@ def create_and_validate_request(endpoint, method, payload='', params=[], headers
         - request: OpenAPIRequest
         - request_result: result of request validation
     """
-    
-    headers["Content-Type"] = "application/json"
-
-    request = Request(
-        url=endpoint,
-        method=method,
-        params=params,
-        data=payload,
-        headers=headers,
-    )
 
     openapi_request = RequestsOpenAPIRequest(request)
     request_result = unmarshal_request(openapi_request, spec=spec)
@@ -115,7 +105,7 @@ def create_and_validate_request(endpoint, method, payload='', params=[], headers
     return openapi_request, request_result
 
 
-def create_and_validate_response(openapi_request, response):
+def create_and_validate_response(request, response):
     """
     Helper function to create OpenAPIResponse and validate it
     :param request: OpenAPIRequest
@@ -125,8 +115,9 @@ def create_and_validate_response(openapi_request, response):
     """
     response.headers["Content-Type"] = "application/json"
     openapi_response = RequestsOpenAPIResponse(response)
+    openapi_request = RequestsOpenAPIRequest(request)
 
-    result = result = unmarshal_response(openapi_request, openapi_response, spec=spec)
+    result = unmarshal_response(openapi_request, openapi_response, spec=spec)
     return result
 
 
@@ -145,22 +136,32 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
         - response: API response object
     """
     base_url = os.getenv('host')
-    
-    openapi_request, request_result = create_and_validate_request(
-        base_url + endpoint, method, payload, params, dict(session.headers)
+    headers = dict(session.headers)
+    headers["Content-Type"] = "application/json"
+
+    request = Request(
+        url=base_url + endpoint,
+        method=method,
+        params=params,
+        data=payload,
+        headers=headers,
     )
 
-    if not bypass_validation_request:
-        request_result.raise_for_errors()
 
+    try:
+        try:
+            create_and_validate_request(request)
+        except Exception as e:
+            if not bypass_validation_request:
+                raise e
 
-    if method == 'post':
-        response = session.post(base_url + endpoint, params=params, data=payload)
-    elif method == 'get':
-        response = session.get(base_url + endpoint, params=params, data=payload)
-    response_result = create_and_validate_response(openapi_request, response)
+        if method == 'post':
+            response = session.post(base_url + endpoint, params=params, data=payload)
+        elif method == 'get':
+            response = session.get(base_url + endpoint, params=params, data=payload)
+    
+        create_and_validate_response(request, response)
+        return response
+    except Exception as e:    
+        raise e
 
-    if not bypass_validation_response:
-        response_result.raise_for_errors()
-
-    return response
