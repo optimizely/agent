@@ -7,7 +7,9 @@ from requests import Request
 from openapi_core import Spec
 from openapi_core.contrib.requests import RequestsOpenAPIRequest, RequestsOpenAPIResponse
 from openapi_core import unmarshal_request, unmarshal_response
-from openapi_core.validation.response.exceptions import MissingData
+from openapi_core.validation.response.exceptions import MissingData, InvalidData
+from openapi_core.validation.request.exceptions import InvalidRequestBody, ParameterValidationError, MissingRequiredParameter
+from openapi_core.casting.schemas.exceptions import CastError
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
@@ -90,11 +92,7 @@ def override_variation(sess, override_with):
 def create_and_validate_request(request):
     """
     Helper function to create OpenAPIRequest and validate it
-    :param endpoint: API endpoint
-    :param method: API request method
-    :param payload: API request payload
-    :param params: API request payload
-    :param headers: API request headers
+    :param request: API Request
     :return:
         - request: OpenAPIRequest
         - request_result: result of request validation
@@ -109,7 +107,7 @@ def create_and_validate_request(request):
 def create_and_validate_response(request, response):
     """
     Helper function to create OpenAPIResponse and validate it
-    :param request: OpenAPIRequest
+    :param request: API Request
     :param response: API response
     :return:
         - result: result of response validation
@@ -148,11 +146,9 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
         headers=headers,
     )
 
-
-  
     try:
         create_and_validate_request(request)
-    except Exception as e:
+    except (InvalidRequestBody, CastError, ParameterValidationError, MissingRequiredParameter) as e:
         if not bypass_validation_request:
             raise e
 
@@ -165,10 +161,8 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
         create_and_validate_response(request, response)
     except MissingData:
         return response
-    except Exception as e:
+    except InvalidData as e:
         if not bypass_validation_response:
             raise e
         
     return response
-  
-
