@@ -2,48 +2,43 @@ openapi: 3.1.0
 info:
   title: Optimizely Agent API
   description: Optimizely Agent is a stand-alone, open-source microservice that provides major benefits over using Optimizely SDKs in certain use cases. Its REST API offers consolidated and simplified endpoints for accessing all the functionality of Optimizely Feature Experimentation SDKs. Use this API the control experiments (such as a feature tests). For more info, see https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/optimizely-agent
-  contact: {}
+  termsOfService: https://www.optimizely.com/legal/terms/
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: '0.12.0'
-jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 paths:
   /v1/config:
     get:
-      summary: getConfig
+      summary: Return the Optimizely config for the given environment
       description: Return all available experiment and features definitions for this environment.
       operationId: getConfig
-      parameters: []
       responses:
         '200':
           description: Valid response
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OptimizelyConfig'
         '401':
           description: Unauthorized, invalid JWT
-          headers: {}
           content: 
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
       deprecated: false
-    parameters: []
   /v1/datafile:
     get:
-      summary: getDatafile
+      summary: Return the datafile for the given environment. If you need strict consistency, you can pass the datafile to other Optimizely instances. so that all initialize from exactly the same datafile version (rather than each fetching the datafile separately from the Optimizely CDN). 
       description: Returns the json datafile for the given environment.
       operationId: getDatafile
-      parameters: []
       responses:
         '200':
           description: Valid response
-          headers: {}
           content:
             application/json:
               schema:
@@ -52,21 +47,18 @@ paths:
                 contentMediaType: application/json
         '401':
           description: Unauthorized, invalid JWT
-          headers: {}
           content: 
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
       deprecated: false
-    parameters: []
   /v1/decide:
     post:
-      summary: decide
+      summary: Decide makes feature decisions for the selected query parameters.
       description: Returns decision results for flag keys for a user. The result for a single key is returned as an OptimizelyDecision object whereas the result for multiple keys is returned as an array of OptimizelyDecision objects. If no flag key is provided, decision is made for all flag keys. OptimizelyDecision object contains all data required to deliver the flag rule.
       operationId: decide
       parameters:
@@ -87,7 +79,6 @@ paths:
       responses:
         '200':
           description: Valid response
-          headers: {}
           content:
             application/json:
               schema:
@@ -99,34 +90,28 @@ paths:
                 contentMediaType: application/json
         '400':
           description: Missing required parameters
-          headers: {}
           content: 
             application/json: {}
         '401':
           description: Unauthorized, invalid JWT
-          headers: {}
           content: 
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
           description: Failed to fetch qualified segments
-          headers: {}
           content: 
             application/json: {}
       deprecated: false
-    parameters: []
   /v1/lookup:
     post:
-      summary: lookup
+      summary: Lookup returns saved user profile.
       description: Returns the saved user profile for a user.
       operationId: lookup
-      parameters: []
       requestBody:
         description: ''
         content:
@@ -137,41 +122,34 @@ paths:
       responses:
         '200':
           description: Valid response
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
         '400':
           description: Missing required parameters
-          headers: {}
           content: 
             application/json: {}
         '401':
           description: Unauthorized, invalid JWT
-          headers: {}
           content: 
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
           description: User Profile Service not found
-          headers: {}
           content: 
             application/json: {}
       deprecated: false
-    parameters: []
   /v1/save:
     post:
-      summary: save
+      summary: Save saves user profile.
       description: Saves user profile for a user.
       operationId: save
-      parameters: []
       requestBody:
         description: ''
         content:
@@ -195,10 +173,9 @@ paths:
         '500':
           description: User Profile Service not found
       deprecated: false
-    parameters: []
   /v1/track:
     post:
-      summary: trackEvent
+      summary: Track event for the given user.
       description: Send event and user details to Optimizely analytics backend, so you can see metrics for an experiment. You can view metrics either on your Results page or as a data export.
       operationId: trackEvent
       parameters:
@@ -232,19 +209,16 @@ paths:
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/responses/Forbidden'
       deprecated: false
-    parameters: []
   /v1/send-odp-event:
     post:
-      summary: sendOdpEvent
+      summary: Send event to Optimizely Data Platform (ODP).
       description: Send ODP event to Optimizely Data Platform. Clients can send arbitrary events to the ODP server. For instance, they can bind an email to the FS userId via this API.
       operationId: sendOdpEvent
-      parameters: []
       requestBody:
         description: ''
         content:
@@ -255,36 +229,30 @@ paths:
       responses:
         '200':
           description: Valid response, event received
-          headers: {}
           content: 
             application/json: {}
         '400':
           description: Missing required parameters
-          headers: {}
           content: 
             application/json: {}
         '401':
           description: Unauthorized, invalid JWT
-          headers: {}
           content: 
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/responses/Forbidden'
         '500':
           description: Failed to send odp event
-          headers: {}
           content: 
             application/json: {}
       deprecated: false
-    parameters: []
   /v1/activate:
     post:
-      summary: activate
+      summary: Activate selected features and experiments for the given user.
       description: Returns Optimizely's decision about which features and experiments a given user is exposed to. Optionally sends an impression event to the Optimizely analytics backend for any decision made for an experiment. This endpoint consolidates key functionality from the Feature Experimentation SDKs into one convenient call.
       operationId: activate
       parameters:
@@ -362,13 +330,11 @@ paths:
               schema:
                 $ref: '#/components/responses/Forbidden'
       deprecated: false
-    parameters: []
   /v1/override:
     post:
-      summary: override
+      summary: Override an experiment decision for a user
       description: For debugging or testing. Overrides an experiment and variation decision for a given user, in local memory only. Do not use this endpoint for production overrides.
       operationId: override
-      parameters: []
       requestBody:
         description: ''
         content:
@@ -379,7 +345,6 @@ paths:
       responses:
         '200':
           description: Valid response
-          headers: {}
           content:
             application/json:
               schema:
@@ -390,29 +355,24 @@ paths:
                 contentMediaType: application/json
         '400':
           description: Invalid payload
-          headers: {}
           content: 
             application/json: {}
         '401':
           description: Unauthorized, invalid JWT
-          headers: {}
           content: 
             application/json: {}
         '403':
           description: You do not have necessary permissions for the resource
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/responses/Forbidden'
       deprecated: false
-    parameters: []
   /oauth/token:
     post:
-      summary: getToken
+      summary: Get JWT token to authenticate all requests.
       description: Generates valid JWT token for grant_type, client_id, and client_secret, using the values you pass in the request body.  Configure expiration time and SDK keys (to which the token grants access) in Optimizely config.
       operationId: getToken
-      parameters: []
       requestBody:
         description: ''
         content:
@@ -423,24 +383,20 @@ paths:
       responses:
         '200':
           description: Generates a valid token
-          headers: {}
           content: 
             application/json: {}
         '401':
           description: Unable to match credentials
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenError'
       deprecated: false
-    parameters: []
   /v1/batch:
     post:
       summary: Batch multiple API endpoints into one request.
       description: "You can use the Batch endpoint to do things like   \n1. Make activate decisions for a batch of users in a short timeframe for testing purposes\n2. Gather responses from a bunch of activate calls into one response for comparison or analysis\n"
       operationId: BatchmultipleAPIendpointsintoonerequest.
-      parameters: []
       requestBody:
         description: ''
         content:
@@ -451,23 +407,19 @@ paths:
       responses:
         '200':
           description: responses for each endpoint called in the batch request
-          headers: {}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchResponse'
         '400':
           description: Bad request, invalid parameters.
-          headers: {}
           content: 
             application/json: {}
         '422':
           description: Unprocessable Entity, too many operations
-          headers: {}
           content: 
             application/json: {}
       deprecated: false
-    parameters: []
 components:
   requestBodies:
     ActivateContext:

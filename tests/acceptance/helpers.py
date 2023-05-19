@@ -149,22 +149,26 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
     )
 
 
+  
     try:
-        try:
-            create_and_validate_request(request)
-        except Exception as e:
-            if not bypass_validation_request:
-                raise e
+        create_and_validate_request(request)
+    except Exception as e:
+        if not bypass_validation_request:
+            raise e
 
-        if method == 'post':
-            response = session.post(base_url + endpoint, params=params, data=payload)
-        elif method == 'get':
-            response = session.get(base_url + endpoint, params=params, data=payload)
-        try: 
-            create_and_validate_response(request, response)
-        except MissingData:
-            return response
+    if method == 'post':
+        response = session.post(base_url + endpoint, params=params, data=payload)
+    elif method == 'get':
+        response = session.get(base_url + endpoint, params=params, data=payload)
+
+    try: 
+        create_and_validate_response(request, response)
+    except MissingData:
         return response
-    except Exception as e:    
-        raise e
+    except Exception as e:
+        if not bypass_validation_response:
+            raise e
+        
+    return response
+  
 
