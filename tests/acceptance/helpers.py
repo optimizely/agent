@@ -3,13 +3,13 @@ import os
 import string
 from random import randint, choice
 
-import yaml
-from openapi_core import create_spec
-from openapi_core.validation.request.datatypes import (OpenAPIRequest, RequestParameters)
-from openapi_core.validation.request.validators import RequestValidator
-from openapi_core.validation.response.datatypes import OpenAPIResponse
-from openapi_core.validation.response.validators import ResponseValidator
-from werkzeug.datastructures import ImmutableMultiDict
+from requests import Request
+from openapi_core import Spec
+from openapi_core.contrib.requests import RequestsOpenAPIRequest, RequestsOpenAPIResponse
+from openapi_core import unmarshal_request, unmarshal_response
+from openapi_core.validation.response.exceptions import MissingData, InvalidData
+from openapi_core.validation.request.exceptions import InvalidRequestBody, ParameterValidationError, MissingRequiredParameter
+from openapi_core.casting.schemas.exceptions import CastError
 
 ENDPOINT_ACTIVATE = '/v1/activate'
 ENDPOINT_CONFIG = '/v1/config'
@@ -25,16 +25,7 @@ ENDPOINT_SEND_ODP_EVENT = '/v1/send-odp-event'
 
 YAML_FILE_PATH = os.getenv('OPENAPI_YAML_PATH', 'api/openapi-spec/openapi.yaml')
 
-
-def parse_yaml(path):
-    with open(path, 'r') as stream:
-        try:
-            return yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-
-
-spec = create_spec(parse_yaml(YAML_FILE_PATH))
+spec = Spec.from_file_path(YAML_FILE_PATH)
 
 
 def get_random_string():
@@ -98,54 +89,34 @@ def override_variation(sess, override_with):
     return resp
 
 
-def create_and_validate_request(endpoint, method, payload='', params=[], headers=[]):
+def create_and_validate_request(request):
     """
     Helper function to create OpenAPIRequest and validate it
-    :param endpoint: API endpoint
-    :param method: API request method
-    :param payload: API request payload
-    :param params: API request payload
-    :param headers: API request headers
+    :param request: API Request
     :return:
         - request: OpenAPIRequest
         - request_result: result of request validation
     """
-    parameters = RequestParameters(
-        query=ImmutableMultiDict(params),
-        path=endpoint,
-        header=headers
-    )
 
-    request = OpenAPIRequest(
-        full_url_pattern=endpoint,
-        method=method,
-        parameters=parameters,
-        body=payload,
-        mimetype='application/json',
-    )
+    openapi_request = RequestsOpenAPIRequest(request)
+    request_result = unmarshal_request(openapi_request, spec=spec)
 
-    validator = RequestValidator(spec)
-    request_result = validator.validate(request)
-
-    return request, request_result
+    return openapi_request, request_result
 
 
 def create_and_validate_response(request, response):
     """
     Helper function to create OpenAPIResponse and validate it
-    :param request: OpenAPIRequest
+    :param request: API Request
     :param response: API response
     :return:
         - result: result of response validation
     """
-    response = OpenAPIResponse(
-        data=response.content,
-        status_code=response.status_code,
-        mimetype='application/json'
-    )
+    response.headers["Content-Type"] = "application/json"
+    openapi_response = RequestsOpenAPIResponse(response)
+    openapi_request = RequestsOpenAPIRequest(request)
 
-    validator = ResponseValidator(spec)
-    result = validator.validate(request, response)
+    result = unmarshal_response(openapi_request, openapi_response, spec=spec)
     return result
 
 
@@ -163,22 +134,35 @@ def create_and_validate_request_and_response(endpoint, method, session, bypass_v
     :return:
         - response: API response object
     """
-    request, request_result = create_and_validate_request(
-        endpoint, method, payload, params, dict(session.headers)
+    base_url = os.getenv('host')
+    headers = dict(session.headers)
+    headers["Content-Type"] = "application/json"
+
+    request = Request(
+        url=base_url + endpoint,
+        method=method,
+        params=params,
+        data=payload,
+        headers=headers,
     )
 
-    if not bypass_validation_request:
-        request_result.raise_for_errors()
-
-    base_url = os.getenv('host')
+    try:
+        create_and_validate_request(request)
+    except (InvalidRequestBody, CastError, ParameterValidationError, MissingRequiredParameter) as e:
+        if not bypass_validation_request:
+            raise e
 
     if method == 'post':
         response = session.post(base_url + endpoint, params=params, data=payload)
     elif method == 'get':
         response = session.get(base_url + endpoint, params=params, data=payload)
-    response_result = create_and_validate_response(request, response)
 
-    if not bypass_validation_response:
-        response_result.raise_for_errors()
-
+    try: 
+        create_and_validate_response(request, response)
+    except MissingData:
+        return response
+    except InvalidData as e:
+        if not bypass_validation_response:
+            raise e
+        
     return response
