@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
+ * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -84,6 +84,21 @@ func NewDefaultConfig() *AgentConfig {
 				"default":  "",
 				"services": map[string]interface{}{},
 			},
+			ODP: OdpConfig{
+				Disable:                false,
+				EventsRequestTimeout:   10 * time.Second,
+				EventsFlushInterval:    1 * time.Second,
+				SegmentsRequestTimeout: 10 * time.Second,
+				SegmentsCache: ODPCacheConfigs{
+					"default": "in-memory",
+					"services": map[string]interface{}{
+						"in-memory": map[string]interface{}{
+							"size":    10000,
+							"timeout": "600s",
+						},
+					},
+				},
+			},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -154,6 +169,9 @@ func (ac *AgentConfig) LogConfigWarnings() {
 // UserProfileServiceConfigs defines the generic mapping of userprofileservice plugins
 type UserProfileServiceConfigs map[string]interface{}
 
+// ODPCacheConfigs defines the generic mapping of odp cache plugins
+type ODPCacheConfigs map[string]interface{}
+
 // ClientConfig holds the configuration options for the Optimizely Client.
 type ClientConfig struct {
 	PollingInterval     time.Duration             `json:"pollingInterval"`
@@ -164,6 +182,16 @@ type ClientConfig struct {
 	EventURL            string                    `json:"eventURL"`
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
+	ODP                 OdpConfig                 `json:"odp"`
+}
+
+// OdpConfig holds the odp configuration
+type OdpConfig struct {
+	Disable                bool            `json:"disable"`
+	EventsRequestTimeout   time.Duration   `json:"eventsRequestTimeout"`
+	EventsFlushInterval    time.Duration   `json:"eventsFlushInterval"`
+	SegmentsRequestTimeout time.Duration   `json:"segmentsRequestTimeout"`
+	SegmentsCache          ODPCacheConfigs `json:"segmentsCache"`
 }
 
 // LogConfig holds the log configuration

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, 2021 Optimizely, Inc. and contributors                   *
+ * Copyright 2020-2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -19,16 +19,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi"
-	"github.com/optimizely/agent/config"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/optimizely/agent/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type OAuthTestSuite struct {
@@ -224,6 +225,19 @@ func (s *OAuthTestSuite) TestGetAPIAccessTokenSuccess() {
 	s.NotEmpty(actual.ExpiresIn)
 }
 
+func (s *OAuthTestSuite) TestGetAPIAccessTokenFailureUnsupportedContentType() {
+	bodyValues := url.Values{}
+	bodyValues.Set("grant_type", "client_credentials")
+	bodyValues.Set("client_id", "optly_user")
+	bodyValues.Set("client_secret", s.secret)
+	req := httptest.NewRequest("POST", "/api/token", strings.NewReader(bodyValues.Encode()))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+
+	s.Equal(http.StatusUnsupportedMediaType, rec.Code)
+}
+
 func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 	bodyValues := url.Values{}
 	bodyValues.Set("grant_type", "client_credentials")
@@ -241,6 +255,19 @@ func (s *OAuthTestSuite) TestGetAdminAccessTokenSuccess() {
 	s.Equal("bearer", actual.TokenType)
 	s.NotEmpty(actual.AccessToken)
 	s.NotEmpty(actual.ExpiresIn)
+}
+
+func (s *OAuthTestSuite) TestGetAdminAccessTokenFailureUnsupportedContentType() {
+	bodyValues := url.Values{}
+	bodyValues.Set("grant_type", "client_credentials")
+	bodyValues.Set("client_id", "optly_user")
+	bodyValues.Set("client_secret", s.secret)
+	req := httptest.NewRequest("POST", "/admin/token", strings.NewReader(bodyValues.Encode()))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	s.mux.ServeHTTP(rec, req)
+
+	s.Equal(http.StatusUnsupportedMediaType, rec.Code)
 }
 
 func TestOAuthTestSuite(t *testing.T) {

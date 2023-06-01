@@ -161,6 +161,28 @@ client:
         #   headers: 
         #     Content-Type: "application/json"
         #     Auth-Token: "12345"
+    odp:
+      ## Disable odp
+      disable: false
+      ## Timeout in seconds after which event requests will timeout.
+      eventsRequestTimeout: 10s
+      ## Flush interval in seconds for odp events
+      eventsFlushInterval: 1s
+      ## Timeout in seconds after which segment requests will timeout.
+      segmentsRequestTimeout: 10s
+      ## If no segmentsCache is defined (or no default is defined), we will use the default in-memory with default size and timeout
+      segmentsCache:
+        default: "in-memory"
+        services:
+          in-memory: 
+            size: 10000
+            timeout: 600s
+        #   redis: 
+        #     host: "localhost:6379"
+        #     password: ""
+        #     database: 0
+        #     timeout: 0s
+      
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.

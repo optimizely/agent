@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2019,2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -57,7 +57,7 @@ func NewGroup(ctx context.Context, conf config.ServerConfig) *Group {
 func (g *Group) GoListenAndServe(name, port string, handler http.Handler) {
 
 	if port == "0" {
-		log.Info().Msg(fmt.Sprintf(`"%s" not enabled`, name))
+		log.Info().Msg(fmt.Sprintf(`%q not enabled`, name))
 		return
 	}
 

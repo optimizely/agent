@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2023, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -51,7 +51,7 @@ type HealthInfo struct {
 func NewServer(name, port string, handler http.Handler, conf config.ServerConfig) (Server, error) {
 
 	if handler == nil {
-		return Server{}, fmt.Errorf(`"%s" handler is not initialized`, name)
+		return Server{}, fmt.Errorf(`%q handler is not initialized`, name)
 	}
 
 	handler = middleware.BatchRouter(conf.BatchRequests)(handler)

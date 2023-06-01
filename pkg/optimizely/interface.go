@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2019,2022-2023, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -27,6 +27,8 @@ type Cache interface {
 	UpdateConfigs(sdkKey string)
 	// SetUserProfileService sets userProfileService to be used for the given sdkKey
 	SetUserProfileService(sdkKey, userProfileService string)
+	// SetODPCache sets odpCache to be used for the given sdkKey
+	SetODPCache(sdkKey, odpCache string)
 }
 
 // SyncedConfigManager has the basic ConfigManager methods plus the SyncConfig method to trigger immediate updates

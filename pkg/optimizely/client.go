@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
+ * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -23,6 +23,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/odp/cache"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -37,6 +38,7 @@ type OptlyClient struct {
 	ConfigManager      SyncedConfigManager
 	ForcedVariations   *decision.MapExperimentOverridesStore
 	UserProfileService decision.UserProfileService
+	odpCache           cache.Cache
 }
 
 // Decision Model
@@ -65,6 +67,12 @@ type Track struct {
 	UserID   string `json:"userId"`
 	EventKey string `json:"eventKey"`
 	Error    string `json:"error,omitempty"`
+}
+
+// SendOdpEventResponseModel response model
+type SendOdpEventResponseModel struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
 }
 
 // UpdateConfig uses config manager to sync and set project config

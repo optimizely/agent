@@ -6,6 +6,8 @@ import requests
 # sdk key of the project "Agent Acceptance", under QA account
 sdk_key = "KZbunNn9bVfBWLpZPq2XC4"
 
+# sdk key of the project "Agent Acceptance w ODP", under QA account
+sdk_key_odp = "91GuiKYH8ZF1hLLXR7DR1"
 
 @pytest.fixture
 def session_obj():
@@ -23,6 +25,16 @@ def session_obj():
                       'X-Optimizely-SDK-Key': sdk_key})
     return s
 
+
+@pytest.fixture(scope='function')
+def session_override_sdk_key_odp(session_obj):
+    """
+    Override session_obj fixture with odp SDK key.
+    :param session_obj: session fixture object
+    :return: updated session object
+    """
+    session_obj.headers['X-Optimizely-SDK-Key'] = sdk_key_odp
+    return session_obj
 
 @pytest.fixture(scope='function')
 def session_override_sdk_key(session_obj):

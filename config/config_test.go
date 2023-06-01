@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022, Optimizely, Inc. and contributors              *
+ * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -84,7 +84,18 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
 	assert.Equal(t, "^\\w+(:\\w+)?$", conf.Client.SdkKeyRegex)
 	assert.Equal(t, "", conf.Client.UserProfileService["default"])
+	assert.Equal(t, false, conf.Client.ODP.Disable)
+	assert.Equal(t, 1*time.Second, conf.Client.ODP.EventsFlushInterval)
+	assert.Equal(t, 10*time.Second, conf.Client.ODP.EventsRequestTimeout)
+	assert.Equal(t, 10*time.Second, conf.Client.ODP.SegmentsRequestTimeout)
 	assert.Equal(t, map[string]interface{}{}, conf.Client.UserProfileService["services"])
+	assert.Equal(t, "in-memory", conf.Client.ODP.SegmentsCache["default"])
+	assert.Equal(t, map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size":    10000,
+			"timeout": "600s",
+		},
+	}, conf.Client.ODP.SegmentsCache["services"])
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)

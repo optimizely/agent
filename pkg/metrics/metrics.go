@@ -1,4 +1,5 @@
 /****************************************************************************
+ * Copyright 2019,2023, Optimizely, Inc. and contributors                   *
  * Copyright 2019,2023 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -101,6 +102,7 @@ func (m *Registry) NewTimer(key string) *Timer {
 	return m.createTimer(combinedKey)
 }
 
+// GetCounter gets go-kit expvar Counter
 // NewRegistry initializes metrics registry
 func NewRegistry(metricsType string) *Registry {
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020-2022, Optimizely, Inc. and contributors                   *
+ * Copyright 2020-2023, Optimizely, Inc. and contributors                   *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -23,7 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -69,6 +69,9 @@ func (m MockCache) UpdateConfigs(_ string) {
 func (m MockCache) SetUserProfileService(sdkKey, userProfileService string) {
 }
 
+func (m MockCache) SetODPCache(sdkKey, odpCache string) {
+}
+
 var testHandler = func(val string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(methodHeaderKey, val)
@@ -109,20 +112,21 @@ func (suite *APIV1TestSuite) SetupTest() {
 	suite.tc = testClient
 
 	opts = &APIOptions{
-		maxConns:        1,
-		sdkMiddleware:   testOptlyMiddleware,
-		configHandler:   testHandler("config"),
-		datafileHandler: testHandler("datafile"),
-		activateHandler: testHandler("activate"),
-		overrideHandler: testHandler("override"),
-		lookupHandler:   testHandler("lookup"),
-		saveHandler:     testHandler("save"),
-		trackHandler:    testHandler("track"),
-		nStreamHandler:  testHandler("notifications/event-stream"),
-		oAuthHandler:    testHandler("oauth/token"),
-		oAuthMiddleware: testAuthMiddleware,
-		metricsRegistry: metricsRegistry,
-		corsHandler:     testCorsHandler,
+		maxConns:            1,
+		sdkMiddleware:       testOptlyMiddleware,
+		configHandler:       testHandler("config"),
+		datafileHandler:     testHandler("datafile"),
+		activateHandler:     testHandler("activate"),
+		overrideHandler:     testHandler("override"),
+		lookupHandler:       testHandler("lookup"),
+		saveHandler:         testHandler("save"),
+		trackHandler:        testHandler("track"),
+		sendOdpEventHandler: testHandler("send-odp-event"),
+		nStreamHandler:      testHandler("notifications/event-stream"),
+		oAuthHandler:        testHandler("oauth/token"),
+		oAuthMiddleware:     testAuthMiddleware,
+		metricsRegistry:     metricsRegistry,
+		corsHandler:         testCorsHandler,
 	}
 
 	suite.mux = NewAPIRouter(opts)
@@ -150,6 +154,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		{"POST", "override"},
 		{"POST", "lookup"},
 		{"POST", "save"},
+		{"POST", "send-odp-event"},
 		{"GET", "notifications/event-stream"},
 	}
 
@@ -166,19 +171,21 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 	}
 }
 
+// TODO: this test fails because odp hasn't been added to the open api schema yet?
 func (suite *APIV1TestSuite) TestStaticContent() {
 	routes := []struct {
 		method string
 		path   string
 	}{
 		{"GET", "/"},
-		{"POST", "/openapi.yaml"},
+		{"GET", "/openapi.yaml"},
 	}
 
 	for _, route := range routes {
 		req := httptest.NewRequest(route.method, route.path, nil)
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
+
 		suite.Equal(http.StatusOK, rec.Code)
 	}
 }

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2021-2022, Optimizely, Inc. and contributors              *
+ * Copyright 2019,2021-2023, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -61,6 +61,10 @@ func (tc *TestCache) UpdateConfigs(_ string) {
 
 // SetUserProfileService sets userProfileService to be used for the given sdkKey
 func (tc *TestCache) SetUserProfileService(sdkKey, userProfileService string) {
+}
+
+// SetODPCache sets odpCache to be used for the given sdkKey
+func (tc *TestCache) SetODPCache(sdkKey, odpCache string) {
 }
 
 func TestHandleWebhookInvalidMessage(t *testing.T) {

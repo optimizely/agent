@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2022 Optimizely, Inc. and contributors                    *
+ * Copyright 2019,2022-2023, Optimizely, Inc. and contributors              *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -26,14 +26,27 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
 	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/logging"
+	"github.com/optimizely/go-sdk/pkg/odp"
+	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
+	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
+	"github.com/optimizely/go-sdk/pkg/utils"
 
+	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
+)
+
+// User plugin strings required for internal usage
+const (
+	userProfileServicePlugin = "UserProfileService"
+	odpCachePlugin           = "ODP Cache"
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -42,6 +55,7 @@ type OptlyCache struct {
 	loader                func(string) (*OptlyClient, error)
 	optlyMap              cmap.ConcurrentMap
 	userProfileServiceMap cmap.ConcurrentMap
+	odpCacheMap           cmap.ConcurrentMap
 	ctx                   context.Context
 	wg                    sync.WaitGroup
 }
@@ -55,12 +69,14 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 	}
 
 	userProfileServiceMap := cmap.New()
+	odpCacheMap := cmap.New()
 	cache := &OptlyCache{
 		ctx:                   ctx,
 		wg:                    sync.WaitGroup{},
-		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, cmLoader, event.NewBatchEventProcessor),
+		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, odpCacheMap, cmLoader, event.NewBatchEventProcessor),
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: userProfileServiceMap,
+		odpCacheMap:           odpCacheMap,
 	}
 
 	return cache
@@ -129,6 +145,11 @@ func (c *OptlyCache) SetUserProfileService(sdkKey, userProfileService string) {
 	c.userProfileServiceMap.SetIfAbsent(sdkKey, userProfileService)
 }
 
+// SetODPCache sets odpCache to be used for the given sdkKey
+func (c *OptlyCache) SetODPCache(sdkKey, odpCache string) {
+	c.odpCacheMap.SetIfAbsent(sdkKey, odpCache)
+}
+
 // Wait for all optimizely clients to gracefully shutdown
 func (c *OptlyCache) Wait() {
 	c.wg.Wait()
@@ -150,6 +171,7 @@ func defaultLoader(
 	conf config.ClientConfig,
 	metricsRegistry *MetricsRegistry,
 	userProfileServiceMap cmap.ConcurrentMap,
+	odpCacheMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
 	validator := regexValidator(conf.SdkKeyRegex)
@@ -223,59 +245,111 @@ func defaultLoader(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
+			client.WithOdpDisabled(conf.ODP.Disable),
 		}
 
 		var clientUserProfileService decision.UserProfileService
-		if clientUserProfileService = getUserProfileService(sdkKey, userProfileServiceMap, conf); clientUserProfileService != nil {
-			clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
+		var rawUPS = getServiceWithType(userProfileServicePlugin, sdkKey, userProfileServiceMap, conf.UserProfileService)
+		// Check if ups was provided by user
+		if rawUPS != nil {
+			// convert ups to UserProfileService interface
+			if convertedUPS, ok := rawUPS.(decision.UserProfileService); ok && convertedUPS != nil {
+				clientUserProfileService = convertedUPS
+				clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
+			}
 		}
+
+		var clientODPCache odpCachePkg.Cache
+		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, conf.ODP.SegmentsCache)
+		// Check if odp cache was provided by user
+		if rawODPCache != nil {
+			// convert odpCache to Cache interface
+			if convertedODPCache, ok := rawODPCache.(odpCachePkg.Cache); ok && convertedODPCache != nil {
+				clientODPCache = convertedODPCache
+			}
+		}
+
+		// Create segment manager with odpConfig and custom cache
+		segmentManager := odpSegmentPkg.NewSegmentManager(
+			sdkKey,
+			odpSegmentPkg.WithAPIManager(
+				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "SegmentAPIManager"), utils.Timeout(conf.ODP.SegmentsRequestTimeout))),
+			),
+			odpSegmentPkg.WithSegmentsCache(clientODPCache),
+		)
+
+		// Create event manager with odpConfig
+		eventManager := odpEventPkg.NewBatchEventManager(
+			odpEventPkg.WithAPIManager(
+				odpEventPkg.NewEventAPIManager(
+					sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "EventAPIManager"), utils.Timeout(conf.ODP.EventsRequestTimeout)),
+				),
+			),
+			odpEventPkg.WithFlushInterval(conf.ODP.EventsFlushInterval),
+		)
+
+		// Create odp manager with custom segment and event manager
+		odpManager := odp.NewOdpManager(
+			sdkKey,
+			conf.ODP.Disable,
+			odp.WithSegmentManager(segmentManager),
+			odp.WithEventManager(eventManager),
+		)
+		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,
 		)
-		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService}, err
+		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService, clientODPCache}, err
 	}
 }
 
-// Returns the registered userProfileService against the sdkKey
-func getUserProfileService(sdkKey string, userProfileServiceMap cmap.ConcurrentMap, conf config.ClientConfig) decision.UserProfileService {
+func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMap, serviceConf map[string]interface{}) interface{} {
 
-	intializeUPSWithName := func(upsName string) decision.UserProfileService {
-		if clientConfigUPSMap, ok := conf.UserProfileService["services"].(map[string]interface{}); ok {
-			if userProfileServiceConfig, ok := clientConfigUPSMap[upsName].(map[string]interface{}); ok {
-				// Check if any such user profile service was added using `Add` method
-				if creator, ok := userprofileservice.Creators[upsName]; ok {
-					if upsInstance := creator(); upsInstance != nil {
-						success := true
-						// Trying to map userProfileService from client config to struct
-						if upsConfig, err := json.Marshal(userProfileServiceConfig); err != nil {
-							log.Warn().Err(err).Msgf(`Error marshaling user profile service config: "%s"`, upsName)
-							success = false
-						} else if err := json.Unmarshal(upsConfig, upsInstance); err != nil {
-							log.Warn().Err(err).Msgf(`Error unmarshalling user profile service config: "%s"`, upsName)
-							success = false
-						}
-						if success {
-							log.Info().Msgf(`UserProfileService of type: "%s" created for sdkKey: "%s"`, upsName, sdkKey)
-							return upsInstance
-						}
+	intializeServiceWithName := func(serviceName string) interface{} {
+		if clientConfigMap, ok := serviceConf["services"].(map[string]interface{}); ok {
+			if serviceConfig, ok := clientConfigMap[serviceName].(map[string]interface{}); ok {
+				// Check if any such service was added using `Add` method
+				var serviceInstance interface{}
+				switch serviceType {
+				case userProfileServicePlugin:
+					if upsCreator, ok := userprofileservice.Creators[serviceName]; ok {
+						serviceInstance = upsCreator()
+					}
+				case odpCachePlugin:
+					if odpCreator, ok := odpcache.Creators[serviceName]; ok {
+						serviceInstance = odpCreator()
+					}
+				default:
+				}
+
+				if serviceInstance != nil {
+					// Trying to map service from client config to struct
+					if serviceConfig, err := json.Marshal(serviceConfig); err != nil {
+						log.Warn().Err(err).Msgf(`Error marshaling %s config: %q`, serviceType, serviceName)
+					} else if err := json.Unmarshal(serviceConfig, serviceInstance); err != nil {
+						log.Warn().Err(err).Msgf(`Error unmarshalling %s config: %q`, serviceType, serviceName)
+					} else {
+						log.Info().Msgf(`%s of type: %q created for sdkKey: %q`, serviceType, serviceName, sdkKey)
+						return serviceInstance
 					}
 				}
+				return nil
 			}
 		}
 		return nil
 	}
 
-	// Check if ups name was provided in the request headers
-	if ups, ok := userProfileServiceMap.Get(sdkKey); ok {
-		if upsNameStr, ok := ups.(string); ok && upsNameStr != "" {
-			return intializeUPSWithName(upsNameStr)
+	// Check if service name was provided in the request headers
+	if service, ok := serviceMap.Get(sdkKey); ok {
+		if serviceNameStr, ok := service.(string); ok && serviceNameStr != "" {
+			return intializeServiceWithName(serviceNameStr)
 		}
 	}
 
-	// Check if any default user profile service was provided and if it exists in client config
-	if upsNameStr, ok := conf.UserProfileService["default"].(string); ok && upsNameStr != "" {
-		return intializeUPSWithName(upsNameStr)
+	// Check if any default service was provided and if it exists in client config
+	if defaultServiceName, isAvailable := serviceConf["default"].(string); isAvailable && defaultServiceName != "" {
+		return intializeServiceWithName(defaultServiceName)
 	}
 	return nil
 }
