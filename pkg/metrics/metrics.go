@@ -29,17 +29,15 @@ import (
 	go_kit_expvar "github.com/go-kit/kit/metrics/expvar"
 	go_kit_prometheus "github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
 // CounterPrefix stores the prefix for Counter
 const (
-	CounterPrefix   = "counter"
-	GaugePrefix     = "gauge"
-	TimerPrefix     = "timer"
-	ConstantsPrefix = "constants"
+	CounterPrefix = "counter"
+	GaugePrefix   = "gauge"
+	TimerPrefix   = "timer"
 )
 
 const (
@@ -113,7 +111,6 @@ func NewRegistry(metricsType string) *Registry {
 		metricsTimerVars:     map[string]*Timer{},
 		metricsType:          metricsType,
 	}
-	registry.addDefaultConstantMetrics()
 	return registry
 }
 
@@ -222,33 +219,6 @@ func (m *Registry) createTimer(key string) *Timer {
 	}
 	m.metricsTimerVars[key] = timerVar
 	return timerVar
-}
-
-func (m *Registry) addDefaultConstantMetrics() {
-	createCounterWithLabels := func(kv map[string]string) {
-		switch m.metricsType {
-		case prometheusPackage:
-			labelNames := []string{}
-			for k := range kv {
-				labelNames = append(labelNames, k)
-			}
-			promauto.NewCounterVec(stdprometheus.CounterOpts{
-				Name: ConstantsPrefix,
-				Help: "Agent constants.",
-			}, labelNames).With(kv)
-		default:
-			// Default expvar
-			for k, v := range kv {
-				expvar.NewString(k).Set(v)
-			}
-		}
-	}
-	// These can be retrieved from yaml configuration aswell
-	// Needs to be discussed before writing tests
-	sampleLabels := map[string]string{
-		"host": "www.apple.com", "host1": "www.apple.com",
-	}
-	createCounterWithLabels(sampleLabels)
 }
 
 // getPackageSupportedName converts name to package supported type
