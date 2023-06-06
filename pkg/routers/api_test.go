@@ -33,7 +33,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 )
 
-var metricsRegistry = metrics.NewRegistry()
+var metricsRegistry = metrics.NewRegistry("")
 
 const methodHeaderKey = "X-Method-Header"
 const clientHeaderKey = "X-Client-Header"

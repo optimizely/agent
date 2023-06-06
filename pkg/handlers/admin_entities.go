@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020, Optimizely, Inc. and contributors                   *
+ * Copyright 2019-2020,2023 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,14 +18,13 @@
 package handlers
 
 import (
-	"expvar"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-chi/render"
-
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/metrics"
 )
 
 var startTime = time.Now()
@@ -87,5 +86,5 @@ func (a Admin) AppInfoHeader(next http.Handler) http.Handler {
 
 // Metrics returns expvar info
 func (a Admin) Metrics(w http.ResponseWriter, r *http.Request) {
-	expvar.Handler().ServeHTTP(w, r)
+	metrics.GetHandler(a.Config.Admin.MetricsType).ServeHTTP(w, r)
 }

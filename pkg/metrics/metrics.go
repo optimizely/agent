@@ -18,11 +18,17 @@
 package metrics
 
 import (
+	"expvar"
+	"net/http"
+	"regexp"
+	"strings"
 	"sync"
 
 	go_kit_metrics "github.com/go-kit/kit/metrics"
-
 	go_kit_expvar "github.com/go-kit/kit/metrics/expvar"
+	go_kit_prometheus "github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -33,27 +39,18 @@ const (
 	TimerPrefix   = "timer"
 )
 
-// Registry initializes expvar metrics registry
-type Registry struct {
-	metricsCounterVars   map[string]go_kit_metrics.Counter
-	metricsGaugeVars     map[string]go_kit_metrics.Gauge
-	metricsHistogramVars map[string]go_kit_metrics.Histogram
-	metricsTimerVars     map[string]*Timer
+const (
+	prometheusPackage = "prometheus"
+)
 
-	gaugeLock     sync.RWMutex
-	counterLock   sync.RWMutex
-	histogramLock sync.RWMutex
-	timerLock     sync.RWMutex
-}
-
-// NewRegistry initializes metrics registry
-func NewRegistry() *Registry {
-
-	return &Registry{
-		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
-		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
-		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
-		metricsTimerVars:     map[string]*Timer{},
+// GetHandler returns request handler for provided metrics package type
+func GetHandler(packageType string) http.Handler {
+	switch packageType {
+	case prometheusPackage:
+		return promhttp.Handler()
+	default:
+		// expvar
+		return expvar.Handler()
 	}
 }
 
@@ -62,6 +59,27 @@ type Timer struct {
 	hits      go_kit_metrics.Counter
 	totalTime go_kit_metrics.Counter
 	histogram go_kit_metrics.Histogram
+}
+
+// Update timer components
+func (t *Timer) Update(delta float64) {
+	t.hits.Add(1)
+	t.totalTime.Add(delta)
+	t.histogram.Observe(delta)
+}
+
+// Registry initializes expvar metrics registry
+type Registry struct {
+	metricsCounterVars   map[string]go_kit_metrics.Counter
+	metricsGaugeVars     map[string]go_kit_metrics.Gauge
+	metricsHistogramVars map[string]go_kit_metrics.Histogram
+	metricsTimerVars     map[string]*Timer
+	metricsType          string
+
+	gaugeLock     sync.RWMutex
+	counterLock   sync.RWMutex
+	histogramLock sync.RWMutex
+	timerLock     sync.RWMutex
 }
 
 // NewTimer constructs Timer
@@ -81,16 +99,22 @@ func (m *Registry) NewTimer(key string) *Timer {
 	return m.createTimer(combinedKey)
 }
 
-// Update timer components
-func (t *Timer) Update(delta float64) {
-	t.hits.Add(1)
-	t.totalTime.Add(delta)
-	t.histogram.Observe(delta)
+// GetCounter gets go-kit expvar Counter
+// NewRegistry initializes metrics registry
+func NewRegistry(metricsType string) *Registry {
+
+	registry := &Registry{
+		metricsCounterVars:   map[string]go_kit_metrics.Counter{},
+		metricsGaugeVars:     map[string]go_kit_metrics.Gauge{},
+		metricsHistogramVars: map[string]go_kit_metrics.Histogram{},
+		metricsTimerVars:     map[string]*Timer{},
+		metricsType:          metricsType,
+	}
+	return registry
 }
 
-// GetCounter gets go-kit expvar Counter
+// GetCounter gets go-kit Counter
 func (m *Registry) GetCounter(key string) go_kit_metrics.Counter {
-
 	if key == "" {
 		log.Warn().Msg("metrics counter key is empty")
 		return nil
@@ -103,13 +127,11 @@ func (m *Registry) GetCounter(key string) go_kit_metrics.Counter {
 	if val, ok := m.metricsCounterVars[combinedKey]; ok {
 		return val
 	}
-
 	return m.createCounter(combinedKey)
 }
 
-// GetGauge gets go-kit expvar Gauge
+// GetGauge gets go-kit Gauge
 func (m *Registry) GetGauge(key string) go_kit_metrics.Gauge {
-
 	if key == "" {
 		log.Warn().Msg("metrics gauge key is empty")
 		return nil
@@ -127,9 +149,8 @@ func (m *Registry) GetGauge(key string) go_kit_metrics.Gauge {
 
 // GetHistogram gets go-kit Histogram
 func (m *Registry) GetHistogram(key string) go_kit_metrics.Histogram {
-
 	if key == "" {
-		log.Warn().Msg("metrics gauge key is empty")
+		log.Warn().Msg("metrics histogram key is empty")
 		return nil
 	}
 
@@ -141,25 +162,52 @@ func (m *Registry) GetHistogram(key string) go_kit_metrics.Histogram {
 	return m.createHistogram(key)
 }
 
-func (m *Registry) createGauge(key string) *go_kit_expvar.Gauge {
-	gaugeVar := go_kit_expvar.NewGauge(key)
+func (m *Registry) createGauge(key string) (gaugeVar go_kit_metrics.Gauge) {
+	// This is required since naming convention for every package differs
+	name := m.getPackageSupportedName(key)
+	switch m.metricsType {
+	case prometheusPackage:
+		gaugeVar = go_kit_prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Name: name,
+		}, []string{})
+	default:
+		// Default expvar
+		gaugeVar = go_kit_expvar.NewGauge(name)
+	}
 	m.metricsGaugeVars[key] = gaugeVar
-	return gaugeVar
-
+	return
 }
 
-func (m *Registry) createCounter(key string) *go_kit_expvar.Counter {
-	counterVar := go_kit_expvar.NewCounter(key)
+func (m *Registry) createCounter(key string) (counterVar go_kit_metrics.Counter) {
+	// This is required since naming convention for every package differs
+	name := m.getPackageSupportedName(key)
+	switch m.metricsType {
+	case prometheusPackage:
+		counterVar = go_kit_prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+			Name: name,
+		}, []string{})
+	default:
+		// Default expvar
+		counterVar = go_kit_expvar.NewCounter(name)
+	}
 	m.metricsCounterVars[key] = counterVar
-	return counterVar
-
+	return
 }
 
-func (m *Registry) createHistogram(key string) *go_kit_expvar.Histogram {
-	histogramVar := go_kit_expvar.NewHistogram(key, 50)
+func (m *Registry) createHistogram(key string) (histogramVar go_kit_metrics.Histogram) {
+	// This is required since naming convention for every package differs
+	name := m.getPackageSupportedName(key)
+	switch m.metricsType {
+	case prometheusPackage:
+		histogramVar = go_kit_prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+			Name: name,
+		}, []string{})
+	default:
+		// Default expvar
+		histogramVar = go_kit_expvar.NewHistogram(name, 50)
+	}
 	m.metricsHistogramVars[key] = histogramVar
-	return histogramVar
-
+	return
 }
 
 func (m *Registry) createTimer(key string) *Timer {
@@ -168,8 +216,33 @@ func (m *Registry) createTimer(key string) *Timer {
 		totalTime: m.createCounter(key + ".responseTime"),
 		histogram: m.createHistogram(key + ".responseTimeHist"),
 	}
-
 	m.metricsTimerVars[key] = timerVar
 	return timerVar
+}
 
+// getPackageSupportedName converts name to package supported type
+func (m *Registry) getPackageSupportedName(name string) string {
+	switch m.metricsType {
+	case prometheusPackage:
+		// https://prometheus.io/docs/practices/naming/
+		return toSnakeCase(name)
+	default:
+		// Default expvar
+		return name
+	}
+}
+
+func toSnakeCase(name string) string {
+	v := strings.Replace(name, "-", "_", -1)
+	strArray := strings.Split(v, ".")
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	convertedArray := []string{}
+
+	for _, v := range strArray {
+		snake := matchFirstCap.ReplaceAllString(v, "${1}_${2}")
+		snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+		convertedArray = append(convertedArray, strings.ToLower(snake))
+	}
+	return strings.Join(convertedArray, "_")
 }

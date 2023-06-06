@@ -104,7 +104,7 @@ func (suite *CacheTestSuite) TestUpdateConfigs() {
 }
 
 func (suite *CacheTestSuite) TestNewCache() {
-	agentMetricsRegistry := metrics.NewRegistry()
+	agentMetricsRegistry := metrics.NewRegistry("")
 	sdkMetricsRegistry := NewRegistry(agentMetricsRegistry)
 
 	// To improve coverage
@@ -252,7 +252,7 @@ type DefaultLoaderTestSuite struct {
 func (s *DefaultLoaderTestSuite) SetupTest() {
 	// Need the registry to be created only once since it panics if we create gauges with the same name again and again
 	doOnce.Do(func() {
-		s.registry = &MetricsRegistry{metrics.NewRegistry()}
+		s.registry = &MetricsRegistry{metrics.NewRegistry("")}
 	})
 	s.upsMap = cmap.New()
 	s.bpFactory = func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
