@@ -12,8 +12,9 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
 	github.com/lestrrat-go/jwx v0.9.0
-	github.com/optimizely/go-sdk v1.8.4-0.20230411182937-99d0bcfccf75
+	github.com/optimizely/go-sdk v1.8.4-0.20230515121609-7ffed835c991
 	github.com/orcaman/concurrent-map v1.0.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/zerolog v1.29.0
 	github.com/spf13/viper v1.15.0
@@ -21,6 +22,16 @@ require (
 	golang.org/x/crypto v0.6.0
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/common v0.30.0 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )
 
 require (

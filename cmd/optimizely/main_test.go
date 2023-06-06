@@ -121,6 +121,7 @@ func assertLog(t *testing.T, actual config.LogConfig) {
 
 func assertAdmin(t *testing.T, actual config.AdminConfig) {
 	assert.Equal(t, "3002", actual.Port)
+	assert.Equal(t, "prometheus", actual.MetricsType)
 }
 
 func assertAdminAuth(t *testing.T, actual config.ServiceAuthConfig) {
@@ -282,6 +283,7 @@ func TestViperProps(t *testing.T) {
 	v.Set("log.level", "debug")
 
 	v.Set("admin.port", "3002")
+	v.Set("admin.metricsType", "prometheus")
 	v.Set("admin.auth.ttl", "30m")
 	v.Set("admin.auth.hmacSecrets", "efgh,ijkl")
 	v.Set("admin.auth.jwksURL", "admin_jwks_url")
@@ -375,6 +377,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_LOG_LEVEL", "debug")
 
 	_ = os.Setenv("OPTIMIZELY_ADMIN_PORT", "3002")
+	_ = os.Setenv("OPTIMIZELY_ADMIN_METRICSTYPE", "prometheus")
 
 	_ = os.Setenv("OPTIMIZELY_API_MAXCONNS", "100")
 	_ = os.Setenv("OPTIMIZELY_API_PORT", "3000")

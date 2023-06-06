@@ -144,7 +144,8 @@ func main() {
 
 	setRuntimeEnvironment(conf.Runtime)
 
-	agentMetricsRegistry := metrics.NewRegistry()
+	// Set metrics type to be used
+	agentMetricsRegistry := metrics.NewRegistry(conf.Admin.MetricsType)
 	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context

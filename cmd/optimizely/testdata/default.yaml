@@ -70,6 +70,7 @@ client:
       
 admin:
   port: "3002"
+  metricsType: "prometheus"
   auth:
     ttl: 30m
     hmacSecrets:

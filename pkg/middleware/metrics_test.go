@@ -53,7 +53,7 @@ func (rm *RequestMetrics) SetupRoute(key string) {
 	r := httptest.NewRequest("GET", "/", nil)
 
 	rm.req = r.WithContext(context.WithValue(r.Context(), responseTime, time.Now()))
-	rm.handler = http.Handler(Metricize(key, metrics.NewRegistry())(getTestMetrics()))
+	rm.handler = http.Handler(Metricize(key, metrics.NewRegistry(""))(getTestMetrics()))
 
 }
 
