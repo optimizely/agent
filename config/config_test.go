@@ -218,6 +218,26 @@ func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsAuthSetForBoth() {
 	s.NotContains(messages, fmt.Sprintf(AuthDisabledWarningTemplate, "Admin"))
 }
 
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningForShortPollingInterval() {
+	conf := NewDefaultConfig()
+	conf.Client.PollingInterval = 10 * time.Second
+
+	conf.LogConfigWarnings()
+
+	messages := s.hook.messages()
+	s.Contains(messages, fmt.Sprintf(PollingIntervalBelowThresholdWarningTemplate, PollingIntervalThreshold))
+}
+
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningForLongPollingInterval() {
+	conf := NewDefaultConfig()
+	conf.Client.PollingInterval = PollingIntervalThreshold
+
+	conf.LogConfigWarnings()
+
+	messages := s.hook.messages()
+	s.NotContains(messages, fmt.Sprintf(PollingIntervalBelowThresholdWarningTemplate, PollingIntervalThreshold))
+}
+
 func TestLogConfigWarnings(t *testing.T) {
 	suite.Run(t, new(LogConfigWarningsTestSuite))
 }
