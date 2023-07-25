@@ -151,6 +151,12 @@ var HTTPSDisabledWarning = "keyfile and certfile not available, so server will u
 // AuthDisabledWarningTemplate is used to log a warning when auth is disabled for API or Admin endpoints
 var AuthDisabledWarningTemplate = "Authorization not enabled for %v endpoint. For production deployments, authorization is recommended."
 
+// PollingIntervalBelowThresholdWarningTemplate is used to log a warning when Polling interval is below threshold
+var PollingIntervalBelowThresholdWarningTemplate = "Polling interval is below the recommended threshold %v"
+
+// PollingIntervalThreshold the recommended threshold for the Polling Interval
+const PollingIntervalThreshold = 30 * time.Second
+
 // LogConfigWarnings checks this configuration and logs any relevant warnings.
 func (ac *AgentConfig) LogConfigWarnings() {
 	if !ac.Server.isHTTPSEnabled() {
@@ -163,6 +169,10 @@ func (ac *AgentConfig) LogConfigWarnings() {
 
 	if !ac.Admin.Auth.isAuthorizationEnabled() {
 		log.Warn().Msgf(AuthDisabledWarningTemplate, "Admin")
+	}
+
+	if ac.Client.isPollingIntervalBelowThreshold() {
+		log.Warn().Msgf(PollingIntervalBelowThresholdWarningTemplate, PollingIntervalThreshold)
 	}
 }
 
@@ -183,6 +193,10 @@ type ClientConfig struct {
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
 	ODP                 OdpConfig                 `json:"odp"`
+}
+
+func (c ClientConfig) isPollingIntervalBelowThreshold() bool {
+	return c.PollingInterval > 0 && c.PollingInterval < PollingIntervalThreshold
 }
 
 // OdpConfig holds the odp configuration
