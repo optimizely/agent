@@ -171,7 +171,7 @@ func (ac *AgentConfig) LogConfigWarnings() {
 		log.Warn().Msgf(AuthDisabledWarningTemplate, "Admin")
 	}
 
-	if ac.Client.isPollingIntervalBelowThreshold() {
+	if len(ac.SDKKeys) > 0 && ac.Client.isPollingIntervalBelowThreshold() {
 		log.Warn().Msgf(PollingIntervalBelowThresholdWarningTemplate, PollingIntervalThreshold)
 	}
 }
