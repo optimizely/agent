@@ -220,6 +220,7 @@ func (s *LogConfigWarningsTestSuite) TestLogConfigWarningsAuthSetForBoth() {
 
 func (s *LogConfigWarningsTestSuite) TestLogConfigWarningForShortPollingInterval() {
 	conf := NewDefaultConfig()
+	conf.SDKKeys = []string{"test-sdk-key"}
 	conf.Client.PollingInterval = 10 * time.Second
 
 	conf.LogConfigWarnings()
@@ -228,8 +229,9 @@ func (s *LogConfigWarningsTestSuite) TestLogConfigWarningForShortPollingInterval
 	s.Contains(messages, fmt.Sprintf(PollingIntervalBelowThresholdWarningTemplate, PollingIntervalThreshold))
 }
 
-func (s *LogConfigWarningsTestSuite) TestLogConfigWarningForLongPollingInterval() {
+func (s *LogConfigWarningsTestSuite) TestLogConfigWarningForOptimalPollingInterval() {
 	conf := NewDefaultConfig()
+	conf.SDKKeys = []string{"test-sdk-key"}
 	conf.Client.PollingInterval = PollingIntervalThreshold
 
 	conf.LogConfigWarnings()
