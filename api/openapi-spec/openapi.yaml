@@ -292,7 +292,7 @@ paths:
           - description: Limit the decisions to either experiment or features
       - name: enabled
         in: query
-        description: Filter the activation response to return only enabled descisions.
+        description: Filter the activation response to return only enabled decisions.
         style: form
         explode: true
         schema:
