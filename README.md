@@ -15,7 +15,7 @@ Refer to the [Agent's developer documentation](https://docs.developers.optimizel
 
 ### Requirements
 
-Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.20+ is required for developing and compiling from source.
+Optimizely Agent is implemented in [Golang](https://golang.org/). Golang version 1.21.0+ is required for developing and compiling from source.
 Installers and binary archives for most platforms can be downloaded directly from the Go [downloads](https://go.dev/dl/) page.
 
 ### Run from source (Linux / OSX)

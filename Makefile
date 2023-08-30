@@ -36,7 +36,7 @@ build: $(TARGET) check-go ## builds and installs binary in bin/
 
 check-go:
 ifndef GOPATH
-	$(error "go is not available please install golang version 1.20+, https://golang.org/dl/")
+	$(error "go is not available please install golang version 1.21.0+, https://golang.org/dl/")
 endif
 
 clean: check-go ## runs `go clean` and removes the bin/ dir
