@@ -123,6 +123,9 @@ func NewDefaultConfig() *AgentConfig {
 		Webhook: WebhookConfig{
 			Port: "8085",
 		},
+		Syncer: &SyncConfig{
+			RedisAddr: "http://redis:6379",
+		},
 	}
 
 	return &config
@@ -143,6 +146,11 @@ type AgentConfig struct {
 	Runtime RuntimeConfig `json:"runtime"`
 	Server  ServerConfig  `json:"server"`
 	Webhook WebhookConfig `json:"webhook"`
+	Syncer  *SyncConfig   `json:"syncer"`
+}
+
+type SyncConfig struct {
+	RedisAddr string `json:"redisAddr"`
 }
 
 // HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration
