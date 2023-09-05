@@ -110,9 +110,9 @@ func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			client := redis.NewClient(&redis.Options{
-				Addr:     "redis.demo.svc:6379", // Redis server address
-				Password: "",                    // No password
-				DB:       0,                     // Default DB
+				Addr:     "localhost:6379", // Redis server address
+				Password: "",               // No password
+				DB:       0,                // Default DB
 			})
 			defer client.Close()
 
@@ -148,9 +148,9 @@ func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     "redis.demo.svc:6379", // Redis server address
-		Password: "",                    // No password
-		DB:       0,                     // Default DB
+		Addr:     "localhost:6379", // Redis server address
+		Password: "",               // No password
+		DB:       0,                // Default DB
 	})
 	defer client.Close()
 
@@ -158,19 +158,17 @@ func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 	pubsub := client.Subscribe(context.TODO(), "notifications")
 	defer pubsub.Close()
 
-	// Listen to connection close and un-register messageChan
-	notify := r.Context().Done()
-
 	// "raw" query string option
 	// If provided, send raw JSON lines instead of SSE-compliant strings.
 	raw := len(r.Form["raw"]) > 0
 
 	for {
 		select {
-		case <-notify:
-			middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
+		case <-r.Context().Done():
+			log.Println("context cancelled, shutting down notification handler")
 			return
 		default:
+			log.Println("looking for redis message")
 			msg, err := pubsub.ReceiveMessage(r.Context())
 			if err != nil {
 				log.Println("Error receiving message:", err)

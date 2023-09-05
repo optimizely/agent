@@ -47,7 +47,7 @@ server:
     readTimeout: 5s
     ## the maximum duration before timing out writes of the response.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    writeTimeout: 10s
+    writeTimeout: -1
     ## path for the health status api
     healthCheckPath: "/health"
     ## the location of the TLS key file
@@ -69,7 +69,7 @@ api:
     ## http listener port
     port: "8080"
     ## set to true to enable subscribing to notifications via an SSE event-stream
-    enableNotifications: false
+    enableNotifications: true
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
     ## CORS support is provided via chi middleware
