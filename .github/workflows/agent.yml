@@ -58,7 +58,7 @@ jobs:
     - name: success
       if: steps.coveralls.outcome == 'success'
       run: |
-        go get github.com/mattn/goveralls@latest
+        go install github.com/mattn/goveralls@latest
         goveralls -coverprofile=coverage.txt -service=github
 
   tests_sourceclear:
