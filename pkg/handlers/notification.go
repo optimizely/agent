@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -65,6 +64,107 @@ func getFilter(filters []string) map[string]notification.Type {
 
 // NotificationEventSteamHandler implements the http.Handler interface.
 func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
+	// Make sure that the writer supports flushing.
+	flusher, ok := w.(http.Flusher)
+
+	if !ok {
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+		return
+	}
+
+	_, err := middleware.GetOptlyClient(r)
+
+	if err != nil {
+		RenderError(err, http.StatusUnprocessableEntity, w, r)
+		return
+	}
+
+	// Set the headers related to event streaming.
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	// Each connection registers its own message channel with the NotificationHandler's connections registry
+	messageChan := make(MessageChan)
+	// Each connection also adds listeners
+	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
+	nc := registry.GetNotificationCenter(sdkKey)
+
+	// Parse the form.
+	_ = r.ParseForm()
+
+	filters := r.Form["filter"]
+
+	// Parse out the any filters that were added
+	notificationsToAdd := getFilter(filters)
+
+	ids := []struct {
+		int
+		notification.Type
+	}{}
+
+	for _, value := range notificationsToAdd {
+		id, e := nc.AddHandler(value, func(n interface{}) {
+			jsonEvent, err := json.Marshal(n)
+			if err != nil {
+				middleware.GetLogger(r).Error().Msg("encoding notification to json")
+			} else {
+				messageChan <- jsonEvent
+			}
+		})
+		if e != nil {
+			RenderError(e, http.StatusUnprocessableEntity, w, r)
+			return
+		}
+
+		// do defer outside the loop.
+		ids = append(ids, struct {
+			int
+			notification.Type
+		}{id, value})
+	}
+
+	// Remove the decision listener if we exited.
+	defer func() {
+		for _, id := range ids {
+			err := nc.RemoveHandler(id.int, id.Type)
+			if err != nil {
+				middleware.GetLogger(r).Error().AnErr("removing notification", err)
+			}
+		}
+	}()
+
+	// "raw" query string option
+	// If provided, send raw JSON lines instead of SSE-compliant strings.
+	raw := len(r.Form["raw"]) > 0
+
+	// Listen to connection close and un-register messageChan
+	notify := r.Context().Done()
+	// block waiting or messages broadcast on this connection's messageChan
+	for {
+		select {
+		// Write to the ResponseWriter
+		case msg := <-messageChan:
+			if raw {
+				// Raw JSON events, one per line
+				_, _ = fmt.Fprintf(w, "%s\n", msg)
+			} else {
+				// Server Sent Events compatible
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", msg)
+			}
+			// Flush the data immediately instead of buffering it for later.
+			// The flush will fail if the connection is closed.  That will cause the handler to exit.
+			flusher.Flush()
+		case <-notify:
+			middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
+			return
+		}
+	}
+
+}
+
+// NotificationEventSteamHandler implements the http.Handler interface.
+func NotificationEventSteamSyncHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure that the writer supports flushing.
 	flusher, ok := w.(http.Flusher)
 
@@ -155,17 +255,20 @@ func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 	defer client.Close()
 
 	// Subscribe to a Redis channel
-	pubsub := client.Subscribe(context.TODO(), "notifications")
+	pubsub := client.Subscribe(r.Context(), "notifications")
 	defer pubsub.Close()
 
 	// "raw" query string option
 	// If provided, send raw JSON lines instead of SSE-compliant strings.
 	raw := len(r.Form["raw"]) > 0
 
+	// Listen to connection close and un-register messageChan
+	notify := r.Context().Done()
+
 	for {
 		select {
-		case <-r.Context().Done():
-			log.Println("context cancelled, shutting down notification handler")
+		case <-notify:
+			middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
 			return
 		default:
 			log.Println("looking for redis message")

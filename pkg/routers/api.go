@@ -82,7 +82,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		overrideHandler = forbiddenHandler("Overrides not enabled")
 	}
 
-	nStreamHandler := handlers.NotificationEventSteamHandler
+	nStreamHandler := handlers.NotificationEventSteamSyncHandler
 	if !conf.EnableNotifications {
 		nStreamHandler = forbiddenHandler("Notification stream not enabled")
 	}

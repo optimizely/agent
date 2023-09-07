@@ -123,8 +123,10 @@ func NewDefaultConfig() *AgentConfig {
 		Webhook: WebhookConfig{
 			Port: "8085",
 		},
-		Syncer: &SyncConfig{
-			RedisAddr: "http://redis:6379",
+		Synchronization: SyncConfig{
+			Notification: NotificationConfig{
+				Enable: false,
+			},
 		},
 	}
 
@@ -139,18 +141,23 @@ type AgentConfig struct {
 
 	SDKKeys []string `yaml:"sdkKeys" json:"sdkKeys"`
 
-	Admin   AdminConfig   `json:"admin"`
-	API     APIConfig     `json:"api"`
-	Log     LogConfig     `json:"log"`
-	Client  ClientConfig  `json:"client"`
-	Runtime RuntimeConfig `json:"runtime"`
-	Server  ServerConfig  `json:"server"`
-	Webhook WebhookConfig `json:"webhook"`
-	Syncer  *SyncConfig   `json:"syncer"`
+	Admin           AdminConfig   `json:"admin"`
+	API             APIConfig     `json:"api"`
+	Log             LogConfig     `json:"log"`
+	Client          ClientConfig  `json:"client"`
+	Runtime         RuntimeConfig `json:"runtime"`
+	Server          ServerConfig  `json:"server"`
+	Webhook         WebhookConfig `json:"webhook"`
+	Synchronization SyncConfig    `json:"synchronization"`
 }
 
 type SyncConfig struct {
-	RedisAddr string `json:"redisAddr"`
+	Notification NotificationConfig `json:"notification"`
+}
+
+type NotificationConfig struct {
+	Enable bool                   `json:"enable"`
+	Pubsub map[string]interface{} `json:"pubsub"`
 }
 
 // HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration
