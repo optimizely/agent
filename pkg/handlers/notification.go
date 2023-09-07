@@ -18,43 +18,15 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
 )
-
-type Syncer struct {
-}
-
-func (s *Syncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
-	return 0, nil
-}
-
-func (s *Syncer) RemoveHandler(_ int, _ notification.Type) error {
-	return nil
-}
-
-func (s *Syncer) Send(notificationType notification.Type, notification interface{}) error {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "redis.demo.svc:6379", // Redis server address
-		Password: "",                    // No password
-		DB:       0,                     // Default DB
-	})
-	defer client.Close()
-
-	// Subscribe to a Redis channel
-	pubsub := client.Subscribe(context.TODO(), "notifications")
-	defer pubsub.Close()
-
-	return client.Publish(context.TODO(), "notifications", notification).Err()
-}
 
 // A MessageChan is a channel of bytes
 // Each http handler call creates a new channel and pumps decision service messages onto it.
