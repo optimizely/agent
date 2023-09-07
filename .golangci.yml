@@ -65,4 +65,4 @@ issues:
  exclude-use-default: false
 
 service:
- golangci-lint-version: 1.51.2
+ golangci-lint-version: 1.54.2
