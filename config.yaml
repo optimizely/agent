@@ -213,7 +213,6 @@ synchronization:
     notification:
         enable: true
         pubsub:
-            redis:
-                addr: "localhost:6379"
-                password: ""
-                db: 0
+            addr: "localhost:6379"
+            password: ""
+            db: 0

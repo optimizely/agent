@@ -286,9 +286,9 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 		}()
 
 		client := redis.NewClient(&redis.Options{
-			Addr:     "localhost:6379", // Redis server address
-			Password: "",               // No password
-			DB:       0,                // Default DB
+			Addr:     conf.Notification.Pubsub.Addr,     // Redis server address
+			Password: conf.Notification.Pubsub.Password, // No password
+			DB:       conf.Notification.Pubsub.DB,       // Default DB
 		})
 		defer client.Close()
 
