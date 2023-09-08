@@ -156,8 +156,14 @@ type SyncConfig struct {
 }
 
 type NotificationConfig struct {
-	Enable bool                   `json:"enable"`
-	Pubsub map[string]interface{} `json:"pubsub"`
+	Enable bool        `json:"enable"`
+	Pubsub RedisConfig `json:"pubsub"`
+}
+
+type RedisConfig struct {
+	Addr     string `json:"addr"`
+	Password string `json:"password"`
+	DB       int    `json:"db"`
 }
 
 // HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration

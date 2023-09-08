@@ -164,7 +164,7 @@ func main() {
 		cancel()
 	}()
 
-	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
+	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf, agentMetricsRegistry)
 	adminRouter := routers.NewAdminRouter(*conf)
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")

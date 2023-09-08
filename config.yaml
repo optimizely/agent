@@ -214,6 +214,6 @@ synchronization:
         enable: true
         pubsub:
             redis:
-                host: "localhost:6379"
+                addr: "localhost:6379"
                 password: ""
-                database: 0
+                db: 0

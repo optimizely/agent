@@ -63,35 +63,35 @@ func forbiddenHandler(message string) http.HandlerFunc {
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf *config.AgentConfig, metricsRegistry *metrics.Registry) http.Handler {
 
-	authProvider := middleware.NewAuth(&conf.Auth)
+	authProvider := middleware.NewAuth(&conf.API.Auth)
 	if authProvider == nil {
 		log.Error().Msg("unable to initialize api auth middleware.")
 		return nil
 	}
 
-	authHandler := handlers.NewOAuthHandler(&conf.Auth)
+	authHandler := handlers.NewOAuthHandler(&conf.API.Auth)
 	if authHandler == nil {
 		log.Error().Msg("unable to initialize api auth handler.")
 		return nil
 	}
 
 	overrideHandler := handlers.Override
-	if !conf.EnableOverrides {
+	if !conf.API.EnableOverrides {
 		overrideHandler = forbiddenHandler("Overrides not enabled")
 	}
 
-	nStreamHandler := handlers.NotificationEventSteamSyncHandler
-	if !conf.EnableNotifications {
+	nStreamHandler := handlers.NotificationEventStreamDecider(&conf.Synchronization)
+	if !conf.API.EnableNotifications {
 		nStreamHandler = forbiddenHandler("Notification stream not enabled")
 	}
 
 	mw := middleware.CachedOptlyMiddleware{Cache: optlyCache}
-	corsHandler := createCorsHandler(conf.CORS)
+	corsHandler := createCorsHandler(conf.API.CORS)
 
 	spec := &APIOptions{
-		maxConns:            conf.MaxConns,
+		maxConns:            conf.API.MaxConns,
 		metricsRegistry:     metricsRegistry,
 		configHandler:       handlers.OptimizelyConfig,
 		datafileHandler:     handlers.GetDatafile,
