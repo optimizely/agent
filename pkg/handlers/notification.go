@@ -183,17 +183,55 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 			return
 		}
 
-		_, err := middleware.GetOptlyClient(r)
-
+		optlyClient, err := middleware.GetOptlyClient(r)
 		if err != nil {
 			RenderError(err, http.StatusUnprocessableEntity, w, r)
 			return
 		}
 
+		nc := optlyClient.GetNotificationCenter()
+
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
+
+		// Parse the form.
+		_ = r.ParseForm()
+
+		filters := r.Form["filter"]
+
+		// Parse out the any filters that were added
+		notificationsToAdd := getFilter(filters)
+
+		ids := []struct {
+			int
+			notification.Type
+		}{}
+
+		for _, value := range notificationsToAdd {
+			id, e := nc.AddHandler(value, syncer.NewRedisPubSubSyncer(middleware.GetLogger(r), conf).GetNotificationSyncer(r.Context()))
+			if e != nil {
+				RenderError(e, http.StatusUnprocessableEntity, w, r)
+				return
+			}
+
+			// do defer outside the loop.
+			ids = append(ids, struct {
+				int
+				notification.Type
+			}{id, value})
+		}
+
+		// Remove the decision listener if we exited.
+		defer func() {
+			for _, id := range ids {
+				err := nc.RemoveHandler(id.int, id.Type)
+				if err != nil {
+					middleware.GetLogger(r).Error().AnErr("removing notification", err)
+				}
+			}
+		}()
 
 		client := redis.NewClient(&redis.Options{
 			Addr:     conf.Notification.Pubsub.Addr,     // Redis server address

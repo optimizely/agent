@@ -254,7 +254,9 @@ func defaultLoader(
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
 			client.WithOdpDisabled(conf.ODP.Disable),
-			client.WithNotificationCenter(syncer.NewRedisCenter(&conff.Synchronization)),
+		}
+		if conff.Synchronization.Notification.Enable {
+			clientOptions = append(clientOptions, client.WithNotificationCenter(syncer.NewRedisCenter(&conff.Synchronization)))
 		}
 
 		var clientUserProfileService decision.UserProfileService
