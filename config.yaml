@@ -213,6 +213,6 @@ synchronization:
     notification:
         enable: true
         pubsub:
-            addr: "localhost:6379"
+            addr: "redis.demo.svc:6379"
             password: ""
             db: 0

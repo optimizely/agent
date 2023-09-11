@@ -18,7 +18,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -28,9 +27,9 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
-	"github.com/rs/zerolog"
 )
 
 // A MessageChan is a channel of bytes
@@ -173,52 +172,6 @@ func NotificationEventSteamHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-const (
-	PubSubChan  = "optimizely-notifications"
-	PubSubRedis = "redis"
-)
-
-type RedisPubSubSyncer struct {
-	Addr     string
-	Password string
-	DB       int
-	logger   *zerolog.Logger
-}
-
-func NewRedisPubSubSyncer(logger *zerolog.Logger, conf *config.SyncConfig) *RedisPubSubSyncer {
-	return &RedisPubSubSyncer{
-		Addr:     conf.Notification.Pubsub.Addr,
-		Password: conf.Notification.Pubsub.Password,
-		DB:       conf.Notification.Pubsub.DB,
-		logger:   logger,
-	}
-}
-
-func (r *RedisPubSubSyncer) GetNotificationSyncer(ctx context.Context) func(n interface{}) {
-	return func(n interface{}) {
-		jsonEvent, err := json.Marshal(n)
-		if err != nil {
-			r.logger.Error().Msg("encoding notification to json")
-			return
-		}
-		client := redis.NewClient(&redis.Options{
-			Addr:     "localhost:6379", // Redis server address
-			Password: "",               // No password
-			DB:       0,                // Default DB
-		})
-		defer client.Close()
-
-		// Subscribe to a Redis channel
-		pubsub := client.Subscribe(ctx, PubSubChan)
-		defer pubsub.Close()
-
-		if err := client.Publish(ctx, PubSubChan, jsonEvent).Err(); err != nil {
-			r.logger.Err(err).Msg("failed to publish json event to pub/sub")
-			return
-		}
-	}
-}
-
 // NotificationEventSteamHandler implements the http.Handler interface.
 func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -242,49 +195,6 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
 
-		// Each connection also adds listeners
-		sdkKey := r.Header.Get(middleware.OptlySDKHeader)
-		nc := registry.GetNotificationCenter(sdkKey)
-
-		// Parse the form.
-		_ = r.ParseForm()
-
-		filters := r.Form["filter"]
-
-		// Parse out the any filters that were added
-		notificationsToAdd := getFilter(filters)
-
-		ids := []struct {
-			int
-			notification.Type
-		}{}
-
-		syncer := NewRedisPubSubSyncer(middleware.GetLogger(r), conf)
-
-		for _, value := range notificationsToAdd {
-			id, e := nc.AddHandler(value, syncer.GetNotificationSyncer(r.Context()))
-			if e != nil {
-				RenderError(e, http.StatusUnprocessableEntity, w, r)
-				return
-			}
-
-			// do defer outside the loop.
-			ids = append(ids, struct {
-				int
-				notification.Type
-			}{id, value})
-		}
-
-		// Remove the decision listener if we exited.
-		defer func() {
-			for _, id := range ids {
-				err := nc.RemoveHandler(id.int, id.Type)
-				if err != nil {
-					middleware.GetLogger(r).Error().AnErr("removing notification", err)
-				}
-			}
-		}()
-
 		client := redis.NewClient(&redis.Options{
 			Addr:     conf.Notification.Pubsub.Addr,     // Redis server address
 			Password: conf.Notification.Pubsub.Password, // No password
@@ -293,7 +203,7 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 		defer client.Close()
 
 		// Subscribe to a Redis channel
-		pubsub := client.Subscribe(r.Context(), "notifications")
+		pubsub := client.Subscribe(r.Context(), syncer.PubSubChan)
 		defer pubsub.Close()
 
 		// "raw" query string option

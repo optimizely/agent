@@ -150,8 +150,8 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache(ctx, conf.Client, sdkMetricsRegistry)
-	optlyCache.Init(conf.SDKKeys)
+	optlyCache := optimizely.NewCache(ctx, conf, sdkMetricsRegistry)
+	optlyCache.Init(conf)
 
 	// goroutine to check for signals to gracefully shutdown listeners
 	go func() {

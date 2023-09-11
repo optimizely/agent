@@ -26,6 +26,7 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
@@ -33,13 +34,16 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
+	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/odp"
 	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
+	"github.com/optimizely/go-sdk/pkg/registry"
 	"github.com/optimizely/go-sdk/pkg/utils"
 
 	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -61,7 +65,7 @@ type OptlyCache struct {
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+func NewCache(ctx context.Context, conf *config.AgentConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 
 	// TODO is there a cleaner way to handle this translation???
 	cmLoader := func(sdkkey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
@@ -83,8 +87,8 @@ func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *Me
 }
 
 // Init takes a slice of sdkKeys to warm the cache upon startup
-func (c *OptlyCache) Init(sdkKeys []string) {
-	for _, sdkKey := range sdkKeys {
+func (c *OptlyCache) Init(conf *config.AgentConfig) {
+	for _, sdkKey := range conf.SDKKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			message := "Failed to initialize Optimizely Client."
 			if ShouldIncludeSDKKey {
@@ -93,6 +97,9 @@ func (c *OptlyCache) Init(sdkKeys []string) {
 			}
 			log.Warn().Msg(message)
 		}
+
+		nc := registry.GetNotificationCenter(sdkKey)
+		nc.AddHandler(notification.Track, syncer.NewRedisPubSubSyncer(&zerolog.Logger{}, &conf.Synchronization).GetNotificationSyncer(context.TODO()))
 	}
 }
 
@@ -168,12 +175,13 @@ func regexValidator(sdkKeyRegex string) func(string) bool {
 }
 
 func defaultLoader(
-	conf config.ClientConfig,
+	conff *config.AgentConfig,
 	metricsRegistry *MetricsRegistry,
 	userProfileServiceMap cmap.ConcurrentMap,
 	odpCacheMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
+	conf := conff.Client
 	validator := regexValidator(conf.SdkKeyRegex)
 
 	return func(clientKey string) (*OptlyClient, error) {
@@ -246,6 +254,7 @@ func defaultLoader(
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
 			client.WithOdpDisabled(conf.ODP.Disable),
+			client.WithNotificationCenter(syncer.NewRedisCenter(&conff.Synchronization)),
 		}
 
 		var clientUserProfileService decision.UserProfileService
@@ -300,6 +309,9 @@ func defaultLoader(
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,
 		)
+		if err != nil {
+			return nil, err
+		}
 		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService, clientODPCache}, err
 	}
 }
