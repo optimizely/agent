@@ -34,7 +34,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
-	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/odp"
 	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
@@ -244,22 +243,19 @@ func defaultLoader(
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 
-		nc := notification.NewNotificationCenter()
-		redisSyncer, err := syncer.NewRedisPubSubSyncer(nil, &conff.Synchronization)
-		if err != nil {
-			return nil, err
-		}
-		_, e := nc.AddHandler(notification.Track, redisSyncer.GetNotificationSyncer(context.TODO()))
-		if e != nil {
-			return nil, e
-		}
-
 		clientOptions := []client.OptionFunc{
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
 			client.WithOdpDisabled(conf.ODP.Disable),
-			client.WithNotificationCenter(nc),
+		}
+
+		if conff.Synchronization.Notification.Enable {
+			redisSyncer, err := syncer.NewRedisPubSubSyncer(nil, &conff.Synchronization)
+			if err != nil {
+				return nil, err
+			}
+			clientOptions = append(clientOptions, client.WithNotificationCenter(redisSyncer))
 		}
 
 		var clientUserProfileService decision.UserProfileService
