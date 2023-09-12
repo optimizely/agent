@@ -16,6 +16,11 @@ const (
 	PubSubRedis = "redis"
 )
 
+type Notification struct {
+	Type    notification.Type
+	Message interface{}
+}
+
 type RedisPubSubSyncer struct {
 	Host     string
 	Password string
@@ -71,8 +76,12 @@ func (r *RedisPubSubSyncer) RemoveHandler(_ int, t notification.Type) error {
 	return nil
 }
 
-func (r *RedisPubSubSyncer) Send(_ notification.Type, n interface{}) error {
-	jsonEvent, err := json.Marshal(n)
+func (r *RedisPubSubSyncer) Send(t notification.Type, n interface{}) error {
+	notification := Notification{
+		Type:    t,
+		Message: n,
+	}
+	jsonEvent, err := json.Marshal(notification)
 	if err != nil {
 		r.logger.Error().Msg("encoding notification to json")
 		return err

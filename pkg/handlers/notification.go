@@ -37,14 +37,14 @@ import (
 type MessageChan chan []byte
 
 // types of notifications supported.
-var types = map[string]notification.Type{
-	string(notification.Decision):            notification.Decision,
-	string(notification.Track):               notification.Track,
-	string(notification.ProjectConfigUpdate): notification.ProjectConfigUpdate,
+var types = map[notification.Type]string{
+	notification.Decision:            string(notification.Decision),
+	notification.Track:               string(notification.Track),
+	notification.ProjectConfigUpdate: string(notification.ProjectConfigUpdate),
 }
 
-func getFilter(filters []string) map[string]notification.Type {
-	notificationsToAdd := map[string]notification.Type{}
+func getFilter(filters []string) map[notification.Type]string {
+	notificationsToAdd := make(map[notification.Type]string)
 	// Parse out the any filters that were added
 	if len(filters) == 0 {
 		notificationsToAdd = types
@@ -55,8 +55,8 @@ func getFilter(filters []string) map[string]notification.Type {
 		splits := strings.Split(filter, ",")
 		for _, split := range splits {
 			// if the string is a valid type
-			if _, ok := types[split]; ok {
-				notificationsToAdd[split] = notification.Type(split)
+			if _, ok := types[notification.Type(split)]; ok {
+				notificationsToAdd[notification.Type(split)] = split
 			}
 		}
 	}
@@ -112,8 +112,8 @@ func NotificationEventSteamMonolithHandler(w http.ResponseWriter, r *http.Reques
 		notification.Type
 	}{}
 
-	for _, value := range notificationsToAdd {
-		id, e := nc.AddHandler(value, func(n interface{}) {
+	for notificationType, _ := range notificationsToAdd {
+		id, e := nc.AddHandler(notificationType, func(n interface{}) {
 			jsonEvent, err := json.Marshal(n)
 			if err != nil {
 				middleware.GetLogger(r).Error().Msg("encoding notification to json")
@@ -130,7 +130,7 @@ func NotificationEventSteamMonolithHandler(w http.ResponseWriter, r *http.Reques
 		ids = append(ids, struct {
 			int
 			notification.Type
-		}{id, value})
+		}{id, notificationType})
 	}
 
 	// Remove the decision listener if we exited.
@@ -208,6 +208,14 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 		// If provided, send raw JSON lines instead of SSE-compliant strings.
 		raw := len(r.Form["raw"]) > 0
 
+		// Parse the form.
+		_ = r.ParseForm()
+
+		filters := r.Form["filter"]
+
+		// Parse out the any filters that were added
+		notificationsToAdd := getFilter(filters)
+
 		// Listen to connection close and un-register messageChan
 		notify := r.Context().Done()
 
@@ -220,9 +228,21 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 				log.Println("looking for redis message")
 				msg, err := pubsub.ReceiveMessage(r.Context())
 				if err != nil {
-					log.Println("Error receiving message:", err)
+					middleware.GetLogger(r).Err(err).Msg("error in receiving msg from redis")
 					return
 				}
+
+				var notification syncer.Notification
+				if err := json.Unmarshal([]byte(msg.String()), &notification); err != nil {
+					middleware.GetLogger(r).Err(err).Msg("bad formatted notification")
+					continue
+				}
+
+				_, found := notificationsToAdd[notification.Type]
+				if !found {
+					continue
+				}
+
 				if raw {
 					// Raw JSON events, one per line
 					_, _ = fmt.Fprintf(w, "%s\n", msg.Payload)
