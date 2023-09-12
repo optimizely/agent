@@ -125,7 +125,16 @@ func NewDefaultConfig() *AgentConfig {
 		},
 		Synchronization: SyncConfig{
 			Notification: NotificationConfig{
-				Enable: false,
+				Enable:  false,
+				Default: "redis",
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": 0,
+						"channel":  "optimizely-notifications",
+					},
+				},
 			},
 		},
 	}
@@ -156,14 +165,9 @@ type SyncConfig struct {
 }
 
 type NotificationConfig struct {
-	Enable bool        `json:"enable"`
-	Pubsub RedisConfig `json:"pubsub"`
-}
-
-type RedisConfig struct {
-	Addr     string `json:"addr"`
-	Password string `json:"password"`
-	DB       int    `json:"db"`
+	Enable  bool                   `json:"enable"`
+	Default string                 `json:"default"`
+	Pubsub  map[string]interface{} `json:"pubsub"`
 }
 
 // HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration

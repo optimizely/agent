@@ -209,8 +209,13 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 			notification.Type
 		}{}
 
+		redisSyncer, err := syncer.NewRedisPubSubSyncer(middleware.GetLogger(r), conf)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
 		for _, value := range notificationsToAdd {
-			id, e := nc.AddHandler(value, syncer.NewRedisPubSubSyncer(middleware.GetLogger(r), conf).GetNotificationSyncer(r.Context()))
+			id, e := nc.AddHandler(value, redisSyncer.GetNotificationSyncer(r.Context()))
 			if e != nil {
 				RenderError(e, http.StatusUnprocessableEntity, w, r)
 				return
@@ -234,14 +239,14 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 		}()
 
 		client := redis.NewClient(&redis.Options{
-			Addr:     conf.Notification.Pubsub.Addr,     // Redis server address
-			Password: conf.Notification.Pubsub.Password, // No password
-			DB:       conf.Notification.Pubsub.DB,       // Default DB
+			Addr:     redisSyncer.Host,
+			Password: redisSyncer.Password,
+			DB:       redisSyncer.Database,
 		})
 		defer client.Close()
 
 		// Subscribe to a Redis channel
-		pubsub := client.Subscribe(r.Context(), syncer.PubSubChan)
+		pubsub := client.Subscribe(r.Context(), redisSyncer.Channel)
 		defer pubsub.Close()
 
 		// "raw" query string option

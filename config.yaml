@@ -212,7 +212,10 @@ runtime:
 synchronization:
     notification:
         enable: true
+        default: "redis"
         pubsub:
-            addr: "redis.demo.svc:6379"
-            password: ""
-            db: 0
+            redis:
+                host: "redis.demo.svc:6379"
+                password: ""
+                database: 0
+                channel: "optimizely-notifications"

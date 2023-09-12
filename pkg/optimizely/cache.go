@@ -38,12 +38,10 @@ import (
 	"github.com/optimizely/go-sdk/pkg/odp"
 	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
-	"github.com/optimizely/go-sdk/pkg/registry"
 	"github.com/optimizely/go-sdk/pkg/utils"
 
 	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -97,9 +95,6 @@ func (c *OptlyCache) Init(conf *config.AgentConfig) {
 			}
 			log.Warn().Msg(message)
 		}
-
-		nc := registry.GetNotificationCenter(sdkKey)
-		nc.AddHandler(notification.Track, syncer.NewRedisPubSubSyncer(&zerolog.Logger{}, &conf.Synchronization).GetNotificationSyncer(context.TODO()))
 	}
 }
 
@@ -249,14 +244,22 @@ func defaultLoader(
 		forcedVariations := decision.NewMapExperimentOverridesStore()
 		optimizelyFactory := &client.OptimizelyFactory{SDKKey: sdkKey}
 
+		nc := notification.NewNotificationCenter()
+		redisSyncer, err := syncer.NewRedisPubSubSyncer(nil, &conff.Synchronization)
+		if err != nil {
+			return nil, err
+		}
+		_, e := nc.AddHandler(notification.Track, redisSyncer.GetNotificationSyncer(context.TODO()))
+		if e != nil {
+			return nil, e
+		}
+
 		clientOptions := []client.OptionFunc{
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
 			client.WithOdpDisabled(conf.ODP.Disable),
-		}
-		if conff.Synchronization.Notification.Enable {
-			clientOptions = append(clientOptions, client.WithNotificationCenter(syncer.NewRedisCenter(&conff.Synchronization)))
+			client.WithNotificationCenter(nc),
 		}
 
 		var clientUserProfileService decision.UserProfileService
@@ -311,9 +314,6 @@ func defaultLoader(
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,
 		)
-		if err != nil {
-			return nil, err
-		}
 		return &OptlyClient{optimizelyClient, configManager, forcedVariations, clientUserProfileService, clientODPCache}, err
 	}
 }
