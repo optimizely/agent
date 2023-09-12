@@ -84,8 +84,8 @@ func NewCache(ctx context.Context, conf *config.AgentConfig, metricsRegistry *Me
 }
 
 // Init takes a slice of sdkKeys to warm the cache upon startup
-func (c *OptlyCache) Init(conf *config.AgentConfig) {
-	for _, sdkKey := range conf.SDKKeys {
+func (c *OptlyCache) Init(sdkKeys []string) {
+	for _, sdkKey := range sdkKeys {
 		if _, err := c.GetClient(sdkKey); err != nil {
 			message := "Failed to initialize Optimizely Client."
 			if ShouldIncludeSDKKey {

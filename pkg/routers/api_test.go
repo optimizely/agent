@@ -331,7 +331,7 @@ func TestAPIV1TestSuite(t *testing.T) {
 }
 
 func TestNewDefaultAPIV1Router(t *testing.T) {
-	client := NewDefaultAPIRouter(MockCache{}, config.APIConfig{}, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, &config.AgentConfig{}, metricsRegistry)
 	assert.NotNil(t, client)
 }
 
@@ -356,7 +356,7 @@ func TestNewDefaultAPIV1RouterInvalidHandlerConfig(t *testing.T) {
 		EnableNotifications: false,
 		EnableOverrides:     false,
 	}
-	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, &config.AgentConfig{API: invalidAPIConfig}, metricsRegistry)
 	assert.Nil(t, client)
 }
 
@@ -371,12 +371,12 @@ func TestNewDefaultClientRouterInvalidMiddlewareConfig(t *testing.T) {
 		EnableNotifications: false,
 		EnableOverrides:     false,
 	}
-	client := NewDefaultAPIRouter(MockCache{}, invalidAPIConfig, metricsRegistry)
+	client := NewDefaultAPIRouter(MockCache{}, &config.AgentConfig{API: invalidAPIConfig}, metricsRegistry)
 	assert.Nil(t, client)
 }
 
 func TestForbiddenRoutes(t *testing.T) {
-	conf := config.APIConfig{}
+	conf := &config.AgentConfig{}
 	mux := NewDefaultAPIRouter(MockCache{}, conf, metricsRegistry)
 
 	routes := []struct {

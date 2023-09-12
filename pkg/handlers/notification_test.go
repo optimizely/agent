@@ -27,6 +27,7 @@ import (
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
 
+	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
@@ -65,8 +66,9 @@ func (suite *NotificationTestSuite) SetupTest() {
 	mux := chi.NewMux()
 	EventStreamMW := &NotificationMW{optlyClient}
 
+	conf := config.NewDefaultConfig()
 	mux.Use(EventStreamMW.ClientCtx)
-	mux.Get("/notifications/event-stream", NotificationEventSteamHandler)
+	mux.Get("/notifications/event-stream", NotificationEventStreamHandler(&conf.Synchronization))
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -201,8 +203,9 @@ func TestEventStreamMissingOptlyCtx(t *testing.T) {
 	mw := new(NotificationMW)
 	mw.optlyClient = nil
 
+	conf := config.NewDefaultConfig()
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		NotificationEventSteamHandler,
+		NotificationEventStreamHandler(&conf.Synchronization),
 	}
 
 	for _, handler := range handlers {
