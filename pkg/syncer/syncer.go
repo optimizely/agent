@@ -71,31 +71,6 @@ func (r *RedisPubSubSyncer) RemoveHandler(_ int, t notification.Type) error {
 	return nil
 }
 
-func (r *RedisPubSubSyncer) GetNotificationSyncer(ctx context.Context) func(n interface{}) {
-	return func(n interface{}) {
-		jsonEvent, err := json.Marshal(n)
-		if err != nil {
-			r.logger.Error().Msg("encoding notification to json")
-			return
-		}
-		client := redis.NewClient(&redis.Options{
-			Addr:     r.Host,
-			Password: r.Password,
-			DB:       r.Database,
-		})
-		defer client.Close()
-
-		// Subscribe to a Redis channel
-		pubsub := client.Subscribe(ctx, r.Channel)
-		defer pubsub.Close()
-
-		if err := client.Publish(ctx, r.Channel, jsonEvent).Err(); err != nil {
-			r.logger.Err(err).Msg("failed to publish json event to pub/sub")
-			return
-		}
-	}
-}
-
 func (r *RedisPubSubSyncer) Send(_ notification.Type, n interface{}) error {
 	jsonEvent, err := json.Marshal(n)
 	if err != nil {
