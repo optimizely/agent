@@ -233,7 +233,7 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 				}
 
 				var notification syncer.Notification
-				if err := json.Unmarshal([]byte(msg.String()), &notification); err != nil {
+				if err := json.Unmarshal([]byte(msg.Payload), &notification); err != nil {
 					middleware.GetLogger(r).Err(err).Msg("bad formatted notification")
 					continue
 				}
@@ -243,12 +243,18 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 					continue
 				}
 
+				jsonEvent, err := json.Marshal(notification.Message)
+				if err != nil {
+					middleware.GetLogger(r).Err(err).Msg("failed to marshal notification into json")
+					continue
+				}
+
 				if raw {
 					// Raw JSON events, one per line
-					_, _ = fmt.Fprintf(w, "%s\n", msg.Payload)
+					_, _ = fmt.Fprintf(w, "%s\n", string(jsonEvent))
 				} else {
 					// Server Sent Events compatible
-					_, _ = fmt.Fprintf(w, "data: %s\n\n", msg.Payload)
+					_, _ = fmt.Fprintf(w, "data: %s\n\n", string(jsonEvent))
 				}
 				// Flush the data immediately instead of buffering it for later.
 				// The flush will fail if the connection is closed.  That will cause the handler to exit.

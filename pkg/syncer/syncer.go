@@ -17,8 +17,8 @@ const (
 )
 
 type Notification struct {
-	Type    notification.Type
-	Message interface{}
+	Type    notification.Type `json:"type"`
+	Message interface{}       `json:"message"`
 }
 
 type RedisPubSubSyncer struct {
@@ -59,6 +59,10 @@ func NewRedisPubSubSyncer(logger *zerolog.Logger, conf *config.SyncConfig) (*Red
 		return nil, errors.New("redis channel not provided in correct format")
 	}
 
+	if logger == nil {
+		logger = &zerolog.Logger{}
+	}
+
 	return &RedisPubSubSyncer{
 		Host:     host,
 		Password: password,
@@ -81,21 +85,18 @@ func (r *RedisPubSubSyncer) Send(t notification.Type, n interface{}) error {
 		Type:    t,
 		Message: n,
 	}
+
 	jsonEvent, err := json.Marshal(notification)
 	if err != nil {
-		r.logger.Error().Msg("encoding notification to json")
 		return err
 	}
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     r.Host,     // Redis server address
-		Password: r.Password, // No password
-		DB:       r.Database, // Default DB
+		Addr:     r.Host,
+		Password: r.Password,
+		DB:       r.Database,
 	})
 	defer client.Close()
-
-	// Subscribe to a Redis channel
-	pubsub := client.Subscribe(context.TODO(), r.Channel)
-	defer pubsub.Close()
 
 	if err := client.Publish(context.TODO(), r.Channel, jsonEvent).Err(); err != nil {
 		r.logger.Err(err).Msg("failed to publish json event to pub/sub")
