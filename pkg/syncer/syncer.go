@@ -29,7 +29,7 @@ type RedisNotificationSyncer struct {
 	logger   *zerolog.Logger
 }
 
-func NewRedisNotificationSyncer(logger *zerolog.Logger, conf *config.SyncConfig) (*RedisNotificationSyncer, error) {
+func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) (*RedisNotificationSyncer, error) {
 	if !conf.Notification.Enable {
 		return nil, errors.New("notification syncer is not enabled")
 	}

@@ -64,7 +64,7 @@ func getFilter(filters []string) map[notification.Type]string {
 	return notificationsToAdd
 }
 
-func NotificationEventStreamHandler(syncConfig *config.SyncConfig) http.HandlerFunc {
+func NotificationEventStreamHandler(syncConfig config.SyncConfig) http.HandlerFunc {
 	if !syncConfig.Notification.Enable {
 		return NotificationEventSteamMonolithHandler
 	}
@@ -173,7 +173,7 @@ func NotificationEventSteamMonolithHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // NotificationEventSteamHandler implements the http.Handler interface.
-func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc {
+func NotificationEventSteamSyncHandler(conf config.SyncConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Make sure that the writer supports flushing.
 		flusher, ok := w.(http.Flusher)
