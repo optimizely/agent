@@ -68,7 +68,7 @@ func (suite *NotificationTestSuite) SetupTest() {
 
 	conf := config.NewDefaultConfig()
 	mux.Use(EventStreamMW.ClientCtx)
-	mux.Get("/notifications/event-stream", NotificationEventStreamHandler(&conf.Synchronization))
+	mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
 
 	suite.mux = mux
 	suite.tc = testClient
@@ -205,7 +205,7 @@ func TestEventStreamMissingOptlyCtx(t *testing.T) {
 
 	conf := config.NewDefaultConfig()
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		NotificationEventStreamHandler(&conf.Synchronization),
+		NotificationEventStreamHandler(conf.Synchronization),
 	}
 
 	for _, handler := range handlers {
