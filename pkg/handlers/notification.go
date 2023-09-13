@@ -188,7 +188,7 @@ func NotificationEventSteamSyncHandler(conf *config.SyncConfig) http.HandlerFunc
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
 
-		redisSyncer, err := syncer.NewRedisPubSubSyncer(middleware.GetLogger(r), conf)
+		redisSyncer, err := syncer.NewRedisNotificationSyncer(middleware.GetLogger(r), conf)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

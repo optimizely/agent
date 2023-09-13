@@ -251,7 +251,7 @@ func defaultLoader(
 		}
 
 		if conff.Synchronization.Notification.Enable {
-			redisSyncer, err := syncer.NewRedisPubSubSyncer(nil, &conff.Synchronization)
+			redisSyncer, err := syncer.NewRedisNotificationSyncer(nil, &conff.Synchronization)
 			if err != nil {
 				return nil, err
 			}

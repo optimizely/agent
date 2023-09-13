@@ -21,7 +21,7 @@ type Notification struct {
 	Message interface{}       `json:"message"`
 }
 
-type RedisPubSubSyncer struct {
+type RedisNotificationSyncer struct {
 	Host     string
 	Password string
 	Database int
@@ -29,7 +29,7 @@ type RedisPubSubSyncer struct {
 	logger   *zerolog.Logger
 }
 
-func NewRedisPubSubSyncer(logger *zerolog.Logger, conf *config.SyncConfig) (*RedisPubSubSyncer, error) {
+func NewRedisNotificationSyncer(logger *zerolog.Logger, conf *config.SyncConfig) (*RedisNotificationSyncer, error) {
 	if !conf.Notification.Enable {
 		return nil, errors.New("notification syncer is not enabled")
 	}
@@ -63,7 +63,7 @@ func NewRedisPubSubSyncer(logger *zerolog.Logger, conf *config.SyncConfig) (*Red
 		logger = &zerolog.Logger{}
 	}
 
-	return &RedisPubSubSyncer{
+	return &RedisNotificationSyncer{
 		Host:     host,
 		Password: password,
 		Database: database,
@@ -72,15 +72,15 @@ func NewRedisPubSubSyncer(logger *zerolog.Logger, conf *config.SyncConfig) (*Red
 	}, nil
 }
 
-func (r *RedisPubSubSyncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
+func (r *RedisNotificationSyncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
 	return 0, nil
 }
 
-func (r *RedisPubSubSyncer) RemoveHandler(_ int, t notification.Type) error {
+func (r *RedisNotificationSyncer) RemoveHandler(_ int, t notification.Type) error {
 	return nil
 }
 
-func (r *RedisPubSubSyncer) Send(t notification.Type, n interface{}) error {
+func (r *RedisNotificationSyncer) Send(t notification.Type, n interface{}) error {
 	notification := Notification{
 		Type:    t,
 		Message: n,
