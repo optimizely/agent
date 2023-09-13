@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	PubSubChan  = "optimizely-notifications"
-	PubSubRedis = "redis"
+	PubSubDefaultChan = "optimizely-notifications"
+	PubSubRedis       = "redis"
 )
 
 type Notification struct {
@@ -36,6 +36,9 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) 
 	if conf.Notification.Default != PubSubRedis {
 		return nil, errors.New("redis syncer is not set as default")
 	}
+	if conf.Notification.Pubsub == nil {
+		return nil, errors.New("redis config is not given")
+	}
 
 	redisConfig, found := conf.Notification.Pubsub[PubSubRedis].(map[string]interface{})
 	if !found {
@@ -56,7 +59,7 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) 
 	}
 	channel, ok := redisConfig["channel"].(string)
 	if !ok {
-		return nil, errors.New("redis channel not provided in correct format")
+		channel = PubSubDefaultChan
 	}
 
 	if logger == nil {

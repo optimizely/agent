@@ -66,15 +66,16 @@ func (suite *NotificationTestSuite) SetupTest() {
 	mux := chi.NewMux()
 	EventStreamMW := &NotificationMW{optlyClient}
 
-	conf := config.NewDefaultConfig()
 	mux.Use(EventStreamMW.ClientCtx)
-	mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
 
 	suite.mux = mux
 	suite.tc = testClient
 }
 
 func (suite *NotificationTestSuite) TestFeatureTestFilter() {
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
+
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -125,6 +126,59 @@ func (suite *NotificationTestSuite) TestFilter() {
 }
 
 func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
+
+	event := entities.Event{Key: "one"}
+	suite.tc.AddEvent(event)
+
+	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
+	rec := httptest.NewRecorder()
+
+	expected := `data: {"test":"value"}` + "\n\n" + `data: {"Type":"project_config_update","Revision":"revision"}` + "\n\n"
+
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1, _ := context.WithTimeout(ctx, 3*time.Second)
+
+	nc := registry.GetNotificationCenter("")
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		_ = nc.Send(notification.Track, map[string]string{"test": "value"})
+		projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
+			Type:     notification.ProjectConfigUpdate,
+			Revision: suite.tc.ProjectConfig.GetRevision(),
+		}
+		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
+	}()
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	response := string(rec.Body.Bytes())
+	suite.Equal(expected, response)
+}
+
+func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization() {
+	conf := config.NewDefaultConfig()
+	conf.Synchronization = config.SyncConfig{
+		Notification: config.NotificationConfig{
+			Enable:  true,
+			Default: "redis",
+			Pubsub: map[string]interface{}{
+				"redis": map[string]interface{}{
+					"host":     "localhost:6379",
+					"password": "",
+					"database": 0,
+				},
+			},
+		},
+	}
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
+
 	event := entities.Event{Key: "one"}
 	suite.tc.AddEvent(event)
 
@@ -159,6 +213,9 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 }
 
 func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
+
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
 

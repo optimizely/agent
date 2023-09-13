@@ -211,7 +211,7 @@ runtime:
 ## will get the notifications from multiple replicas
 synchronization:
     notification:
-        enable: true
+        enable: false
         default: "redis"
         pubsub:
             redis:
