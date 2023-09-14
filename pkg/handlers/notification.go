@@ -43,7 +43,7 @@ const (
 // Each http handler call creates a new channel and pumps decision service messages onto it.
 type MessageChan chan []byte
 
-type NotificationReceiverFunc func(context.Context, config.SyncConfig) (<-chan syncer.Notification, error)
+type NotificationReceiverFunc func(context.Context) (<-chan syncer.Notification, error)
 
 // types of notifications supported.
 var types = map[notification.Type]string{
@@ -80,20 +80,20 @@ func getFilter(filters []string) map[notification.Type]string {
 // 	return notificationEventSteamMonolithHandler
 // }
 
-func GetNotificationReceiverFunc(conf config.SyncConfig) NotificationReceiverFunc {
-	if !conf.Notification.Enable {
-		return DefaultNotificationReceiver
-	}
-	return RedisNotificationReceiver
-}
-
-func NotificationEventStreamHandler(conf config.SyncConfig, notificationReceiverFn NotificationReceiverFunc) http.HandlerFunc {
+func NotificationEventStreamHandler(notificationReceiverFn NotificationReceiverFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Make sure that the writer supports flushing.
 		flusher, ok := w.(http.Flusher)
 
 		if !ok {
 			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+			return
+		}
+
+		_, err := middleware.GetOptlyClient(r)
+
+		if err != nil {
+			RenderError(err, http.StatusUnprocessableEntity, w, r)
 			return
 		}
 
@@ -104,7 +104,7 @@ func NotificationEventStreamHandler(conf config.SyncConfig, notificationReceiver
 
 		// "raw" query string option
 		// If provided, send raw JSON lines instead of SSE-compliant strings.
-		raw := len(r.Form["raw"]) > 0
+		raw := len(r.URL.Query()["raw"]) > 0
 
 		// Parse the form.
 		_ = r.ParseForm()
@@ -120,7 +120,7 @@ func NotificationEventStreamHandler(conf config.SyncConfig, notificationReceiver
 		sdkKey := r.Header.Get(middleware.OptlySDKHeader)
 		ctx := context.WithValue(r.Context(), SDKKey, sdkKey)
 
-		dataChan, err := notificationReceiverFn(context.WithValue(ctx, LoggerKey, middleware.GetLogger(r)), conf)
+		dataChan, err := notificationReceiverFn(context.WithValue(ctx, LoggerKey, middleware.GetLogger(r)))
 		if err != nil {
 			middleware.GetLogger(r).Err(err).Msg("error from receiver")
 			http.Error(w, "Error from data receiver!", http.StatusInternalServerError)
@@ -138,7 +138,7 @@ func NotificationEventStreamHandler(conf config.SyncConfig, notificationReceiver
 					continue
 				}
 
-				jsonEvent, err := json.Marshal(event)
+				jsonEvent, err := json.Marshal(event.Message)
 				if err != nil {
 					middleware.GetLogger(r).Err(err).Msg("failed to marshal notification into json")
 					continue
@@ -159,108 +159,7 @@ func NotificationEventStreamHandler(conf config.SyncConfig, notificationReceiver
 	}
 }
 
-// NotificationEventSteamHandler implements the http.Handler interface.
-func notificationEventSteamMonolithHandler(w http.ResponseWriter, r *http.Request) {
-	// Make sure that the writer supports flushing.
-	flusher, ok := w.(http.Flusher)
-
-	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-		return
-	}
-
-	_, err := middleware.GetOptlyClient(r)
-
-	if err != nil {
-		RenderError(err, http.StatusUnprocessableEntity, w, r)
-		return
-	}
-
-	// Set the headers related to event streaming.
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
-	// Each connection registers its own message channel with the NotificationHandler's connections registry
-	messageChan := make(MessageChan)
-	// Each connection also adds listeners
-	sdkKey := r.Header.Get(middleware.OptlySDKHeader)
-	nc := registry.GetNotificationCenter(sdkKey)
-
-	// Parse the form.
-	_ = r.ParseForm()
-
-	filters := r.Form["filter"]
-
-	// Parse out the any filters that were added
-	notificationsToAdd := getFilter(filters)
-
-	ids := []struct {
-		int
-		notification.Type
-	}{}
-
-	for notificationType, _ := range notificationsToAdd {
-		id, e := nc.AddHandler(notificationType, func(n interface{}) {
-			jsonEvent, err := json.Marshal(n)
-			if err != nil {
-				middleware.GetLogger(r).Error().Msg("encoding notification to json")
-			} else {
-				messageChan <- jsonEvent
-			}
-		})
-		if e != nil {
-			RenderError(e, http.StatusUnprocessableEntity, w, r)
-			return
-		}
-
-		// do defer outside the loop.
-		ids = append(ids, struct {
-			int
-			notification.Type
-		}{id, notificationType})
-	}
-
-	// Remove the decision listener if we exited.
-	defer func() {
-		for _, id := range ids {
-			err := nc.RemoveHandler(id.int, id.Type)
-			if err != nil {
-				middleware.GetLogger(r).Error().AnErr("removing notification", err)
-			}
-		}
-	}()
-
-	// "raw" query string option
-	// If provided, send raw JSON lines instead of SSE-compliant strings.
-	raw := len(r.Form["raw"]) > 0
-
-	// Listen to connection close and un-register messageChan
-	notify := r.Context().Done()
-	// block waiting or messages broadcast on this connection's messageChan
-	for {
-		select {
-		// Write to the ResponseWriter
-		case msg := <-messageChan:
-			if raw {
-				// Raw JSON events, one per line
-				_, _ = fmt.Fprintf(w, "%s\n", msg)
-			} else {
-				// Server Sent Events compatible
-				_, _ = fmt.Fprintf(w, "data: %s\n\n", msg)
-			}
-			// Flush the data immediately instead of buffering it for later.
-			// The flush will fail if the connection is closed.  That will cause the handler to exit.
-			flusher.Flush()
-		case <-notify:
-			middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
-			return
-		}
-	}
-
-}
-
-func DefaultNotificationReceiver(ctx context.Context, conf config.SyncConfig) (<-chan syncer.Notification, error) {
+func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Notification, error) {
 	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
 	if !ok {
 		logger = &zerolog.Logger{}
@@ -320,122 +219,54 @@ func DefaultNotificationReceiver(ctx context.Context, conf config.SyncConfig) (<
 	return messageChan, nil
 }
 
-func RedisNotificationReceiver(ctx context.Context, conf config.SyncConfig) (<-chan syncer.Notification, error) {
-	redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, conf)
-	if err != nil {
-		return nil, err
-	}
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     redisSyncer.Host,
-		Password: redisSyncer.Password,
-		DB:       redisSyncer.Database,
-	})
-
-	// Subscribe to a Redis channel
-	pubsub := client.Subscribe(ctx, redisSyncer.Channel)
-
-	dataChan := make(chan syncer.Notification)
-
-	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
-	if !ok {
-		logger = &zerolog.Logger{}
-	}
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				client.Close()
-				pubsub.Close()
-				logger.Debug().Msg("context cancelled, redis notification receiver is closed")
-				return
-			default:
-				msg, err := pubsub.ReceiveMessage(ctx)
-				if err != nil {
-					logger.Err(err).Msg("failed to receive message from redis")
-					continue
-				}
-
-				var event syncer.Notification
-				if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
-					logger.Err(err).Msg("failed to unmarshal redis message")
-					continue
-				}
-				dataChan <- event
-			}
-		}
-	}()
-
-	return dataChan, nil
-}
-
-// NotificationEventSteamHandler implements the http.Handler interface.
-func notificationEventSteamSyncHandler(conf config.SyncConfig, receiverFn NotificationReceiverFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Make sure that the writer supports flushing.
-		flusher, ok := w.(http.Flusher)
-
-		if !ok {
-			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-			return
-		}
-
-		// Set the headers related to event streaming.
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-
-		// "raw" query string option
-		// If provided, send raw JSON lines instead of SSE-compliant strings.
-		raw := len(r.Form["raw"]) > 0
-
-		// Parse the form.
-		_ = r.ParseForm()
-
-		filters := r.Form["filter"]
-
-		// Parse out the any filters that were added
-		notificationsToAdd := getFilter(filters)
-
-		// Listen to connection close and un-register messageChan
-		notify := r.Context().Done()
-
-		dataChan, err := receiverFn(context.WithValue(r.Context(), LoggerKey, middleware.GetLogger(r)), conf)
+func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc {
+	return func(ctx context.Context) (<-chan syncer.Notification, error) {
+		redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, conf)
 		if err != nil {
-			middleware.GetLogger(r).Err(err).Msg("error from receiver")
-			http.Error(w, "Error from data receiver!", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 
-		for {
-			select {
-			case <-notify:
-				middleware.GetLogger(r).Debug().Msg("received close on the request.  So, we are shutting down this handler")
-				return
-			case event := <-dataChan:
-				_, found := notificationsToAdd[event.Type]
-				if !found {
-					continue
-				}
+		client := redis.NewClient(&redis.Options{
+			Addr:     redisSyncer.Host,
+			Password: redisSyncer.Password,
+			DB:       redisSyncer.Database,
+		})
 
-				jsonEvent, err := json.Marshal(event)
-				if err != nil {
-					middleware.GetLogger(r).Err(err).Msg("failed to marshal notification into json")
-					continue
-				}
+		// Subscribe to a Redis channel
+		pubsub := client.Subscribe(ctx, redisSyncer.Channel)
 
-				if raw {
-					// Raw JSON events, one per line
-					_, _ = fmt.Fprintf(w, "%s\n", string(jsonEvent))
-				} else {
-					// Server Sent Events compatible
-					_, _ = fmt.Fprintf(w, "data: %s\n\n", string(jsonEvent))
+		dataChan := make(chan syncer.Notification)
+
+		logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
+		if !ok {
+			logger = &zerolog.Logger{}
+		}
+
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					client.Close()
+					pubsub.Close()
+					logger.Debug().Msg("context cancelled, redis notification receiver is closed")
+					return
+				default:
+					msg, err := pubsub.ReceiveMessage(ctx)
+					if err != nil {
+						logger.Err(err).Msg("failed to receive message from redis")
+						continue
+					}
+
+					var event syncer.Notification
+					if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+						logger.Err(err).Msg("failed to unmarshal redis message")
+						continue
+					}
+					dataChan <- event
 				}
-				// Flush the data immediately instead of buffering it for later.
-				// The flush will fail if the connection is closed.  That will cause the handler to exit.
-				flusher.Flush()
 			}
-		}
+		}()
+
+		return dataChan, nil
 	}
 }

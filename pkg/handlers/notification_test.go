@@ -31,6 +31,7 @@ import (
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/pkg/syncer"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/go-sdk/pkg/entities"
@@ -74,7 +75,7 @@ func (suite *NotificationTestSuite) SetupTest() {
 
 func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	conf := config.NewDefaultConfig()
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization)))
 
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
@@ -126,9 +127,6 @@ func (suite *NotificationTestSuite) TestFilter() {
 }
 
 func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
-	conf := config.NewDefaultConfig()
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
-
 	event := entities.Event{Key: "one"}
 	suite.tc.AddEvent(event)
 
@@ -143,15 +141,27 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 
 	nc := registry.GetNotificationCenter("")
 
+	notifications := make([]syncer.Notification, 0)
+
+	trackEvent := map[string]string{"test": "value"}
+	projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
+		Type:     notification.ProjectConfigUpdate,
+		Revision: suite.tc.ProjectConfig.GetRevision(),
+	}
+
+	notifications = append(notifications, syncer.Notification{Type: notification.Track, Message: trackEvent})
+	notifications = append(notifications, syncer.Notification{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
+
 	go func() {
 		time.Sleep(1 * time.Second)
-		_ = nc.Send(notification.Track, map[string]string{"test": "value"})
-		projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
-			Type:     notification.ProjectConfigUpdate,
-			Revision: suite.tc.ProjectConfig.GetRevision(),
-		}
+
+		_ = nc.Send(notification.Track, trackEvent)
+
 		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
 	}()
+
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -163,6 +173,39 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 }
 
 func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization() {
+	event := entities.Event{Key: "one"}
+	suite.tc.AddEvent(event)
+
+	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
+	rec := httptest.NewRecorder()
+
+	expected := `data: {"test":"value"}` + "\n\n" + `data: {"Type":"project_config_update","Revision":"revision"}` + "\n\n"
+
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1, _ := context.WithTimeout(ctx, 3*time.Second)
+
+	nc := registry.GetNotificationCenter("")
+
+	notifications := make([]syncer.Notification, 0)
+
+	trackEvent := map[string]string{"test": "value"}
+	projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
+		Type:     notification.ProjectConfigUpdate,
+		Revision: suite.tc.ProjectConfig.GetRevision(),
+	}
+
+	notifications = append(notifications, syncer.Notification{Type: notification.Track, Message: trackEvent})
+	notifications = append(notifications, syncer.Notification{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
+
+	go func() {
+		time.Sleep(1 * time.Second)
+
+		_ = nc.Send(notification.Track, trackEvent)
+
+		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
+	}()
+
 	conf := config.NewDefaultConfig()
 	conf.Synchronization = config.SyncConfig{
 		Notification: config.NotificationConfig{
@@ -177,31 +220,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 			},
 		},
 	}
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
-
-	event := entities.Event{Key: "one"}
-	suite.tc.AddEvent(event)
-
-	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
-	rec := httptest.NewRecorder()
-
-	expected := `data: {"test":"value"}` + "\n\n" + `data: {"Type":"project_config_update","Revision":"revision"}` + "\n\n"
-
-	// create a cancelable request context
-	ctx := req.Context()
-	ctx1, _ := context.WithTimeout(ctx, 3*time.Second)
-
-	nc := registry.GetNotificationCenter("")
-
-	go func() {
-		time.Sleep(1 * time.Second)
-		_ = nc.Send(notification.Track, map[string]string{"test": "value"})
-		projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
-			Type:     notification.ProjectConfigUpdate,
-			Revision: suite.tc.ProjectConfig.GetRevision(),
-		}
-		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
-	}()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -213,9 +232,6 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 }
 
 func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
-	conf := config.NewDefaultConfig()
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(conf.Synchronization))
-
 	testVariation := suite.tc.ProjectConfig.CreateVariation("variation_a")
 	suite.tc.AddExperiment("one", []entities.Variation{testVariation})
 
@@ -229,10 +245,18 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	ctx1, _ := context.WithTimeout(ctx, 2*time.Second)
 
 	nc := registry.GetNotificationCenter("")
+	decisionEvent := map[string]string{"key": "value"}
+
+	notifications := make([]syncer.Notification, 0)
+	notifications = append(notifications, syncer.Notification{Type: notification.Decision, Message: decisionEvent})
+
 	go func() {
 		time.Sleep(1 * time.Second)
-		nc.Send(notification.Decision, map[string]string{"key": "value"})
+		nc.Send(notification.Decision, decisionEvent)
 	}()
+
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -262,12 +286,25 @@ func TestEventStreamMissingOptlyCtx(t *testing.T) {
 
 	conf := config.NewDefaultConfig()
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		NotificationEventStreamHandler(conf.Synchronization),
+		NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization)),
 	}
 
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
 		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
+	}
+}
+
+func getMockNotificationReceiver(conf config.SyncConfig, msg ...syncer.Notification) NotificationReceiverFunc {
+	return func(ctx context.Context) (<-chan syncer.Notification, error) {
+		dataChan := make(chan syncer.Notification)
+		go func() {
+			time.Sleep(1)
+			for _, val := range msg {
+				dataChan <- val
+			}
+		}()
+		return dataChan, nil
 	}
 }
