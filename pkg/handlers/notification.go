@@ -73,13 +73,6 @@ func getFilter(filters []string) map[notification.Type]string {
 	return notificationsToAdd
 }
 
-// func NotificationEventStreamHandler(syncConfig config.SyncConfig) http.HandlerFunc {
-// 	if syncConfig.Notification.Enable {
-// 		return notificationEventSteamSyncHandler(syncConfig, redisNotificationReceiver)
-// 	}
-// 	return notificationEventSteamMonolithHandler
-// }
-
 func NotificationEventStreamHandler(notificationReceiverFn NotificationReceiverFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Make sure that the writer supports flushing.

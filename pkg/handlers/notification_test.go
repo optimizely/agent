@@ -21,20 +21,19 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
-
+	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 	"github.com/optimizely/agent/pkg/syncer"
-
-	"github.com/go-chi/chi/v5"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -306,5 +305,42 @@ func getMockNotificationReceiver(conf config.SyncConfig, msg ...syncer.Notificat
 			}
 		}()
 		return dataChan, nil
+	}
+}
+
+func TestDefaultNotificationReceiver(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    <-chan syncer.Notification
+		wantErr bool
+	}{
+		{
+			name:    "Test happy path",
+			args:    args{ctx: context.WithValue(context.TODO(), SDKKey, "1221")},
+			want:    make(chan syncer.Notification),
+			wantErr: false,
+		},
+		{
+			name:    "Test without sdk key",
+			args:    args{ctx: context.TODO()},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DefaultNotificationReceiver(tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DefaultNotificationReceiver() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if reflect.TypeOf(tt.want) != reflect.TypeOf(got) {
+				t.Errorf("DefaultNotificationReceiver() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
