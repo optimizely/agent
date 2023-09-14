@@ -19,6 +19,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -340,6 +341,64 @@ func TestDefaultNotificationReceiver(t *testing.T) {
 			}
 			if reflect.TypeOf(tt.want) != reflect.TypeOf(got) {
 				t.Errorf("DefaultNotificationReceiver() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRedisNotificationReceiver(t *testing.T) {
+	conf := config.SyncConfig{
+		Notification: config.NotificationConfig{
+			Enable:  true,
+			Default: "redis",
+			Pubsub: map[string]interface{}{
+				"redis": map[string]interface{}{
+					"host":     "localhost:6379",
+					"password": "",
+					"database": 0,
+				},
+			},
+		},
+	}
+	type args struct {
+		conf config.SyncConfig
+	}
+	tests := []struct {
+		name string
+		args args
+		want NotificationReceiverFunc
+	}{
+		{
+			name: "Test happy path",
+			args: args{conf: conf},
+			want: func(ctx context.Context) (<-chan syncer.Notification, error) {
+				return make(<-chan syncer.Notification), nil
+			},
+		},
+		{
+			name: "Test empty config",
+			args: args{conf: config.SyncConfig{}},
+			want: func(ctx context.Context) (<-chan syncer.Notification, error) {
+				return nil, errors.New("error")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := RedisNotificationReceiver(tt.args.conf)
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("RedisNotificationReceiver() = %v, want %v", got, tt.want)
+			}
+
+			ch1, err1 := got(context.TODO())
+			ch2, err2 := tt.want(context.TODO())
+
+			if reflect.TypeOf(err1) != reflect.TypeOf(err2) {
+				t.Errorf("error type not matched")
+			}
+
+			if reflect.TypeOf(ch1) != reflect.TypeOf(ch2) {
+				t.Errorf("error type not matched")
 			}
 		})
 	}
