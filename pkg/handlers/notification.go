@@ -43,7 +43,7 @@ const (
 // Each http handler call creates a new channel and pumps decision service messages onto it.
 type MessageChan chan []byte
 
-type NotificationReceiverFunc func(context.Context) (<-chan syncer.Notification, error)
+type NotificationReceiverFunc func(context.Context) (<-chan syncer.Event, error)
 
 // types of notifications supported.
 var types = map[notification.Type]string{
@@ -152,7 +152,7 @@ func NotificationEventStreamHandler(notificationReceiverFn NotificationReceiverF
 	}
 }
 
-func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Notification, error) {
+func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Event, error) {
 	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
 	if !ok {
 		logger = &zerolog.Logger{}
@@ -164,7 +164,7 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Notificatio
 	}
 
 	// Each connection registers its own message channel with the NotificationHandler's connections registry
-	messageChan := make(chan syncer.Notification)
+	messageChan := make(chan syncer.Event)
 	nc := registry.GetNotificationCenter(sdkKey)
 
 	// Parse out the any filters that were added
@@ -177,7 +177,7 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Notificatio
 
 	for notificationType := range notificationsToAdd {
 		id, e := nc.AddHandler(notificationType, func(n interface{}) {
-			msg := syncer.Notification{
+			msg := syncer.Event{
 				Type:    notificationType,
 				Message: n,
 			}
@@ -213,7 +213,7 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Notificatio
 }
 
 func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc {
-	return func(ctx context.Context) (<-chan syncer.Notification, error) {
+	return func(ctx context.Context) (<-chan syncer.Event, error) {
 		redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, conf)
 		if err != nil {
 			return nil, err
@@ -228,7 +228,7 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 		// Subscribe to a Redis channel
 		pubsub := client.Subscribe(ctx, redisSyncer.Channel)
 
-		dataChan := make(chan syncer.Notification)
+		dataChan := make(chan syncer.Event)
 
 		logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
 		if !ok {
@@ -241,7 +241,7 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 				case <-ctx.Done():
 					client.Close()
 					pubsub.Close()
-					logger.Debug().Msg("context cancelled, redis notification receiver is closed")
+					logger.Debug().Msg("context canceled, redis notification receiver is closed")
 					return
 				default:
 					msg, err := pubsub.ReceiveMessage(ctx)
@@ -250,7 +250,7 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 						continue
 					}
 
-					var event syncer.Notification
+					var event syncer.Event
 					if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
 						logger.Err(err).Msg("failed to unmarshal redis message")
 						continue

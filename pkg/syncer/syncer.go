@@ -1,3 +1,20 @@
+/****************************************************************************
+ * Copyright 2019-2020,2023, Optimizely, Inc. and contributors              *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ ***************************************************************************/
+
+// Package syncer provides synchronization across Agent nodes
 package syncer
 
 import (
@@ -12,15 +29,19 @@ import (
 )
 
 const (
+	// PubSubDefaultChan will be used as default pubsub channel name
 	PubSubDefaultChan = "optimizely-notifications"
-	PubSubRedis       = "redis"
+	// PubSubRedis is the name of pubsub type of Redis
+	PubSubRedis = "redis"
 )
 
-type Notification struct {
+// Event holds the notification event with it's type
+type Event struct {
 	Type    notification.Type `json:"type"`
 	Message interface{}       `json:"message"`
 }
 
+// RedisNotificationSyncer defines Redis pubsub configuration
 type RedisNotificationSyncer struct {
 	Host     string
 	Password string
@@ -29,6 +50,7 @@ type RedisNotificationSyncer struct {
 	logger   *zerolog.Logger
 }
 
+// NewRedisNotificationSyncer returns an instance of RedisNotificationSyncer
 func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) (*RedisNotificationSyncer, error) {
 	if !conf.Notification.Enable {
 		return nil, errors.New("notification syncer is not enabled")
@@ -75,21 +97,24 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) 
 	}, nil
 }
 
+// AddHandler is empty but needed to implement notification.Center interface
 func (r *RedisNotificationSyncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
 	return 0, nil
 }
 
+// RemoveHandler is empty but needed to implement notification.Center interface
 func (r *RedisNotificationSyncer) RemoveHandler(_ int, t notification.Type) error {
 	return nil
 }
 
+// Send will send the notification to the specified channel in the Redis pubsub
 func (r *RedisNotificationSyncer) Send(t notification.Type, n interface{}) error {
-	notification := Notification{
+	event := Event{
 		Type:    t,
 		Message: n,
 	}
 
-	jsonEvent, err := json.Marshal(notification)
+	jsonEvent, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}

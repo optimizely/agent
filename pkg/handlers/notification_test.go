@@ -141,7 +141,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 
 	nc := registry.GetNotificationCenter("")
 
-	notifications := make([]syncer.Notification, 0)
+	notifications := make([]syncer.Event, 0)
 
 	trackEvent := map[string]string{"test": "value"}
 	projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
@@ -149,8 +149,8 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 		Revision: suite.tc.ProjectConfig.GetRevision(),
 	}
 
-	notifications = append(notifications, syncer.Notification{Type: notification.Track, Message: trackEvent})
-	notifications = append(notifications, syncer.Notification{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
+	notifications = append(notifications, syncer.Event{Type: notification.Track, Message: trackEvent})
+	notifications = append(notifications, syncer.Event{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
 
 	go func() {
 		time.Sleep(1 * time.Second)
@@ -187,7 +187,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 
 	nc := registry.GetNotificationCenter("")
 
-	notifications := make([]syncer.Notification, 0)
+	notifications := make([]syncer.Event, 0)
 
 	trackEvent := map[string]string{"test": "value"}
 	projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
@@ -195,8 +195,8 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 		Revision: suite.tc.ProjectConfig.GetRevision(),
 	}
 
-	notifications = append(notifications, syncer.Notification{Type: notification.Track, Message: trackEvent})
-	notifications = append(notifications, syncer.Notification{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
+	notifications = append(notifications, syncer.Event{Type: notification.Track, Message: trackEvent})
+	notifications = append(notifications, syncer.Event{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
 
 	go func() {
 		time.Sleep(1 * time.Second)
@@ -247,8 +247,8 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	nc := registry.GetNotificationCenter("")
 	decisionEvent := map[string]string{"key": "value"}
 
-	notifications := make([]syncer.Notification, 0)
-	notifications = append(notifications, syncer.Notification{Type: notification.Decision, Message: decisionEvent})
+	notifications := make([]syncer.Event, 0)
+	notifications = append(notifications, syncer.Event{Type: notification.Decision, Message: decisionEvent})
 
 	go func() {
 		time.Sleep(1 * time.Second)
@@ -278,8 +278,8 @@ func (suite *NotificationTestSuite) TestWithFailedNotificationReceiver() {
 	nc := registry.GetNotificationCenter("")
 	decisionEvent := map[string]string{"key": "value"}
 
-	notifications := make([]syncer.Notification, 0)
-	notifications = append(notifications, syncer.Notification{Type: notification.Decision, Message: decisionEvent})
+	notifications := make([]syncer.Event, 0)
+	notifications = append(notifications, syncer.Event{Type: notification.Decision, Message: decisionEvent})
 
 	go func() {
 		time.Sleep(1 * time.Second)
@@ -330,13 +330,13 @@ func TestDefaultNotificationReceiver(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    <-chan syncer.Notification
+		want    <-chan syncer.Event
 		wantErr bool
 	}{
 		{
 			name:    "Test happy path",
 			args:    args{ctx: context.WithValue(context.TODO(), SDKKey, "1221")},
-			want:    make(chan syncer.Notification),
+			want:    make(chan syncer.Event),
 			wantErr: false,
 		},
 		{
@@ -385,14 +385,14 @@ func TestRedisNotificationReceiver(t *testing.T) {
 		{
 			name: "Test happy path",
 			args: args{conf: conf},
-			want: func(ctx context.Context) (<-chan syncer.Notification, error) {
-				return make(<-chan syncer.Notification), nil
+			want: func(ctx context.Context) (<-chan syncer.Event, error) {
+				return make(<-chan syncer.Event), nil
 			},
 		},
 		{
 			name: "Test empty config",
 			args: args{conf: config.SyncConfig{}},
-			want: func(ctx context.Context) (<-chan syncer.Notification, error) {
+			want: func(ctx context.Context) (<-chan syncer.Event, error) {
 				return nil, errors.New("error")
 			},
 		},
@@ -418,12 +418,12 @@ func TestRedisNotificationReceiver(t *testing.T) {
 	}
 }
 
-func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg ...syncer.Notification) NotificationReceiverFunc {
-	return func(ctx context.Context) (<-chan syncer.Notification, error) {
+func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg ...syncer.Event) NotificationReceiverFunc {
+	return func(ctx context.Context) (<-chan syncer.Event, error) {
 		if returnError {
 			return nil, errors.New("mock error")
 		}
-		dataChan := make(chan syncer.Notification)
+		dataChan := make(chan syncer.Event)
 		go func() {
 			time.Sleep(1)
 			for _, val := range msg {

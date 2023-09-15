@@ -160,10 +160,12 @@ type AgentConfig struct {
 	Synchronization SyncConfig    `json:"synchronization"`
 }
 
+// SyncConfig contains Synchronization configuration for the multiple Agent nodes
 type SyncConfig struct {
 	Notification NotificationConfig `json:"notification"`
 }
 
+// NotificationConfig contains Notification Synchronization configuration for the multiple Agent nodes
 type NotificationConfig struct {
 	Enable  bool                   `json:"enable"`
 	Default string                 `json:"default"`
