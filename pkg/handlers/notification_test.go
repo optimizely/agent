@@ -75,7 +75,7 @@ func (suite *NotificationTestSuite) SetupTest() {
 
 func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	conf := config.NewDefaultConfig()
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization)))
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false)))
 
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
@@ -161,7 +161,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 	}()
 
 	conf := config.NewDefaultConfig()
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, notifications...)))
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -220,7 +220,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 			},
 		},
 	}
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, notifications...)))
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -256,7 +256,7 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	}()
 
 	conf := config.NewDefaultConfig()
-	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, notifications...)))
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -265,6 +265,33 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	// Unmarshal response
 	response := string(rec.Body.Bytes())
 	suite.Equal(expected, response)
+}
+
+func (suite *NotificationTestSuite) TestWithFailedNotificationReceiver() {
+	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
+	rec := httptest.NewRecorder()
+
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1, _ := context.WithTimeout(ctx, 2*time.Second)
+
+	nc := registry.GetNotificationCenter("")
+	decisionEvent := map[string]string{"key": "value"}
+
+	notifications := make([]syncer.Notification, 0)
+	notifications = append(notifications, syncer.Notification{Type: notification.Decision, Message: decisionEvent})
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		nc.Send(notification.Decision, decisionEvent)
+	}()
+
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, true, notifications...)))
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
+
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *NotificationTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
@@ -286,26 +313,13 @@ func TestEventStreamMissingOptlyCtx(t *testing.T) {
 
 	conf := config.NewDefaultConfig()
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization)),
+		NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false)),
 	}
 
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
 		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
-	}
-}
-
-func getMockNotificationReceiver(conf config.SyncConfig, msg ...syncer.Notification) NotificationReceiverFunc {
-	return func(ctx context.Context) (<-chan syncer.Notification, error) {
-		dataChan := make(chan syncer.Notification)
-		go func() {
-			time.Sleep(1)
-			for _, val := range msg {
-				dataChan <- val
-			}
-		}()
-		return dataChan, nil
 	}
 }
 
@@ -401,5 +415,21 @@ func TestRedisNotificationReceiver(t *testing.T) {
 				t.Errorf("error type not matched")
 			}
 		})
+	}
+}
+
+func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg ...syncer.Notification) NotificationReceiverFunc {
+	return func(ctx context.Context) (<-chan syncer.Notification, error) {
+		if returnError {
+			return nil, errors.New("mock error")
+		}
+		dataChan := make(chan syncer.Notification)
+		go func() {
+			time.Sleep(1)
+			for _, val := range msg {
+				dataChan <- val
+			}
+		}()
+		return dataChan, nil
 	}
 }
