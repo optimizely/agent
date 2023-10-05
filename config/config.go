@@ -71,6 +71,9 @@ func NewDefaultConfig() *AgentConfig {
 			IncludeSDKKey: true,
 			Level:         "info",
 		},
+		Tracing: TracingConfig{
+			Enabled: false,
+		},
 		Client: ClientConfig{
 			PollingInterval:     1 * time.Minute,
 			BatchSize:           10,
@@ -139,6 +142,7 @@ type AgentConfig struct {
 	Admin   AdminConfig   `json:"admin"`
 	API     APIConfig     `json:"api"`
 	Log     LogConfig     `json:"log"`
+	Tracing TracingConfig `json:"tracing"`
 	Client  ClientConfig  `json:"client"`
 	Runtime RuntimeConfig `json:"runtime"`
 	Server  ServerConfig  `json:"server"`
@@ -199,6 +203,16 @@ type LogConfig struct {
 	Pretty        bool   `json:"pretty"`
 	IncludeSDKKey bool   `json:"includeSdkKey" default:"true"`
 	Level         string `json:"level"`
+}
+
+type TracingConfig struct {
+	Enabled  bool                  `json:"enabled"`
+	Exporter TracingExporterConfig `json:"exporter"`
+}
+
+type TracingExporterConfig struct {
+	Default  string                 `json:"default"`
+	Services map[string]interface{} `json:"services"`
 }
 
 // PluginConfigs defines the generic mapping of middleware plugins

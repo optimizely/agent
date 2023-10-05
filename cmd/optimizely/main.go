@@ -177,16 +177,21 @@ func main() {
 	conf := loadConfig(v)
 	initLogging(conf.Log)
 
-	tp, err := initTracing()
-	if err != nil {
-		log.Panic().Err(err).Msg("Unable to initialize tracing")
-	}
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Error().Err(err).Msg("Failed to shutdown tracing")
+	if conf.Tracing.Enabled {
+		tp, err := initTracing()
+		if err != nil {
+			log.Panic().Err(err).Msg("Unable to initialize tracing")
 		}
-	}()
-	otel.SetTracerProvider(tp)
+		defer func() {
+			if err := tp.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Msg("Failed to shutdown tracing")
+			}
+		}()
+		otel.SetTracerProvider(tp)
+		log.Info().Msg(fmt.Sprintf("Tracing enabled with service %q", conf.Tracing.Exporter.Default))
+	} else {
+		log.Info().Msg("Tracing disabled")
+	}
 
 	conf.LogConfigWarnings()
 

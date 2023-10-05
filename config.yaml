@@ -26,6 +26,22 @@ log:
     ## to set whether or not the SDK key is included in the logging output.
     includeSdkKey: true
 
+tracing:
+    enabled: false
+    exporter:
+        default: "stdout"
+        services:
+            stdout:
+                format: "json"
+                filename: "trace.out"
+            datadog:
+                endpoint: "http://localhost:8126"
+                serviceName: "optimizely"
+                sampleRate: 1.0
+                tags:
+                    - "env:dev"
+                    - "version:1.0.0"
+
 ##
 ## http server configuration
 ##
