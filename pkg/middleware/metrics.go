@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/optimizely/agent/pkg/metrics"
+	"go.opentelemetry.io/otel"
 )
 
 type contextString string
@@ -52,6 +53,18 @@ func Metricize(key string, metricsRegistry *metrics.Registry) func(http.Handler)
 		return http.HandlerFunc(fn)
 	}
 	return f
+}
+
+func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx, span := otel.Tracer(tracerName).Start(r.Context(), spanName)
+			defer span.End()
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+		return http.HandlerFunc(fn)
+	}
 }
 
 // SetTime middleware sets the start time in request context

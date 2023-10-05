@@ -18,6 +18,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -44,6 +45,11 @@ import (
 	// Initiate the loading of the odpCache plugins
 	_ "github.com/optimizely/agent/plugins/odpcache/all"
 	"github.com/optimizely/go-sdk/pkg/logging"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 // Version holds the admin version
@@ -119,6 +125,37 @@ func initLogging(conf config.LogConfig) {
 	}
 }
 
+func initTracing() (*sdktrace.TracerProvider, error) {
+	f, err := os.Create("trace.out")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the trace file, error: %s", err.Error())
+	}
+
+	exp, err := stdouttrace.New(
+		stdouttrace.WithPrettyPrint(),
+		stdouttrace.WithWriter(f),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the collector exporter, error: %s", err.Error())
+	}
+
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("optimizely-agent"),
+		),
+		resource.WithAttributes(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
+	}
+
+	return sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithResource(res),
+	), nil
+}
+
 func setRuntimeEnvironment(conf config.RuntimeConfig) {
 	if conf.BlockProfileRate != 0 {
 		log.Warn().Msgf("Setting non-zero blockProfileRate is NOT recommended for production")
@@ -139,6 +176,17 @@ func main() {
 
 	conf := loadConfig(v)
 	initLogging(conf.Log)
+
+	tp, err := initTracing()
+	if err != nil {
+		log.Panic().Err(err).Msg("Unable to initialize tracing")
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Error().Err(err).Msg("Failed to shutdown tracing")
+		}
+	}()
+	otel.SetTracerProvider(tp)
 
 	conf.LogConfigWarnings()
 
