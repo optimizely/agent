@@ -29,7 +29,7 @@ log:
 tracing:
     enabled: true
     exporter:
-        default: "remote"
+        default: "stdout"
         serviceName: "optimizely-agent"
         env: "dev"
         services:

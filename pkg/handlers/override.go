@@ -61,7 +61,7 @@ func Override(w http.ResponseWriter, r *http.Request) {
 
 	// Empty variation means remove
 	if body.VariationKey == "" {
-		if override, err := optlyClient.RemoveForcedVariation(experimentKey, body.UserID); err != nil {
+		if override, err := optlyClient.RemoveForcedVariation(r.Context(), experimentKey, body.UserID); err != nil {
 			RenderError(err, http.StatusInternalServerError, w, r)
 		} else {
 			render.JSON(w, r, override)
@@ -70,7 +70,7 @@ func Override(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
-	if override, err := optlyClient.SetForcedVariation(experimentKey, body.UserID, body.VariationKey); err != nil {
+	if override, err := optlyClient.SetForcedVariation(r.Context(), experimentKey, body.UserID, body.VariationKey); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 	} else {
 		render.JSON(w, r, override)

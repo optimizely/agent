@@ -76,10 +76,10 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		switch value {
 		case "experiment":
 			logger.Debug().Str("experimentKey", key).Msg("fetching experiment decision")
-			d, err = optlyClient.ActivateExperiment(key, uc, disableTracking)
+			d, err = optlyClient.ActivateExperiment(r.Context(), key, uc, disableTracking)
 		case "feature":
 			logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
-			d, err = optlyClient.ActivateFeature(key, uc, disableTracking)
+			d, err = optlyClient.ActivateFeature(r.Context(), key, uc, disableTracking)
 		case "experimentKey-not-found":
 			logger.Debug().Str("experimentKey", key).Msg("experimentKey not found")
 			d = &optimizely.Decision{
