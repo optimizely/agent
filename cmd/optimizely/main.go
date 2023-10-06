@@ -18,6 +18,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -46,6 +47,8 @@ import (
 	_ "github.com/optimizely/agent/plugins/odpcache/all"
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -125,8 +128,8 @@ func initLogging(conf config.LogConfig) {
 	}
 }
 
-func initTracing() (*sdktrace.TracerProvider, error) {
-	f, err := os.Create("trace.out")
+func getStdOutTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
+	f, err := os.Create(conf.Exporter.Services.StdOut.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the trace file, error: %s", err.Error())
 	}
@@ -142,9 +145,9 @@ func initTracing() (*sdktrace.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String("optimizely-agent"),
+			semconv.ServiceNameKey.String(conf.Exporter.ServiceName),
+			semconv.DeploymentEnvironmentKey.String(conf.Exporter.Env),
 		),
-		resource.WithAttributes(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
@@ -154,6 +157,48 @@ func initTracing() (*sdktrace.TracerProvider, error) {
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(res),
 	), nil
+}
+
+func getRemoteTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(conf.Exporter.ServiceName),
+			semconv.DeploymentEnvironmentKey.String(conf.Exporter.Env),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
+	}
+
+	traceExporter, err := otlptrace.New(
+		context.Background(),
+		otlptracegrpc.NewClient(
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint(conf.Exporter.Services.Remote.Endpoint),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the remote trace exporter, error: %s", err.Error())
+	}
+
+	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
+	return sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Exporter.Services.Remote.SampleRate))),
+		sdktrace.WithResource(res),
+		sdktrace.WithSpanProcessor(bsp),
+	), nil
+}
+
+func initTracing(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
+	switch conf.Exporter.Default {
+	case config.TracingServiceTypeRemote:
+		return getRemoteTraceProvider(conf)
+	case config.TracingServiceTypeStdOut:
+		return getStdOutTraceProvider(conf)
+	default:
+		return nil, errors.New("unknown tracing service type")
+	}
 }
 
 func setRuntimeEnvironment(conf config.RuntimeConfig) {
@@ -178,7 +223,7 @@ func main() {
 	initLogging(conf.Log)
 
 	if conf.Tracing.Enabled {
-		tp, err := initTracing()
+		tp, err := initTracing(conf.Tracing)
 		if err != nil {
 			log.Panic().Err(err).Msg("Unable to initialize tracing")
 		}

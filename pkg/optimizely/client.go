@@ -86,8 +86,8 @@ func (c *OptlyClient) UpdateConfig() {
 }
 
 // TrackEvent checks for the existence of the event before calling the OptimizelyClient Track method
-func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, eventTags map[string]interface{}) (*Track, error) {
-	_, span := otel.Tracer("trackHandler").Start(context.Background(), "TrackEvent")
+func (c *OptlyClient) TrackEvent(ctx context.Context, eventKey string, uc entities.UserContext, eventTags map[string]interface{}) (*Track, error) {
+	_, span := otel.Tracer("trackHandler").Start(ctx, "TrackEvent")
 	defer span.End()
 	span.SetAttributes(attribute.String("trackEventKey", eventKey))
 

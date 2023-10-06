@@ -27,20 +27,18 @@ log:
     includeSdkKey: true
 
 tracing:
-    enabled: false
+    enabled: true
     exporter:
-        default: "stdout"
+        default: "remote"
+        serviceName: "optimizely-agent"
+        env: "dev"
         services:
             stdout:
-                format: "json"
                 filename: "trace.out"
-            datadog:
-                endpoint: "http://localhost:8126"
-                serviceName: "optimizely"
+            remote:
+                endpoint: "localhost:4317"
                 sampleRate: 1.0
-                tags:
-                    - "env:dev"
-                    - "version:1.0.0"
+              
 
 ##
 ## http server configuration

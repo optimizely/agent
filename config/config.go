@@ -210,9 +210,32 @@ type TracingConfig struct {
 	Exporter TracingExporterConfig `json:"exporter"`
 }
 
+type TracingServiceType string
+
+const (
+	TracingServiceTypeStdOut TracingServiceType = "stdout"
+	TracingServiceTypeRemote TracingServiceType = "remote"
+)
+
 type TracingExporterConfig struct {
-	Default  string                 `json:"default"`
-	Services map[string]interface{} `json:"services"`
+	Default     TracingServiceType   `json:"default"`
+	ServiceName string               `json:"serviceName"`
+	Env         string               `json:"env"`
+	Services    TracingServiceConfig `json:"services"`
+}
+
+type TracingServiceConfig struct {
+	StdOut TracingStdOutConfig `json:"stdout"`
+	Remote TracingRemoteConfig `json:"remote"`
+}
+
+type TracingStdOutConfig struct {
+	Filename string `json:"filename"`
+}
+
+type TracingRemoteConfig struct {
+	Endpoint   string  `json:"endpoint"`
+	SampleRate float64 `json:"sampleRate"`
 }
 
 // PluginConfigs defines the generic mapping of middleware plugins
