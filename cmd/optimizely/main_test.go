@@ -452,7 +452,7 @@ func Test_initTracing(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return no error for remote tracing exporter",
+			name: "should return no error for remote tracing exporter with http protocal",
 			args: args{
 				conf: config.TracingExporterConfig{
 					Default: "remote",
@@ -465,6 +465,36 @@ func Test_initTracing(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "should return no error for remote tracing exporter with grpc protocal",
+			args: args{
+				conf: config.TracingExporterConfig{
+					Default: "remote",
+					Services: config.TracingServiceConfig{
+						Remote: config.TracingRemoteConfig{
+							Endpoint: "localhost:1234",
+							Protocal: "grpc",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error for remote tracing exporter with invalid protocal",
+			args: args{
+				conf: config.TracingExporterConfig{
+					Default: "remote",
+					Services: config.TracingServiceConfig{
+						Remote: config.TracingRemoteConfig{
+							Endpoint: "localhost:1234",
+							Protocal: "udp/invalid",
+						},
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
