@@ -418,3 +418,62 @@ func TestLoggingWithIncludeSdkKey(t *testing.T) {
 	})
 	assert.False(t, optimizely.ShouldIncludeSDKKey)
 }
+
+func Test_initTracing(t *testing.T) {
+	type args struct {
+		conf config.TracingExporterConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should return error when exporter type is not supported",
+			args: args{
+				conf: config.TracingExporterConfig{
+					Default: "unsupported",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return no error stdout tracing exporter",
+			args: args{
+				conf: config.TracingExporterConfig{
+					Default: "stdout",
+					Services: config.TracingServiceConfig{
+						StdOut: config.TracingStdOutConfig{
+							Filename: "trace.out",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error for remote tracing exporter",
+			args: args{
+				conf: config.TracingExporterConfig{
+					Default: "remote",
+					Services: config.TracingServiceConfig{
+						Remote: config.TracingRemoteConfig{
+							Endpoint: "localhost:1234",
+							Protocal: "http",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := initTracing(tt.args.conf)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("initTracing() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
