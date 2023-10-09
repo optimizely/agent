@@ -49,6 +49,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -159,6 +160,23 @@ func getStdOutTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider
 	), nil
 }
 
+func getOLTPTraceClient(conf config.TracingConfig) (otlptrace.Client, error) {
+	switch conf.Exporter.Services.Remote.Protocal {
+	case config.TracingRemoteProtocalHTTP:
+		return otlptracehttp.NewClient(
+			otlptracehttp.WithInsecure(),
+			otlptracehttp.WithEndpoint(conf.Exporter.Services.Remote.Endpoint),
+		), nil
+	case config.TracingRemoteProtocalGRPC:
+		return otlptracegrpc.NewClient(
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint(conf.Exporter.Services.Remote.Endpoint),
+		), nil
+	default:
+		return nil, errors.New("unknown remote tracing protocal")
+	}
+}
+
 func getRemoteTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
@@ -171,13 +189,12 @@ func getRemoteTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider
 		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
 	}
 
-	traceExporter, err := otlptrace.New(
-		context.Background(),
-		otlptracegrpc.NewClient(
-			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(conf.Exporter.Services.Remote.Endpoint),
-		),
-	)
+	traceClient, err := getOLTPTraceClient(conf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the remote trace client, error: %s", err.Error())
+	}
+
+	traceExporter, err := otlptrace.New(context.Background(), traceClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the remote trace exporter, error: %s", err.Error())
 	}

@@ -29,7 +29,7 @@ log:
 tracing:
     enabled: true
     exporter:
-        default: "stdout"
+        default: "remote"
         serviceName: "optimizely-agent"
         env: "dev"
         services:
@@ -37,6 +37,8 @@ tracing:
                 filename: "trace.out"
             remote:
                 endpoint: "localhost:4317"
+                ## supported protocals are "http" and "grpc"
+                protocal: "grpc"
                 sampleRate: 1.0
               
 

@@ -217,6 +217,13 @@ const (
 	TracingServiceTypeRemote TracingServiceType = "remote"
 )
 
+type TracingRemoteProtocal string
+
+const (
+	TracingRemoteProtocalGRPC TracingRemoteProtocal = "grpc"
+	TracingRemoteProtocalHTTP TracingRemoteProtocal = "http"
+)
+
 type TracingExporterConfig struct {
 	Default     TracingServiceType   `json:"default"`
 	ServiceName string               `json:"serviceName"`
@@ -234,8 +241,9 @@ type TracingStdOutConfig struct {
 }
 
 type TracingRemoteConfig struct {
-	Endpoint   string  `json:"endpoint"`
-	SampleRate float64 `json:"sampleRate"`
+	Endpoint   string                `json:"endpoint"`
+	Protocal   TracingRemoteProtocal `json:"protocal"`
+	SampleRate float64               `json:"sampleRate"`
 }
 
 // PluginConfigs defines the generic mapping of middleware plugins
