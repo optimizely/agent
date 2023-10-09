@@ -129,8 +129,8 @@ func initLogging(conf config.LogConfig) {
 	}
 }
 
-func getStdOutTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
-	f, err := os.Create(conf.Exporter.Services.StdOut.Filename)
+func getStdOutTraceProvider(conf config.TracingExporterConfig) (*sdktrace.TracerProvider, error) {
+	f, err := os.Create(conf.Services.StdOut.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the trace file, error: %s", err.Error())
 	}
@@ -146,8 +146,8 @@ func getStdOutTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(conf.Exporter.ServiceName),
-			semconv.DeploymentEnvironmentKey.String(conf.Exporter.Env),
+			semconv.ServiceNameKey.String(conf.ServiceName),
+			semconv.DeploymentEnvironmentKey.String(conf.Env),
 		),
 	)
 	if err != nil {
@@ -160,29 +160,29 @@ func getStdOutTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider
 	), nil
 }
 
-func getOLTPTraceClient(conf config.TracingConfig) (otlptrace.Client, error) {
-	switch conf.Exporter.Services.Remote.Protocal {
+func getOLTPTraceClient(conf config.TracingExporterConfig) (otlptrace.Client, error) {
+	switch conf.Services.Remote.Protocal {
 	case config.TracingRemoteProtocalHTTP:
 		return otlptracehttp.NewClient(
 			otlptracehttp.WithInsecure(),
-			otlptracehttp.WithEndpoint(conf.Exporter.Services.Remote.Endpoint),
+			otlptracehttp.WithEndpoint(conf.Services.Remote.Endpoint),
 		), nil
 	case config.TracingRemoteProtocalGRPC:
 		return otlptracegrpc.NewClient(
 			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(conf.Exporter.Services.Remote.Endpoint),
+			otlptracegrpc.WithEndpoint(conf.Services.Remote.Endpoint),
 		), nil
 	default:
 		return nil, errors.New("unknown remote tracing protocal")
 	}
 }
 
-func getRemoteTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
+func getRemoteTraceProvider(conf config.TracingExporterConfig) (*sdktrace.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(conf.Exporter.ServiceName),
-			semconv.DeploymentEnvironmentKey.String(conf.Exporter.Env),
+			semconv.ServiceNameKey.String(conf.ServiceName),
+			semconv.DeploymentEnvironmentKey.String(conf.Env),
 		),
 	)
 	if err != nil {
@@ -201,14 +201,14 @@ func getRemoteTraceProvider(conf config.TracingConfig) (*sdktrace.TracerProvider
 
 	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
 	return sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Exporter.Services.Remote.SampleRate))),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Services.Remote.SampleRate))),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
 	), nil
 }
 
-func initTracing(conf config.TracingConfig) (*sdktrace.TracerProvider, error) {
-	switch conf.Exporter.Default {
+func initTracing(conf config.TracingExporterConfig) (*sdktrace.TracerProvider, error) {
+	switch conf.Default {
 	case config.TracingServiceTypeRemote:
 		return getRemoteTraceProvider(conf)
 	case config.TracingServiceTypeStdOut:
@@ -240,7 +240,7 @@ func main() {
 	initLogging(conf.Log)
 
 	if conf.Tracing.Enabled {
-		tp, err := initTracing(conf.Tracing)
+		tp, err := initTracing(conf.Tracing.Exporter)
 		if err != nil {
 			log.Panic().Err(err).Msg("Unable to initialize tracing")
 		}
