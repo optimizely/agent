@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019, Optimizely, Inc. and contributors                        *
+ * Copyright 2023 Optimizely, Inc. and contributors                        *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -18,49 +18,19 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
-	"time"
 
-	"github.com/optimizely/agent/pkg/metrics"
+	"go.opentelemetry.io/otel"
 )
 
-type contextString string
-
-const responseTime = contextString("responseTime")
-
-// Metricize updates counts, total response time, and response time histogram
-// for each URL hit, key being a combination of a method and route pattern
-func Metricize(key string, metricsRegistry *metrics.Registry) func(http.Handler) http.Handler {
-	singleMetric := metricsRegistry.NewTimer(key)
-
-	f := func(h http.Handler) http.Handler {
-
+func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			startTime, ok := ctx.Value(responseTime).(time.Time)
-			if ok {
-				defer func() {
-					endTime := time.Now()
-					timeDiff := endTime.Sub(startTime).Seconds() * 1000.0 // display time in milliseconds
-					singleMetric.Update(timeDiff)
-				}()
-			}
+			ctx, span := otel.Tracer(tracerName).Start(r.Context(), spanName)
+			defer span.End()
 
-			h.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 		return http.HandlerFunc(fn)
 	}
-	return f
-}
-
-// SetTime middleware sets the start time in request context
-func SetTime(next http.Handler) http.Handler {
-
-	fn := func(w http.ResponseWriter, r *http.Request) {
-
-		ctx := context.WithValue(r.Context(), responseTime, time.Now())
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-	return http.HandlerFunc(fn)
 }
