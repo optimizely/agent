@@ -160,7 +160,7 @@ func getStdOutTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 	), nil
 }
 
-func getOLTPTraceClient(conf config.TracingExporterConfig) (otlptrace.Client, error) {
+func getOTELTraceClient(conf config.TracingExporterConfig) (otlptrace.Client, error) {
 	switch conf.Services.Remote.Protocal {
 	case config.TracingRemoteProtocalHTTP:
 		return otlptracehttp.NewClient(
@@ -189,7 +189,7 @@ func getRemoteTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
 	}
 
-	traceClient, err := getOLTPTraceClient(conf)
+	traceClient, err := getOTELTraceClient(conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the remote trace client, error: %s", err.Error())
 	}
