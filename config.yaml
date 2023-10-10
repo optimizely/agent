@@ -26,19 +26,38 @@ log:
     ## to set whether or not the SDK key is included in the logging output.
     includeSdkKey: true
 
+##
+## tracing: tracing configuration
+##
 tracing:
+    ## bydefault tracing is disabled
+    ## to enable tracing set enabled to true
     enabled: false
+    ## tracing exporter configuration
     exporter:
+        ## bydefault stdout exporter is enabled
+        ## to enable remote exporter set default as "remote"
         default: "stdout"
+        ## tracing service name
         serviceName: "optimizely-agent"
+        ## tracing environment name
+        ## example: for production environment env can be set as "prod"
         env: "dev"
+        ## tracing service configuration
         services:
+            ## stdout exporter configuration
             stdout:
+                ## for stdout tracing data is saved in the specified file
                 filename: "trace.out"
+            ## remote exporter configuration
             remote:
+                ## remote collector endpoint
                 endpoint: "localhost:4317"
                 ## supported protocals are "http" and "grpc"
                 protocal: "grpc"
+                ## "sampleRate" refers to the rate at which traces are collected and recorded.
+                ## sampleRate >= 1 will always sample.
+                ## sampleRate < 0 are treated as zero i.e. never sample.
                 sampleRate: 1.0
               
 
