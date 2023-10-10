@@ -27,9 +27,9 @@ log:
     includeSdkKey: true
 
 tracing:
-    enabled: true
+    enabled: false
     exporter:
-        default: "remote"
+        default: "stdout"
         serviceName: "optimizely-agent"
         env: "dev"
         services:
