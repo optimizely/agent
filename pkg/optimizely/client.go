@@ -151,6 +151,9 @@ func (c *OptlyClient) SetForcedVariation(ctx context.Context, experimentKey, use
 		override.Messages = messages
 	}
 
+	span.SetAttributes(attribute.String("variationKey", override.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", override.ExperimentKey))
+
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
 	return &override, nil
 }
@@ -186,6 +189,9 @@ func (c *OptlyClient) RemoveForcedVariation(ctx context.Context, experimentKey, 
 	override.Messages = messages
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
 
+	span.SetAttributes(attribute.String("variationKey", override.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", override.ExperimentKey))
+
 	return &override, nil
 }
 
@@ -209,6 +215,12 @@ func (c *OptlyClient) ActivateFeature(ctx context.Context, key string, uc entiti
 		ExperimentKey: unsafeDecisionInfo.ExperimentKey,
 		VariationKey:  unsafeDecisionInfo.VariationKey,
 	}
+
+	span.SetAttributes(attribute.String("variationKey", dec.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", dec.ExperimentKey))
+	span.SetAttributes(attribute.String("featureKey", dec.FeatureKey))
+	span.SetAttributes(attribute.Bool("enabled", dec.Enabled))
+	span.SetAttributes(attribute.String("type", dec.Type))
 
 	return dec, nil
 }
@@ -238,6 +250,11 @@ func (c *OptlyClient) ActivateExperiment(ctx context.Context, key string, uc ent
 		Type:          "experiment",
 		Variables:     map[string]interface{}{},
 	}
+
+	span.SetAttributes(attribute.String("variationKey", dec.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", dec.ExperimentKey))
+	span.SetAttributes(attribute.Bool("enabled", dec.Enabled))
+	span.SetAttributes(attribute.String("type", dec.Type))
 
 	return dec, nil
 }
