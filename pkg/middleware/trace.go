@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
@@ -28,6 +29,14 @@ func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx, span := otel.Tracer(tracerName).Start(r.Context(), spanName)
 			defer span.End()
+
+			span.SetAttributes(
+				semconv.HTTPMethodKey.String(r.Method),
+				semconv.HTTPRouteKey.String(r.URL.Path),
+				semconv.HTTPURLKey.String(r.URL.String()),
+				semconv.HTTPHostKey.String(r.Host),
+				semconv.HTTPSchemeKey.String(r.URL.Scheme),
+			)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
