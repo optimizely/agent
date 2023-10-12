@@ -24,6 +24,16 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+	r.statusCode = code
+	r.ResponseWriter.WriteHeader(code)
+}
+
 func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +48,16 @@ func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
 				semconv.HTTPSchemeKey.String(r.URL.Scheme),
 			)
 
-			next.ServeHTTP(w, r.WithContext(ctx))
+			rec := &statusRecorder{
+				ResponseWriter: w,
+				statusCode:     http.StatusOK,
+			}
+
+			next.ServeHTTP(rec, r.WithContext(ctx))
+
+			span.SetAttributes(
+				semconv.HTTPStatusCodeKey.Int(rec.statusCode),
+			)
 		}
 		return http.HandlerFunc(fn)
 	}
