@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
@@ -46,6 +47,7 @@ func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
 				semconv.HTTPURLKey.String(r.URL.String()),
 				semconv.HTTPHostKey.String(r.Host),
 				semconv.HTTPSchemeKey.String(r.URL.Scheme),
+				attribute.String(OptlySDKHeader, r.Header.Get(OptlySDKHeader)),
 			)
 
 			rec := &statusRecorder{
