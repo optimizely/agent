@@ -163,13 +163,13 @@ func getStdOutTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 }
 
 func getOTELTraceClient(conf config.TracingExporterConfig) (otlptrace.Client, error) {
-	switch conf.Services.Remote.Protocal {
-	case config.TracingRemoteProtocalHTTP:
+	switch conf.Services.Remote.Protocol {
+	case config.TracingRemoteProtocolHTTP:
 		return otlptracehttp.NewClient(
 			otlptracehttp.WithInsecure(),
 			otlptracehttp.WithEndpoint(conf.Services.Remote.Endpoint),
 		), nil
-	case config.TracingRemoteProtocalGRPC:
+	case config.TracingRemoteProtocolGRPC:
 		return otlptracegrpc.NewClient(
 			otlptracegrpc.WithInsecure(),
 			otlptracegrpc.WithEndpoint(conf.Services.Remote.Endpoint),

@@ -217,11 +217,11 @@ const (
 	TracingServiceTypeRemote TracingServiceType = "remote"
 )
 
-type TracingRemoteProtocal string
+type TracingRemoteProtocol string
 
 const (
-	TracingRemoteProtocalGRPC TracingRemoteProtocal = "grpc"
-	TracingRemoteProtocalHTTP TracingRemoteProtocal = "http"
+	TracingRemoteProtocolGRPC TracingRemoteProtocol = "grpc"
+	TracingRemoteProtocolHTTP TracingRemoteProtocol = "http"
 )
 
 type TracingExporterConfig struct {
@@ -242,7 +242,7 @@ type TracingStdOutConfig struct {
 
 type TracingRemoteConfig struct {
 	Endpoint   string                `json:"endpoint"`
-	Protocal   TracingRemoteProtocal `json:"protocal"`
+	Protocol   TracingRemoteProtocol `json:"protocol"`
 	SampleRate float64               `json:"sampleRate"`
 }
 

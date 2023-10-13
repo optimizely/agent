@@ -459,7 +459,7 @@ func Test_initTracing(t *testing.T) {
 					Services: config.TracingServiceConfig{
 						Remote: config.TracingRemoteConfig{
 							Endpoint: "localhost:1234",
-							Protocal: "http",
+							Protocol: "http",
 						},
 					},
 				},
@@ -474,7 +474,7 @@ func Test_initTracing(t *testing.T) {
 					Services: config.TracingServiceConfig{
 						Remote: config.TracingRemoteConfig{
 							Endpoint: "localhost:1234",
-							Protocal: "grpc",
+							Protocol: "grpc",
 						},
 					},
 				},
@@ -489,7 +489,7 @@ func Test_initTracing(t *testing.T) {
 					Services: config.TracingServiceConfig{
 						Remote: config.TracingRemoteConfig{
 							Endpoint: "localhost:1234",
-							Protocal: "udp/invalid",
+							Protocol: "udp/invalid",
 						},
 					},
 				},
