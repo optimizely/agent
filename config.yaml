@@ -53,8 +53,8 @@ tracing:
             remote:
                 ## remote collector endpoint
                 endpoint: "localhost:4317"
-                ## supported protocals are "http" and "grpc"
-                protocal: "grpc"
+                ## supported protocols are "http" and "grpc"
+                protocol: "grpc"
                 ## "sampleRate" refers to the rate at which traces are collected and recorded.
                 ## sampleRate >= 1 will always sample.
                 ## sampleRate < 0 are treated as zero i.e. never sample.
