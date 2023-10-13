@@ -25,7 +25,9 @@ import (
 
 func TestAddTracing(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/text")
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
 	})
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -37,5 +39,13 @@ func TestAddTracing(t *testing.T) {
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected status code %v, but got %v", http.StatusOK, status)
+	}
+
+	if body := rr.Body.String(); body != "OK" {
+		t.Errorf("Expected response body %v, but got %v", "OK", body)
+	}
+
+	if typeHeader := rr.Header().Get("Content-Type"); typeHeader != "application/text" {
+		t.Errorf("Expected Content-Type header %v, but got %v", "application/text", typeHeader)
 	}
 }

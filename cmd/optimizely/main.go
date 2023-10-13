@@ -34,6 +34,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/metrics"
+	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
@@ -157,6 +158,7 @@ func getStdOutTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 	return sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(res),
+		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator()),
 	), nil
 }
 
@@ -204,6 +206,7 @@ func getRemoteTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Services.Remote.SampleRate))),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
+		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator()),
 	), nil
 }
 

@@ -50,6 +50,11 @@ const OptlyUPSHeader = "X-Optimizely-UPS-Name"
 // OptlyODPCacheHeader is the header key for an ad-hoc ODP Cache name
 const OptlyODPCacheHeader = "X-Optimizely-ODP-Cache-Name"
 
+// OptlyTraceIDHeader is the header key for trace-id in distributed tracing.
+// The value set in HTTP Header must be a hex compliant with the W3C trace-context specification.
+// See more at https://www.w3.org/TR/trace-context/#trace-id
+const OptlyTraceIDHeader = "X-Optimizely-Trace-ID"
+
 // CachedOptlyMiddleware implements OptlyMiddleware backed by a cache
 type CachedOptlyMiddleware struct {
 	Cache optimizely.Cache
