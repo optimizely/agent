@@ -81,3 +81,14 @@ func TestNewSpanIDWithInvalidTraceID(t *testing.T) {
 	spanID := gen.NewSpanID(context.Background(), trace.TraceID{})
 	assert.Truef(t, spanID.IsValid(), "span id: %s", spanID.String())
 }
+
+func TestTraceIDWithGivenHeaderValue(t *testing.T) {
+	gen := NewTraceIDGenerator()
+
+	traceID := "9b8eac67e332c6f8baf1e013de6891bb"
+
+	ctx := context.WithValue(context.Background(), OptlyTraceIDHeader, traceID)
+	genTraceID, _ := gen.NewIDs(ctx)
+	assert.Truef(t, genTraceID.IsValid(), "trace id: %s", genTraceID.String())
+	assert.Equal(t, traceID, genTraceID.String())
+}
