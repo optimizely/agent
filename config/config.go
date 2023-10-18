@@ -206,8 +206,8 @@ type LogConfig struct {
 }
 
 type TracingConfig struct {
-	Enabled  bool                  `json:"enabled"`
-	Exporter TracingExporterConfig `json:"exporter"`
+	Enabled       bool              `json:"enabled"`
+	OpenTelemetry OTELTracingConfig `json:"opentelemetry"`
 }
 
 type TracingServiceType string
@@ -224,7 +224,7 @@ const (
 	TracingRemoteProtocolHTTP TracingRemoteProtocol = "http"
 )
 
-type TracingExporterConfig struct {
+type OTELTracingConfig struct {
 	Default     TracingServiceType   `json:"default"`
 	ServiceName string               `json:"serviceName"`
 	Env         string               `json:"env"`

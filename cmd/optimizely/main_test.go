@@ -421,7 +421,7 @@ func TestLoggingWithIncludeSdkKey(t *testing.T) {
 
 func Test_initTracing(t *testing.T) {
 	type args struct {
-		conf config.TracingExporterConfig
+		conf config.OTELTracingConfig
 	}
 	tests := []struct {
 		name    string
@@ -431,7 +431,7 @@ func Test_initTracing(t *testing.T) {
 		{
 			name: "should return error when exporter type is not supported",
 			args: args{
-				conf: config.TracingExporterConfig{
+				conf: config.OTELTracingConfig{
 					Default: "unsupported",
 				},
 			},
@@ -440,7 +440,7 @@ func Test_initTracing(t *testing.T) {
 		{
 			name: "should return no error stdout tracing exporter",
 			args: args{
-				conf: config.TracingExporterConfig{
+				conf: config.OTELTracingConfig{
 					Default: "stdout",
 					Services: config.TracingServiceConfig{
 						StdOut: config.TracingStdOutConfig{
@@ -454,7 +454,7 @@ func Test_initTracing(t *testing.T) {
 		{
 			name: "should return no error for remote tracing exporter with http protocal",
 			args: args{
-				conf: config.TracingExporterConfig{
+				conf: config.OTELTracingConfig{
 					Default: "remote",
 					Services: config.TracingServiceConfig{
 						Remote: config.TracingRemoteConfig{
@@ -469,7 +469,7 @@ func Test_initTracing(t *testing.T) {
 		{
 			name: "should return no error for remote tracing exporter with grpc protocal",
 			args: args{
-				conf: config.TracingExporterConfig{
+				conf: config.OTELTracingConfig{
 					Default: "remote",
 					Services: config.TracingServiceConfig{
 						Remote: config.TracingRemoteConfig{
@@ -484,7 +484,7 @@ func Test_initTracing(t *testing.T) {
 		{
 			name: "should return no error for remote tracing exporter with invalid protocal",
 			args: args{
-				conf: config.TracingExporterConfig{
+				conf: config.OTELTracingConfig{
 					Default: "remote",
 					Services: config.TracingServiceConfig{
 						Remote: config.TracingRemoteConfig{

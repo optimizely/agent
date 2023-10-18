@@ -130,7 +130,7 @@ func initLogging(conf config.LogConfig) {
 	}
 }
 
-func getStdOutTraceProvider(conf config.TracingExporterConfig) (*sdktrace.TracerProvider, error) {
+func getStdOutTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProvider, error) {
 	f, err := os.Create(conf.Services.StdOut.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the trace file, error: %s", err.Error())
@@ -162,7 +162,7 @@ func getStdOutTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 	), nil
 }
 
-func getOTELTraceClient(conf config.TracingExporterConfig) (otlptrace.Client, error) {
+func getOTELTraceClient(conf config.OTELTracingConfig) (otlptrace.Client, error) {
 	switch conf.Services.Remote.Protocol {
 	case config.TracingRemoteProtocolHTTP:
 		return otlptracehttp.NewClient(
@@ -179,7 +179,7 @@ func getOTELTraceClient(conf config.TracingExporterConfig) (otlptrace.Client, er
 	}
 }
 
-func getRemoteTraceProvider(conf config.TracingExporterConfig) (*sdktrace.TracerProvider, error) {
+func getRemoteTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
@@ -210,7 +210,7 @@ func getRemoteTraceProvider(conf config.TracingExporterConfig) (*sdktrace.Tracer
 	), nil
 }
 
-func initTracing(conf config.TracingExporterConfig) (*sdktrace.TracerProvider, error) {
+func initTracing(conf config.OTELTracingConfig) (*sdktrace.TracerProvider, error) {
 	switch conf.Default {
 	case config.TracingServiceTypeRemote:
 		return getRemoteTraceProvider(conf)
@@ -243,7 +243,7 @@ func main() {
 	initLogging(conf.Log)
 
 	if conf.Tracing.Enabled {
-		tp, err := initTracing(conf.Tracing.Exporter)
+		tp, err := initTracing(conf.Tracing.OpenTelemetry)
 		if err != nil {
 			log.Panic().Err(err).Msg("Unable to initialize tracing")
 		}
@@ -253,7 +253,7 @@ func main() {
 			}
 		}()
 		otel.SetTracerProvider(tp)
-		log.Info().Msg(fmt.Sprintf("Tracing enabled with service %q", conf.Tracing.Exporter.Default))
+		log.Info().Msg(fmt.Sprintf("Tracing enabled with service %q", conf.Tracing.OpenTelemetry.Default))
 	} else {
 		log.Info().Msg("Tracing disabled")
 	}
