@@ -418,3 +418,92 @@ func TestLoggingWithIncludeSdkKey(t *testing.T) {
 	})
 	assert.False(t, optimizely.ShouldIncludeSDKKey)
 }
+
+func Test_initTracing(t *testing.T) {
+	type args struct {
+		conf config.OTELTracingConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should return error when exporter type is not supported",
+			args: args{
+				conf: config.OTELTracingConfig{
+					Default: "unsupported",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return no error stdout tracing exporter",
+			args: args{
+				conf: config.OTELTracingConfig{
+					Default: "stdout",
+					Services: config.TracingServiceConfig{
+						StdOut: config.TracingStdOutConfig{
+							Filename: "trace.out",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error for remote tracing exporter with http protocal",
+			args: args{
+				conf: config.OTELTracingConfig{
+					Default: "remote",
+					Services: config.TracingServiceConfig{
+						Remote: config.TracingRemoteConfig{
+							Endpoint: "localhost:1234",
+							Protocol: "http",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error for remote tracing exporter with grpc protocal",
+			args: args{
+				conf: config.OTELTracingConfig{
+					Default: "remote",
+					Services: config.TracingServiceConfig{
+						Remote: config.TracingRemoteConfig{
+							Endpoint: "localhost:1234",
+							Protocol: "grpc",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error for remote tracing exporter with invalid protocal",
+			args: args{
+				conf: config.OTELTracingConfig{
+					Default: "remote",
+					Services: config.TracingServiceConfig{
+						Remote: config.TracingRemoteConfig{
+							Endpoint: "localhost:1234",
+							Protocol: "udp/invalid",
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := initTracing(tt.args.conf)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("initTracing() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
