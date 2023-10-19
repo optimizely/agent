@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/optimizely/agent/config"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -34,14 +35,16 @@ import (
 
 type traceIDGenerator struct {
 	sync.Mutex
-	randSource *rand.Rand
+	randSource       *rand.Rand
+	traceIDHeaderKey string
 }
 
-func NewTraceIDGenerator() *traceIDGenerator {
+func NewTraceIDGenerator(traceIDHeaderKey string) *traceIDGenerator {
 	var rngSeed int64
 	_ = binary.Read(crand.Reader, binary.LittleEndian, &rngSeed)
 	return &traceIDGenerator{
-		randSource: rand.New(rand.NewSource(rngSeed)),
+		randSource:       rand.New(rand.NewSource(rngSeed)),
+		traceIDHeaderKey: traceIDHeaderKey,
 	}
 }
 
@@ -62,7 +65,7 @@ func (gen *traceIDGenerator) NewIDs(ctx context.Context) (trace.TraceID, trace.S
 	_, _ = gen.randSource.Read(sid[:])
 
 	// read trace id from header if provided
-	traceIDHeader := ctx.Value(OptlyTraceIDHeader)
+	traceIDHeader := ctx.Value(gen.traceIDHeaderKey)
 	if val, ok := traceIDHeader.(string); ok {
 		if val != "" {
 			headerTraceId, err := trace.TraceIDFromHex(val)
@@ -87,10 +90,10 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
-func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
+func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			pctx := context.WithValue(r.Context(), OptlyTraceIDHeader, r.Header.Get(OptlyTraceIDHeader))
+			pctx := context.WithValue(r.Context(), conf.OpenTelemetry.TraceIDHeaderKey, r.Header.Get(conf.OpenTelemetry.TraceIDHeaderKey))
 
 			ctx, span := otel.Tracer(tracerName).Start(pctx, spanName)
 			defer span.End()

@@ -158,7 +158,7 @@ func getStdOutTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProv
 	return sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(res),
-		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator()),
+		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator(conf.TraceIDHeaderKey)),
 	), nil
 }
 
@@ -206,7 +206,7 @@ func getRemoteTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProv
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Services.Remote.SampleRate))),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
-		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator()),
+		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator(conf.TraceIDHeaderKey)),
 	), nil
 }
 
@@ -282,7 +282,7 @@ func main() {
 		cancel()
 	}()
 
-	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
+	apiRouter := routers.NewDefaultAPIRouter(optlyCache, *conf, agentMetricsRegistry)
 	adminRouter := routers.NewAdminRouter(*conf)
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")

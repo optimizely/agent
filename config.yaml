@@ -43,6 +43,10 @@ tracing:
         ## tracing environment name
         ## example: for production environment env can be set as "prod"
         env: "dev"
+        ## HTTP Header Key for TraceID in Distributed Tracing
+        ## The value set in HTTP Header must be a hex compliant with the W3C trace-context specification.
+        ## See more at https://www.w3.org/TR/trace-context/#trace-id
+        traceIDHeaderKey: "X-Optimizely-Trace-ID"
         ## tracing service configuration
         services:
             ## stdout exporter configuration
