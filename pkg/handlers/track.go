@@ -60,7 +60,7 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		Attributes: body.UserAttributes,
 	}
 
-	track, err := optlyClient.TrackEvent(eventKey, uc, body.EventTags)
+	track, err := optlyClient.TrackEvent(r.Context(), eventKey, uc, body.EventTags)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return

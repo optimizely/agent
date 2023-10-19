@@ -71,6 +71,9 @@ func NewDefaultConfig() *AgentConfig {
 			IncludeSDKKey: true,
 			Level:         "info",
 		},
+		Tracing: TracingConfig{
+			Enabled: false,
+		},
 		Client: ClientConfig{
 			PollingInterval:     1 * time.Minute,
 			BatchSize:           10,
@@ -124,6 +127,7 @@ type AgentConfig struct {
 	Admin   AdminConfig   `json:"admin"`
 	API     APIConfig     `json:"api"`
 	Log     LogConfig     `json:"log"`
+	Tracing TracingConfig `json:"tracing"`
 	Client  ClientConfig  `json:"client"`
 	Runtime RuntimeConfig `json:"runtime"`
 	Server  ServerConfig  `json:"server"`
@@ -171,6 +175,48 @@ type LogConfig struct {
 	Pretty        bool   `json:"pretty"`
 	IncludeSDKKey bool   `json:"includeSdkKey" default:"true"`
 	Level         string `json:"level"`
+}
+
+type TracingConfig struct {
+	Enabled       bool              `json:"enabled"`
+	OpenTelemetry OTELTracingConfig `json:"opentelemetry"`
+}
+
+type TracingServiceType string
+
+const (
+	TracingServiceTypeStdOut TracingServiceType = "stdout"
+	TracingServiceTypeRemote TracingServiceType = "remote"
+)
+
+type TracingRemoteProtocol string
+
+const (
+	TracingRemoteProtocolGRPC TracingRemoteProtocol = "grpc"
+	TracingRemoteProtocolHTTP TracingRemoteProtocol = "http"
+)
+
+type OTELTracingConfig struct {
+	Default          TracingServiceType   `json:"default"`
+	ServiceName      string               `json:"serviceName"`
+	Env              string               `json:"env"`
+	TraceIDHeaderKey string               `json:"traceIDHeaderKey"`
+	Services         TracingServiceConfig `json:"services"`
+}
+
+type TracingServiceConfig struct {
+	StdOut TracingStdOutConfig `json:"stdout"`
+	Remote TracingRemoteConfig `json:"remote"`
+}
+
+type TracingStdOutConfig struct {
+	Filename string `json:"filename"`
+}
+
+type TracingRemoteConfig struct {
+	Endpoint   string                `json:"endpoint"`
+	Protocol   TracingRemoteProtocol `json:"protocol"`
+	SampleRate float64               `json:"sampleRate"`
 }
 
 // PluginConfigs defines the generic mapping of middleware plugins

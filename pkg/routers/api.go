@@ -63,8 +63,8 @@ func forbiddenHandler(message string) http.HandlerFunc {
 }
 
 // NewDefaultAPIRouter creates a new router with the default backing optimizely.Cache
-func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, metricsRegistry *metrics.Registry) http.Handler {
-
+func NewDefaultAPIRouter(optlyCache optimizely.Cache, agentConf config.AgentConfig, metricsRegistry *metrics.Registry) http.Handler {
+	conf := agentConf.API
 	authProvider := middleware.NewAuth(&conf.Auth)
 	if authProvider == nil {
 		log.Error().Msg("unable to initialize api auth middleware.")
@@ -109,19 +109,19 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.APIConfig, met
 		corsHandler:         corsHandler,
 	}
 
-	return NewAPIRouter(spec)
+	return NewAPIRouter(spec, agentConf.Tracing)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIRouter(opt *APIOptions) *chi.Mux {
+func NewAPIRouter(opt *APIOptions, traceConf config.TracingConfig) *chi.Mux {
 	r := chi.NewRouter()
-	WithAPIRouter(opt, r)
+	WithAPIRouter(opt, r, traceConf)
 	return r
 }
 
 // WithAPIRouter appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi/v5#Mux.Group for usage
-func WithAPIRouter(opt *APIOptions, r chi.Router) {
+func WithAPIRouter(opt *APIOptions, r chi.Router, traceConf config.TracingConfig) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	getDatafileTimer := middleware.Metricize("get-datafile", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
@@ -134,6 +134,18 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 	contentTypeMiddleware := chimw.AllowContentType("application/json")
 
+	configTracer := middleware.AddTracing(traceConf, "configHandler", "OptimizelyConfig")
+	datafileTracer := middleware.AddTracing(traceConf, "datafileHandler", "OptimizelyDatafile")
+	activateTracer := middleware.AddTracing(traceConf, "activateHandler", "Activate")
+	decideTracer := middleware.AddTracing(traceConf, "decideHandler", "Decide")
+	trackTracer := middleware.AddTracing(traceConf, "trackHandler", "Track")
+	overrideTracer := middleware.AddTracing(traceConf, "overrideHandler", "Override")
+	lookupTracer := middleware.AddTracing(traceConf, "lookupHandler", "Lookup")
+	saveTracer := middleware.AddTracing(traceConf, "saveHandler", "Save")
+	sendOdpEventTracer := middleware.AddTracing(traceConf, "sendOdpEventHandler", "SendOdpEvent")
+	nStreamTracer := middleware.AddTracing(traceConf, "notificationHandler", "SendNotificationEvent")
+	authTracer := middleware.AddTracing(traceConf, "authHandler", "AuthToken")
+
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold
 		r.Use(chimw.Throttle(opt.maxConns))
@@ -144,19 +156,19 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(opt.corsHandler, opt.sdkMiddleware)
-		r.With(getConfigTimer, opt.oAuthMiddleware).Get("/config", opt.configHandler)
-		r.With(getDatafileTimer, opt.oAuthMiddleware).Get("/datafile", opt.datafileHandler)
-		r.With(activateTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/activate", opt.activateHandler)
-		r.With(decideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/decide", opt.decideHandler)
-		r.With(trackTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/track", opt.trackHandler)
-		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/override", opt.overrideHandler)
-		r.With(lookupTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/lookup", opt.lookupHandler)
-		r.With(saveTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/save", opt.saveHandler)
-		r.With(sendOdpEventTimer, opt.oAuthMiddleware, contentTypeMiddleware).Post("/send-odp-event", opt.sendOdpEventHandler)
-		r.With(opt.oAuthMiddleware).Get("/notifications/event-stream", opt.nStreamHandler)
+		r.With(getConfigTimer, opt.oAuthMiddleware, configTracer).Get("/config", opt.configHandler)
+		r.With(getDatafileTimer, opt.oAuthMiddleware, datafileTracer).Get("/datafile", opt.datafileHandler)
+		r.With(activateTimer, opt.oAuthMiddleware, contentTypeMiddleware, activateTracer).Post("/activate", opt.activateHandler)
+		r.With(decideTimer, opt.oAuthMiddleware, contentTypeMiddleware, decideTracer).Post("/decide", opt.decideHandler)
+		r.With(trackTimer, opt.oAuthMiddleware, contentTypeMiddleware, trackTracer).Post("/track", opt.trackHandler)
+		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware, overrideTracer).Post("/override", opt.overrideHandler)
+		r.With(lookupTimer, opt.oAuthMiddleware, contentTypeMiddleware, lookupTracer).Post("/lookup", opt.lookupHandler)
+		r.With(saveTimer, opt.oAuthMiddleware, contentTypeMiddleware, saveTracer).Post("/save", opt.saveHandler)
+		r.With(sendOdpEventTimer, opt.oAuthMiddleware, contentTypeMiddleware, sendOdpEventTracer).Post("/send-odp-event", opt.sendOdpEventHandler)
+		r.With(opt.oAuthMiddleware, nStreamTracer).Get("/notifications/event-stream", opt.nStreamHandler)
 	})
 
-	r.With(createAccesstokenTimer).Post("/oauth/token", opt.oAuthHandler)
+	r.With(createAccesstokenTimer, authTracer).Post("/oauth/token", opt.oAuthHandler)
 
 	statikFS, err := fs.New()
 	if err != nil {

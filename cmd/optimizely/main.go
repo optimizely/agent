@@ -18,6 +18,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -32,6 +34,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/metrics"
+	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
@@ -42,6 +45,14 @@ import (
 	// Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
 	"github.com/optimizely/go-sdk/pkg/logging"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 // Version holds the admin version
@@ -112,6 +123,97 @@ func initLogging(conf config.LogConfig) {
 	}
 }
 
+func getStdOutTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProvider, error) {
+	f, err := os.Create(conf.Services.StdOut.Filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the trace file, error: %s", err.Error())
+	}
+
+	exp, err := stdouttrace.New(
+		stdouttrace.WithPrettyPrint(),
+		stdouttrace.WithWriter(f),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the collector exporter, error: %s", err.Error())
+	}
+
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(conf.ServiceName),
+			semconv.DeploymentEnvironmentKey.String(conf.Env),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
+	}
+
+	return sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithResource(res),
+		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator(conf.TraceIDHeaderKey)),
+	), nil
+}
+
+func getOTELTraceClient(conf config.OTELTracingConfig) (otlptrace.Client, error) {
+	switch conf.Services.Remote.Protocol {
+	case config.TracingRemoteProtocolHTTP:
+		return otlptracehttp.NewClient(
+			otlptracehttp.WithInsecure(),
+			otlptracehttp.WithEndpoint(conf.Services.Remote.Endpoint),
+		), nil
+	case config.TracingRemoteProtocolGRPC:
+		return otlptracegrpc.NewClient(
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint(conf.Services.Remote.Endpoint),
+		), nil
+	default:
+		return nil, errors.New("unknown remote tracing protocal")
+	}
+}
+
+func getRemoteTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProvider, error) {
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(conf.ServiceName),
+			semconv.DeploymentEnvironmentKey.String(conf.Env),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the otel resource, error: %s", err.Error())
+	}
+
+	traceClient, err := getOTELTraceClient(conf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the remote trace client, error: %s", err.Error())
+	}
+
+	traceExporter, err := otlptrace.New(context.Background(), traceClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the remote trace exporter, error: %s", err.Error())
+	}
+
+	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
+	return sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Services.Remote.SampleRate))),
+		sdktrace.WithResource(res),
+		sdktrace.WithSpanProcessor(bsp),
+		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator(conf.TraceIDHeaderKey)),
+	), nil
+}
+
+func initTracing(conf config.OTELTracingConfig) (*sdktrace.TracerProvider, error) {
+	switch conf.Default {
+	case config.TracingServiceTypeRemote:
+		return getRemoteTraceProvider(conf)
+	case config.TracingServiceTypeStdOut:
+		return getStdOutTraceProvider(conf)
+	default:
+		return nil, errors.New("unknown tracing service type")
+	}
+}
+
 func setRuntimeEnvironment(conf config.RuntimeConfig) {
 	if conf.BlockProfileRate != 0 {
 		log.Warn().Msgf("Setting non-zero blockProfileRate is NOT recommended for production")
@@ -132,6 +234,22 @@ func main() {
 
 	conf := loadConfig(v)
 	initLogging(conf.Log)
+
+	if conf.Tracing.Enabled {
+		tp, err := initTracing(conf.Tracing.OpenTelemetry)
+		if err != nil {
+			log.Panic().Err(err).Msg("Unable to initialize tracing")
+		}
+		defer func() {
+			if err := tp.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Msg("Failed to shutdown tracing")
+			}
+		}()
+		otel.SetTracerProvider(tp)
+		log.Info().Msg(fmt.Sprintf("Tracing enabled with service %q", conf.Tracing.OpenTelemetry.Default))
+	} else {
+		log.Info().Msg("Tracing disabled")
+	}
 
 	conf.LogConfigWarnings()
 
@@ -157,7 +275,7 @@ func main() {
 		cancel()
 	}()
 
-	apiRouter := routers.NewDefaultAPIRouter(optlyCache, conf.API, agentMetricsRegistry)
+	apiRouter := routers.NewDefaultAPIRouter(optlyCache, *conf, agentMetricsRegistry)
 	adminRouter := routers.NewAdminRouter(*conf)
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")

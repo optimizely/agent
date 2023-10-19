@@ -18,11 +18,14 @@
 package optimizely
 
 import (
+	"context"
 	"errors"
 
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -81,7 +84,11 @@ func (c *OptlyClient) UpdateConfig() {
 }
 
 // TrackEvent checks for the existence of the event before calling the OptimizelyClient Track method
-func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, eventTags map[string]interface{}) (*Track, error) {
+func (c *OptlyClient) TrackEvent(ctx context.Context, eventKey string, uc entities.UserContext, eventTags map[string]interface{}) (*Track, error) {
+	_, span := otel.Tracer("trackHandler").Start(ctx, "TrackEvent")
+	defer span.End()
+	span.SetAttributes(attribute.String("trackEventKey", eventKey))
+
 	tr := &Track{
 		UserID:   uc.ID,
 		EventKey: eventKey,
@@ -104,7 +111,10 @@ func (c *OptlyClient) TrackEvent(eventKey string, uc entities.UserContext, event
 // SetForcedVariation sets a forced variation for the argument experiment key and user ID
 // Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
 // Returns an error when forced variations are not available on this OptlyClient instance
-func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey string) (*Override, error) {
+func (c *OptlyClient) SetForcedVariation(ctx context.Context, experimentKey, userID, variationKey string) (*Override, error) {
+	_, span := otel.Tracer("overrideHandler").Start(ctx, "SetForcedVariation")
+	defer span.End()
+
 	if c.ForcedVariations == nil {
 		return &Override{}, ErrForcedVariationsUninitialized
 	}
@@ -139,12 +149,18 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 		override.Messages = messages
 	}
 
+	span.SetAttributes(attribute.String("variationKey", override.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", override.ExperimentKey))
+
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
 	return &override, nil
 }
 
 // RemoveForcedVariation removes any forced variation that was previously set for the argument experiment key and user ID
-func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Override, error) {
+func (c *OptlyClient) RemoveForcedVariation(ctx context.Context, experimentKey, userID string) (*Override, error) {
+	_, span := otel.Tracer("overrideHandler").Start(ctx, "RemoveForcedVariation")
+	defer span.End()
+
 	if c.ForcedVariations == nil {
 		return &Override{}, ErrForcedVariationsUninitialized
 	}
@@ -171,12 +187,18 @@ func (c *OptlyClient) RemoveForcedVariation(experimentKey, userID string) (*Over
 	override.Messages = messages
 	c.ForcedVariations.RemoveVariation(forcedVariationKey)
 
+	span.SetAttributes(attribute.String("variationKey", override.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", override.ExperimentKey))
+
 	return &override, nil
 }
 
 // ActivateFeature activates a feature for a given user by getting the feature enabled status and all
 // associated variables
-func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+func (c *OptlyClient) ActivateFeature(ctx context.Context, key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+	_, span := otel.Tracer("activateHandler").Start(ctx, "ActivateFeature")
+	defer span.End()
+
 	unsafeDecisionInfo, err := c.GetDetailedFeatureDecisionUnsafe(key, uc, disableTracking)
 	if err != nil {
 		return &Decision{}, err
@@ -192,11 +214,20 @@ func (c *OptlyClient) ActivateFeature(key string, uc entities.UserContext, disab
 		VariationKey:  unsafeDecisionInfo.VariationKey,
 	}
 
+	span.SetAttributes(attribute.String("variationKey", dec.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", dec.ExperimentKey))
+	span.SetAttributes(attribute.String("featureKey", dec.FeatureKey))
+	span.SetAttributes(attribute.Bool("enabled", dec.Enabled))
+	span.SetAttributes(attribute.String("type", dec.Type))
+
 	return dec, nil
 }
 
 // ActivateExperiment activates an experiment
-func (c *OptlyClient) ActivateExperiment(key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+func (c *OptlyClient) ActivateExperiment(ctx context.Context, key string, uc entities.UserContext, disableTracking bool) (*Decision, error) {
+	_, span := otel.Tracer("activateHandler").Start(ctx, "ActivateExperiment")
+	defer span.End()
+
 	var variation string
 	var err error
 
@@ -217,6 +248,11 @@ func (c *OptlyClient) ActivateExperiment(key string, uc entities.UserContext, di
 		Type:          "experiment",
 		Variables:     map[string]interface{}{},
 	}
+
+	span.SetAttributes(attribute.String("variationKey", dec.VariationKey))
+	span.SetAttributes(attribute.String("experimentKey", dec.ExperimentKey))
+	span.SetAttributes(attribute.Bool("enabled", dec.Enabled))
+	span.SetAttributes(attribute.String("type", dec.Type))
 
 	return dec, nil
 }

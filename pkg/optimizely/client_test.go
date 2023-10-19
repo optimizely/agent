@@ -18,6 +18,7 @@
 package optimizely
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -65,7 +66,7 @@ func (suite *ClientTestSuite) TestTrackEvent() {
 	eventKey := "eventKey"
 	suite.testClient.AddEvent(entities.Event{Key: eventKey})
 	tags := map[string]interface{}{"tag": "value"}
-	actual, err := suite.optlyClient.TrackEvent(eventKey, suite.userContext, tags)
+	actual, err := suite.optlyClient.TrackEvent(context.Background(), eventKey, suite.userContext, tags)
 	suite.NoError(err)
 
 	expected := &Track{
@@ -122,7 +123,7 @@ func (suite *ClientTestSuite) TestValidSetForcedVariations() {
 
 	userID := "testUser"
 	for _, scenario := range scenarios {
-		actual, err := suite.optlyClient.SetForcedVariation(scenario.experimentKey, userID, scenario.variationKey)
+		actual, err := suite.optlyClient.SetForcedVariation(context.Background(), scenario.experimentKey, userID, scenario.variationKey)
 		suite.NoError(err)
 
 		expected := &Override{
@@ -161,10 +162,10 @@ func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 	}
 
 	userID := "testUser"
-	_, _ = suite.optlyClient.SetForcedVariation(suite.featureExp.Key, userID, "enabled_var")
+	_, _ = suite.optlyClient.SetForcedVariation(context.Background(), suite.featureExp.Key, userID, "enabled_var")
 
 	for _, scenario := range scenarios {
-		actual, err := suite.optlyClient.RemoveForcedVariation(suite.featureExp.Key, userID)
+		actual, err := suite.optlyClient.RemoveForcedVariation(context.Background(), suite.featureExp.Key, userID)
 		suite.NoError(err)
 
 		expected := &Override{
@@ -211,7 +212,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 
 	// Response should be the same regardless of the flag
 	for _, flag := range []bool{true, false} {
-		actual, err := suite.optlyClient.ActivateFeature(feature.Key, entities.UserContext{ID: "testUser"}, flag)
+		actual, err := suite.optlyClient.ActivateFeature(context.Background(), feature.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
 		suite.Equal(expected, actual)
 	}
@@ -237,7 +238,7 @@ func (suite *ClientTestSuite) TestActivateExperiment() {
 
 	// Response should be the same regardless of the flag
 	for _, flag := range []bool{true, false} {
-		actual, err := suite.optlyClient.ActivateExperiment(experiment.Key, entities.UserContext{ID: "testUser"}, flag)
+		actual, err := suite.optlyClient.ActivateExperiment(context.Background(), experiment.Key, entities.UserContext{ID: "testUser"}, flag)
 		suite.NoError(err)
 		suite.Equal(expected, actual)
 	}
@@ -314,7 +315,7 @@ func TestTrackErrorConfigManager(t *testing.T) {
 	}
 
 	uc := entities.UserContext{ID: "userId"}
-	actual, err := optlyClient.TrackEvent("something", uc, map[string]interface{}{})
+	actual, err := optlyClient.TrackEvent(context.Background(), "something", uc, map[string]interface{}{})
 	assert.EqualError(t, err, "config error")
 
 	expected := &Track{}
@@ -341,7 +342,7 @@ func TestTrackErrorClient(t *testing.T) {
 	}
 
 	uc := entities.UserContext{ID: "userId"}
-	actual, err := optlyClient.TrackEvent("something", uc, map[string]interface{}{})
+	actual, err := optlyClient.TrackEvent(context.Background(), "something", uc, map[string]interface{}{})
 	assert.NoError(t, err)
 
 	expected := &Track{
