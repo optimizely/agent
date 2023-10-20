@@ -58,11 +58,11 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) 
 	if conf.Notification.Default != PubSubRedis {
 		return nil, errors.New("redis syncer is not set as default")
 	}
-	if conf.Notification.Pubsub == nil {
+	if conf.Pubsub == nil {
 		return nil, errors.New("redis config is not given")
 	}
 
-	redisConfig, found := conf.Notification.Pubsub[PubSubRedis].(map[string]interface{})
+	redisConfig, found := conf.Pubsub[PubSubRedis].(map[string]interface{})
 	if !found {
 		return nil, errors.New("redis pubsub config not found")
 	}

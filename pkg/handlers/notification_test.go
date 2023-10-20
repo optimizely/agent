@@ -208,16 +208,16 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 
 	conf := config.NewDefaultConfig()
 	conf.Synchronization = config.SyncConfig{
+		Pubsub: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+		},
 		Notification: config.NotificationConfig{
 			Enable:  true,
 			Default: "redis",
-			Pubsub: map[string]interface{}{
-				"redis": map[string]interface{}{
-					"host":     "localhost:6379",
-					"password": "",
-					"database": 0,
-				},
-			},
 		},
 	}
 	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
@@ -362,16 +362,16 @@ func TestDefaultNotificationReceiver(t *testing.T) {
 
 func TestRedisNotificationReceiver(t *testing.T) {
 	conf := config.SyncConfig{
+		Pubsub: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+		},
 		Notification: config.NotificationConfig{
 			Enable:  true,
 			Default: "redis",
-			Pubsub: map[string]interface{}{
-				"redis": map[string]interface{}{
-					"host":     "localhost:6379",
-					"password": "",
-					"database": 0,
-				},
-			},
 		},
 	}
 	type args struct {

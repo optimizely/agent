@@ -249,12 +249,12 @@ runtime:
 ## if notification synchronization is enabled, then the active notification event-stream API
 ## will get the notifications from multiple replicas
 synchronization:
+    pubsub:
+        redis:
+            host: "redis.demo.svc:6379"
+            password: ""
+            database: 0
+            channel: "optimizely-notifications"
     notification:
         enable: false
         default: "redis"
-        pubsub:
-            redis:
-                host: "redis.demo.svc:6379"
-                password: ""
-                database: 0
-                channel: "optimizely-notifications"
