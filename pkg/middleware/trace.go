@@ -80,16 +80,6 @@ func (gen *traceIDGenerator) NewIDs(ctx context.Context) (trace.TraceID, trace.S
 	return tid, sid
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (r *statusRecorder) WriteHeader(code int) {
-	r.statusCode = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
 func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -107,16 +97,7 @@ func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(htt
 				attribute.String(OptlySDKHeader, r.Header.Get(OptlySDKHeader)),
 			)
 
-			rec := &statusRecorder{
-				ResponseWriter: w,
-				statusCode:     http.StatusOK,
-			}
-
-			next.ServeHTTP(rec, r.WithContext(ctx))
-
-			span.SetAttributes(
-				semconv.HTTPStatusCodeKey.Int(rec.statusCode),
-			)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 		return http.HandlerFunc(fn)
 	}
