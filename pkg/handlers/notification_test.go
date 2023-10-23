@@ -20,6 +20,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -376,6 +377,7 @@ func TestRedisNotificationReceiver(t *testing.T) {
 	}
 	type args struct {
 		conf config.SyncConfig
+		ctx  context.Context
 	}
 	tests := []struct {
 		name string
@@ -384,14 +386,20 @@ func TestRedisNotificationReceiver(t *testing.T) {
 	}{
 		{
 			name: "Test happy path",
-			args: args{conf: conf},
+			args: args{
+				conf: conf,
+				ctx:  context.WithValue(context.Background(), SDKKey, "random-sdk-key-1"),
+			},
 			want: func(ctx context.Context) (<-chan syncer.Event, error) {
 				return make(<-chan syncer.Event), nil
 			},
 		},
 		{
 			name: "Test empty config",
-			args: args{conf: config.SyncConfig{}},
+			args: args{
+				conf: config.SyncConfig{},
+				ctx:  context.WithValue(context.Background(), SDKKey, "random-sdk-key-2"),
+			},
 			want: func(ctx context.Context) (<-chan syncer.Event, error) {
 				return nil, errors.New("error")
 			},
@@ -404,15 +412,16 @@ func TestRedisNotificationReceiver(t *testing.T) {
 				t.Errorf("RedisNotificationReceiver() = %v, want %v", got, tt.want)
 			}
 
-			ch1, err1 := got(context.TODO())
-			ch2, err2 := tt.want(context.TODO())
+			ch1, err1 := got(tt.args.ctx)
+			ch2, err2 := tt.want(tt.args.ctx)
 
 			if reflect.TypeOf(err1) != reflect.TypeOf(err2) {
+				fmt.Println(err1, err2)
 				t.Errorf("error type not matched")
 			}
 
 			if reflect.TypeOf(ch1) != reflect.TypeOf(ch2) {
-				t.Errorf("error type not matched")
+				t.Errorf("channel type not matched")
 			}
 		})
 	}
