@@ -21,6 +21,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"sync"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
@@ -35,6 +37,11 @@ const (
 	PubSubRedis = "redis"
 )
 
+var (
+	ncCache   = make(map[string]*RedisNotificationSyncer)
+	mutexLock = &sync.Mutex{}
+)
+
 // Event holds the notification event with it's type
 type Event struct {
 	Type    notification.Type `json:"type"`
@@ -43,15 +50,24 @@ type Event struct {
 
 // RedisNotificationSyncer defines Redis pubsub configuration
 type RedisNotificationSyncer struct {
+	ctx      context.Context
 	Host     string
 	Password string
 	Database int
 	Channel  string
 	logger   *zerolog.Logger
+	sdkKey   string
 }
 
 // NewRedisNotificationSyncer returns an instance of RedisNotificationSyncer
-func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) (*RedisNotificationSyncer, error) {
+func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig, sdkKey string) (*RedisNotificationSyncer, error) {
+	mutexLock.Lock()
+	defer mutexLock.Unlock()
+
+	if nc, found := ncCache[sdkKey]; found {
+		return nc, nil
+	}
+
 	if !conf.Notification.Enable {
 		return nil, errors.New("notification syncer is not enabled")
 	}
@@ -88,13 +104,22 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig) 
 		logger = &zerolog.Logger{}
 	}
 
-	return &RedisNotificationSyncer{
+	nc := &RedisNotificationSyncer{
+		ctx:      context.Background(),
 		Host:     host,
 		Password: password,
 		Database: database,
 		Channel:  channel,
 		logger:   logger,
-	}, nil
+		sdkKey:   sdkKey,
+	}
+	ncCache[sdkKey] = nc
+	return nc, nil
+}
+
+func (r *RedisNotificationSyncer) WithContext(ctx context.Context) *RedisNotificationSyncer {
+	r.ctx = ctx
+	return r
 }
 
 // AddHandler is empty but needed to implement notification.Center interface
@@ -125,10 +150,15 @@ func (r *RedisNotificationSyncer) Send(t notification.Type, n interface{}) error
 		DB:       r.Database,
 	})
 	defer client.Close()
+	channel := GetChannelForSDKKey(r.Channel, r.sdkKey)
 
-	if err := client.Publish(context.TODO(), r.Channel, jsonEvent).Err(); err != nil {
+	if err := client.Publish(r.ctx, channel, jsonEvent).Err(); err != nil {
 		r.logger.Err(err).Msg("failed to publish json event to pub/sub")
 		return err
 	}
 	return nil
+}
+
+func GetChannelForSDKKey(channel, key string) string {
+	return fmt.Sprintf("%s-%s", channel, key)
 }

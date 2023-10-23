@@ -201,7 +201,7 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Event, erro
 				for _, id := range ids {
 					err := nc.RemoveHandler(id.int, id.Type)
 					if err != nil {
-						logger.Err(err).AnErr("removing notification", err)
+						logger.Err(err).AnErr("error in removing notification handler", err)
 					}
 				}
 				return
@@ -214,7 +214,12 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Event, erro
 
 func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc {
 	return func(ctx context.Context) (<-chan syncer.Event, error) {
-		redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, conf)
+		sdkKey, ok := ctx.Value(SDKKey).(string)
+		if !ok || sdkKey == "" {
+			return nil, errors.New("sdk key not found")
+		}
+
+		redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, conf, sdkKey)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +231,7 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 		})
 
 		// Subscribe to a Redis channel
-		pubsub := client.Subscribe(ctx, redisSyncer.Channel)
+		pubsub := client.Subscribe(ctx, syncer.GetChannelForSDKKey(redisSyncer.Channel, sdkKey))
 
 		dataChan := make(chan syncer.Event)
 
