@@ -98,11 +98,12 @@ func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(htt
 				attribute.String(OptlySDKHeader, r.Header.Get(OptlySDKHeader)),
 			)
 
-			next.ServeHTTP(w, r.WithContext(ctx))
+			respWriter := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
-			statusCode := middleware.NewWrapResponseWriter(w, r.ProtoMajor).Status()
+			next.ServeHTTP(respWriter, r.WithContext(ctx))
+
 			span.SetAttributes(
-				semconv.HTTPStatusCodeKey.Int(statusCode),
+				semconv.HTTPStatusCodeKey.Int(respWriter.Status()),
 			)
 		}
 		return http.HandlerFunc(fn)
