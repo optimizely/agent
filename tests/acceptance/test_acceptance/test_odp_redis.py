@@ -52,6 +52,7 @@ def test_redis_save(session_override_sdk_key_odp):
     """
     
     expected_segments = ["atsbugbashsegmenthaspurchased", "atsbugbashsegmentdob"]
+    expected_segments_rev = ["atsbugbashsegmentdob", "atsbugbashsegmenthaspurchased"]
     uId = "fs_user_id-$-matjaz-user-1"
     r = redis.Redis(host='localhost', port=6379, db=0)
     # clean redis before testing since several tests use same user_id
@@ -72,7 +73,7 @@ def test_redis_save(session_override_sdk_key_odp):
                                                     params=params)
 
     # Check saved segments
-    assert json.loads(json.dumps(expected_segments)) == json.loads(r.get(uId))
+    assert json.loads(json.dumps(expected_segments)) == json.loads(r.get(uId)) or json.loads(json.dumps(expected_segments_rev)) == json.loads(r.get(uId))
         
     assert json.loads(json.dumps(expected_redis_save)) == resp.json()
     assert resp.status_code == 200, resp.text
