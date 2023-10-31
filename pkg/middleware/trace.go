@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/optimizely/agent/config"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -80,16 +81,6 @@ func (gen *traceIDGenerator) NewIDs(ctx context.Context) (trace.TraceID, trace.S
 	return tid, sid
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (r *statusRecorder) WriteHeader(code int) {
-	r.statusCode = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
 func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -107,15 +98,12 @@ func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(htt
 				attribute.String(OptlySDKHeader, r.Header.Get(OptlySDKHeader)),
 			)
 
-			rec := &statusRecorder{
-				ResponseWriter: w,
-				statusCode:     http.StatusOK,
-			}
+			respWriter := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
-			next.ServeHTTP(rec, r.WithContext(ctx))
+			next.ServeHTTP(respWriter, r.WithContext(ctx))
 
 			span.SetAttributes(
-				semconv.HTTPStatusCodeKey.Int(rec.statusCode),
+				semconv.HTTPStatusCodeKey.Int(respWriter.Status()),
 			)
 		}
 		return http.HandlerFunc(fn)
