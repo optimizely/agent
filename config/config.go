@@ -197,11 +197,10 @@ const (
 )
 
 type OTELTracingConfig struct {
-	Default          TracingServiceType   `json:"default"`
-	ServiceName      string               `json:"serviceName"`
-	Env              string               `json:"env"`
-	TraceIDHeaderKey string               `json:"traceIDHeaderKey"`
-	Services         TracingServiceConfig `json:"services"`
+	Default     TracingServiceType   `json:"default"`
+	ServiceName string               `json:"serviceName"`
+	Env         string               `json:"env"`
+	Services    TracingServiceConfig `json:"services"`
 }
 
 type TracingServiceConfig struct {
