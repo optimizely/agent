@@ -34,7 +34,6 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/metrics"
-	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
@@ -52,6 +51,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -158,7 +158,6 @@ func getStdOutTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProv
 	return sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(res),
-		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator(conf.TraceIDHeaderKey)),
 	), nil
 }
 
@@ -206,7 +205,6 @@ func getRemoteTraceProvider(conf config.OTELTracingConfig) (*sdktrace.TracerProv
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(conf.Services.Remote.SampleRate))),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
-		sdktrace.WithIDGenerator(middleware.NewTraceIDGenerator(conf.TraceIDHeaderKey)),
 	), nil
 }
 
@@ -253,6 +251,7 @@ func main() {
 			}
 		}()
 		otel.SetTracerProvider(tp)
+		otel.SetTextMapPropagator(propagation.TraceContext{})
 		log.Info().Msg(fmt.Sprintf("Tracing enabled with service %q", conf.Tracing.OpenTelemetry.Default))
 	} else {
 		log.Info().Msg("Tracing disabled")

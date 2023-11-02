@@ -111,19 +111,19 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.AgentConfig, m
 		corsHandler:         corsHandler,
 	}
 
-	return NewAPIRouter(spec, conf.Tracing)
+	return NewAPIRouter(spec)
 }
 
 // NewAPIRouter returns HTTP API router backed by an optimizely.Cache implementation
-func NewAPIRouter(opt *APIOptions, traceConf config.TracingConfig) *chi.Mux {
+func NewAPIRouter(opt *APIOptions) *chi.Mux {
 	r := chi.NewRouter()
-	WithAPIRouter(opt, r, traceConf)
+	WithAPIRouter(opt, r)
 	return r
 }
 
 // WithAPIRouter appends routes and middleware to the given router.
 // See https://godoc.org/github.com/go-chi/chi/v5#Mux.Group for usage
-func WithAPIRouter(opt *APIOptions, r chi.Router, traceConf config.TracingConfig) {
+func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	getConfigTimer := middleware.Metricize("get-config", opt.metricsRegistry)
 	getDatafileTimer := middleware.Metricize("get-datafile", opt.metricsRegistry)
 	activateTimer := middleware.Metricize("activate", opt.metricsRegistry)
@@ -136,17 +136,17 @@ func WithAPIRouter(opt *APIOptions, r chi.Router, traceConf config.TracingConfig
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
 	contentTypeMiddleware := chimw.AllowContentType("application/json")
 
-	configTracer := middleware.AddTracing(traceConf, "configHandler", "OptimizelyConfig")
-	datafileTracer := middleware.AddTracing(traceConf, "datafileHandler", "OptimizelyDatafile")
-	activateTracer := middleware.AddTracing(traceConf, "activateHandler", "Activate")
-	decideTracer := middleware.AddTracing(traceConf, "decideHandler", "Decide")
-	trackTracer := middleware.AddTracing(traceConf, "trackHandler", "Track")
-	overrideTracer := middleware.AddTracing(traceConf, "overrideHandler", "Override")
-	lookupTracer := middleware.AddTracing(traceConf, "lookupHandler", "Lookup")
-	saveTracer := middleware.AddTracing(traceConf, "saveHandler", "Save")
-	sendOdpEventTracer := middleware.AddTracing(traceConf, "sendOdpEventHandler", "SendOdpEvent")
-	nStreamTracer := middleware.AddTracing(traceConf, "notificationHandler", "SendNotificationEvent")
-	authTracer := middleware.AddTracing(traceConf, "authHandler", "AuthToken")
+	configTracer := middleware.AddTracing("configHandler", "OptimizelyConfig")
+	datafileTracer := middleware.AddTracing("datafileHandler", "OptimizelyDatafile")
+	activateTracer := middleware.AddTracing("activateHandler", "Activate")
+	decideTracer := middleware.AddTracing("decideHandler", "Decide")
+	trackTracer := middleware.AddTracing("trackHandler", "Track")
+	overrideTracer := middleware.AddTracing("overrideHandler", "Override")
+	lookupTracer := middleware.AddTracing("lookupHandler", "Lookup")
+	saveTracer := middleware.AddTracing("saveHandler", "Save")
+	sendOdpEventTracer := middleware.AddTracing("sendOdpEventHandler", "SendOdpEvent")
+	nStreamTracer := middleware.AddTracing("notificationHandler", "SendNotificationEvent")
+	authTracer := middleware.AddTracing("authHandler", "AuthToken")
 
 	if opt.maxConns > 0 {
 		// Note this is NOT a rate limiter, but a concurrency threshold

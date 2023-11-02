@@ -129,7 +129,7 @@ func (suite *APIV1TestSuite) SetupTest() {
 		corsHandler:         testCorsHandler,
 	}
 
-	suite.mux = NewAPIRouter(opts, config.TracingConfig{})
+	suite.mux = NewAPIRouter(opts)
 }
 
 func (suite *APIV1TestSuite) TestValidRoutes() {
@@ -141,7 +141,7 @@ func (suite *APIV1TestSuite) TestValidRoutes() {
 		}
 		return http.HandlerFunc(fn)
 	}
-	suite.mux = NewAPIRouter(opts, config.TracingConfig{})
+	suite.mux = NewAPIRouter(opts)
 
 	routes := []struct {
 		method string

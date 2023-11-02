@@ -18,74 +18,22 @@
 package middleware
 
 import (
-	"context"
-	crand "crypto/rand"
-	"encoding/binary"
-	"math/rand"
 	"net/http"
-	"sync"
 
-	"github.com/optimizely/agent/config"
-	"github.com/rs/zerolog/log"
+	"github.com/go-chi/chi/v5/middleware"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.opentelemetry.io/otel/trace"
 )
 
-type traceIDGenerator struct {
-	sync.Mutex
-	randSource       *rand.Rand
-	traceIDHeaderKey string
-}
-
-func NewTraceIDGenerator(traceIDHeaderKey string) *traceIDGenerator {
-	var rngSeed int64
-	_ = binary.Read(crand.Reader, binary.LittleEndian, &rngSeed)
-	return &traceIDGenerator{
-		randSource:       rand.New(rand.NewSource(rngSeed)),
-		traceIDHeaderKey: traceIDHeaderKey,
-	}
-}
-
-func (gen *traceIDGenerator) NewSpanID(ctx context.Context, traceID trace.TraceID) trace.SpanID {
-	gen.Lock()
-	defer gen.Unlock()
-	sid := trace.SpanID{}
-	_, _ = gen.randSource.Read(sid[:])
-	return sid
-}
-
-func (gen *traceIDGenerator) NewIDs(ctx context.Context) (trace.TraceID, trace.SpanID) {
-	gen.Lock()
-	defer gen.Unlock()
-	tid := trace.TraceID{}
-	_, _ = gen.randSource.Read(tid[:])
-	sid := trace.SpanID{}
-	_, _ = gen.randSource.Read(sid[:])
-
-	// read trace id from header if provided
-	traceIDHeader := ctx.Value(gen.traceIDHeaderKey)
-	if val, ok := traceIDHeader.(string); ok {
-		if val != "" {
-			headerTraceId, err := trace.TraceIDFromHex(val)
-			if err == nil {
-				tid = headerTraceId
-			} else {
-				log.Error().Err(err).Msg("failed to parse trace id from header, invalid trace id")
-			}
-		}
-	}
-
-	return tid, sid
-}
-
-func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(http.Handler) http.Handler {
+func AddTracing(tracerName, spanName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			pctx := context.WithValue(r.Context(), conf.OpenTelemetry.TraceIDHeaderKey, r.Header.Get(conf.OpenTelemetry.TraceIDHeaderKey))
+			prop := otel.GetTextMapPropagator()
+			propCtx := prop.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
 
-			ctx, span := otel.Tracer(tracerName).Start(pctx, spanName)
+			ctx, span := otel.Tracer(tracerName).Start(propCtx, spanName)
 			defer span.End()
 
 			span.SetAttributes(
@@ -97,7 +45,13 @@ func AddTracing(conf config.TracingConfig, tracerName, spanName string) func(htt
 				attribute.String(OptlySDKHeader, r.Header.Get(OptlySDKHeader)),
 			)
 
-			next.ServeHTTP(w, r.WithContext(ctx))
+			respWriter := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
+			next.ServeHTTP(respWriter, r.WithContext(ctx))
+
+			span.SetAttributes(
+				semconv.HTTPStatusCodeKey.Int(respWriter.Status()),
+			)
 		}
 		return http.HandlerFunc(fn)
 	}
