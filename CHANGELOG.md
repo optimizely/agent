@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - November 3, 2023
+
+### New Features
+
+- Added support for Prometheus-based metrics alongside expvar metrics. This can be configured from the config.yaml file. ([#348](https://github.com/optimizely/agent/pull/348))
+
+- Added support for OpenTelemetry tracing. Distributed tracing is also supported according to [W3C TraceContext](https://www.w3.org/TR/trace-context/). ([#400](https://github.com/optimizely/agent/pull/400), [#401](https://github.com/optimizely/agent/pull/401), [#402](https://github.com/optimizely/agent/pull/402))
+
 ## [4.0.0-beta] - May 11, 2023
 
 ### New Features
