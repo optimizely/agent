@@ -219,7 +219,7 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 			return nil, errors.New("sdk key not found")
 		}
 
-		redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, conf, sdkKey)
+		redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, conf, sdkKey)
 		if err != nil {
 			return nil, err
 		}

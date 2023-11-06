@@ -252,7 +252,7 @@ func defaultLoader(
 		}
 
 		if agentConf.Synchronization.Notification.Enable {
-			redisSyncer, err := syncer.NewRedisNotificationSyncer(&zerolog.Logger{}, agentConf.Synchronization, sdkKey)
+			redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, agentConf.Synchronization, sdkKey)
 			if err != nil {
 				return nil, err
 			}

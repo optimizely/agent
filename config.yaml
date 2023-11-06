@@ -253,7 +253,7 @@ synchronization:
             host: "redis.demo.svc:6379"
             password: ""
             database: 0
-            channel: "optimizely-notifications"
+            channel: "optimizely-sync"
     notification:
         enable: false
         default: "redis"

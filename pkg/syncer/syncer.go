@@ -32,13 +32,13 @@ import (
 
 const (
 	// PubSubDefaultChan will be used as default pubsub channel name
-	PubSubDefaultChan = "optimizely-notifications"
+	PubSubDefaultChan = "optimizely-sync"
 	// PubSubRedis is the name of pubsub type of Redis
 	PubSubRedis = "redis"
 )
 
 var (
-	ncCache   = make(map[string]*RedisNotificationSyncer)
+	ncCache   = make(map[string]*RedisSyncer)
 	mutexLock = &sync.Mutex{}
 )
 
@@ -48,8 +48,8 @@ type Event struct {
 	Message interface{}       `json:"message"`
 }
 
-// RedisNotificationSyncer defines Redis pubsub configuration
-type RedisNotificationSyncer struct {
+// RedisSyncer defines Redis pubsub configuration
+type RedisSyncer struct {
 	ctx      context.Context
 	Host     string
 	Password string
@@ -59,8 +59,8 @@ type RedisNotificationSyncer struct {
 	sdkKey   string
 }
 
-// NewRedisNotificationSyncer returns an instance of RedisNotificationSyncer
-func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig, sdkKey string) (*RedisNotificationSyncer, error) {
+// NewRedisSyncer returns an instance of RedisNotificationSyncer
+func NewRedisSyncer(logger *zerolog.Logger, conf config.SyncConfig, sdkKey string) (*RedisSyncer, error) {
 	mutexLock.Lock()
 	defer mutexLock.Unlock()
 
@@ -104,7 +104,7 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig, 
 		logger = &zerolog.Logger{}
 	}
 
-	nc := &RedisNotificationSyncer{
+	nc := &RedisSyncer{
 		ctx:      context.Background(),
 		Host:     host,
 		Password: password,
@@ -117,23 +117,23 @@ func NewRedisNotificationSyncer(logger *zerolog.Logger, conf config.SyncConfig, 
 	return nc, nil
 }
 
-func (r *RedisNotificationSyncer) WithContext(ctx context.Context) *RedisNotificationSyncer {
+func (r *RedisSyncer) WithContext(ctx context.Context) *RedisSyncer {
 	r.ctx = ctx
 	return r
 }
 
 // AddHandler is empty but needed to implement notification.Center interface
-func (r *RedisNotificationSyncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
+func (r *RedisSyncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
 	return 0, nil
 }
 
 // RemoveHandler is empty but needed to implement notification.Center interface
-func (r *RedisNotificationSyncer) RemoveHandler(_ int, t notification.Type) error {
+func (r *RedisSyncer) RemoveHandler(_ int, t notification.Type) error {
 	return nil
 }
 
 // Send will send the notification to the specified channel in the Redis pubsub
-func (r *RedisNotificationSyncer) Send(t notification.Type, n interface{}) error {
+func (r *RedisSyncer) Send(t notification.Type, n interface{}) error {
 	event := Event{
 		Type:    t,
 		Message: n,
