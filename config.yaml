@@ -243,3 +243,17 @@ runtime:
     ## To just read the current rate, pass rate < 0.
     ## (For n>1 the details of sampling may change.)
     mutexProfileFraction: 0
+
+## synchronization should be enabled when multiple replicas of agent is deployed
+## if notification synchronization is enabled, then the active notification event-stream API
+## will get the notifications from multiple replicas
+synchronization:
+    pubsub:
+        redis:
+            host: "redis.demo.svc:6379"
+            password: ""
+            database: 0
+            channel: "optimizely-sync"
+    notification:
+        enable: false
+        default: "redis"

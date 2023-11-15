@@ -126,6 +126,20 @@ func NewDefaultConfig() *AgentConfig {
 		Webhook: WebhookConfig{
 			Port: "8085",
 		},
+		Synchronization: SyncConfig{
+			Pubsub: map[string]interface{}{
+				"redis": map[string]interface{}{
+					"host":     "localhost:6379",
+					"password": "",
+					"database": 0,
+					"channel":  "optimizely-notifications",
+				},
+			},
+			Notification: NotificationConfig{
+				Enable:  false,
+				Default: "redis",
+			},
+		},
 	}
 
 	return &config
@@ -139,14 +153,27 @@ type AgentConfig struct {
 
 	SDKKeys []string `yaml:"sdkKeys" json:"sdkKeys"`
 
-	Admin   AdminConfig   `json:"admin"`
-	API     APIConfig     `json:"api"`
-	Log     LogConfig     `json:"log"`
-	Tracing TracingConfig `json:"tracing"`
-	Client  ClientConfig  `json:"client"`
-	Runtime RuntimeConfig `json:"runtime"`
-	Server  ServerConfig  `json:"server"`
-	Webhook WebhookConfig `json:"webhook"`
+	Admin           AdminConfig   `json:"admin"`
+	API             APIConfig     `json:"api"`
+	Log             LogConfig     `json:"log"`
+	Tracing         TracingConfig `json:"tracing"`
+	Client          ClientConfig  `json:"client"`
+	Runtime         RuntimeConfig `json:"runtime"`
+	Server          ServerConfig  `json:"server"`
+	Webhook         WebhookConfig `json:"webhook"`
+	Synchronization SyncConfig    `json:"synchronization"`
+}
+
+// SyncConfig contains Synchronization configuration for the multiple Agent nodes
+type SyncConfig struct {
+	Pubsub       map[string]interface{} `json:"pubsub"`
+	Notification NotificationConfig     `json:"notification"`
+}
+
+// NotificationConfig contains Notification Synchronization configuration for the multiple Agent nodes
+type NotificationConfig struct {
+	Enable  bool   `json:"enable"`
+	Default string `json:"default"`
 }
 
 // HTTPSDisabledWarning is logged when keyfile and certfile are not provided in server configuration

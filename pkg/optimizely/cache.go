@@ -26,6 +26,7 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/client"
@@ -40,6 +41,7 @@ import (
 
 	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -61,7 +63,7 @@ type OptlyCache struct {
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.ClientConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+func NewCache(ctx context.Context, conf config.AgentConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
 
 	// TODO is there a cleaner way to handle this translation???
 	cmLoader := func(sdkkey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
@@ -168,13 +170,14 @@ func regexValidator(sdkKeyRegex string) func(string) bool {
 }
 
 func defaultLoader(
-	conf config.ClientConfig,
+	agentConf config.AgentConfig,
 	metricsRegistry *MetricsRegistry,
 	userProfileServiceMap cmap.ConcurrentMap,
 	odpCacheMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
-	validator := regexValidator(conf.SdkKeyRegex)
+	clientConf := agentConf.Client
+	validator := regexValidator(clientConf.SdkKeyRegex)
 
 	return func(clientKey string) (*OptlyClient, error) {
 		var sdkKey string
@@ -211,15 +214,15 @@ func defaultLoader(
 		if datafileAccessToken != "" {
 			configManager = pcFactory(
 				sdkKey,
-				sdkconfig.WithPollingInterval(conf.PollingInterval),
-				sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
+				sdkconfig.WithPollingInterval(clientConf.PollingInterval),
+				sdkconfig.WithDatafileURLTemplate(clientConf.DatafileURLTemplate),
 				sdkconfig.WithDatafileAccessToken(datafileAccessToken),
 			)
 		} else {
 			configManager = pcFactory(
 				sdkKey,
-				sdkconfig.WithPollingInterval(conf.PollingInterval),
-				sdkconfig.WithDatafileURLTemplate(conf.DatafileURLTemplate),
+				sdkconfig.WithPollingInterval(clientConf.PollingInterval),
+				sdkconfig.WithDatafileURLTemplate(clientConf.DatafileURLTemplate),
 			)
 		}
 
@@ -227,13 +230,13 @@ func defaultLoader(
 			return &OptlyClient{}, err
 		}
 
-		q := event.NewInMemoryQueue(conf.QueueSize)
+		q := event.NewInMemoryQueue(clientConf.QueueSize)
 		ep := bpFactory(
 			event.WithSDKKey(sdkKey),
-			event.WithQueueSize(conf.QueueSize),
-			event.WithBatchSize(conf.BatchSize),
-			event.WithEventEndPoint(conf.EventURL),
-			event.WithFlushInterval(conf.FlushInterval),
+			event.WithQueueSize(clientConf.QueueSize),
+			event.WithBatchSize(clientConf.BatchSize),
+			event.WithEventEndPoint(clientConf.EventURL),
+			event.WithFlushInterval(clientConf.FlushInterval),
 			event.WithQueue(q),
 			event.WithEventDispatcherMetrics(metricsRegistry),
 		)
@@ -245,11 +248,19 @@ func defaultLoader(
 			client.WithConfigManager(configManager),
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
-			client.WithOdpDisabled(conf.ODP.Disable),
+			client.WithOdpDisabled(clientConf.ODP.Disable),
+		}
+
+		if agentConf.Synchronization.Notification.Enable {
+			redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, agentConf.Synchronization, sdkKey)
+			if err != nil {
+				return nil, err
+			}
+			clientOptions = append(clientOptions, client.WithNotificationCenter(redisSyncer))
 		}
 
 		var clientUserProfileService decision.UserProfileService
-		var rawUPS = getServiceWithType(userProfileServicePlugin, sdkKey, userProfileServiceMap, conf.UserProfileService)
+		var rawUPS = getServiceWithType(userProfileServicePlugin, sdkKey, userProfileServiceMap, clientConf.UserProfileService)
 		// Check if ups was provided by user
 		if rawUPS != nil {
 			// convert ups to UserProfileService interface
@@ -260,7 +271,7 @@ func defaultLoader(
 		}
 
 		var clientODPCache odpCachePkg.Cache
-		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, conf.ODP.SegmentsCache)
+		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, clientConf.ODP.SegmentsCache)
 		// Check if odp cache was provided by user
 		if rawODPCache != nil {
 			// convert odpCache to Cache interface
@@ -273,7 +284,7 @@ func defaultLoader(
 		segmentManager := odpSegmentPkg.NewSegmentManager(
 			sdkKey,
 			odpSegmentPkg.WithAPIManager(
-				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "SegmentAPIManager"), utils.Timeout(conf.ODP.SegmentsRequestTimeout))),
+				odpSegmentPkg.NewSegmentAPIManager(sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "SegmentAPIManager"), utils.Timeout(clientConf.ODP.SegmentsRequestTimeout))),
 			),
 			odpSegmentPkg.WithSegmentsCache(clientODPCache),
 		)
@@ -282,16 +293,16 @@ func defaultLoader(
 		eventManager := odpEventPkg.NewBatchEventManager(
 			odpEventPkg.WithAPIManager(
 				odpEventPkg.NewEventAPIManager(
-					sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "EventAPIManager"), utils.Timeout(conf.ODP.EventsRequestTimeout)),
+					sdkKey, utils.NewHTTPRequester(logging.GetLogger(sdkKey, "EventAPIManager"), utils.Timeout(clientConf.ODP.EventsRequestTimeout)),
 				),
 			),
-			odpEventPkg.WithFlushInterval(conf.ODP.EventsFlushInterval),
+			odpEventPkg.WithFlushInterval(clientConf.ODP.EventsFlushInterval),
 		)
 
 		// Create odp manager with custom segment and event manager
 		odpManager := odp.NewOdpManager(
 			sdkKey,
-			conf.ODP.Disable,
+			clientConf.ODP.Disable,
 			odp.WithSegmentManager(segmentManager),
 			odp.WithEventManager(eventManager),
 		)

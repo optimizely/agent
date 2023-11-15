@@ -19,20 +19,23 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
-
+	"github.com/go-chi/chi/v5"
+	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
-
-	"github.com/go-chi/chi/v5"
+	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/go-sdk/pkg/entities"
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/pkg/registry"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -66,13 +69,15 @@ func (suite *NotificationTestSuite) SetupTest() {
 	EventStreamMW := &NotificationMW{optlyClient}
 
 	mux.Use(EventStreamMW.ClientCtx)
-	mux.Get("/notifications/event-stream", NotificationEventSteamHandler)
 
 	suite.mux = mux
 	suite.tc = testClient
 }
 
 func (suite *NotificationTestSuite) TestFeatureTestFilter() {
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false)))
+
 	feature := entities.Feature{Key: "one"}
 	suite.tc.AddFeatureTest(feature)
 
@@ -137,15 +142,86 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 
 	nc := registry.GetNotificationCenter("")
 
+	notifications := make([]syncer.Event, 0)
+
+	trackEvent := map[string]string{"test": "value"}
+	projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
+		Type:     notification.ProjectConfigUpdate,
+		Revision: suite.tc.ProjectConfig.GetRevision(),
+	}
+
+	notifications = append(notifications, syncer.Event{Type: notification.Track, Message: trackEvent})
+	notifications = append(notifications, syncer.Event{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
+
 	go func() {
 		time.Sleep(1 * time.Second)
-		_ = nc.Send(notification.Track, map[string]string{"test": "value"})
-		projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
-			Type:     notification.ProjectConfigUpdate,
-			Revision: suite.tc.ProjectConfig.GetRevision(),
-		}
+
+		_ = nc.Send(notification.Track, trackEvent)
+
 		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
 	}()
+
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
+
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	response := string(rec.Body.Bytes())
+	suite.Equal(expected, response)
+}
+
+func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization() {
+	event := entities.Event{Key: "one"}
+	suite.tc.AddEvent(event)
+
+	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
+	rec := httptest.NewRecorder()
+
+	expected := `data: {"test":"value"}` + "\n\n" + `data: {"Type":"project_config_update","Revision":"revision"}` + "\n\n"
+
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1, _ := context.WithTimeout(ctx, 3*time.Second)
+
+	nc := registry.GetNotificationCenter("")
+
+	notifications := make([]syncer.Event, 0)
+
+	trackEvent := map[string]string{"test": "value"}
+	projectConfigUpdateNotification := notification.ProjectConfigUpdateNotification{
+		Type:     notification.ProjectConfigUpdate,
+		Revision: suite.tc.ProjectConfig.GetRevision(),
+	}
+
+	notifications = append(notifications, syncer.Event{Type: notification.Track, Message: trackEvent})
+	notifications = append(notifications, syncer.Event{Type: notification.ProjectConfigUpdate, Message: projectConfigUpdateNotification})
+
+	go func() {
+		time.Sleep(1 * time.Second)
+
+		_ = nc.Send(notification.Track, trackEvent)
+
+		_ = nc.Send(notification.ProjectConfigUpdate, projectConfigUpdateNotification)
+	}()
+
+	conf := config.NewDefaultConfig()
+	conf.Synchronization = config.SyncConfig{
+		Pubsub: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+		},
+		Notification: config.NotificationConfig{
+			Enable:  true,
+			Default: "redis",
+		},
+	}
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -170,10 +246,18 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	ctx1, _ := context.WithTimeout(ctx, 2*time.Second)
 
 	nc := registry.GetNotificationCenter("")
+	decisionEvent := map[string]string{"key": "value"}
+
+	notifications := make([]syncer.Event, 0)
+	notifications = append(notifications, syncer.Event{Type: notification.Decision, Message: decisionEvent})
+
 	go func() {
 		time.Sleep(1 * time.Second)
-		nc.Send(notification.Decision, map[string]string{"key": "value"})
+		nc.Send(notification.Decision, decisionEvent)
 	}()
+
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
 
 	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
 
@@ -182,6 +266,33 @@ func (suite *NotificationTestSuite) TestActivateExperimentRaw() {
 	// Unmarshal response
 	response := string(rec.Body.Bytes())
 	suite.Equal(expected, response)
+}
+
+func (suite *NotificationTestSuite) TestWithFailedNotificationReceiver() {
+	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
+	rec := httptest.NewRecorder()
+
+	// create a cancelable request context
+	ctx := req.Context()
+	ctx1, _ := context.WithTimeout(ctx, 2*time.Second)
+
+	nc := registry.GetNotificationCenter("")
+	decisionEvent := map[string]string{"key": "value"}
+
+	notifications := make([]syncer.Event, 0)
+	notifications = append(notifications, syncer.Event{Type: notification.Decision, Message: decisionEvent})
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		nc.Send(notification.Decision, decisionEvent)
+	}()
+
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, true, notifications...)))
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
+
+	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *NotificationTestSuite) assertError(rec *httptest.ResponseRecorder, msg string, code int) {
@@ -201,13 +312,133 @@ func TestEventStreamMissingOptlyCtx(t *testing.T) {
 	mw := new(NotificationMW)
 	mw.optlyClient = nil
 
+	conf := config.NewDefaultConfig()
 	handlers := []func(w http.ResponseWriter, r *http.Request){
-		NotificationEventSteamHandler,
+		NotificationEventStreamHandler(getMockNotificationReceiver(conf.Synchronization, false)),
 	}
 
 	for _, handler := range handlers {
 		rec := httptest.NewRecorder()
 		mw.ClientCtx(http.HandlerFunc(handler)).ServeHTTP(rec, req)
 		assertError(t, rec, "optlyClient not available", http.StatusUnprocessableEntity)
+	}
+}
+
+func TestDefaultNotificationReceiver(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    <-chan syncer.Event
+		wantErr bool
+	}{
+		{
+			name:    "Test happy path",
+			args:    args{ctx: context.WithValue(context.TODO(), SDKKey, "1221")},
+			want:    make(chan syncer.Event),
+			wantErr: false,
+		},
+		{
+			name:    "Test without sdk key",
+			args:    args{ctx: context.TODO()},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DefaultNotificationReceiver(tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DefaultNotificationReceiver() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if reflect.TypeOf(tt.want) != reflect.TypeOf(got) {
+				t.Errorf("DefaultNotificationReceiver() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRedisNotificationReceiver(t *testing.T) {
+	conf := config.SyncConfig{
+		Pubsub: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+		},
+		Notification: config.NotificationConfig{
+			Enable:  true,
+			Default: "redis",
+		},
+	}
+	type args struct {
+		conf config.SyncConfig
+		ctx  context.Context
+	}
+	tests := []struct {
+		name string
+		args args
+		want NotificationReceiverFunc
+	}{
+		{
+			name: "Test happy path",
+			args: args{
+				conf: conf,
+				ctx:  context.WithValue(context.Background(), SDKKey, "random-sdk-key-1"),
+			},
+			want: func(ctx context.Context) (<-chan syncer.Event, error) {
+				return make(<-chan syncer.Event), nil
+			},
+		},
+		{
+			name: "Test empty config",
+			args: args{
+				conf: config.SyncConfig{},
+				ctx:  context.WithValue(context.Background(), SDKKey, "random-sdk-key-2"),
+			},
+			want: func(ctx context.Context) (<-chan syncer.Event, error) {
+				return nil, errors.New("error")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := RedisNotificationReceiver(tt.args.conf)
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("RedisNotificationReceiver() = %v, want %v", got, tt.want)
+			}
+
+			ch1, err1 := got(tt.args.ctx)
+			ch2, err2 := tt.want(tt.args.ctx)
+
+			if reflect.TypeOf(err1) != reflect.TypeOf(err2) {
+				fmt.Println(err1, err2)
+				t.Errorf("error type not matched")
+			}
+
+			if reflect.TypeOf(ch1) != reflect.TypeOf(ch2) {
+				t.Errorf("channel type not matched")
+			}
+		})
+	}
+}
+
+func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg ...syncer.Event) NotificationReceiverFunc {
+	return func(ctx context.Context) (<-chan syncer.Event, error) {
+		if returnError {
+			return nil, errors.New("mock error")
+		}
+		dataChan := make(chan syncer.Event)
+		go func() {
+			time.Sleep(1)
+			for _, val := range msg {
+				dataChan <- val
+			}
+		}()
+		return dataChan, nil
 	}
 }
