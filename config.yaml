@@ -145,17 +145,17 @@ webhook:
     ## http listener port
     port: "8089"
 #    ## a map of Optimizely Projects to one or more SDK keys
-#    projects:
-#        ## <project-id>: Optimizely project id as an integer
-#        <project-id>:
-#            ## sdkKeys: a list of SDKs linked to this project
-#            sdkKeys:
-#                - <sdk-key-1>
+    projects:
+        ## <project-id>: Optimizely project id as an integer
+        23897262460:
+            ## sdkKeys: a list of SDKs linked to this project
+            sdkKeys:
+                - RiowyaMnbPxLa4dPWrDqu
 #                - <sdk-key-1>
 #            ## secret: webhook secret used the validate the notification
 #            secret: <secret-10000>
 #            ## skipSignatureCheck: override the signature check (not recommended for production)
-#            skipSignatureCheck: true
+            skipSignatureCheck: true
 
 ##
 ## optimizely client configurations (options passed to the underlying go-sdk)
@@ -256,4 +256,7 @@ synchronization:
             channel: "optimizely-sync"
     notification:
         enable: false
+        default: "redis"
+    datafile:
+        enable: true
         default: "redis"

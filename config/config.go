@@ -168,10 +168,17 @@ type AgentConfig struct {
 type SyncConfig struct {
 	Pubsub       map[string]interface{} `json:"pubsub"`
 	Notification NotificationConfig     `json:"notification"`
+	Datafile     DatafileSyncConfig     `json:"datafile"`
 }
 
 // NotificationConfig contains Notification Synchronization configuration for the multiple Agent nodes
 type NotificationConfig struct {
+	Enable  bool   `json:"enable"`
+	Default string `json:"default"`
+}
+
+// DatafileSyncConfig contains Datafile Synchronization configuration for the multiple Agent nodes
+type DatafileSyncConfig struct {
 	Enable  bool   `json:"enable"`
 	Default string `json:"default"`
 }

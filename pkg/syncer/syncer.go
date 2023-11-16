@@ -64,13 +64,10 @@ func NewRedisSyncer(logger *zerolog.Logger, conf config.SyncConfig, sdkKey strin
 	mutexLock.Lock()
 	defer mutexLock.Unlock()
 
-	if nc, found := ncCache[sdkKey]; found {
+	if nc, found := ncCache[sdkKey]; found && sdkKey != "" {
 		return nc, nil
 	}
 
-	if !conf.Notification.Enable {
-		return nil, errors.New("notification syncer is not enabled")
-	}
 	if conf.Notification.Default != PubSubRedis {
 		return nil, errors.New("redis syncer is not set as default")
 	}
@@ -157,6 +154,27 @@ func (r *RedisSyncer) Send(t notification.Type, n interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (r *RedisSyncer) SyncConfig(sdkKey string) error {
+	client := redis.NewClient(&redis.Options{
+		Addr:     r.Host,
+		Password: r.Password,
+		DB:       r.Database,
+	})
+	defer client.Close()
+	channel := GetDatafileSyncChannel()
+
+	if err := client.Publish(r.ctx, channel, sdkKey).Err(); err != nil {
+		r.logger.Err(err).Msg("failed to publish datafile sync event to pub/sub")
+		return err
+	}
+	fmt.Println("====================== published message ============================")
+	return nil
+}
+
+func GetDatafileSyncChannel() string {
+	return fmt.Sprintf("%s-datafile", PubSubDefaultChan)
 }
 
 func GetChannelForSDKKey(channel, key string) string {

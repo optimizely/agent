@@ -266,7 +266,8 @@ func main() {
 	sdkMetricsRegistry := optimizely.NewRegistry(agentMetricsRegistry)
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
-	sg := server.NewGroup(ctx, conf.Server)                 // Create a new server group to manage the individual http listeners
+	defer cancel()
+	sg := server.NewGroup(ctx, conf.Server) // Create a new server group to manage the individual http listeners
 	optlyCache := optimizely.NewCache(ctx, *conf, sdkMetricsRegistry)
 	optlyCache.Init(conf.SDKKeys)
 
@@ -286,7 +287,7 @@ func main() {
 
 	log.Info().Str("version", conf.Version).Msg("Starting services.")
 	sg.GoListenAndServe("api", conf.API.Port, apiRouter)
-	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(optlyCache, conf.Webhook))
+	sg.GoListenAndServe("webhook", conf.Webhook.Port, routers.NewWebhookRouter(ctx, optlyCache, *conf))
 	sg.GoListenAndServe("admin", conf.Admin.Port, adminRouter) // Admin should be added last.
 
 	// wait for server group to shutdown
