@@ -24,17 +24,20 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/optimizely/go-sdk/pkg/utils"
+	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
 )
 
 // RestUserProfileService represents the rest API implementation of UserProfileService interface
 type RestUserProfileService struct {
 	Requester    *utils.HTTPRequester
+	Cache        *cache.Cache
 	Host         string            `json:"host"`
 	Headers      map[string]string `json:"headers"`
 	LookupPath   string            `json:"lookupPath"`
@@ -58,6 +61,10 @@ func (r *RestUserProfileService) Lookup(userID string) (profile decision.UserPro
 
 	userIDKey := r.getUserIDKey()
 	// Check if profile exists
+	cachedProfile, found := r.Cache.Get(userIDKey)
+	if found {
+		return cachedProfile.(decision.UserProfile)
+	}
 	parameters := map[string]interface{}{userIDKey: userID}
 	success, response := r.performRequest(requestURL, r.LookupMethod, parameters)
 	if !success {
@@ -70,7 +77,9 @@ func (r *RestUserProfileService) Lookup(userID string) (profile decision.UserPro
 		return
 	}
 
-	return convertToUserProfile(userProfileMap, userIDKey)
+	userProfile := convertToUserProfile(userProfileMap, userIDKey)
+	r.Cache.Set(userProfile.ID, userProfile, cache.DefaultExpiration)
+	return userProfile
 }
 
 // Save is used to save bucketing decisions for users
@@ -162,10 +171,12 @@ func (r *RestUserProfileService) performRequest(requestURL, method string, param
 }
 
 func init() {
+	c := cache.New(5*time.Minute, 10*time.Minute)
 	restUPSCreator := func() decision.UserProfileService {
 		return &RestUserProfileService{
 			Requester: utils.NewHTTPRequester(logging.GetLogger("", "RestUserProfileService")),
 			Headers:   map[string]string{},
+			Cache:     c,
 		}
 	}
 	userprofileservice.Add("rest", restUPSCreator)
