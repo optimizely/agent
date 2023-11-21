@@ -29,7 +29,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
 
 	"github.com/go-chi/render"
@@ -156,7 +155,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 		for _, sdkKey := range webhookConfig.SDKKeys {
 			log.Info().Msg("====================== sdk key ============================")
 			log.Info().Msg(sdkKey)
-			syncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, h.syncConfig, sdkKey)
+			dfSyncer, err := syncer.NewDatafileSyncer(h.syncConfig)
 			if err != nil {
 				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
 				log.Error().Msg(errMsg)
@@ -167,7 +166,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 				return
 			}
 
-			if err := syncer.SyncConfig(sdkKey); err != nil {
+			if err := dfSyncer.Sync(r.Context(), syncer.GetDatafileSyncChannel(), sdkKey); err != nil {
 				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
 				log.Error().Msg(errMsg)
 				render.Status(r, http.StatusInternalServerError)
@@ -183,46 +182,31 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 
 func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
 	fmt.Println("================ starting syncer ===================")
-	redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, h.syncConfig, "")
+	dfSyncer, err := syncer.NewDatafileSyncer(h.syncConfig)
 	if err != nil {
 		return err
 	}
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     redisSyncer.Host,
-		Password: redisSyncer.Password,
-		DB:       redisSyncer.Database,
-	})
-
-	// Subscribe to a Redis channel
-	pubsub := client.Subscribe(ctx, syncer.GetDatafileSyncChannel())
 
 	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
 	if !ok {
 		logger = &zerolog.Logger{}
 	}
 
+	dataCh, err := dfSyncer.Subscribe(ctx, syncer.GetDatafileSyncChannel())
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				pubsub.Close()
-				client.Close()
 				logger.Debug().Msg("context canceled, redis notification receiver is closed")
 				return
-			default:
-				// fmt.Println("====================== waiting for message ============================")
-				msg, err := pubsub.ReceiveMessage(ctx)
-				if err != nil {
-					logger.Err(err).Msg("failed to receive message from redis")
-					continue
-				}
-
-				fmt.Println("=====================  message from redis: ", msg.Payload, "=========================")
-				logger.Info().Msg("received message from redis")
-				logger.Info().Msg(msg.Payload)
-
-				h.optlyCache.UpdateConfigs(msg.Payload)
+			case key := <-dataCh:
+				fmt.Println("=========== updating config =============")
+				fmt.Println("for key: ", key)
+				h.optlyCache.UpdateConfigs(key)
 			}
 		}
 	}()

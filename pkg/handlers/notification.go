@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/syncer"
@@ -219,19 +218,15 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 			return nil, errors.New("sdk key not found")
 		}
 
-		redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, conf, sdkKey)
+		redisSyncer, err := syncer.NewSyncedNotificationCenter(ctx, &zerolog.Logger{}, sdkKey, conf)
 		if err != nil {
 			return nil, err
 		}
 
-		client := redis.NewClient(&redis.Options{
-			Addr:     redisSyncer.Host,
-			Password: redisSyncer.Password,
-			DB:       redisSyncer.Database,
-		})
-
-		// Subscribe to a Redis channel
-		pubsub := client.Subscribe(ctx, syncer.GetChannelForSDKKey(redisSyncer.Channel, sdkKey))
+		eventCh, err := redisSyncer.Subscribe(ctx, syncer.GetChannelForSDKKey("opti", sdkKey))
+		if err != nil {
+			return nil, err
+		}
 
 		dataChan := make(chan syncer.Event)
 
@@ -244,19 +239,12 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 			for {
 				select {
 				case <-ctx.Done():
-					client.Close()
-					pubsub.Close()
+					close(dataChan)
 					logger.Debug().Msg("context canceled, redis notification receiver is closed")
 					return
-				default:
-					msg, err := pubsub.ReceiveMessage(ctx)
-					if err != nil {
-						logger.Err(err).Msg("failed to receive message from redis")
-						continue
-					}
-
+				case msg := <-eventCh:
 					var event syncer.Event
-					if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+					if err := json.Unmarshal([]byte(msg), &event); err != nil {
 						logger.Err(err).Msg("failed to unmarshal redis message")
 						continue
 					}

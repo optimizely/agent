@@ -216,7 +216,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfigWithSynchronization
 				"database": 0,
 			},
 		},
-		Notification: config.NotificationConfig{
+		Notification: config.FeatureSyncConfig{
 			Enable:  true,
 			Default: "redis",
 		},
@@ -370,7 +370,7 @@ func TestRedisNotificationReceiver(t *testing.T) {
 				"database": 0,
 			},
 		},
-		Notification: config.NotificationConfig{
+		Notification: config.FeatureSyncConfig{
 			Enable:  true,
 			Default: "redis",
 		},

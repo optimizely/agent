@@ -252,11 +252,11 @@ func defaultLoader(
 		}
 
 		if agentConf.Synchronization.Notification.Enable {
-			redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, agentConf.Synchronization, sdkKey)
+			syncedNC, err := syncer.NewSyncedNotificationCenter(context.Background(), &zerolog.Logger{}, sdkKey, agentConf.Synchronization)
 			if err != nil {
 				return nil, err
 			}
-			clientOptions = append(clientOptions, client.WithNotificationCenter(redisSyncer))
+			clientOptions = append(clientOptions, client.WithNotificationCenter(syncedNC))
 		}
 
 		var clientUserProfileService decision.UserProfileService
