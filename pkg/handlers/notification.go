@@ -223,7 +223,7 @@ func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc 
 			return nil, err
 		}
 
-		eventCh, err := redisSyncer.Subscribe(ctx, syncer.GetChannelForSDKKey("opti", sdkKey))
+		eventCh, err := redisSyncer.Subscribe(ctx, syncer.GetChannelForSDKKey(syncer.PubSubDefaultChan, sdkKey))
 		if err != nil {
 			return nil, err
 		}

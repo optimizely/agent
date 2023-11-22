@@ -39,10 +39,33 @@ type PubSub interface {
 
 func NewPubSub(conf config.SyncConfig) (PubSub, error) {
 	if conf.Notification.Default == PubSubRedis {
+		host, ok := conf.Pubsub[PubSubRedis].(map[string]interface{})["host"].(string)
+		if !ok {
+			return nil, errors.New("host is not valid")
+		}
+		password, ok := conf.Pubsub[PubSubRedis].(map[string]interface{})["password"].(string)
+		if !ok {
+			return nil, errors.New("password is not valid")
+		}
+		database, ok := conf.Pubsub[PubSubRedis].(map[string]interface{})["database"].(int)
+		if !ok {
+			return nil, errors.New("database is not valid")
+		}
+
+		client := redis.NewClient(&redis.Options{
+			Addr:     host,
+			Password: password,
+			DB:       database,
+		})
+		defer client.Close()
+		if err := client.Ping(context.Background()).Err(); err != nil {
+			return nil, err
+		}
+
 		return &pubsubRedis{
-			host:     conf.Pubsub[PubSubRedis].(map[string]interface{})["host"].(string),
-			password: conf.Pubsub[PubSubRedis].(map[string]interface{})["password"].(string),
-			database: conf.Pubsub[PubSubRedis].(map[string]interface{})["database"].(int),
+			host:     host,
+			password: password,
+			database: database,
 		}, nil
 	}
 	return nil, errors.New("pubsub type not supported")

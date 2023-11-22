@@ -53,6 +53,9 @@ type Event struct {
 }
 
 func NewSyncedNotificationCenter(ctx context.Context, logger *zerolog.Logger, sdkKey string, conf config.SyncConfig) (NotificationSyncer, error) {
+	mutexLock.Lock()
+	defer mutexLock.Unlock()
+
 	if nc, ok := ncCache[sdkKey]; ok {
 		return nc, nil
 	}
@@ -63,6 +66,7 @@ func NewSyncedNotificationCenter(ctx context.Context, logger *zerolog.Logger, sd
 	}
 
 	nc := &SyncedNotificationCenter{
+		ctx:    ctx,
 		logger: logger,
 		sdkKey: sdkKey,
 		pubsub: pubsub,
