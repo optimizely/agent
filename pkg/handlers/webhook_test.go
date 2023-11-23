@@ -111,7 +111,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 			Secret:  "I am secret",
 		},
 	}
-	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs)
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs, config.SyncConfig{})
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -146,7 +146,7 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 			SkipSignatureCheck: true,
 		},
 	}
-	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
+	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs, config.SyncConfig{})
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -181,7 +181,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 			Secret:  "I am secret",
 		},
 	}
-	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
+	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs, config.SyncConfig{})
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,

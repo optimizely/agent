@@ -254,9 +254,10 @@ func defaultLoader(
 		if agentConf.Synchronization.Notification.Enable {
 			syncedNC, err := syncer.NewSyncedNotificationCenter(context.Background(), &zerolog.Logger{}, sdkKey, agentConf.Synchronization)
 			if err != nil {
-				return nil, err
+				log.Error().Err(err).Msgf("Failed to create SyncedNotificationCenter, reason: %s", err.Error())
+			} else {
+				clientOptions = append(clientOptions, client.WithNotificationCenter(syncedNC))
 			}
-			clientOptions = append(clientOptions, client.WithNotificationCenter(syncedNC))
 		}
 
 		var clientUserProfileService decision.UserProfileService

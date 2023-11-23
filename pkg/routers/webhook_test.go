@@ -19,6 +19,7 @@ package routers
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,8 +30,8 @@ import (
 
 func TestWebhookAllowedContentTypeMiddleware(t *testing.T) {
 
-	conf := config.WebhookConfig{}
-	router := NewWebhookRouter(nil, conf)
+	conf := config.AgentConfig{}
+	router := NewWebhookRouter(context.Background(), nil, conf)
 
 	// Testing unsupported content type
 	body := "<request> <parameters> <email>test@123.com</email> </parameters> </request>"
