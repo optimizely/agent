@@ -48,12 +48,14 @@ func NewCache() *TestCache {
 }
 
 type TestDFSyncer struct {
-	syncCalled bool
+	syncCalled      bool
+	subscribeCalled bool
 }
 
 func NewTestDFSyncer() *TestDFSyncer {
 	return &TestDFSyncer{
-		syncCalled: false,
+		syncCalled:      false,
+		subscribeCalled: false,
 	}
 }
 
@@ -63,6 +65,7 @@ func (t *TestDFSyncer) Sync(_ context.Context, _ string, _ string) error {
 }
 
 func (t *TestDFSyncer) Subscribe(_ context.Context, _ string) (chan string, error) {
+	t.subscribeCalled = true
 	return make(chan string), nil
 }
 
@@ -266,4 +269,19 @@ func TestHandleWebhookWithDatafileSyncer(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 	assert.Equal(t, true, testCache.updateConfigsCalled)
 	assert.Equal(t, true, syncer.syncCalled)
+}
+
+func TestWebhookStartSyncer(t *testing.T) {
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
+		},
+	}
+	syncer := NewTestDFSyncer()
+
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs, syncer)
+	err := optlyHandler.StartSyncer(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, true, syncer.subscribeCalled)
 }
