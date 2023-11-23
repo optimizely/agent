@@ -60,17 +60,19 @@ type OptlyMessage struct {
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct {
-	optlyCache optimizely.Cache
-	ProjectMap map[int64]config.WebhookProject
-	syncConfig config.SyncConfig
+	optlyCache   optimizely.Cache
+	ProjectMap   map[int64]config.WebhookProject
+	configSyncer syncer.Syncer
+	syncEnabled  bool
 }
 
 // NewWebhookHandler returns a new instance of OptlyWebhookHandler
-func NewWebhookHandler(optlyCache optimizely.Cache, projectMap map[int64]config.WebhookProject, conf config.SyncConfig) *OptlyWebhookHandler {
+func NewWebhookHandler(optlyCache optimizely.Cache, projectMap map[int64]config.WebhookProject, configSyncer syncer.Syncer) *OptlyWebhookHandler {
 	return &OptlyWebhookHandler{
-		optlyCache: optlyCache,
-		ProjectMap: projectMap,
-		syncConfig: conf,
+		optlyCache:   optlyCache,
+		ProjectMap:   projectMap,
+		syncEnabled:  configSyncer != nil,
+		configSyncer: configSyncer,
 	}
 }
 
@@ -148,15 +150,8 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 	for _, sdkKey := range webhookConfig.SDKKeys {
 		h.optlyCache.UpdateConfigs(sdkKey)
 
-		if h.syncConfig.Datafile.Enable {
-			dfSyncer, err := syncer.NewDatafileSyncer(h.syncConfig)
-			if err != nil {
-				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
-				log.Error().Msg(errMsg)
-				continue
-			}
-
-			if err := dfSyncer.Sync(r.Context(), syncer.GetDatafileSyncChannel(), sdkKey); err != nil {
+		if h.syncEnabled {
+			if err := h.configSyncer.Sync(r.Context(), syncer.GetDatafileSyncChannel(), sdkKey); err != nil {
 				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
 				log.Error().Msg(errMsg)
 			}
@@ -167,17 +162,17 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
-	dfSyncer, err := syncer.NewDatafileSyncer(h.syncConfig)
-	if err != nil {
-		return err
-	}
-
 	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
 	if !ok {
 		logger = &zerolog.Logger{}
 	}
 
-	dataCh, err := dfSyncer.Subscribe(ctx, syncer.GetDatafileSyncChannel())
+	if !h.syncEnabled {
+		logger.Debug().Msg("datafile syncer is not enabled")
+		return nil
+	}
+
+	dataCh, err := h.configSyncer.Subscribe(ctx, syncer.GetDatafileSyncChannel())
 	if err != nil {
 		return err
 	}

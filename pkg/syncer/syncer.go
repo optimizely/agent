@@ -38,6 +38,11 @@ type NotificationSyncer interface {
 	Subscribe(ctx context.Context, channel string) (chan string, error)
 }
 
+type Syncer interface {
+	Sync(ctx context.Context, channel string, sdkKey string) error
+	Subscribe(ctx context.Context, channel string) (chan string, error)
+}
+
 // RedisSyncer defines Redis pubsub configuration
 type SyncedNotificationCenter struct {
 	ctx    context.Context
