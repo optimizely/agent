@@ -19,10 +19,10 @@ package routers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/handlers"
+	"github.com/rs/zerolog/log"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -40,7 +40,7 @@ func NewWebhookRouter(ctx context.Context, optlyCache optimizely.Cache, conf con
 	webhookAPI := handlers.NewWebhookHandler(optlyCache, conf.Webhook.Projects, conf.Synchronization)
 	if conf.Synchronization.Datafile.Enable {
 		if err := webhookAPI.StartSyncer(ctx); err != nil {
-			fmt.Errorf("failed to start datafile syncer: %s", err.Error())
+			log.Error().Msgf("failed to start datafile syncer: %s", err.Error())
 		}
 	}
 

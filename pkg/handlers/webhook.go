@@ -146,42 +146,27 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 
 	// Iterate through all SDK keys and update config
 	for _, sdkKey := range webhookConfig.SDKKeys {
-		fmt.Println("=========== updating config =============")
 		h.optlyCache.UpdateConfigs(sdkKey)
-	}
 
-	if h.syncConfig.Datafile.Enable {
-		log.Info().Msg("======================= Syncing datafile ============================")
-		for _, sdkKey := range webhookConfig.SDKKeys {
-			log.Info().Msg("====================== sdk key ============================")
-			log.Info().Msg(sdkKey)
+		if h.syncConfig.Datafile.Enable {
 			dfSyncer, err := syncer.NewDatafileSyncer(h.syncConfig)
 			if err != nil {
 				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
 				log.Error().Msg(errMsg)
-				render.Status(r, http.StatusInternalServerError)
-				render.JSON(w, r, render.M{
-					"error": errMsg,
-				})
-				return
+				continue
 			}
 
 			if err := dfSyncer.Sync(r.Context(), syncer.GetDatafileSyncChannel(), sdkKey); err != nil {
 				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
 				log.Error().Msg(errMsg)
-				render.Status(r, http.StatusInternalServerError)
-				render.JSON(w, r, render.M{
-					"error": errMsg,
-				})
-				return
 			}
 		}
+
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
-	fmt.Println("================ starting syncer ===================")
 	dfSyncer, err := syncer.NewDatafileSyncer(h.syncConfig)
 	if err != nil {
 		return err
@@ -201,11 +186,9 @@ func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Debug().Msg("context canceled, redis notification receiver is closed")
+				logger.Debug().Msg("context canceled, syncer is stopped")
 				return
 			case key := <-dataCh:
-				fmt.Println("=========== updating config =============")
-				fmt.Println("for key: ", key)
 				h.optlyCache.UpdateConfigs(key)
 			}
 		}
