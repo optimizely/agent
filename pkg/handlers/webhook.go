@@ -164,7 +164,7 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
 	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
 	if !ok {
-		logger = &zerolog.Logger{}
+		logger = &log.Logger
 	}
 
 	if !h.syncEnabled {
@@ -185,8 +185,10 @@ func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
 				return
 			case key := <-dataCh:
 				h.optlyCache.UpdateConfigs(key)
+				logger.Debug().Msg("datafile synced successfully")
 			}
 		}
 	}()
+	logger.Debug().Msg("datafile syncer is started")
 	return nil
 }

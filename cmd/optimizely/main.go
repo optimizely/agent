@@ -33,6 +33,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
@@ -267,6 +268,8 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background()) // Create default service context
 	defer cancel()
+	ctx = context.WithValue(ctx, handlers.LoggerKey, &log.Logger)
+
 	sg := server.NewGroup(ctx, conf.Server) // Create a new server group to manage the individual http listeners
 	optlyCache := optimizely.NewCache(ctx, *conf, sdkMetricsRegistry)
 	optlyCache.Init(conf.SDKKeys)
