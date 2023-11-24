@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/syncer/pubsub"
 )
 
 func TestNewPubSub(t *testing.T) {
@@ -51,10 +52,10 @@ func TestNewPubSub(t *testing.T) {
 					},
 				},
 			},
-			want: &pubsubRedis{
-				host:     "localhost:6379",
-				password: "",
-				database: 0,
+			want: &pubsub.Redis{
+				Host:     "localhost:6379",
+				Password: "",
+				Database: 0,
 			},
 			wantErr: false,
 		},

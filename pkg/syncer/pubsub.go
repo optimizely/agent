@@ -21,8 +21,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/syncer/pubsub"
 )
 
 const (
@@ -76,62 +76,11 @@ func newPubSub(conf config.SyncConfig) (PubSub, error) {
 			return nil, errors.New("pubsub redis database not valid, database must be int")
 		}
 
-		return &pubsubRedis{
-			host:     host,
-			password: password,
-			database: database,
+		return &pubsub.Redis{
+			Host:     host,
+			Password: password,
+			Database: database,
 		}, nil
 	}
 	return nil, errors.New("pubsub type not supported")
-}
-
-type pubsubRedis struct {
-	host     string
-	password string
-	database int
-}
-
-func (r *pubsubRedis) Publish(ctx context.Context, channel string, message interface{}) error {
-	client := redis.NewClient(&redis.Options{
-		Addr:     r.host,
-		Password: r.password,
-		DB:       r.database,
-	})
-	defer client.Close()
-
-	return client.Publish(ctx, channel, message).Err()
-}
-
-func (r *pubsubRedis) Subscribe(ctx context.Context, channel string) (chan string, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     r.host,
-		Password: r.password,
-		DB:       r.database,
-	})
-
-	// Subscribe to a Redis channel
-	pubsub := client.Subscribe(ctx, channel)
-
-	ch := make(chan string)
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				pubsub.Close()
-				client.Close()
-				close(ch)
-				return
-			default:
-				msg, err := pubsub.ReceiveMessage(ctx)
-				if err != nil {
-					continue
-				}
-
-				ch <- msg.Payload
-
-			}
-		}
-	}()
-	return ch, nil
 }

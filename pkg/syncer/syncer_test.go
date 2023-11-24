@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/syncer/pubsub"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -79,10 +80,10 @@ func TestNewSyncedNotificationCenter(t *testing.T) {
 				ctx:    context.Background(),
 				logger: &log.Logger,
 				sdkKey: "123",
-				pubsub: &pubsubRedis{
-					host:     "localhost:6379",
-					password: "",
-					database: 0,
+				pubsub: &pubsub.Redis{
+					Host:     "localhost:6379",
+					Password: "",
+					Database: 0,
 				},
 			},
 			wantErr: false,
@@ -160,10 +161,10 @@ func TestNewDatafileSyncer(t *testing.T) {
 				},
 			},
 			want: &DatafileSyncer{
-				pubsub: &pubsubRedis{
-					host:     "localhost:6379",
-					password: "",
-					database: 0,
+				pubsub: &pubsub.Redis{
+					Host:     "localhost:6379",
+					Password: "",
+					Database: 0,
 				},
 			},
 			wantErr: false,
