@@ -126,6 +126,103 @@ func TestNewPubSub(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "Test with invalid redis config without host",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"password": "",
+							"database": 0,
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Test with invalid redis config without password",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"database": 0,
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Test with invalid redis config without db",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": "",
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Test with invalid redis config with invalid password",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": 1234,
+							"database": 0,
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Test with invalid redis config with invalid database",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": "",
+							"database": "invalid-db",
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

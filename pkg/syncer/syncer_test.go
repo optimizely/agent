@@ -23,6 +23,8 @@ import (
 	"testing"
 
 	"github.com/optimizely/agent/config"
+	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -277,6 +279,106 @@ func TestDatafileSyncer_Subscribe(t *testing.T) {
 				t.Errorf("DatafileSyncer.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			assert.True(t, tt.fields.pubsub.(*testPubSub).subscribeCalled)
+		})
+	}
+}
+
+func TestSyncedNotificationCenter_Send(t *testing.T) {
+	type fields struct {
+		ctx    context.Context
+		logger *zerolog.Logger
+		sdkKey string
+		pubsub PubSub
+	}
+	type args struct {
+		t notification.Type
+		n interface{}
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test notification send",
+			fields: fields{
+				ctx:    context.Background(),
+				logger: &log.Logger,
+				sdkKey: "123",
+				pubsub: &testPubSub{},
+			},
+			args: args{
+				t: notification.Decision,
+				n: "test",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &SyncedNotificationCenter{
+				ctx:    tt.fields.ctx,
+				logger: tt.fields.logger,
+				sdkKey: tt.fields.sdkKey,
+				pubsub: tt.fields.pubsub,
+			}
+			if err := r.Send(tt.args.t, tt.args.n); (err != nil) != tt.wantErr {
+				t.Errorf("SyncedNotificationCenter.Send() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			assert.True(t, tt.fields.pubsub.(*testPubSub).publishCalled)
+		})
+	}
+}
+
+func TestSyncedNotificationCenter_Subscribe(t *testing.T) {
+	type fields struct {
+		ctx    context.Context
+		logger *zerolog.Logger
+		sdkKey string
+		pubsub PubSub
+	}
+	type args struct {
+		ctx     context.Context
+		channel string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test notification send",
+			fields: fields{
+				ctx:    context.Background(),
+				logger: &log.Logger,
+				sdkKey: "123",
+				pubsub: &testPubSub{},
+			},
+			args: args{
+				ctx:     context.Background(),
+				channel: "test-ch",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &SyncedNotificationCenter{
+				ctx:    tt.fields.ctx,
+				logger: tt.fields.logger,
+				sdkKey: tt.fields.sdkKey,
+				pubsub: tt.fields.pubsub,
+			}
+			_, err := r.Subscribe(tt.args.ctx, tt.args.channel)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SyncedNotificationCenter.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
 			assert.True(t, tt.fields.pubsub.(*testPubSub).subscribeCalled)
 		})
 	}
