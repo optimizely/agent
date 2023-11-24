@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	ncCache   = make(map[string]*SyncedNotificationCenter)
+	ncCache   = make(map[string]NotificationSyncer)
 	mutexLock = &sync.Mutex{}
 )
 
