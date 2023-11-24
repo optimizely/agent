@@ -39,27 +39,41 @@ type PubSub interface {
 
 func NewPubSub(conf config.SyncConfig) (PubSub, error) {
 	if conf.Notification.Default == PubSubRedis {
-		host, ok := conf.Pubsub[PubSubRedis].(map[string]interface{})["host"].(string)
-		if !ok {
-			return nil, errors.New("host is not valid")
-		}
-		password, ok := conf.Pubsub[PubSubRedis].(map[string]interface{})["password"].(string)
-		if !ok {
-			return nil, errors.New("password is not valid")
-		}
-		database, ok := conf.Pubsub[PubSubRedis].(map[string]interface{})["database"].(int)
-		if !ok {
-			return nil, errors.New("database is not valid")
+		pubsubConf, found := conf.Pubsub[PubSubRedis]
+		if !found {
+			return nil, errors.New("pubsub redis config not found")
 		}
 
-		client := redis.NewClient(&redis.Options{
-			Addr:     host,
-			Password: password,
-			DB:       database,
-		})
-		defer client.Close()
-		if err := client.Ping(context.Background()).Err(); err != nil {
-			return nil, err
+		redisConf, ok := pubsubConf.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("pubsub redis config not valid")
+		}
+
+		hostVal, found := redisConf["host"]
+		if !found {
+			return nil, errors.New("pubsub redis host not found")
+		}
+		host, ok := hostVal.(string)
+		if !ok {
+			return nil, errors.New("pubsub redis host not valid, host must be string")
+		}
+
+		passwordVal, found := redisConf["password"]
+		if !found {
+			return nil, errors.New("pubsub redis password not found")
+		}
+		password, ok := passwordVal.(string)
+		if !ok {
+			return nil, errors.New("pubsub redis password not valid, password must be string")
+		}
+
+		databaseVal, found := redisConf["database"]
+		if !found {
+			return nil, errors.New("pubsub redis database not found")
+		}
+		database, ok := databaseVal.(int)
+		if !ok {
+			return nil, errors.New("pubsub redis database not valid, database must be int")
 		}
 
 		return &pubsubRedis{
