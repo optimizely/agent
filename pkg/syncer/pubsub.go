@@ -37,7 +37,7 @@ type PubSub interface {
 	Subscribe(ctx context.Context, channel string) (chan string, error)
 }
 
-func NewPubSub(conf config.SyncConfig) (PubSub, error) {
+func newPubSub(conf config.SyncConfig) (PubSub, error) {
 	if conf.Notification.Default == PubSubRedis {
 		pubsubConf, found := conf.Pubsub[PubSubRedis]
 		if !found {

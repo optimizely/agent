@@ -26,6 +26,11 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+)
+
+const (
+	LoggerCtxKey = "syncer-logger"
 )
 
 var (
@@ -57,7 +62,7 @@ type Event struct {
 	Message interface{}       `json:"message"`
 }
 
-func NewSyncedNotificationCenter(ctx context.Context, logger *zerolog.Logger, sdkKey string, conf config.SyncConfig) (NotificationSyncer, error) {
+func NewSyncedNotificationCenter(ctx context.Context, sdkKey string, conf config.SyncConfig) (NotificationSyncer, error) {
 	mutexLock.Lock()
 	defer mutexLock.Unlock()
 
@@ -65,7 +70,12 @@ func NewSyncedNotificationCenter(ctx context.Context, logger *zerolog.Logger, sd
 		return nc, nil
 	}
 
-	pubsub, err := NewPubSub(conf)
+	logger, ok := ctx.Value(LoggerCtxKey).(*zerolog.Logger)
+	if !ok {
+		logger = &log.Logger
+	}
+
+	pubsub, err := newPubSub(conf)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +132,7 @@ type DatafileSyncer struct {
 }
 
 func NewDatafileSyncer(conf config.SyncConfig) (*DatafileSyncer, error) {
-	pubsub, err := NewPubSub(conf)
+	pubsub, err := newPubSub(conf)
 	if err != nil {
 		return nil, err
 	}

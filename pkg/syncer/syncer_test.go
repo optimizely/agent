@@ -18,25 +18,31 @@
 package syncer
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/optimizely/agent/config"
+	"github.com/rs/zerolog/log"
 )
 
-func TestNewPubSub(t *testing.T) {
+func TestNewSyncedNotificationCenter(t *testing.T) {
 	type args struct {
-		conf config.SyncConfig
+		ctx    context.Context
+		sdkKey string
+		conf   config.SyncConfig
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    PubSub
+		want    NotificationSyncer
 		wantErr bool
 	}{
 		{
 			name: "Test with valid config",
 			args: args{
+				ctx:    context.Background(),
+				sdkKey: "123",
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
@@ -51,70 +57,27 @@ func TestNewPubSub(t *testing.T) {
 					},
 				},
 			},
-			want: &pubsubRedis{
-				host:     "localhost:6379",
-				password: "",
-				database: 0,
+			want: &SyncedNotificationCenter{
+				ctx:    context.Background(),
+				logger: &log.Logger,
+				sdkKey: "123",
+				pubsub: &pubsubRedis{
+					host:     "localhost:6379",
+					password: "",
+					database: 0,
+				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "Test with invalid config",
+			name: "Test with invalid sync config",
 			args: args{
+				ctx:    context.Background(),
+				sdkKey: "1234",
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
-						"nopt-redis": map[string]interface{}{},
-					},
-					Notification: config.FeatureSyncConfig{
-						Default: "redis",
-						Enable:  true,
-					},
-				},
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "Test with nil config",
-			args: args{
-				conf: config.SyncConfig{
-					Pubsub: map[string]interface{}{
-						"redis": nil,
-					},
-					Notification: config.FeatureSyncConfig{
-						Default: "redis",
-						Enable:  true,
-					},
-				},
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "Test with empty config",
-			args: args{
-				conf: config.SyncConfig{
-					Pubsub: map[string]interface{}{
-						"redis": nil,
-					},
-					Notification: config.FeatureSyncConfig{
-						Default: "redis",
-						Enable:  true,
-					},
-				},
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "Test with invalid redis config",
-			args: args{
-				conf: config.SyncConfig{
-					Pubsub: map[string]interface{}{
-						"redis": map[string]interface{}{
-							"host":     123,
-							"password": "",
-							"database": "invalid-db",
+						"not-redis": map[string]interface{}{
+							"host": "invalid host",
 						},
 					},
 					Notification: config.FeatureSyncConfig{
@@ -126,16 +89,26 @@ func TestNewPubSub(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "Test with empty sync config",
+			args: args{
+				ctx:    context.Background(),
+				sdkKey: "1234",
+				conf:   config.SyncConfig{},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newPubSub(tt.args.conf)
+			got, err := NewSyncedNotificationCenter(tt.args.ctx, tt.args.sdkKey, tt.args.conf)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewPubSub() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewSyncedNotificationCenter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewPubSub() = %v, want %v", got, tt.want)
+				t.Errorf("NewSyncedNotificationCenter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
