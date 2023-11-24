@@ -362,19 +362,19 @@ func TestDefaultNotificationReceiver(t *testing.T) {
 }
 
 func TestRedisNotificationReceiver(t *testing.T) {
-	// conf := config.SyncConfig{
-	// 	Pubsub: map[string]interface{}{
-	// 		"redis": map[string]interface{}{
-	// 			"host":     "localhost:6379",
-	// 			"password": "",
-	// 			"database": 0,
-	// 		},
-	// 	},
-	// 	Notification: config.FeatureSyncConfig{
-	// 		Enable:  true,
-	// 		Default: "redis",
-	// 	},
-	// }
+	conf := config.SyncConfig{
+		Pubsub: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+		},
+		Notification: config.FeatureSyncConfig{
+			Enable:  true,
+			Default: "redis",
+		},
+	}
 	type args struct {
 		conf config.SyncConfig
 		ctx  context.Context
@@ -384,16 +384,16 @@ func TestRedisNotificationReceiver(t *testing.T) {
 		args args
 		want NotificationReceiverFunc
 	}{
-		// {
-		// 	name: "Test happy path",
-		// 	args: args{
-		// 		conf: conf,
-		// 		ctx:  context.WithValue(context.Background(), SDKKey, "random-sdk-key-1"),
-		// 	},
-		// 	want: func(ctx context.Context) (<-chan syncer.Event, error) {
-		// 		return make(<-chan syncer.Event), nil
-		// 	},
-		// },
+		{
+			name: "Test happy path",
+			args: args{
+				conf: conf,
+				ctx:  context.WithValue(context.Background(), SDKKey, "random-sdk-key-1"),
+			},
+			want: func(ctx context.Context) (<-chan syncer.Event, error) {
+				return make(<-chan syncer.Event), nil
+			},
+		},
 		{
 			name: "Test empty config",
 			args: args{
