@@ -255,10 +255,10 @@ synchronization:
     ## if notification synchronization is enabled, then the active notification event-stream API
     ## will get the notifications from available replicas
     notification:
-        enable: true
+        enable: false
         default: "redis"
     ## if datafile synchronization is enabled, then for each webhook API call
     ## the datafile will be sent to all available replicas to achieve better eventual consistency
     datafile:
-        enable: true
+        enable: false
         default: "redis"
