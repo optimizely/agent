@@ -85,7 +85,7 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.AgentConfig, m
 	if conf.API.EnableNotifications {
 		nStreamHandler = handlers.NotificationEventStreamHandler(handlers.DefaultNotificationReceiver)
 		if conf.Synchronization.Notification.Enable {
-			nStreamHandler = handlers.NotificationEventStreamHandler(handlers.RedisNotificationReceiver(conf.Synchronization))
+			nStreamHandler = handlers.NotificationEventStreamHandler(handlers.SyncedNotificationReceiver(conf.Synchronization))
 		}
 	}
 

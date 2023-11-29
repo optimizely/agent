@@ -154,7 +154,7 @@ func TestNewDatafileSyncer(t *testing.T) {
 							"database": 0,
 						},
 					},
-					Notification: config.FeatureSyncConfig{
+					Datafile: config.FeatureSyncConfig{
 						Default: "redis",
 						Enable:  true,
 					},
@@ -178,7 +178,7 @@ func TestNewDatafileSyncer(t *testing.T) {
 							"host": "invalid host",
 						},
 					},
-					Notification: config.FeatureSyncConfig{
+					Datafile: config.FeatureSyncConfig{
 						Default: "redis",
 						Enable:  true,
 					},

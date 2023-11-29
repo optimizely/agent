@@ -28,6 +28,7 @@ import (
 func TestNewPubSub(t *testing.T) {
 	type args struct {
 		conf config.SyncConfig
+		flag SycnFeatureFlag
 	}
 	tests := []struct {
 		name    string
@@ -51,6 +52,32 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
+			},
+			want: &pubsub.Redis{
+				Host:     "localhost:6379",
+				Password: "",
+				Database: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test with valid config for datafile",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
+						},
+					},
+					Datafile: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+				flag: SycnFeatureFlagDatafile,
 			},
 			want: &pubsub.Redis{
 				Host:     "localhost:6379",
@@ -71,6 +98,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -87,6 +115,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -103,6 +132,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -123,6 +153,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -142,6 +173,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -161,6 +193,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -180,6 +213,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -200,6 +234,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -220,6 +255,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
+				flag: SyncFeatureFlagNotificaiton,
 			},
 			want:    nil,
 			wantErr: true,
@@ -227,7 +263,7 @@ func TestNewPubSub(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newPubSub(tt.args.conf)
+			got, err := newPubSub(tt.args.conf, tt.args.flag)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewPubSub() error = %v, wantErr %v", err, tt.wantErr)
 				return

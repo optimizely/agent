@@ -148,15 +148,15 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 
 	// Iterate through all SDK keys and update config
 	for _, sdkKey := range webhookConfig.SDKKeys {
-		h.optlyCache.UpdateConfigs(sdkKey)
-
 		if h.syncEnabled {
 			if err := h.configSyncer.Sync(r.Context(), syncer.GetDatafileSyncChannel(), sdkKey); err != nil {
 				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
 				log.Error().Msg(errMsg)
+				h.optlyCache.UpdateConfigs(sdkKey)
 			}
+		} else {
+			h.optlyCache.UpdateConfigs(sdkKey)
 		}
-
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -185,7 +185,7 @@ func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
 				return
 			case key := <-dataCh:
 				h.optlyCache.UpdateConfigs(key)
-				logger.Debug().Msg("datafile synced successfully")
+				logger.Info().Msgf("datafile synced successfully for sdkKey: %s", key)
 			}
 		}
 	}()

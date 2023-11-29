@@ -211,19 +211,19 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Event, erro
 	return messageChan, nil
 }
 
-func RedisNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc {
+func SyncedNotificationReceiver(conf config.SyncConfig) NotificationReceiverFunc {
 	return func(ctx context.Context) (<-chan syncer.Event, error) {
 		sdkKey, ok := ctx.Value(SDKKey).(string)
 		if !ok || sdkKey == "" {
 			return nil, errors.New("sdk key not found")
 		}
 
-		redisSyncer, err := syncer.NewSyncedNotificationCenter(ctx, sdkKey, conf)
+		ncSyncer, err := syncer.NewSyncedNotificationCenter(ctx, sdkKey, conf)
 		if err != nil {
 			return nil, err
 		}
 
-		eventCh, err := redisSyncer.Subscribe(ctx, syncer.GetChannelForSDKKey(syncer.PubSubDefaultChan, sdkKey))
+		eventCh, err := ncSyncer.Subscribe(ctx, syncer.GetChannelForSDKKey(syncer.PubSubDefaultChan, sdkKey))
 		if err != nil {
 			return nil, err
 		}

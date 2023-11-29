@@ -32,55 +32,76 @@ const (
 	PubSubRedis = "redis"
 )
 
+type SycnFeatureFlag string
+
+const (
+	SyncFeatureFlagNotificaiton SycnFeatureFlag = "sync-feature-flag-notification"
+	SycnFeatureFlagDatafile     SycnFeatureFlag = "sync-feature-flag-datafile"
+)
+
 type PubSub interface {
 	Publish(ctx context.Context, channel string, message interface{}) error
 	Subscribe(ctx context.Context, channel string) (chan string, error)
 }
 
-func newPubSub(conf config.SyncConfig) (PubSub, error) {
-	if conf.Notification.Default == PubSubRedis {
-		pubsubConf, found := conf.Pubsub[PubSubRedis]
-		if !found {
-			return nil, errors.New("pubsub redis config not found")
+func newPubSub(conf config.SyncConfig, featureFlag SycnFeatureFlag) (PubSub, error) {
+	if featureFlag == SyncFeatureFlagNotificaiton {
+		if conf.Notification.Default == PubSubRedis {
+			return getPubSubRedis(conf)
+		} else {
+			return nil, errors.New("pubsub type not supported")
 		}
-
-		redisConf, ok := pubsubConf.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("pubsub redis config not valid")
+	} else if featureFlag == SycnFeatureFlagDatafile {
+		if conf.Datafile.Default == PubSubRedis {
+			return getPubSubRedis(conf)
+		} else {
+			return nil, errors.New("pubsub type not supported")
 		}
-
-		hostVal, found := redisConf["host"]
-		if !found {
-			return nil, errors.New("pubsub redis host not found")
-		}
-		host, ok := hostVal.(string)
-		if !ok {
-			return nil, errors.New("pubsub redis host not valid, host must be string")
-		}
-
-		passwordVal, found := redisConf["password"]
-		if !found {
-			return nil, errors.New("pubsub redis password not found")
-		}
-		password, ok := passwordVal.(string)
-		if !ok {
-			return nil, errors.New("pubsub redis password not valid, password must be string")
-		}
-
-		databaseVal, found := redisConf["database"]
-		if !found {
-			return nil, errors.New("pubsub redis database not found")
-		}
-		database, ok := databaseVal.(int)
-		if !ok {
-			return nil, errors.New("pubsub redis database not valid, database must be int")
-		}
-
-		return &pubsub.Redis{
-			Host:     host,
-			Password: password,
-			Database: database,
-		}, nil
 	}
-	return nil, errors.New("pubsub type not supported")
+	return nil, errors.New("provided feature flag not supported")
+}
+
+func getPubSubRedis(conf config.SyncConfig) (PubSub, error) {
+	pubsubConf, found := conf.Pubsub[PubSubRedis]
+	if !found {
+		return nil, errors.New("pubsub redis config not found")
+	}
+
+	redisConf, ok := pubsubConf.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("pubsub redis config not valid")
+	}
+
+	hostVal, found := redisConf["host"]
+	if !found {
+		return nil, errors.New("pubsub redis host not found")
+	}
+	host, ok := hostVal.(string)
+	if !ok {
+		return nil, errors.New("pubsub redis host not valid, host must be string")
+	}
+
+	passwordVal, found := redisConf["password"]
+	if !found {
+		return nil, errors.New("pubsub redis password not found")
+	}
+	password, ok := passwordVal.(string)
+	if !ok {
+		return nil, errors.New("pubsub redis password not valid, password must be string")
+	}
+
+	databaseVal, found := redisConf["database"]
+	if !found {
+		return nil, errors.New("pubsub redis database not found")
+	}
+	database, ok := databaseVal.(int)
+	if !ok {
+		return nil, errors.New("pubsub redis database not valid, database must be int")
+	}
+
+	return &pubsub.Redis{
+		Host:     host,
+		Password: password,
+		Database: database,
+	}, nil
 }

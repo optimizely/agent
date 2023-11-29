@@ -233,7 +233,6 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 }
 
 func TestHandleWebhookWithDatafileSyncer(t *testing.T) {
-	testCache := NewCache()
 	var testWebhookConfigs = map[int64]config.WebhookProject{
 		42: {
 			SDKKeys: []string{"myDatafile"},
@@ -242,7 +241,7 @@ func TestHandleWebhookWithDatafileSyncer(t *testing.T) {
 	}
 	syncer := NewTestDFSyncer()
 
-	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs, syncer)
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs, syncer)
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -267,7 +266,6 @@ func TestHandleWebhookWithDatafileSyncer(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-	assert.Equal(t, true, testCache.updateConfigsCalled)
 	assert.Equal(t, true, syncer.syncCalled)
 }
 
