@@ -244,7 +244,7 @@ runtime:
     ## (For n>1 the details of sampling may change.)
     mutexProfileFraction: 0
 
-## synchronization should be enabled when multiple replicas of agent is deployed
+## synchronization should be enabled when features for multiple nodes like notification streaming are deployed
 synchronization:
     pubsub:
         redis:
