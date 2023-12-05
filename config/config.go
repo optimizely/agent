@@ -135,7 +135,7 @@ func NewDefaultConfig() *AgentConfig {
 					"channel":  "optimizely-notifications",
 				},
 			},
-			Notification: NotificationConfig{
+			Notification: FeatureSyncConfig{
 				Enable:  false,
 				Default: "redis",
 			},
@@ -167,11 +167,12 @@ type AgentConfig struct {
 // SyncConfig contains Synchronization configuration for the multiple Agent nodes
 type SyncConfig struct {
 	Pubsub       map[string]interface{} `json:"pubsub"`
-	Notification NotificationConfig     `json:"notification"`
+	Notification FeatureSyncConfig      `json:"notification"`
+	Datafile     FeatureSyncConfig      `json:"datafile"`
 }
 
-// NotificationConfig contains Notification Synchronization configuration for the multiple Agent nodes
-type NotificationConfig struct {
+// FeatureSyncConfig contains Notification Synchronization configuration for the multiple Agent nodes
+type FeatureSyncConfig struct {
 	Enable  bool   `json:"enable"`
 	Default string `json:"default"`
 }

@@ -18,11 +18,13 @@
 package handlers
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -30,9 +32,11 @@ import (
 	"github.com/optimizely/agent/config"
 
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/syncer"
 )
 
 const signatureHeader = "X-Hub-Signature"
@@ -56,15 +60,19 @@ type OptlyMessage struct {
 
 // OptlyWebhookHandler handles incoming messages from Optimizely
 type OptlyWebhookHandler struct {
-	optlyCache optimizely.Cache
-	ProjectMap map[int64]config.WebhookProject
+	optlyCache   optimizely.Cache
+	ProjectMap   map[int64]config.WebhookProject
+	configSyncer syncer.Syncer
+	syncEnabled  bool
 }
 
 // NewWebhookHandler returns a new instance of OptlyWebhookHandler
-func NewWebhookHandler(optlyCache optimizely.Cache, projectMap map[int64]config.WebhookProject) *OptlyWebhookHandler {
+func NewWebhookHandler(optlyCache optimizely.Cache, projectMap map[int64]config.WebhookProject, configSyncer syncer.Syncer) *OptlyWebhookHandler {
 	return &OptlyWebhookHandler{
-		optlyCache: optlyCache,
-		ProjectMap: projectMap,
+		optlyCache:   optlyCache,
+		ProjectMap:   projectMap,
+		syncEnabled:  configSyncer != nil,
+		configSyncer: configSyncer,
 	}
 }
 
@@ -140,7 +148,47 @@ func (h *OptlyWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Reque
 
 	// Iterate through all SDK keys and update config
 	for _, sdkKey := range webhookConfig.SDKKeys {
-		h.optlyCache.UpdateConfigs(sdkKey)
+		if h.syncEnabled {
+			if err := h.configSyncer.Sync(r.Context(), syncer.GetDatafileSyncChannel(), sdkKey); err != nil {
+				errMsg := fmt.Sprintf("datafile synced failed. reason: %s", err.Error())
+				log.Error().Msg(errMsg)
+				h.optlyCache.UpdateConfigs(sdkKey)
+			}
+		} else {
+			h.optlyCache.UpdateConfigs(sdkKey)
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *OptlyWebhookHandler) StartSyncer(ctx context.Context) error {
+	logger, ok := ctx.Value(LoggerKey).(*zerolog.Logger)
+	if !ok {
+		logger = &log.Logger
+	}
+
+	if !h.syncEnabled {
+		logger.Debug().Msg("datafile syncer is not enabled")
+		return nil
+	}
+
+	dataCh, err := h.configSyncer.Subscribe(ctx, syncer.GetDatafileSyncChannel())
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Debug().Msg("context canceled, syncer is stopped")
+				return
+			case key := <-dataCh:
+				h.optlyCache.UpdateConfigs(key)
+				logger.Info().Msgf("datafile synced successfully for sdkKey: %s", key)
+			}
+		}
+	}()
+	logger.Debug().Msg("datafile syncer is started")
+	return nil
 }

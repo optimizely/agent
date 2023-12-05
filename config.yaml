@@ -244,16 +244,20 @@ runtime:
     ## (For n>1 the details of sampling may change.)
     mutexProfileFraction: 0
 
-## synchronization should be enabled when multiple replicas of agent is deployed
-## if notification synchronization is enabled, then the active notification event-stream API
-## will get the notifications from multiple replicas
+## synchronization should be enabled when features for multiple nodes like notification streaming are deployed
 synchronization:
     pubsub:
         redis:
             host: "redis.demo.svc:6379"
             password: ""
             database: 0
-            channel: "optimizely-sync"
+    ## if notification synchronization is enabled, then the active notification event-stream API
+    ## will get the notifications from available replicas
     notification:
+        enable: false
+        default: "redis"
+    ## if datafile synchronization is enabled, then for each webhook API call
+    ## the datafile will be sent to all available replicas to achieve better eventual consistency
+    datafile:
         enable: false
         default: "redis"

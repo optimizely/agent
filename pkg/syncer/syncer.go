@@ -20,27 +20,41 @@ package syncer
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const (
-	// PubSubDefaultChan will be used as default pubsub channel name
-	PubSubDefaultChan = "optimizely-sync"
-	// PubSubRedis is the name of pubsub type of Redis
-	PubSubRedis = "redis"
+	LoggerCtxKey = "syncer-logger"
 )
 
 var (
-	ncCache   = make(map[string]*RedisSyncer)
+	ncCache   = make(map[string]NotificationSyncer)
 	mutexLock = &sync.Mutex{}
 )
+
+type NotificationSyncer interface {
+	notification.Center
+	Subscribe(ctx context.Context, channel string) (chan string, error)
+}
+
+type Syncer interface {
+	Sync(ctx context.Context, channel string, sdkKey string) error
+	Subscribe(ctx context.Context, channel string) (chan string, error)
+}
+
+// RedisSyncer defines Redis pubsub configuration
+type SyncedNotificationCenter struct {
+	ctx    context.Context
+	logger *zerolog.Logger
+	sdkKey string
+	pubsub PubSub
+}
 
 // Event holds the notification event with it's type
 type Event struct {
@@ -48,92 +62,46 @@ type Event struct {
 	Message interface{}       `json:"message"`
 }
 
-// RedisSyncer defines Redis pubsub configuration
-type RedisSyncer struct {
-	ctx      context.Context
-	Host     string
-	Password string
-	Database int
-	Channel  string
-	logger   *zerolog.Logger
-	sdkKey   string
-}
-
-// NewRedisSyncer returns an instance of RedisNotificationSyncer
-func NewRedisSyncer(logger *zerolog.Logger, conf config.SyncConfig, sdkKey string) (*RedisSyncer, error) {
+func NewSyncedNotificationCenter(ctx context.Context, sdkKey string, conf config.SyncConfig) (NotificationSyncer, error) {
 	mutexLock.Lock()
 	defer mutexLock.Unlock()
 
-	if nc, found := ncCache[sdkKey]; found {
+	if nc, ok := ncCache[sdkKey]; ok {
 		return nc, nil
 	}
 
-	if !conf.Notification.Enable {
-		return nil, errors.New("notification syncer is not enabled")
-	}
-	if conf.Notification.Default != PubSubRedis {
-		return nil, errors.New("redis syncer is not set as default")
-	}
-	if conf.Pubsub == nil {
-		return nil, errors.New("redis config is not given")
+	logger, ok := ctx.Value(LoggerCtxKey).(*zerolog.Logger)
+	if !ok {
+		logger = &log.Logger
 	}
 
-	redisConfig, found := conf.Pubsub[PubSubRedis].(map[string]interface{})
-	if !found {
-		return nil, errors.New("redis pubsub config not found")
+	pubsub, err := newPubSub(conf, SyncFeatureFlagNotificaiton)
+	if err != nil {
+		return nil, err
 	}
 
-	host, ok := redisConfig["host"].(string)
-	if !ok {
-		return nil, errors.New("redis host not provided in correct format")
-	}
-	password, ok := redisConfig["password"].(string)
-	if !ok {
-		return nil, errors.New("redis password not provider in correct format")
-	}
-	database, ok := redisConfig["database"].(int)
-	if !ok {
-		return nil, errors.New("redis database not provided in correct format")
-	}
-	channel, ok := redisConfig["channel"].(string)
-	if !ok {
-		channel = PubSubDefaultChan
-	}
-
-	if logger == nil {
-		logger = &zerolog.Logger{}
-	}
-
-	nc := &RedisSyncer{
-		ctx:      context.Background(),
-		Host:     host,
-		Password: password,
-		Database: database,
-		Channel:  channel,
-		logger:   logger,
-		sdkKey:   sdkKey,
+	nc := &SyncedNotificationCenter{
+		ctx:    ctx,
+		logger: logger,
+		sdkKey: sdkKey,
+		pubsub: pubsub,
 	}
 	ncCache[sdkKey] = nc
 	return nc, nil
 }
 
-func (r *RedisSyncer) WithContext(ctx context.Context) *RedisSyncer {
-	r.ctx = ctx
-	return r
-}
-
 // AddHandler is empty but needed to implement notification.Center interface
-func (r *RedisSyncer) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
+func (r *SyncedNotificationCenter) AddHandler(_ notification.Type, _ func(interface{})) (int, error) {
 	return 0, nil
 }
 
 // RemoveHandler is empty but needed to implement notification.Center interface
-func (r *RedisSyncer) RemoveHandler(_ int, t notification.Type) error {
+func (r *SyncedNotificationCenter) RemoveHandler(_ int, t notification.Type) error {
 	return nil
 }
 
 // Send will send the notification to the specified channel in the Redis pubsub
-func (r *RedisSyncer) Send(t notification.Type, n interface{}) error {
+func (r *SyncedNotificationCenter) Send(t notification.Type, n interface{}) error {
 	event := Event{
 		Type:    t,
 		Message: n,
@@ -144,21 +112,40 @@ func (r *RedisSyncer) Send(t notification.Type, n interface{}) error {
 		return err
 	}
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     r.Host,
-		Password: r.Password,
-		DB:       r.Database,
-	})
-	defer client.Close()
-	channel := GetChannelForSDKKey(r.Channel, r.sdkKey)
+	return r.pubsub.Publish(r.ctx, GetChannelForSDKKey(PubSubDefaultChan, r.sdkKey), jsonEvent)
+}
 
-	if err := client.Publish(r.ctx, channel, jsonEvent).Err(); err != nil {
-		r.logger.Err(err).Msg("failed to publish json event to pub/sub")
-		return err
-	}
-	return nil
+func (r *SyncedNotificationCenter) Subscribe(ctx context.Context, channel string) (chan string, error) {
+	return r.pubsub.Subscribe(ctx, channel)
+}
+
+func GetDatafileSyncChannel() string {
+	return fmt.Sprintf("%s-datafile", PubSubDefaultChan)
 }
 
 func GetChannelForSDKKey(channel, key string) string {
 	return fmt.Sprintf("%s-%s", channel, key)
+}
+
+type DatafileSyncer struct {
+	pubsub PubSub
+}
+
+func NewDatafileSyncer(conf config.SyncConfig) (*DatafileSyncer, error) {
+	pubsub, err := newPubSub(conf, SycnFeatureFlagDatafile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DatafileSyncer{
+		pubsub: pubsub,
+	}, nil
+}
+
+func (r *DatafileSyncer) Sync(ctx context.Context, channel string, sdkKey string) error {
+	return r.pubsub.Publish(ctx, channel, sdkKey)
+}
+
+func (r *DatafileSyncer) Subscribe(ctx context.Context, channel string) (chan string, error) {
+	return r.pubsub.Subscribe(ctx, channel)
 }

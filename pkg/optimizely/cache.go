@@ -41,7 +41,6 @@ import (
 
 	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	cmap "github.com/orcaman/concurrent-map"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -252,11 +251,12 @@ func defaultLoader(
 		}
 
 		if agentConf.Synchronization.Notification.Enable {
-			redisSyncer, err := syncer.NewRedisSyncer(&zerolog.Logger{}, agentConf.Synchronization, sdkKey)
+			syncedNC, err := syncer.NewSyncedNotificationCenter(context.Background(), sdkKey, agentConf.Synchronization)
 			if err != nil {
-				return nil, err
+				log.Error().Err(err).Msgf("Failed to create SyncedNotificationCenter, reason: %s", err.Error())
+			} else {
+				clientOptions = append(clientOptions, client.WithNotificationCenter(syncedNC))
 			}
-			clientOptions = append(clientOptions, client.WithNotificationCenter(redisSyncer))
 		}
 
 		var clientUserProfileService decision.UserProfileService

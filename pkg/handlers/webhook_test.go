@@ -19,6 +19,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -44,6 +45,28 @@ func NewCache() *TestCache {
 		testClient:          testClient,
 		updateConfigsCalled: false,
 	}
+}
+
+type TestDFSyncer struct {
+	syncCalled      bool
+	subscribeCalled bool
+}
+
+func NewTestDFSyncer() *TestDFSyncer {
+	return &TestDFSyncer{
+		syncCalled:      false,
+		subscribeCalled: false,
+	}
+}
+
+func (t *TestDFSyncer) Sync(_ context.Context, _ string, _ string) error {
+	t.syncCalled = true
+	return nil
+}
+
+func (t *TestDFSyncer) Subscribe(_ context.Context, _ string) (chan string, error) {
+	t.subscribeCalled = true
+	return make(chan string), nil
 }
 
 // GetClient returns a default OptlyClient for testing
@@ -111,7 +134,7 @@ func TestHandleWebhookValidMessageInvalidSignature(t *testing.T) {
 			Secret:  "I am secret",
 		},
 	}
-	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs)
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs, nil)
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -146,7 +169,7 @@ func TestHandleWebhookSkippedCheckInvalidSignature(t *testing.T) {
 			SkipSignatureCheck: true,
 		},
 	}
-	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
+	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs, nil)
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -181,7 +204,7 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 			Secret:  "I am secret",
 		},
 	}
-	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs)
+	optlyHandler := NewWebhookHandler(testCache, testWebhookConfigs, nil)
 	webhookMsg := OptlyMessage{
 		ProjectID: 42,
 		Timestamp: 42424242,
@@ -207,4 +230,56 @@ func TestHandleWebhookValidMessage(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 	assert.Equal(t, true, testCache.updateConfigsCalled)
+}
+
+func TestHandleWebhookWithDatafileSyncer(t *testing.T) {
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
+		},
+	}
+	syncer := NewTestDFSyncer()
+
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs, syncer)
+	webhookMsg := OptlyMessage{
+		ProjectID: 42,
+		Timestamp: 42424242,
+		Event:     "project.datafile_updated",
+		Data: DatafileUpdateData{
+			Revision:    101,
+			OriginURL:   "origin.optimizely.com/datafiles/myDatafile",
+			CDNUrl:      "cdn.optimizely.com/datafiles/myDatafile",
+			Environment: "Production",
+		},
+	}
+
+	validWebhookMessage, _ := json.Marshal(webhookMsg)
+
+	req := httptest.NewRequest("POST", "/webhooks/optimizely", bytes.NewBuffer(validWebhookMessage))
+
+	// This sha1 has been computed from the Optimizely application
+	req.Header.Set(signatureHeader, "sha1=e0199de63fb7192634f52136d4ceb7dc6f191da3")
+
+	rec := httptest.NewRecorder()
+	handler := http.HandlerFunc(optlyHandler.HandleWebhook)
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, true, syncer.syncCalled)
+}
+
+func TestWebhookStartSyncer(t *testing.T) {
+	var testWebhookConfigs = map[int64]config.WebhookProject{
+		42: {
+			SDKKeys: []string{"myDatafile"},
+			Secret:  "I am secret",
+		},
+	}
+	syncer := NewTestDFSyncer()
+
+	optlyHandler := NewWebhookHandler(nil, testWebhookConfigs, syncer)
+	err := optlyHandler.StartSyncer(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, true, syncer.subscribeCalled)
 }
