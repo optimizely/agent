@@ -22,10 +22,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/optimizely/go-sdk/pkg/odp/event"
 
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/go-sdk/pkg/odp/event"
 )
 
 // SendOdpEvent sends event to ODP platform

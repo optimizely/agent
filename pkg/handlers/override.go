@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 )
@@ -41,6 +42,8 @@ func Override(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	span := trace.SpanFromContext(r.Context())
 
 	var body OverrideBody
 	if parseErr := ParseRequestBody(r, &body); parseErr != nil {
@@ -69,7 +72,7 @@ func Override(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
+	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
 	if override, err := optlyClient.SetForcedVariation(r.Context(), experimentKey, body.UserID, body.VariationKey); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 	} else {
