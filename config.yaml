@@ -22,7 +22,7 @@ log:
     level: info
     ## enable pretty colorized console logging. setting to false will output
     ## structured JSON logs. Recommended false in production.
-    pretty: true
+    pretty: false
     ## to set whether or not the SDK key is included in the logging output.
     includeSdkKey: true
 
@@ -35,7 +35,7 @@ log:
 tracing:
     ## bydefault tracing is disabled
     ## to enable tracing set enabled to true
-    enabled: false
+    enabled: true
     # opentelemetry tracing configuration
     opentelemetry:
         ## bydefault stdout exporter is enabled
