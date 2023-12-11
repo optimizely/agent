@@ -22,9 +22,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/optimizely/go-sdk/pkg/entities"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
+	"github.com/optimizely/go-sdk/pkg/entities"
 )
 
 type trackBody struct {
@@ -40,6 +41,8 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+	logger := middleware.GetLogger(r)
+	span := trace.SpanFromContext(r.Context())
 
 	var body trackBody
 	err = ParseRequestBody(r, &body)
@@ -66,6 +69,6 @@ func TrackEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	middleware.GetLogger(r).Debug().Str("eventKey", eventKey).Msg("tracking event")
+	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Str("eventKey", eventKey).Msg("tracked event")
 	render.JSON(w, r, track)
 }
