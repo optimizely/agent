@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
@@ -35,6 +36,9 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	logger := middleware.GetLogger(r)
+	span := trace.SpanFromContext(r.Context())
 
 	body, err := getRequestOdpEvent(r)
 	if err != nil {
@@ -52,6 +56,7 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 	}
 
+	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msg("Successfully sent event to ODP platform")
 	render.JSON(w, r, returnResult)
 }
 

@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 )
@@ -33,6 +34,10 @@ func OptimizelyConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger := middleware.GetLogger(r)
+	span := trace.SpanFromContext(r.Context())
+
 	conf := optlyClient.GetOptimizelyConfig()
+	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msg("Successfully returned OptimizelyConfig")
 	render.JSON(w, r, conf)
 }
