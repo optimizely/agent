@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 )
@@ -36,7 +35,6 @@ func GetDatafile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger := middleware.GetLogger(r)
-	span := trace.SpanFromContext(r.Context())
 
 	datafile := optlyClient.GetOptimizelyConfig().GetDatafile()
 	var raw map[string]interface{}
@@ -45,6 +43,6 @@ func GetDatafile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msg("Successfully returned datafile")
+	logger.Info().Msg("Successfully returned datafile")
 	render.JSON(w, r, raw)
 }

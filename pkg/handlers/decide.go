@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/go-sdk/pkg/client"
@@ -62,8 +61,6 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
-
-	span := trace.SpanFromContext(r.Context())
 
 	db, err := getUserContextWithOptions(r)
 	if err != nil {
@@ -110,7 +107,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
-		logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+		logger.Info().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		render.JSON(w, r, decideOut)
 		return
@@ -123,7 +120,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	for _, d := range decides {
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		decideOuts = append(decideOuts, decideOut)
-		logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+		logger.Info().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 	}
 	render.JSON(w, r, decideOuts)
 }

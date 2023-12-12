@@ -23,7 +23,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
@@ -48,7 +47,6 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger := middleware.GetLogger(r)
-	span := trace.SpanFromContext(r.Context())
 
 	uc, err := getUserContext(r)
 	if err != nil {
@@ -110,7 +108,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decisions = filterDecisions(r, decisions)
-	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msgf("Made activate decisions for user %s", uc.ID)
+	logger.Info().Msgf("Made activate decisions for user %s", uc.ID)
 	render.JSON(w, r, decisions)
 }
 

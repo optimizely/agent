@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/middleware"
 )
@@ -49,7 +48,6 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger := middleware.GetLogger(r)
-	span := trace.SpanFromContext(r.Context())
 
 	if optlyClient.UserProfileService == nil {
 		RenderError(ErrNoUPS, http.StatusInternalServerError, w, r)
@@ -79,6 +77,6 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 		experimentBucketMap[k.ExperimentID] = map[string]interface{}{k.Field: v}
 	}
 	lookupResponse.ExperimentBucketMap = experimentBucketMap
-	logger.Info().Str("traceID", span.SpanContext().TraceID().String()).Str("spanID", span.SpanContext().SpanID().String()).Msgf("Looked up user profile for user %s", body.UserID)
+	logger.Info().Msgf("Looked up user profile for user %s", body.UserID)
 	render.JSON(w, r, lookupResponse)
 }
