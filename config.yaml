@@ -35,7 +35,7 @@ log:
 tracing:
     ## bydefault tracing is disabled
     ## to enable tracing set enabled to true
-    enabled: true
+    enabled: false
     # opentelemetry tracing configuration
     opentelemetry:
         ## bydefault stdout exporter is enabled
