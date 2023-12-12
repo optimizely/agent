@@ -6,10 +6,10 @@ on:
     tags:
       - 'v*.*.*'
   pull_request:
-    branches: [ "*" ]
+    branches: [ * ]
 
 env:
-  GIMME_GO_VERSION: 1.20.1
+  GIMME_GO_VERSION: 1.20
   GIMME_OS: linux
   GIMME_ARCH: amd64
 
@@ -48,7 +48,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.17'
+        go-version: '1.20'
         check-latest: true
     - name: coveralls
       id: coveralls
@@ -58,7 +58,7 @@ jobs:
     - name: success
       if: steps.coveralls.outcome == 'success'
       run: |
-        go get github.com/mattn/goveralls@latest
+        go install github.com/mattn/goveralls@latest
         goveralls -coverprofile=coverage.txt -service=github
 
   tests_sourceclear:
@@ -72,7 +72,9 @@ jobs:
     - name: sourceclear
       env:
         SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
-      run: curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
+      run: |
+        make -e setup build
+        curl -sSL https://download.sourceclear.com/ci.sh | bash -s – scan
     - name: run
       run: |
         make -e setup build
@@ -106,6 +108,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: 3.9
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.5.0
+      with:
+        redis-version: 4
     - name: acceptance test
       run: |
         make -e setup build
@@ -132,10 +138,10 @@ jobs:
       id: get_version
       run: |
         git fetch --tags --force
-        echo ::set-output name=VERSION::$(git describe --abbrev=0 --tags | tr -d '^v')
+        echo "VERSION=$(git describe --abbrev=0 --tags | tr -d '^v')" >> $GITHUB_OUTPUT
     - name: Get current workspace path
       id: get_workspace
-      run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
+      run: echo "WORKSPACE=${GITHUB_WORKSPACE}" >> $GITHUB_OUTPUT
     - name: set the env
       run: |
         echo "APP_VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
@@ -169,14 +175,15 @@ jobs:
         ref: 'master'
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
+      run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
     - name: Get current workspace path
       id: get_workspace
-      run: echo ::set-output name=WORKSPACE::${GITHUB_WORKSPACE}
+      run: echo "WORKSPACE=${GITHUB_WORKSPACE}" >> $GITHUB_OUTPUT
     - name: set the env
       run: |
         TAG=${{ steps.get_version.outputs.VERSION }}
         echo "APP_VERSION=${TAG#v}" >> $GITHUB_ENV
+        echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
         echo "TRAVIS_BUILD_DIR=${{ steps.get_workspace.outputs.WORKSPACE }}" >> $GITHUB_ENV
     - name: Upload and publish draft
       env:
@@ -239,7 +246,7 @@ jobs:
         ref: 'master'
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF_NAME}
+      run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
     - name: set the env
       run: |
         TAG=${{ steps.get_version.outputs.VERSION }}
@@ -251,7 +258,7 @@ jobs:
       run: |
         # installs hub to ~/bin
         $HOME/travisci-tools/release_github/install_hub.sh
-        echo "$HOME/bin:$HOME/travisci-tools/slack" >> $GITHUB_PATH
+        # echo "$HOME/bin:$HOME/travisci-tools/slack" >> $GITHUB_PATH
     - name: run script
       env:
         GITHUB_TOKEN: ${{ secrets.CI_USER_TOKEN }}
@@ -264,7 +271,8 @@ jobs:
         hub release download $(git describe --abbrev=0 --tags) -i '*-${{ matrix.TARGET }}-*'
         tar xvfz generate_secret-${{ matrix.TARGET }}-${APP_VERSION}.tar.gz -C /tmp
         /tmp/generate_secret
-    - name: failure
-      if: steps.script.outcome != 'success'
-      run: |
-        SLACK_TEXT="${APP_VERSION} ${{ matrix.os_name }} assets failed verification." send_to_slack.sh
+    # TODO: add step to publish outcome on teams.
+    # - name: failure
+    #   if: steps.script.outcome != 'success'
+    #   run: |
+    #     SLACK_TEXT="${APP_VERSION} ${{ matrix.os_name }} assets failed verification." send_to_slack.sh
