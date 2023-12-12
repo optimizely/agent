@@ -23,13 +23,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/optimizely/agent/pkg/optimizely"
-
-	"github.com/optimizely/go-sdk/pkg/config"
-
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/go-sdk/pkg/config"
 )
 
 // ErrorResponse Model
@@ -51,6 +51,12 @@ func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 func GetLogger(r *http.Request) *zerolog.Logger {
 	reqID := r.Header.Get(OptlyRequestHeader)
 	logger := log.With().Str("requestId", reqID).Logger()
+
+	span := trace.SpanFromContext(r.Context())
+	if span.SpanContext().TraceID().IsValid() {
+		logger = logger.With().Str("traceId", span.SpanContext().TraceID().String()).Logger()
+		logger = logger.With().Str("spanId", span.SpanContext().SpanID().String()).Logger()
+	}
 
 	if optimizely.ShouldIncludeSDKKey {
 		sdkKey := r.Header.Get(OptlySDKHeader)

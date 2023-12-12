@@ -69,10 +69,10 @@ func Override(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
 	if override, err := optlyClient.SetForcedVariation(r.Context(), experimentKey, body.UserID, body.VariationKey); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 	} else {
+		logger.Info().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("Successfully set override")
 		render.JSON(w, r, override)
 	}
 }

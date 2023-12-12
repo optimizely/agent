@@ -21,9 +21,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/optimizely/agent/pkg/middleware"
-
 	"github.com/go-chi/render"
+
+	"github.com/optimizely/agent/pkg/middleware"
 )
 
 type lookupBody struct {
@@ -46,6 +46,8 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	logger := middleware.GetLogger(r)
 
 	if optlyClient.UserProfileService == nil {
 		RenderError(ErrNoUPS, http.StatusInternalServerError, w, r)
@@ -75,5 +77,6 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 		experimentBucketMap[k.ExperimentID] = map[string]interface{}{k.Field: v}
 	}
 	lookupResponse.ExperimentBucketMap = experimentBucketMap
+	logger.Info().Msgf("Looked up user profile for user %s", body.UserID)
 	render.JSON(w, r, lookupResponse)
 }

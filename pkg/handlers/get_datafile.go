@@ -34,11 +34,15 @@ func GetDatafile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger := middleware.GetLogger(r)
+
 	datafile := optlyClient.GetOptimizelyConfig().GetDatafile()
 	var raw map[string]interface{}
 	if err = json.Unmarshal([]byte(datafile), &raw); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	logger.Info().Msg("Successfully returned datafile")
 	render.JSON(w, r, raw)
 }

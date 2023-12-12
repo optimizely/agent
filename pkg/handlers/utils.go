@@ -35,7 +35,7 @@ type ErrorResponse struct {
 
 // RenderError sets the request status and renders the error message.
 func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) {
-	middleware.GetLogger(r).Info().Err(err).Int("status", status).Msg("render error")
+	middleware.GetLogger(r).Err(err).Int("status", status).Msg("render error")
 	render.Status(r, status)
 	render.JSON(w, r, ErrorResponse{Error: err.Error()})
 }
@@ -44,22 +44,24 @@ func RenderError(err error, status int, w http.ResponseWriter, r *http.Request) 
 // into the provided interface. Note that we're sanitizing the returned error
 // so that it is not leaked back to the requestor.
 func ParseRequestBody(r *http.Request, v interface{}) error {
+	logger := middleware.GetLogger(r)
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		msg := "error reading request body"
-		middleware.GetLogger(r).Error().Err(err).Msg(msg)
+		logger.Err(err).Msg(msg)
 		return fmt.Errorf("%s", msg)
 	}
 
 	if len(body) == 0 {
-		middleware.GetLogger(r).Debug().Msg("body was empty skip JSON unmarshal")
+		logger.Info().Msg("body was empty skip JSON unmarshal")
 		return nil
 	}
 
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		msg := "error parsing request body"
-		middleware.GetLogger(r).Error().Err(err).Msg(msg)
+		logger.Err(err).Msg(msg)
 		return fmt.Errorf("%s", msg)
 	}
 

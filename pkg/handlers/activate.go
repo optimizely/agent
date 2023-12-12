@@ -22,13 +22,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/render"
+
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
-
 	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/optimizely/go-sdk/pkg/entities"
-
-	"github.com/go-chi/render"
 )
 
 type keyMap map[string]string
@@ -42,11 +41,12 @@ type ActivateBody struct {
 // Activate makes feature and experiment decisions for the selected query parameters.
 func Activate(w http.ResponseWriter, r *http.Request) {
 	optlyClient, err := middleware.GetOptlyClient(r)
-	logger := middleware.GetLogger(r)
 	if err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	logger := middleware.GetLogger(r)
 
 	uc, err := getUserContext(r)
 	if err != nil {
@@ -108,6 +108,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decisions = filterDecisions(r, decisions)
+	logger.Info().Msgf("Made activate decisions for user %s", uc.ID)
 	render.JSON(w, r, decisions)
 }
 
