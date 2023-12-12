@@ -21,13 +21,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/optimizely/agent/pkg/optimizely"
-
 	"github.com/optimizely/go-sdk/pkg/config"
 )
 
@@ -54,14 +56,25 @@ func TestGetLogger(t *testing.T) {
 	out := &bytes.Buffer{}
 	req := httptest.NewRequest("GET", "/", nil)
 
+	traceId := "0af7651916cd43dd8448eb211c80319c"
+	spanId := "b9c7c989f97918e1"
+
 	req.Header.Set(OptlyRequestHeader, "12345")
 	req.Header.Set(OptlySDKHeader, "some_key")
-	logger := GetLogger(req)
+	req.Header.Set("traceparent", fmt.Sprintf("00-%s-%s-01", traceId, spanId))
+
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	ctx := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
+
+	logger := GetLogger(req.WithContext(ctx))
 	newLogger := logger.Output(out)
 	newLogger.Info().Msg("some_message")
 
 	assert.Contains(t, out.String(), `"requestId":"12345"`)
 	assert.Contains(t, out.String(), `"sdkKey":"some_key"`)
+
+	assert.Contains(t, out.String(), `"traceId":"`+traceId+`"`)
+	assert.Contains(t, out.String(), `"spanId":"`+spanId+`"`)
 
 	optimizely.ShouldIncludeSDKKey = false
 	out = &bytes.Buffer{}
@@ -70,6 +83,9 @@ func TestGetLogger(t *testing.T) {
 	newLogger.Info().Msg("some_message")
 	assert.Contains(t, out.String(), `"requestId":"12345"`)
 	assert.NotContains(t, out.String(), `"sdkKey":"some_key"`)
+
+	assert.NotContains(t, out.String(), `"traceId":"`+traceId+`"`)
+	assert.NotContains(t, out.String(), `"spanId":"`+spanId+`"`)
 }
 
 func TestGetFeature(t *testing.T) {
