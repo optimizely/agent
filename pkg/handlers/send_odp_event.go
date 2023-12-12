@@ -22,10 +22,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/optimizely/go-sdk/pkg/odp/event"
 
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/go-sdk/pkg/odp/event"
 )
 
 // SendOdpEvent sends event to ODP platform
@@ -35,6 +35,8 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	logger := middleware.GetLogger(r)
 
 	body, err := getRequestOdpEvent(r)
 	if err != nil {
@@ -52,6 +54,7 @@ func SendOdpEvent(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 	}
 
+	logger.Info().Msg("Successfully sent event to ODP platform")
 	render.JSON(w, r, returnResult)
 }
 

@@ -33,6 +33,9 @@ func OptimizelyConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger := middleware.GetLogger(r)
+
 	conf := optlyClient.GetOptimizelyConfig()
+	logger.Info().Msg("Successfully returned OptimizelyConfig")
 	render.JSON(w, r, conf)
 }

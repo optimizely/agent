@@ -20,10 +20,10 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/go-chi/render"
+
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/go-sdk/pkg/decision"
-
-	"github.com/go-chi/render"
 )
 
 type saveBody struct {
@@ -37,6 +37,8 @@ func Save(w http.ResponseWriter, r *http.Request) {
 		RenderError(err, http.StatusInternalServerError, w, r)
 		return
 	}
+
+	logger := middleware.GetLogger(r)
 
 	if optlyClient.UserProfileService == nil {
 		RenderError(ErrNoUPS, http.StatusInternalServerError, w, r)
@@ -58,6 +60,7 @@ func Save(w http.ResponseWriter, r *http.Request) {
 
 	convertedProfile := convertToUserProfile(body)
 	optlyClient.UserProfileService.Save(convertedProfile)
+	logger.Info().Msgf("Saved user profile for user %s", body.UserID)
 	render.Status(r, http.StatusOK)
 }
 
