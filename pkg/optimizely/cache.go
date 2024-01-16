@@ -25,6 +25,10 @@ import (
 	"strings"
 	"sync"
 
+	cmap "github.com/orcaman/concurrent-map"
+	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/agent/plugins/odpcache"
@@ -35,13 +39,11 @@ import (
 	"github.com/optimizely/go-sdk/pkg/event"
 	"github.com/optimizely/go-sdk/pkg/logging"
 	"github.com/optimizely/go-sdk/pkg/odp"
+	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
 	odpEventPkg "github.com/optimizely/go-sdk/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/pkg/odp/segment"
+	"github.com/optimizely/go-sdk/pkg/tracing"
 	"github.com/optimizely/go-sdk/pkg/utils"
-
-	odpCachePkg "github.com/optimizely/go-sdk/pkg/odp/cache"
-	cmap "github.com/orcaman/concurrent-map"
-	"github.com/rs/zerolog/log"
 )
 
 // User plugin strings required for internal usage
@@ -62,7 +64,7 @@ type OptlyCache struct {
 }
 
 // NewCache returns a new implementation of OptlyCache interface backed by a concurrent map.
-func NewCache(ctx context.Context, conf config.AgentConfig, metricsRegistry *MetricsRegistry) *OptlyCache {
+func NewCache(ctx context.Context, conf config.AgentConfig, metricsRegistry *MetricsRegistry, tracer trace.Tracer) *OptlyCache {
 
 	// TODO is there a cleaner way to handle this translation???
 	cmLoader := func(sdkkey string, options ...sdkconfig.OptionFunc) SyncedConfigManager {
@@ -74,7 +76,7 @@ func NewCache(ctx context.Context, conf config.AgentConfig, metricsRegistry *Met
 	cache := &OptlyCache{
 		ctx:                   ctx,
 		wg:                    sync.WaitGroup{},
-		loader:                defaultLoader(conf, metricsRegistry, userProfileServiceMap, odpCacheMap, cmLoader, event.NewBatchEventProcessor),
+		loader:                defaultLoader(conf, metricsRegistry, tracer, userProfileServiceMap, odpCacheMap, cmLoader, event.NewBatchEventProcessor),
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: userProfileServiceMap,
 		odpCacheMap:           odpCacheMap,
@@ -171,6 +173,7 @@ func regexValidator(sdkKeyRegex string) func(string) bool {
 func defaultLoader(
 	agentConf config.AgentConfig,
 	metricsRegistry *MetricsRegistry,
+	tracer trace.Tracer,
 	userProfileServiceMap cmap.ConcurrentMap,
 	odpCacheMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
@@ -248,6 +251,7 @@ func defaultLoader(
 			client.WithExperimentOverrides(forcedVariations),
 			client.WithEventProcessor(ep),
 			client.WithOdpDisabled(clientConf.ODP.Disable),
+			client.WithTracer(tracing.NewOtelTracer(tracer)),
 		}
 
 		if agentConf.Synchronization.Notification.Enable {

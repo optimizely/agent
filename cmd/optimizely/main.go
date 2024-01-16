@@ -26,27 +26,9 @@ import (
 	"strings"
 	"syscall"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-
-	"github.com/optimizely/agent/config"
-	"github.com/optimizely/agent/pkg/handlers"
-	"github.com/optimizely/agent/pkg/metrics"
-	"github.com/optimizely/agent/pkg/optimizely"
-	"github.com/optimizely/agent/pkg/routers"
-	"github.com/optimizely/agent/pkg/server"
-
-	// Initiate the loading of the interceptor plugins
-	_ "github.com/optimizely/agent/plugins/interceptors/all"
-
-	// Initiate the loading of the userprofileservice plugins
-	_ "github.com/optimizely/agent/plugins/userprofileservice/all"
-	// Initiate the loading of the odpCache plugins
-	_ "github.com/optimizely/agent/plugins/odpcache/all"
-	"github.com/optimizely/go-sdk/pkg/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -56,6 +38,18 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"gopkg.in/yaml.v2"
+
+	"github.com/optimizely/agent/config"
+	"github.com/optimizely/agent/pkg/handlers"
+	"github.com/optimizely/agent/pkg/metrics"
+	"github.com/optimizely/agent/pkg/optimizely"
+	"github.com/optimizely/agent/pkg/routers"
+	"github.com/optimizely/agent/pkg/server"
+	_ "github.com/optimizely/agent/plugins/interceptors/all"       // Initiate the loading of the userprofileservice plugins
+	_ "github.com/optimizely/agent/plugins/odpcache/all"           // Initiate the loading of the odpCache plugins
+	_ "github.com/optimizely/agent/plugins/userprofileservice/all" // Initiate the loading of the interceptor plugins
+	"github.com/optimizely/go-sdk/pkg/logging"
 )
 
 // Version holds the admin version
@@ -271,7 +265,7 @@ func main() {
 	ctx = context.WithValue(ctx, handlers.LoggerKey, &log.Logger)
 
 	sg := server.NewGroup(ctx, conf.Server) // Create a new server group to manage the individual http listeners
-	optlyCache := optimizely.NewCache(ctx, *conf, sdkMetricsRegistry)
+	optlyCache := optimizely.NewCache(ctx, *conf, sdkMetricsRegistry, otel.GetTracerProvider().Tracer(conf.Tracing.OpenTelemetry.ServiceName))
 	optlyCache.Init(conf.SDKKeys)
 
 	// goroutine to check for signals to gracefully shutdown listeners
