@@ -22,16 +22,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg/client"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
-
+	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/stretchr/testify/suite"
+	"github.com/optimizely/go-sdk/pkg/notification"
 )
 
 type ClientTestSuite struct {
@@ -177,7 +176,7 @@ func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 		}
 
 		suite.Equal(expected, actual)
-		isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
+		isEnabled, _ := suite.optlyClient.IsFeatureEnabled(context.Background(), "my_feat", suite.userContext)
 		suite.False(isEnabled)
 	}
 
@@ -195,7 +194,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	}
 
 	suite.testClient.AddFeatureTest(advancedFeature)
-	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig().FeaturesMap["advanced"]
+	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig(context.Background()).FeaturesMap["advanced"]
 
 	expected := &Decision{
 		UserID:     "testUser",
@@ -225,7 +224,7 @@ func (suite *ClientTestSuite) TestActivateExperiment() {
 	testExperimentKey := "testExperiment1"
 	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
 	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
-	experiment := suite.testClient.OptimizelyClient.GetOptimizelyConfig().ExperimentsMap["testExperiment1"]
+	experiment := suite.testClient.OptimizelyClient.GetOptimizelyConfig(context.Background()).ExperimentsMap["testExperiment1"]
 
 	expected := &Decision{
 		UserID:        "testUser",

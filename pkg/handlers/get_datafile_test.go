@@ -75,7 +75,7 @@ func (suite *GetDatafileTestSuite) TestDatafile() {
 	suite.NoError(err)
 
 	var expected map[string]interface{}
-	datafile := suite.oc.GetOptimizelyConfig().GetDatafile()
+	datafile := suite.oc.GetOptimizelyConfig(req.Context()).GetDatafile()
 	if err = json.Unmarshal([]byte(datafile), &expected); err != nil {
 		suite.NoError(err)
 	}

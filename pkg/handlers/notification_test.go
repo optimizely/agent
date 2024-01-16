@@ -28,6 +28,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
@@ -36,7 +38,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
-	"github.com/stretchr/testify/suite"
 )
 
 type NotificationTestSuite struct {
@@ -92,6 +93,7 @@ func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 
 	go func() {
 		suite.tc.OptimizelyClient.IsFeatureEnabled(
+			ctx,
 			"one",
 			entities.UserContext{
 				ID:                "testUser",

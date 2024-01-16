@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/optimizely/go-sdk/pkg/config"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/go-sdk/pkg/config"
 )
 
 type OptimizelyConfigTestSuite struct {
@@ -58,7 +58,7 @@ func (suite *OptimizelyConfigTestSuite) TestConfig() {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(*suite.oc.GetOptimizelyConfig(), actual)
+	suite.Equal(*suite.oc.GetOptimizelyConfig(req.Context()), actual)
 }
 
 // In order for 'go test' to run this suite, we need to create

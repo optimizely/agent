@@ -77,7 +77,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
 
 	if db.FetchSegments {
-		success := optimizelyUserContext.FetchQualifiedSegments(db.FetchSegmentsOptions)
+		success := optimizelyUserContext.FetchQualifiedSegments(r.Context(), db.FetchSegmentsOptions)
 		if !success {
 			err := errors.New("failed to fetch qualified segments")
 			RenderError(err, http.StatusInternalServerError, w, r)
@@ -101,19 +101,19 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	switch len(keys) {
 	case 0:
 		// Decide All
-		decides = optimizelyUserContext.DecideAll(decideOptions)
+		decides = optimizelyUserContext.DecideAll(r.Context(), decideOptions)
 	case 1:
 		// Decide
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
-		d := optimizelyUserContext.Decide(key, decideOptions)
+		d := optimizelyUserContext.Decide(r.Context(), key, decideOptions)
 		logger.Info().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		render.JSON(w, r, decideOut)
 		return
 	default:
 		// Decide for Keys
-		decides = optimizelyUserContext.DecideForKeys(keys, decideOptions)
+		decides = optimizelyUserContext.DecideForKeys(r.Context(), keys, decideOptions)
 	}
 
 	decideOuts := []DecideOut{}
