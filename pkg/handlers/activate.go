@@ -55,7 +55,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query()
-	oConf := optlyClient.GetOptimizelyConfig(r.Context())
+	oConf := optlyClient.WithTraceContext(r.Context()).GetOptimizelyConfig()
 	decisions := make([]*optimizely.Decision, 0, len(oConf.ExperimentsMap)+len(oConf.FeaturesMap))
 	disableTracking := query.Get("disableTracking") == "true"
 

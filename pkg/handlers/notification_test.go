@@ -93,7 +93,6 @@ func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 
 	go func() {
 		suite.tc.OptimizelyClient.IsFeatureEnabled(
-			ctx,
 			"one",
 			entities.UserContext{
 				ID:                "testUser",

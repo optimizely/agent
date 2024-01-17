@@ -36,7 +36,7 @@ func GetDatafile(w http.ResponseWriter, r *http.Request) {
 
 	logger := middleware.GetLogger(r)
 
-	datafile := optlyClient.GetOptimizelyConfig(r.Context()).GetDatafile()
+	datafile := optlyClient.GetOptimizelyConfig().GetDatafile()
 	var raw map[string]interface{}
 	if err = json.Unmarshal([]byte(datafile), &raw); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)

@@ -74,7 +74,7 @@ func (suite *OptimizelyConfigTestSuite) TestConfig() {
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	suite.Equal(*suite.oc.GetOptimizelyConfig(req.Context()), actual)
+	suite.Equal(*suite.oc.GetOptimizelyConfig(), actual)
 }
 
 // In order for 'go test' to run this suite, we need to create

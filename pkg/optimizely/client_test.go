@@ -176,7 +176,7 @@ func (suite *ClientTestSuite) TestRemoveForcedVariation() {
 		}
 
 		suite.Equal(expected, actual)
-		isEnabled, _ := suite.optlyClient.IsFeatureEnabled(context.Background(), "my_feat", suite.userContext)
+		isEnabled, _ := suite.optlyClient.IsFeatureEnabled("my_feat", suite.userContext)
 		suite.False(isEnabled)
 	}
 
@@ -194,7 +194,7 @@ func (suite *ClientTestSuite) TestActivateFeature() {
 	}
 
 	suite.testClient.AddFeatureTest(advancedFeature)
-	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig(context.Background()).FeaturesMap["advanced"]
+	feature := suite.testClient.OptimizelyClient.GetOptimizelyConfig().FeaturesMap["advanced"]
 
 	expected := &Decision{
 		UserID:     "testUser",
@@ -224,7 +224,7 @@ func (suite *ClientTestSuite) TestActivateExperiment() {
 	testExperimentKey := "testExperiment1"
 	testVariation := suite.testClient.ProjectConfig.CreateVariation("variationA")
 	suite.testClient.AddExperiment(testExperimentKey, []entities.Variation{testVariation})
-	experiment := suite.testClient.OptimizelyClient.GetOptimizelyConfig(context.Background()).ExperimentsMap["testExperiment1"]
+	experiment := suite.testClient.OptimizelyClient.GetOptimizelyConfig().ExperimentsMap["testExperiment1"]
 
 	expected := &Decision{
 		UserID:        "testUser",
