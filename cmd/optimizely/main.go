@@ -38,6 +38,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/yaml.v2"
 
 	"github.com/optimizely/agent/config"
@@ -265,13 +266,11 @@ func main() {
 	ctx = context.WithValue(ctx, handlers.LoggerKey, &log.Logger)
 
 	sg := server.NewGroup(ctx, conf.Server) // Create a new server group to manage the individual http listeners
-
-	var optlyCache *optimizely.OptlyCache
+	var tracer trace.Tracer
 	if conf.Tracing.Enabled {
-		optlyCache = optimizely.NewCache(ctx, *conf, sdkMetricsRegistry, otel.GetTracerProvider().Tracer(conf.Tracing.OpenTelemetry.ServiceName))
-	} else {
-		optlyCache = optimizely.NewCache(ctx, *conf, sdkMetricsRegistry, nil)
+		tracer = otel.GetTracerProvider().Tracer(conf.Tracing.OpenTelemetry.ServiceName)
 	}
+	optlyCache := optimizely.NewCache(ctx, *conf, sdkMetricsRegistry, tracer)
 	optlyCache.Init(conf.SDKKeys)
 
 	// goroutine to check for signals to gracefully shutdown listeners
