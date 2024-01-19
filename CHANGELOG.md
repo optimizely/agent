@@ -33,6 +33,7 @@ For details, refer to our documentation pages:
 ### Breaking Changes
 
 - ODPManager in the SDK is enabled by default. Unless an ODP account is integrated into the Optimizely projects, most ODPManager functions will be ignored. If needed, ODPManager can be disabled when OptimizelyClient is instantiated. From Agent, it can be switched off from config.yaml or env variables.
+- Updated go-sdk version to v2.0.0 with module path github.com/optimizely/go-sdk/v2
 
 ### Functionality Enhancement
 * Updated openapi schema to 3.1.0. ([#392](https://github.com/optimizely/agent/pull/392))
