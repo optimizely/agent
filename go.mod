@@ -12,7 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.1
 	github.com/lestrrat-go/jwx v0.9.0
-	github.com/optimizely/go-sdk v1.8.4-0.20240118173841-4adb1affdb93
+	github.com/optimizely/go-sdk/v2 v2.0.0-beta.0.20240119164342-26cf04dc89f1
 	github.com/orcaman/concurrent-map v1.0.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rakyll/statik v0.1.7

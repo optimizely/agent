@@ -50,7 +50,7 @@ import (
 	_ "github.com/optimizely/agent/plugins/interceptors/all"       // Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/odpcache/all"           // Initiate the loading of the odpCache plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all" // Initiate the loading of the interceptor plugins
-	"github.com/optimizely/go-sdk/pkg/logging"
+	"github.com/optimizely/go-sdk/v2/pkg/logging"
 )
 
 // Version holds the admin version

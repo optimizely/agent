@@ -30,7 +30,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/optimizely/agent/pkg/optimizely"
-	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/v2/pkg/config"
 )
 
 // GetOptlyClient is a utility to extract the OptlyClient from the http request context.

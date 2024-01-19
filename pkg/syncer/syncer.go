@@ -24,7 +24,7 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/config"
-	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/v2/pkg/notification"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )

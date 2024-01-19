@@ -20,15 +20,15 @@ package optimizelytest
 import (
 	"time"
 
-	"github.com/optimizely/go-sdk/pkg/client"
-	"github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/optimizely/go-sdk/pkg/event"
-	"github.com/optimizely/go-sdk/pkg/logging"
-	"github.com/optimizely/go-sdk/pkg/odp"
-	pkgOdpEvent "github.com/optimizely/go-sdk/pkg/odp/event"
-	"github.com/optimizely/go-sdk/pkg/odp/segment"
+	"github.com/optimizely/go-sdk/v2/pkg/client"
+	"github.com/optimizely/go-sdk/v2/pkg/config"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/entities"
+	"github.com/optimizely/go-sdk/v2/pkg/event"
+	"github.com/optimizely/go-sdk/v2/pkg/logging"
+	"github.com/optimizely/go-sdk/v2/pkg/odp"
+	pkgOdpEvent "github.com/optimizely/go-sdk/v2/pkg/odp/event"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/segment"
 )
 
 // TestClient encapsulates both the ProjectConfig interface and the OptimizelyClient

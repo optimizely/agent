@@ -20,7 +20,7 @@ package userprofileservice
 import (
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/stretchr/testify/assert"
 )
 

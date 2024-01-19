@@ -26,9 +26,9 @@ import (
 	"net/url"
 
 	"github.com/optimizely/agent/plugins/userprofileservice"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/logging"
-	"github.com/optimizely/go-sdk/pkg/utils"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/logging"
+	"github.com/optimizely/go-sdk/v2/pkg/utils"
 	"github.com/rs/zerolog/log"
 )
 

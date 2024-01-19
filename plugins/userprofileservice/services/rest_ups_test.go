@@ -26,9 +26,9 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/optimizely/agent/pkg/handlers"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/logging"
-	"github.com/optimizely/go-sdk/pkg/utils"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/logging"
+	"github.com/optimizely/go-sdk/v2/pkg/utils"
 	"github.com/stretchr/testify/suite"
 )
 

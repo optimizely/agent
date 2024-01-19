@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"strconv"
 
-	optlyconfig "github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/entities"
+	optlyconfig "github.com/optimizely/go-sdk/v2/pkg/config"
+	"github.com/optimizely/go-sdk/v2/pkg/entities"
 )
 
 // TestProjectConfig is a project config backed by a datafile

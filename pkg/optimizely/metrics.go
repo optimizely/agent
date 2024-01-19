@@ -19,7 +19,7 @@ package optimizely
 
 import (
 	"github.com/optimizely/agent/pkg/metrics"
-	go_sdk_metrics "github.com/optimizely/go-sdk/pkg/metrics"
+	go_sdk_metrics "github.com/optimizely/go-sdk/v2/pkg/metrics"
 )
 
 // MetricsRegistry initializes metrics registry

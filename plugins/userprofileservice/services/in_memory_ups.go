@@ -21,7 +21,7 @@ import (
 	"sync"
 
 	"github.com/optimizely/agent/plugins/userprofileservice"
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 )
 
 const userIDKey = "user_id"

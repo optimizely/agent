@@ -20,7 +20,7 @@ package optimizelytest
 import (
 	"errors"
 
-	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/v2/pkg/event"
 )
 
 // ErrNotImplemented indicates that the error was returned since the functionality was not implemented

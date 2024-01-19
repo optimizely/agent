@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/optimizely/go-sdk/pkg/odp/event"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/event"
 )
 
 // TestEventAPIManager implements Event API Manager to aid in testing

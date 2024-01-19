@@ -21,7 +21,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/optimizely/go-sdk/pkg/logging"
+	"github.com/optimizely/go-sdk/v2/pkg/logging"
 )
 
 var levelMap = map[logging.LogLevel]zerolog.Level{

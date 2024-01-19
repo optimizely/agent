@@ -29,7 +29,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/optimizely/agent/pkg/optimizely"
-	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/v2/pkg/config"
 )
 
 // ErrorResponse Model

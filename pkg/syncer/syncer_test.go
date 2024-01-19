@@ -24,7 +24,7 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/syncer/pubsub"
-	"github.com/optimizely/go-sdk/pkg/notification"
+	"github.com/optimizely/go-sdk/v2/pkg/notification"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"

@@ -35,9 +35,9 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 	"github.com/optimizely/agent/pkg/syncer"
-	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
+	"github.com/optimizely/go-sdk/v2/pkg/entities"
+	"github.com/optimizely/go-sdk/v2/pkg/notification"
+	"github.com/optimizely/go-sdk/v2/pkg/registry"
 )
 
 type NotificationTestSuite struct {

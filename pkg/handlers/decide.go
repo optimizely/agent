@@ -24,10 +24,10 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/optimizely/agent/pkg/middleware"
-	"github.com/optimizely/go-sdk/pkg/client"
-	"github.com/optimizely/go-sdk/pkg/decide"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/odp/segment"
+	"github.com/optimizely/go-sdk/v2/pkg/client"
+	"github.com/optimizely/go-sdk/v2/pkg/decide"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/segment"
 )
 
 // DecideBody defines the request body for decide API

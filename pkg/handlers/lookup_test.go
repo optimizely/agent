@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"

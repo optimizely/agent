@@ -20,7 +20,7 @@ package userprofileservice
 import (
 	"fmt"
 
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 )
 
 // Creator type defines a function for creating an instance of a UserProfileService

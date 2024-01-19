@@ -18,7 +18,7 @@
 package optimizely
 
 import (
-	optimizelyconfig "github.com/optimizely/go-sdk/pkg/config"
+	optimizelyconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 )
 
 // Cache defines a basic interface for retrieving an instance of the OptlyClient keyed off of the SDK Key

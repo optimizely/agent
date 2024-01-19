@@ -27,10 +27,10 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	"github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/odp/event"
-	"github.com/optimizely/go-sdk/pkg/registry"
+	"github.com/optimizely/go-sdk/v2/pkg/config"
+	"github.com/optimizely/go-sdk/v2/pkg/notification"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/event"
+	"github.com/optimizely/go-sdk/v2/pkg/registry"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/middleware"
