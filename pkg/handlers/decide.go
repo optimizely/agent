@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2021,2023, Optimizely, Inc. and contributors                   *
+ * Copyright 2021,2023-2024 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -74,7 +74,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, db.UserAttributes)
+	optimizelyUserContext := optlyClient.WithTraceContext(r.Context()).CreateUserContext(db.UserID, db.UserAttributes)
 
 	if db.FetchSegments {
 		success := optimizelyUserContext.FetchQualifiedSegments(db.FetchSegmentsOptions)

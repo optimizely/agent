@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2021, Optimizely, Inc. and contributors                        *
+ * Copyright 2021,2024 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -36,7 +36,7 @@ func GetDatafile(w http.ResponseWriter, r *http.Request) {
 
 	logger := middleware.GetLogger(r)
 
-	datafile := optlyClient.GetOptimizelyConfig().GetDatafile()
+	datafile := optlyClient.WithTraceContext(r.Context()).GetOptimizelyConfig().GetDatafile()
 	var raw map[string]interface{}
 	if err = json.Unmarshal([]byte(datafile), &raw); err != nil {
 		RenderError(err, http.StatusInternalServerError, w, r)

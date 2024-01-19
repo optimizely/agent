@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019,2021,2023 Optimizely, Inc. and contributors               *
+ * Copyright 2019,2021,2023-2024 Optimizely, Inc. and contributors          *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -24,22 +24,20 @@ import (
 	"testing"
 	"time"
 
-	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/event"
-	"github.com/optimizely/go-sdk/pkg/odp/cache"
+	cmap "github.com/orcaman/concurrent-map"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 	"github.com/optimizely/agent/plugins/odpcache"
-	"github.com/optimizely/agent/plugins/userprofileservice"
-
-	cmap "github.com/orcaman/concurrent-map"
-	"github.com/stretchr/testify/suite"
-
 	odpCacheServices "github.com/optimizely/agent/plugins/odpcache/services"
+	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/agent/plugins/userprofileservice/services"
+	sdkconfig "github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/pkg/event"
+	"github.com/optimizely/go-sdk/pkg/odp/cache"
 )
 
 var counter int
@@ -112,7 +110,7 @@ func (suite *CacheTestSuite) TestNewCache() {
 	sdkMetricsRegistry := NewRegistry(agentMetricsRegistry)
 
 	// To improve coverage
-	optlyCache := NewCache(context.Background(), config.AgentConfig{}, sdkMetricsRegistry)
+	optlyCache := NewCache(context.Background(), config.AgentConfig{}, sdkMetricsRegistry, nil)
 	suite.NotNil(optlyCache)
 }
 
@@ -420,7 +418,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		},
 	}
 
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -474,7 +472,7 @@ func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 	tmpOdpCacheMap := cmap.New()
 	tmpOdpCacheMap.Set("sdkkey", "in-memory")
 
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, tmpUPSMap, tmpOdpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, tmpUPSMap, tmpOdpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -538,7 +536,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -596,7 +594,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.odpCache)
@@ -627,7 +625,7 @@ func (s *DefaultLoaderTestSuite) TestHttpClientInitializesByDefaultRestUPS() {
 			"rest": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -655,7 +653,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 			},
 		}},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -686,7 +684,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidODPCache() {
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -709,7 +707,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
@@ -726,7 +724,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyODPCache() {
 			SegmentsCache: map[string]interface{}{},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.odpCache)
@@ -743,7 +741,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 			"mock3": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
@@ -762,7 +760,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultODPCache() {
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.odpCache)

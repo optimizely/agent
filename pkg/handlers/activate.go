@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020,2023, Optimizely, Inc. and contributors                   *
+ * Copyright 2020,2023-2024 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -55,7 +55,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query()
-	oConf := optlyClient.GetOptimizelyConfig()
+	oConf := optlyClient.WithTraceContext(r.Context()).GetOptimizelyConfig()
 	decisions := make([]*optimizely.Decision, 0, len(oConf.ExperimentsMap)+len(oConf.FeaturesMap))
 	disableTracking := query.Get("disableTracking") == "true"
 

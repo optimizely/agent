@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020, Optimizely, Inc. and contributors                        *
+ * Copyright 2020,2024 Optimizely, Inc. and contributors                    *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -35,7 +35,7 @@ func OptimizelyConfig(w http.ResponseWriter, r *http.Request) {
 
 	logger := middleware.GetLogger(r)
 
-	conf := optlyClient.GetOptimizelyConfig()
+	conf := optlyClient.WithTraceContext(r.Context()).GetOptimizelyConfig()
 	logger.Info().Msg("Successfully returned OptimizelyConfig")
 	render.JSON(w, r, conf)
 }

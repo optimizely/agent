@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2020,2023, Optimizely, Inc. and contributors                   *
+ * Copyright 2020,2023-2024 Optimizely, Inc. and contributors               *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -28,6 +28,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/optimizely"
@@ -36,7 +38,6 @@ import (
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/optimizely/go-sdk/pkg/registry"
-	"github.com/stretchr/testify/suite"
 )
 
 type NotificationTestSuite struct {

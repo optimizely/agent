@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
+ * Copyright 2019-2020,2022-2024 Optimizely, Inc. and contributors          *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -21,12 +21,13 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+
 	optimizelyclient "github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
 	"github.com/optimizely/go-sdk/pkg/odp/cache"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
@@ -103,7 +104,7 @@ func (c *OptlyClient) TrackEvent(ctx context.Context, eventKey string, uc entiti
 		return tr, nil
 	}
 
-	if err := c.Track(eventKey, uc, eventTags); err != nil {
+	if err := c.WithTraceContext(ctx).Track(eventKey, uc, eventTags); err != nil {
 		return &Track{}, err
 	}
 
@@ -129,7 +130,7 @@ func (c *OptlyClient) SetForcedVariation(ctx context.Context, experimentKey, use
 
 	messages := make([]string, 0, 2)
 	// Check the entities exist as part of the Optimizely configuration
-	if optimizelyConfig := c.GetOptimizelyConfig(); optimizelyConfig == nil {
+	if optimizelyConfig := c.WithTraceContext(ctx).GetOptimizelyConfig(); optimizelyConfig == nil {
 		messages = append(messages, "override cannot be validated via configuration")
 	} else if experiment, ok := optimizelyConfig.ExperimentsMap[experimentKey]; !ok {
 		messages = append(messages, "experimentKey not found in configuration")
@@ -201,7 +202,7 @@ func (c *OptlyClient) ActivateFeature(ctx context.Context, key string, uc entiti
 	_, span := otel.Tracer("activateHandler").Start(ctx, "ActivateFeature")
 	defer span.End()
 
-	unsafeDecisionInfo, err := c.GetDetailedFeatureDecisionUnsafe(key, uc, disableTracking)
+	unsafeDecisionInfo, err := c.WithTraceContext(ctx).GetDetailedFeatureDecisionUnsafe(key, uc, disableTracking)
 	if err != nil {
 		return &Decision{}, err
 	}
@@ -234,9 +235,9 @@ func (c *OptlyClient) ActivateExperiment(ctx context.Context, key string, uc ent
 	var err error
 
 	if disableTracking {
-		variation, err = c.GetVariation(key, uc)
+		variation, err = c.WithTraceContext(ctx).GetVariation(key, uc)
 	} else {
-		variation, err = c.Activate(key, uc)
+		variation, err = c.WithTraceContext(ctx).Activate(key, uc)
 	}
 	if err != nil {
 		return &Decision{}, err

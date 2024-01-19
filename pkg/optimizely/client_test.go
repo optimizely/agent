@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2023 Optimizely, Inc. and contributors               *
+ * Copyright 2019-2020,2023-2024 Optimizely, Inc. and contributors          *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -22,16 +22,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/optimizely/go-sdk/pkg/client"
-	"github.com/optimizely/go-sdk/pkg/decision"
-	"github.com/optimizely/go-sdk/pkg/notification"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
-
+	"github.com/optimizely/go-sdk/pkg/client"
 	"github.com/optimizely/go-sdk/pkg/config"
+	"github.com/optimizely/go-sdk/pkg/decision"
 	"github.com/optimizely/go-sdk/pkg/entities"
-	"github.com/stretchr/testify/suite"
+	"github.com/optimizely/go-sdk/pkg/notification"
 )
 
 type ClientTestSuite struct {
