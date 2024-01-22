@@ -433,6 +433,14 @@ sys
 (c) 2009 The Go Authors
 License (BSD 3-Clause): https://github.com/golang/sys
 
+opentelemetry-go
+Copyright The OpenTelemetry Authors
+License (Apache-2.0): https://github.com/open-telemetry/opentelemetry-go
+
+prometheus client_golang
+Copyright 2015 The Prometheus Authors
+License (Apache-2.0): https://github.com/prometheus/client_golang
+
 ## Apache Copyright Notice
 
 Copyright 2019-present, Optimizely, Inc. and contributors

@@ -28,8 +28,8 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/middleware"
 	"github.com/optimizely/agent/pkg/syncer"
-	"github.com/optimizely/go-sdk/pkg/notification"
-	"github.com/optimizely/go-sdk/pkg/registry"
+	"github.com/optimizely/go-sdk/v2/pkg/notification"
+	"github.com/optimizely/go-sdk/v2/pkg/registry"
 	"github.com/rs/zerolog"
 )
 

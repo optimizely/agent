@@ -18,7 +18,7 @@
 package services
 
 import (
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 )
 
 // convertUserProfileToMap converts User Profile object to map

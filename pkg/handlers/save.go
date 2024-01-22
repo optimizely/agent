@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/optimizely/agent/pkg/middleware"
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 )
 
 type saveBody struct {

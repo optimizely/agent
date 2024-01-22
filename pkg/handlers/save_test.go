@@ -32,7 +32,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
 	userprofileservices "github.com/optimizely/agent/plugins/userprofileservice/services"
-	"github.com/optimizely/go-sdk/pkg/decision"
+	"github.com/optimizely/go-sdk/v2/pkg/decision"
 )
 
 type SaveTestSuite struct {

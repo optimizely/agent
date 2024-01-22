@@ -23,7 +23,7 @@ MAKEFLAGS += --silent
 # Use linker flags to strip debugging info from the binary.
 # -s Omit the symbol table and debug information.
 # -w Omit the DWARF symbol table.
-LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION} -X github.com/optimizely/go-sdk/pkg/event.ClientName=Agent -X github.com/optimizely/go-sdk/pkg/event.Version=${APP_VERSION}"
+LDFLAGS=-ldflags "-s -w -X main.Version=${APP_VERSION} -X github.com/optimizely/go-sdk/v2/pkg/event.ClientName=Agent -X github.com/optimizely/go-sdk/v2/pkg/event.Version=${APP_VERSION}"
 .PHONY: all lint clean
 
 all: test lint build ## runs the test, lint and build targets
