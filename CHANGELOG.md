@@ -30,21 +30,26 @@ For details, refer to our documentation pages:
 
 * [Configure Optimizely Agent](https://docs.developers.optimizely.com/feature-experimentation/docs/configure-optimizely-agent)
 
+This release also introduces a fundamental enhancement to the agent with the addition of a datafile syncer. This feature is designed to facilitate seamless synchronization of datafiles across agent nodes, ensuring consistency and accuracy in the operation of the webhook API.
+The datafile syncer uses a PubSub system (Default: Redis) to send updated datafile webhook notification to Agent nodes (in HA system) so that nodes can immediately fetch the latest datafile. ([#405](https://github.com/optimizely/agent/pull/405))
+
 ### Breaking Changes
 
 - ODPManager in the SDK is enabled by default. Unless an ODP account is integrated into the Optimizely projects, most ODPManager functions will be ignored. If needed, ODPManager can be disabled when OptimizelyClient is instantiated. From Agent, it can be switched off from config.yaml or env variables.
 - Updated go-sdk version to v2.0.0 with module path github.com/optimizely/go-sdk/v2
 
 ### Functionality Enhancement
+
 * Updated openapi schema to 3.1.0. ([#392](https://github.com/optimizely/agent/pull/392))
 * Added support for prometheus metrics. ([#348](https://github.com/optimizely/agent/pull/348))
 * Github Issue template is udpated. ([#396](https://github.com/optimizely/agent/pull/396))
 * Updated go version to 1.21. ([#398](https://github.com/optimizely/agent/pull/398))
 * Added OpenTelemetry Tracing Support. ([#400](https://github.com/optimizely/agent/pull/400))
-* Implemented notification consistency across agent nodes. ([#399](https://github.com/optimizely/agent/pull/399))
-* Added datafile syncer to synchronize datafile across agent nodes for webhook API. ([#405](https://github.com/optimizely/agent/pull/405))
 * Added traceID & spanID to logs. ([#407](https://github.com/optimizely/agent/pull/407))
 
+### Bug fixes
+
+In previous versions, there was an issue where the Notification API would miss notification events when the Agent was operating in HA mode. It only got notification events from one Agent node. The bug has been addressed in this release with the implementation of a comprehensive solution. A PubSub system (Default: Redis) is used to ensure consistent retrieval of notification events across all nodes in an HA setup. ([#399](https://github.com/optimizely/agent/pull/399))
 
 ## [3.2.0] - December 13, 2023
 
