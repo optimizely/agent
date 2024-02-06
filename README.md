@@ -238,8 +238,8 @@ This endpoint can used when placing Agent behind a load balancer to indicate whe
 
 The `/metrics` endpoint exposes telemetry data of the running Optimizely Agent.
 
-Currently Agent exposes two type of metrics data (expvar or prometheus) based on user's input. By default expvar metrics will be exposed. To configure this update config.yaml or
-setting the value of the environment variable `OPTIMIZELY_ADMIN_METRICSTYPE`. Supported values are `expvar` (default) & `promethues`.
+Currently, Agent exposes two type of metrics data (expvar or prometheus) based on user's input. By default, expvar metrics will be used. To configure this, update config.yaml or
+set the value of the environment variable `OPTIMIZELY_ADMIN_METRICSTYPE`. Supported values are `expvar` (default) & `promethues`.
 
 ```yaml
 ##
