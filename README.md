@@ -257,7 +257,7 @@ admin:
 
 #### Expvar metrics
 
-The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://go.dev/src/runtime/mstats.go) package.
+The core runtime metrics are exposed via the Go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://go.dev/src/runtime/mstats.go) package.
 
 Example Request:
 
