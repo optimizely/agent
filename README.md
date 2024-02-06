@@ -186,6 +186,29 @@ To accept webhook requests Agent must be configured by mapping an Optimizely Pro
 with the associated secret used for validating the inbound request. An example webhook configuration can
 be found in the the provided [config.yaml](./config.yaml).
 
+When running Agent in High Availability (HA) mode, it's important to ensure that all nodes are updated promptly when a webhook notification is received. By default, only one Agent node or instance will receive the webhook notification. A pubsub .
+
+Redis, a powerful in-memory data structure store, can be used as a relay to propagate the webhook event to all other nodes in the HA setup. This ensures that all nodes are notified about the event and can update their datafiles accordingly.
+
+To set up Redis as a relay, you need to configure the datafile syncer in your Optimizely Agent configuration. The datafile syncer uses the PubSub feature of Redis to publish the webhook notifications to all subscribed Agent nodes.
+
+Here's an example of how you can configure the datafile syncer with Redis:
+
+```yaml
+## synchronization should be enabled when features for multiple nodes like notification streaming are deployed
+synchronization:
+    pubsub:
+        redis:
+            host: "localhost:6379"
+            password: ""
+            database: 0
+    ## if datafile synchronization is enabled, then for each webhook API call
+    ## the datafile will be sent to all available replicas to achieve better eventual consistency
+    datafile:
+        enable: true
+        default: "redis"
+```
+
 ## Admin API
 
 The Admin API provides system information about the running process. This can be used to check the availability
