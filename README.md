@@ -309,7 +309,7 @@ Example Request:
 curl localhost:8088/metrics
 ```
 
-This will return a plain text response in the Prometheus Exposition Formats, which includes all the metrics that Prometheus is currently tracking.
+This will return a plain text response in the Prometheus Exposition Format, which includes all the metrics that Prometheus is currently tracking.
 
 Please note that you need to configure your Prometheus server to scrape metrics from this endpoint.
 
