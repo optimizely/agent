@@ -236,7 +236,28 @@ This endpoint can used when placing Agent behind a load balancer to indicate whe
 
 ### Metrics
 
-The `/metrics` endpoint exposes telemetry data of the running Optimizely Agent. The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://go.dev/src/runtime/mstats.go) package.
+The `/metrics` endpoint exposes telemetry data of the running Optimizely Agent.
+
+Currently Agent exposes two type of metrics data (expvar or prometheus) based on user's input. By default expvar metrics will be exposed. To configure this update config.yaml or
+setting the value of the environment variable `OPTIMIZELY_ADMIN_METRICSTYPE`. Supported values are `expvar` (default) & `promethues`.
+
+```yaml
+##
+## admin service configuration
+##
+admin:
+    ## http listener port
+    port: "8088"
+    ## metrics package to use
+    ## supported packages are expvar and prometheus
+    ## default is expvar
+    metricsType: ""
+    ## metricsType: "promethues" ## for prometheus metrics
+```
+
+#### Expvar metrics
+
+The core runtime metrics are exposed via the go expvar package. Documentation for the various statistics can be found as part of the [mstats](https://go.dev/src/runtime/mstats.go) package.
 
 Example Request:
 
@@ -274,6 +295,80 @@ Custom metrics are also provided for the individual service endpoints and follow
 "timers.<metric-name>.responseTimeHist.p90": 0,
 "timers.<metric-name>.responseTimeHist.p95": 0,
 "timers.<metric-name>.responseTimeHist.p99": 0,
+```
+
+#### Prometheus metrics
+
+Optimizely Agent also supports Prometheus metrics. Prometheus is an open-source systems for monitoring and alerting toolkit. You can use it to collect and visualize metrics in a time-series database.
+
+To access the Prometheus metrics, you can use the `/metrics` endpoint with a Prometheus server. The metrics are exposed in a format that Prometheus can scrape and aggregate.
+
+Example Request:
+
+```bash
+curl localhost:8088/metrics
+```
+
+This will return a plain text response in the Prometheus Exposition Formats, which includes all the metrics that Prometheus is currently tracking.
+
+Please note that you need to configure your Prometheus server to scrape metrics from this endpoint.
+
+For more information on how to use Prometheus for monitoring, you can refer to the [official Prometheus documentation](https://prometheus.io/docs/introduction/overview/).
+
+Example Response:
+
+```
+...
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total{code="200"} 1
+promhttp_metric_handler_requests_total{code="500"} 0
+promhttp_metric_handler_requests_total{code="503"} 0
+# HELP timer_decide_hits 
+# TYPE timer_decide_hits counter
+timer_decide_hits 1
+# HELP timer_decide_response_time 
+# TYPE timer_decide_response_time counter
+timer_decide_response_time 658.109
+# HELP timer_decide_response_time_hist 
+# TYPE timer_decide_response_time_hist histogram
+timer_decide_response_time_hist_bucket{le="0.005"} 0
+timer_decide_response_time_hist_bucket{le="0.01"} 0
+timer_decide_response_time_hist_bucket{le="0.025"} 0
+timer_decide_response_time_hist_bucket{le="0.05"} 0
+timer_decide_response_time_hist_bucket{le="0.1"} 0
+timer_decide_response_time_hist_bucket{le="0.25"} 0
+timer_decide_response_time_hist_bucket{le="0.5"} 0
+timer_decide_response_time_hist_bucket{le="1"} 0
+timer_decide_response_time_hist_bucket{le="2.5"} 0
+timer_decide_response_time_hist_bucket{le="5"} 0
+timer_decide_response_time_hist_bucket{le="10"} 0
+timer_decide_response_time_hist_bucket{le="+Inf"} 1
+timer_decide_response_time_hist_sum 658.109
+timer_decide_response_time_hist_count 1
+# HELP timer_track_event_hits 
+# TYPE timer_track_event_hits counter
+timer_track_event_hits 1
+# HELP timer_track_event_response_time 
+# TYPE timer_track_event_response_time counter
+timer_track_event_response_time 0.356334
+# HELP timer_track_event_response_time_hist 
+# TYPE timer_track_event_response_time_hist histogram
+timer_track_event_response_time_hist_bucket{le="0.005"} 0
+timer_track_event_response_time_hist_bucket{le="0.01"} 0
+timer_track_event_response_time_hist_bucket{le="0.025"} 0
+timer_track_event_response_time_hist_bucket{le="0.05"} 0
+timer_track_event_response_time_hist_bucket{le="0.1"} 0
+timer_track_event_response_time_hist_bucket{le="0.25"} 0
+timer_track_event_response_time_hist_bucket{le="0.5"} 1
+timer_track_event_response_time_hist_bucket{le="1"} 1
+timer_track_event_response_time_hist_bucket{le="2.5"} 1
+timer_track_event_response_time_hist_bucket{le="5"} 1
+timer_track_event_response_time_hist_bucket{le="10"} 1
+timer_track_event_response_time_hist_bucket{le="+Inf"} 1
+timer_track_event_response_time_hist_sum 0.356334
+timer_track_event_response_time_hist_count 1
+...
 ```
 
 ### Profiling
