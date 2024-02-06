@@ -299,7 +299,7 @@ Custom metrics are also provided for the individual service endpoints and follow
 
 #### Prometheus metrics
 
-Optimizely Agent also supports Prometheus metrics. Prometheus is an open-source systems for monitoring and alerting toolkit. You can use it to collect and visualize metrics in a time-series database.
+Optimizely Agent also supports Prometheus metrics. Prometheus is an open-source toolkit for monitoring and alerting. You can use it to collect and visualize metrics in a time-series database.
 
 To access the Prometheus metrics, you can use the `/metrics` endpoint with a Prometheus server. The metrics are exposed in a format that Prometheus can scrape and aggregate.
 
