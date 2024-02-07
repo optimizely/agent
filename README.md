@@ -186,7 +186,7 @@ To accept webhook requests Agent must be configured by mapping an Optimizely Pro
 with the associated secret used for validating the inbound request. An example webhook configuration can
 be found in the the provided [config.yaml](./config.yaml).
 
-When running Agent in High Availability (HA) mode, it's important to ensure that all nodes are updated promptly when a webhook notification is received. By default, only one Agent node or instance will receive the webhook notification. A pub-sub system can be used to ensure this.
+When running Agent in High Availability (HA) mode, it's important to ensure that all nodes are updated promptly when a webhook event (datafile updated) is received. By default, only one Agent node or instance will receive the webhook notification. A pub-sub system can be used to ensure this.
 
 Redis, a powerful in-memory data structure store, can be used as a relay to propagate the webhook event to all other nodes in the HA setup. This ensures that all nodes are notified about the event and can update their data files accordingly.
 
