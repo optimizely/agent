@@ -190,7 +190,7 @@ When running Agent in High Availability (HA) mode, it's important to ensure that
 
 Redis, a powerful in-memory data structure store, can be used as a relay to propagate the datafile webhook event to all other nodes in the HA setup. This ensures that all nodes are notified about the event and can update their datafiles accordingly.
 
-To set up Redis as a relay, you need to enable the data file synchronization in your Optimizely Agent configuration. The PubSub feature of Redis is used to publish the webhook notifications to all subscribed Agent nodes.
+To set up Redis as a relay, you need to enable the datafile synchronization in your Optimizely Agent configuration. The PubSub feature of Redis is used to publish the webhook notifications to all subscribed Agent nodes.
 
 Here's an example of how you can enable the datafile synchronization with Redis:
 
