@@ -187,8 +187,11 @@ with the associated secret used for validating the inbound request. An example w
 be found in the the provided [config.yaml](./config.yaml).
 
 When running Agent in High Availability (HA) mode, it's important to ensure that all nodes are updated promptly when a webhook notification is received. By default, only one Agent node or instance will receive the webhook notification. A pub-sub system can be used to ensure this.
+
 Redis, a powerful in-memory data structure store, can be used as a relay to propagate the webhook event to all other nodes in the HA setup. This ensures that all nodes are notified about the event and can update their data files accordingly.
+
 To set up Redis as a relay, you need to enable the data file synchronization in your Optimizely Agent configuration. The PubSub feature of Redis is used to publish the webhook notifications to all subscribed Agent nodes.
+
 Here's an example of how you can enable the datafile synchronization with Redis:
 
 ```yaml
