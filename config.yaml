@@ -179,7 +179,7 @@ client:
     sdkKeyRegex: "^\\w+(:\\w+)?$"
     ## configure optional User profile service
     userProfileService:
-      default: ""
+      default: "dynamodb"
       services:
         # in-memory: 
         #   capacity: 0
@@ -190,10 +190,10 @@ client:
         #   database: 0
         # dynamodb:
         #   iamRoleAccess: false
-        #    accessKeyID: "test"
-        #    secretAccessKey: "test"
-        #    region: "test"
-        #    host: "http://localhost:8000"
+        #   accessKeyID: "test"
+        #   secretAccessKey: "test"
+        #   region: "test"
+        #   host: "http://localhost:8000"
         # rest: 
         #   host: "http://localhost"
         #   lookupPath: "/ups/lookup"
