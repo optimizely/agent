@@ -179,7 +179,7 @@ client:
     sdkKeyRegex: "^\\w+(:\\w+)?$"
     ## configure optional User profile service
     userProfileService:
-      default: "dynamodb"
+      default: ""
       services:
         # in-memory: 
         #   capacity: 0
