@@ -31,9 +31,9 @@ type RedisUPSTestSuite struct {
 
 func (r *RedisUPSTestSuite) SetupTest() {
 	r.ups = RedisUserProfileService{
-		Address:  "100",
-		Password: "10",
-		Database: 1,
+		Address:  "localhost:6379",
+		Password: "",
+		Database: 0,
 	}
 }
 
@@ -41,9 +41,9 @@ func (r *RedisUPSTestSuite) TestFirstSaveOrLookupConfiguresClient() {
 	r.Nil(r.ups.Client)
 
 	profile := decision.UserProfile{
-		ID: "1",
+		ID: "userIDValue",
 		ExperimentBucketMap: map[decision.UserDecisionKey]string{
-			decision.NewUserDecisionKey("1"): "1",
+			decision.NewUserDecisionKey("experimentId"): "experimentIdValue",
 		},
 	}
 	// Should initialize redis client on first save call
@@ -53,6 +53,8 @@ func (r *RedisUPSTestSuite) TestFirstSaveOrLookupConfiguresClient() {
 	r.ups.Client = nil
 	// Should initialize redis client on first save call
 	r.ups.Lookup("")
+	profileRes := r.ups.Lookup("userIDValue")
+	r.NotNil(profileRes)
 	r.NotNil(r.ups.Client)
 }
 

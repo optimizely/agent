@@ -272,6 +272,8 @@ func defaultLoader(
 				clientUserProfileService = convertedUPS
 				clientOptions = append(clientOptions, client.WithUserProfileService(clientUserProfileService))
 			}
+		} else {
+			log.Info().Msg("No UPS config, rawUPS is NIL")
 		}
 
 		var clientODPCache odpCachePkg.Cache
@@ -320,7 +322,6 @@ func defaultLoader(
 }
 
 func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMap, serviceConf map[string]interface{}) interface{} {
-
 	intializeServiceWithName := func(serviceName string) interface{} {
 		if clientConfigMap, ok := serviceConf["services"].(map[string]interface{}); ok {
 			if serviceConfig, ok := clientConfigMap[serviceName].(map[string]interface{}); ok {

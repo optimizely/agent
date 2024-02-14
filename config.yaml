@@ -188,6 +188,12 @@ client:
         #   host: "localhost:6379"
         #   password: ""
         #   database: 0
+        # dynamodb:
+        #   iamRoleAccess: false
+        #    accessKeyID: "test"
+        #    secretAccessKey: "test"
+        #    region: "test"
+        #    host: "http://localhost:8000"
         # rest: 
         #   host: "http://localhost"
         #   lookupPath: "/ups/lookup"
