@@ -18,6 +18,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -25,12 +26,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/rs/zerolog/log"
+
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/jwtauth"
-
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/rs/zerolog/log"
 )
 
 func getNumberFromJSON(val interface{}) int64 {
@@ -108,7 +109,7 @@ type JWTVerifierURL struct {
 	jwksURL string
 
 	parser   *jwt.Parser
-	jwksKeys *jwk.Set
+	jwksKeys jwk.Set
 	jwksLock sync.RWMutex
 }
 
@@ -130,7 +131,7 @@ func (c *JWTVerifierURL) updateKeySet() error {
 	c.jwksLock.Lock()
 	defer c.jwksLock.Unlock()
 
-	set, err := jwk.Fetch(c.jwksURL)
+	set, err := jwk.Fetch(context.TODO(), c.jwksURL)
 	if err != nil {
 		return err
 	}
@@ -138,7 +139,7 @@ func (c *JWTVerifierURL) updateKeySet() error {
 	return nil
 }
 
-func (c *JWTVerifierURL) getKeySet() *jwk.Set {
+func (c *JWTVerifierURL) getKeySet() jwk.Set {
 	c.jwksLock.RLock()
 	defer c.jwksLock.RUnlock()
 	return c.jwksKeys
@@ -179,8 +180,9 @@ func (c *JWTVerifierURL) CheckToken(token string) (tk *jwt.Token, err error) {
 			return nil, errors.New("expecting JWT header to have string kid")
 		}
 
-		if key := set.LookupKeyID(keyID); len(key) == 1 {
-			return key[0].Materialize()
+		key, found := set.LookupKeyID(keyID)
+		if found {
+			return key, nil
 		}
 
 		return nil, fmt.Errorf("unable to find key %q", keyID)
