@@ -180,9 +180,13 @@ func (c *JWTVerifierURL) CheckToken(token string) (tk *jwt.Token, err error) {
 			return nil, errors.New("expecting JWT header to have string kid")
 		}
 
+		var rawKey interface{}
 		key, found := set.LookupKeyID(keyID)
 		if found {
-			return key, nil
+			if err := key.Raw(&rawKey); err != nil {
+				return nil, err
+			}
+			return rawKey, nil
 		}
 
 		return nil, fmt.Errorf("unable to find key %q", keyID)
