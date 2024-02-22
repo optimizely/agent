@@ -25,11 +25,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/optimizely/agent/config"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/optimizely/agent/config"
 )
 
 type OptlyClaims struct {
@@ -222,8 +222,8 @@ func (suite *AuthTestSuite) TestAuthValidCheckTokenFromValidJwks() {
 
 	auth.updateKeySet()
 	token, err := auth.CheckToken(tk)
-	suite.Equal(tk, token.Raw)
 	suite.NoError(err)
+	suite.Equal(tk, token.Raw)
 }
 
 func (suite *AuthTestSuite) TestAuthValidCheckTokenFromInvalidJwksURL() {
