@@ -74,7 +74,12 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	optimizelyUserContext := optlyClient.WithTraceContext(r.Context()).CreateUserContext(db.UserID, db.UserAttributes)
+	optimizelyUserContext := optlyClient.CreateUserContext(db.UserID, nil)
+	if optimizelyUserContext.UserID == "" {
+		err := errors.New("failed to create optimizely user context")
+		RenderError(err, http.StatusInternalServerError, w, r)
+		return
+	}
 
 	if db.FetchSegments {
 		success := optimizelyUserContext.FetchQualifiedSegments(db.FetchSegmentsOptions)
