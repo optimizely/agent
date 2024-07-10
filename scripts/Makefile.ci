@@ -1,20 +1,85 @@
 .DEFAULT_GOAL := help
 
+# To customize the version of the image, consider setting the value of the
+# APP_VERSION variable. For example, to use the current git revision as a
+# version, use:
+#
+# APP_VERSION:=$(shell git rev-parse HEAD)
+#
+# At the command line this would read, for example:
+#
+#   make \
+#     APP_VERSION=$(git rev-parse HEAD) \
+#     CONTAINERIZER=podman \
+#     ci_build_dockerimage_distroless
+
+# Make the image builder customizable so that we can use alternatives such as
+# podman to build these images.
+#
+# For example, in order to build the distroless image with podman, one can run
+#
+#   make APP_VERSION=4.0.0 CONTAINERIZER=podman ci_build_dockerimage_distroless
+CONTAINERIZER:=docker
+
+# The latest available version of Alpine from https://hub.docker.com/_/golang
+ALPINE_VERSION:=3.20
+
+# The latest release version of go to address security vulnerabilities.
+# See the latest version available at: https://hub.docker.com/_/golang
+GIMME_GO_VERSION:=1.22.5
+
+# Should one wish to have the agent image be deployed from a custom artifact
+# registry such as the Google Artifact Registry (GAR), one may want to
+# customize this tag prefix appropriately.
+IMAGE_TAG_PREFIX:="optimizely/agent"
+
 ci_build_static_binary: ## build static binary
 	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(GOBIN)/$(TARGET) cmd/optimizely/main.go
 
 ci_build_dockerimage: ## build minimal docker image of optimizely
-	docker build \
+	$(CONTAINERIZER) build \
 		-f scripts/dockerfiles/Dockerfile.static \
-		-t optimizely/agent:${APP_VERSION} \
-		-t optimizely/agent:latest \
+		-t "${IMAGE_TAG_PREFIX}:${APP_VERSION}" \
+		-t "${IMAGE_TAG_PREFIX}:latest" \
 		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
 		.
 
 ci_build_dockerimage_alpine: ## build alpine docker image of optimizely
-	docker build \
+	$(CONTAINERIZER) build \
 	  -f scripts/dockerfiles/Dockerfile.alpine \
-		-t optimizely/agent:${APP_VERSION}-alpine \
-		-t optimizely/agent:alpine \
+		-t "${IMAGE_TAG_PREFIX}:${APP_VERSION}-alpine" \
+		-t "${IMAGE_TAG_PREFIX}:alpine" \
+		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
+		--build-arg ALPINE_VERSION=${ALPINE_VERSION:.x=} \
+		.
+
+# Distroless images are tiny, have small attack surface, and security-oriented
+# deployments may consider using them.
+#
+# For more information about distroless, please see:
+# https://github.com/GoogleContainerTools/distroless
+ci_build_dockerimage_distroless: ## build distroless image of optimizely
+	$(CONTAINERIZER) build \
+		-f scripts/dockerfiles/Dockerfile.distroless \
+		-t "${IMAGE_TAG_PREFIX}:${APP_VERSION}-distroless" \
+		-t "${IMAGE_TAG_PREFIX}:distroless" \
 		--build-arg GO_VERSION=${GIMME_GO_VERSION:.x=} \
 		.
+
+# PHONY target to build all of the above container images.
+_ci_build_dockerimage_all: ci_build_dockerimage ci_build_dockerimage_alpine ci_build_dockerimage_distroless
+ci_build_dockerimage_all: _ci_build_dockerimage_all ## build all container images
+
+push_image: ## push container image
+	$(CONTAINERIZER) push "${IMAGE_TAG_PREFIX}:${APP_VERSION}"
+	$(CONTAINERIZER) push "${IMAGE_TAG_PREFIX}:latest"
+
+push_image_alpine:  ## push alpine container image
+	$(CONTAINERIZER) push "${IMAGE_TAG_PREFIX}:${APP_VERSION}-alpine"
+	$(CONTAINERIZER) push "${IMAGE_TAG_PREFIX}:alpine"
+
+push_image_distroless: ## push distroless container image
+	$(CONTAINERIZER) push "${IMAGE_TAG_PREFIX}:${APP_VERSION}-distroless"
+	$(CONTAINERIZER) push "${IMAGE_TAG_PREFIX}:distroless"
+
+push_all_images: push_image push_image_alpine push_image_distroless  ## push all container images
