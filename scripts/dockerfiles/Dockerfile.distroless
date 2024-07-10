@@ -1,0 +1,16 @@
+ARG GO_VERSION
+FROM golang:${GO_VERSION} as builder
+RUN addgroup -u 1000 agentgroup && \
+    useradd -u 1000 agentuser -g agentgroup
+WORKDIR /go/src/github.com/optimizely/agent
+COPY . .
+RUN make setup build && \
+    make ci_build_static_binary
+
+FROM gcr.io/distroless/static:nonroot
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /go/src/github.com/optimizely/agent/bin/optimizely /optimizely
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
+USER agentuser:agentgroup
+ENTRYPOINT ["/optimizely"]
