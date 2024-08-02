@@ -38,7 +38,7 @@ tracing:
     enabled: false
     # opentelemetry tracing configuration
     opentelemetry:
-        ## bydefault stdout exporter is enabled
+        ## bydefault stdout exporter is enabled (test)
         ## to enable remote exporter set default as "remote"
         default: "stdout"
         ## tracing service name
