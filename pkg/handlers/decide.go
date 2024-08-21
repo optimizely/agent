@@ -123,7 +123,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
-		decideOut := DecideOut{d, d.Variables.ToMap(), IsEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
+		decideOut := DecideOut{d, d.Variables.ToMap(), isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
 		render.JSON(w, r, decideOut)
 		return
 	default:
@@ -133,7 +133,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 
 	decideOuts := []DecideOut{}
 	for _, d := range decides {
-		decideOut := DecideOut{d, d.Variables.ToMap(), IsEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
+		decideOut := DecideOut{d, d.Variables.ToMap(), isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
 		decideOuts = append(decideOuts, decideOut)
 		logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 	}
@@ -154,7 +154,7 @@ func getUserContextWithOptions(r *http.Request) (DecideBody, error) {
 	return body, nil
 }
 
-func IsEveryoneElseVariation(rules []config.OptimizelyExperiment, ruleKey string) bool {
+func isEveryoneElseVariation(rules []config.OptimizelyExperiment, ruleKey string) bool {
 	for _, r := range rules {
 		if r.Key == ruleKey {
 			return r.Key == r.ID && strings.HasPrefix(r.Key, DefaultRolloutPrefix)

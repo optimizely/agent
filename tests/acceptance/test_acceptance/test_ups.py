@@ -25,6 +25,7 @@ def test_ups__feature(session_obj):
         {
           "variationKey": "variation_1",
           "enabled": true,
+          "isEveryoneElseVariation": False,
           "ruleKey": "feature_2_test",
           "flagKey": "feature_2",
           "userContext": {
@@ -98,6 +99,7 @@ def test_ups__save(session_obj):
             "variationKey": "variation_2",
             "enabled": true,
             "ruleKey": "feature_2_test",
+            "isEveryoneElseVariation": False,
             "flagKey": "feature_2",
             "userContext": {
                 "userId": "user1",
@@ -186,7 +188,8 @@ def test_ups__save_with_invalid_payload(session_obj):
                     "attr_1": "hola"
                 }
             },
-            "reasons": []
+            "reasons": [],
+            "isEveryoneElseVariation": False
         }
     """
 

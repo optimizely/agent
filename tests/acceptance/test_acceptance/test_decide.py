@@ -12,6 +12,7 @@ expected_forced_decision_without_rule_key = {
     "enabled": True,
     "ruleKey": "",
     "flagKey": "feature_2",
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -26,6 +27,7 @@ expected_forced_decision_with_rule_key = {
     "enabled": True,
     "ruleKey": "feature_2_test",
     "flagKey": "feature_2",
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -43,6 +45,7 @@ expected_single_flag_key_with_ups = r"""
       "enabled": true,
       "ruleKey": "feature_2_test",
       "flagKey": "feature_2",
+      "isEveryoneElseVariation": False,
       "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -59,6 +62,7 @@ expected_single_flag_key_no_ups = r"""
       "enabled": true,
       "ruleKey": "feature_2_test",
       "flagKey": "feature_2",
+      "isEveryoneElseVariation": False,
       "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -75,6 +79,7 @@ expected_invalid_flag_key = r"""
       "enabled": false,
       "ruleKey": "",
       "flagKey": "invalid_flag_key",
+      "isEveryoneElseVariation": False,
       "userContext": {
         "userId": "matjaz",
         "attributes": {
