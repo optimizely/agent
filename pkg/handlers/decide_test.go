@@ -124,17 +124,21 @@ func (suite *DecideTestSuite) TestDecideWithFeatureTest() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "2",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "2",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -152,17 +156,21 @@ func (suite *DecideTestSuite) TestTrackWithFeatureRollout() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "3",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "3",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -206,17 +214,21 @@ func (suite *DecideTestSuite) TestInvalidForcedDecisions() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "2",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "2",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -265,17 +277,21 @@ func (suite *DecideTestSuite) TestForcedDecisionWithFeatureTest() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "4",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "4",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -323,17 +339,21 @@ func (suite *DecideTestSuite) TestForcedDecisionFeatureRollout() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "4",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "4",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -369,17 +389,21 @@ func (suite *DecideTestSuite) TestForcedDecisionWithInvalidVariationKey() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "3",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "3",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -416,17 +440,21 @@ func (suite *DecideTestSuite) TestForcedDecisionWithEmptyRuleKey() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "",
-		Enabled:      true,
-		VariationKey: "4",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "",
+			Enabled:      true,
+			VariationKey: "4",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -444,18 +472,23 @@ func (suite *DecideTestSuite) TestTrackWithFeatureTest() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "one",
-		RuleKey:      "1",
-		Enabled:      true,
-		VariationKey: "2",
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "one",
+			RuleKey:      "1",
+			Enabled:      true,
+			VariationKey: "2",
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
+
 	suite.Equal(expected, actual)
 
 	events := suite.tc.GetProcessedEvents()
@@ -473,17 +506,21 @@ func (suite *DecideTestSuite) TestDecideMissingFlag() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err := json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
-		FlagKey:      "feature-missing",
-		RuleKey:      "",
-		Enabled:      false,
-		VariationKey: "",
-		Reasons:      []string{"No flag was found for key \"feature-missing\"."},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: "testUser", Attributes: map[string]interface{}{}},
+			FlagKey:      "feature-missing",
+			RuleKey:      "",
+			Enabled:      false,
+			VariationKey: "",
+			Reasons:      []string{"No flag was found for key \"feature-missing\"."},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(0, len(suite.tc.GetProcessedEvents()))
@@ -514,7 +551,8 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 				VariationKey: "3",
 				Reasons:      []string{},
 			},
-			Variables: nil,
+			Variables:               nil,
+			IsEveryoneElseVariation: false,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -525,7 +563,8 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 				VariationKey: "6",
 				Reasons:      []string{},
 			},
-			Variables: nil,
+			Variables:               nil,
+			IsEveryoneElseVariation: false,
 		},
 	}
 
@@ -573,7 +612,8 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 				VariationKey: "3",
 				Reasons:      []string{},
 			},
-			Variables: nil,
+			Variables:               nil,
+			IsEveryoneElseVariation: false,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -584,7 +624,8 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 				VariationKey: "6",
 				Reasons:      []string{},
 			},
-			Variables: nil,
+			Variables:               nil,
+			IsEveryoneElseVariation: false,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -595,7 +636,8 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 				VariationKey: "13",
 				Reasons:      []string{},
 			},
-			Variables: map[string]interface{}{"strvar": "abc_notdef"},
+			Variables:               map[string]interface{}{"strvar": "abc_notdef"},
+			IsEveryoneElseVariation: false,
 		},
 	}
 
@@ -703,17 +745,21 @@ func DecideWithFetchSegments(suite *DecideTestSuite, userID string, fetchSegment
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	var actual client.OptimizelyDecision
+	var actual DecideOut
 	err = json.Unmarshal(rec.Body.Bytes(), &actual)
 	suite.NoError(err)
 
-	expected := client.OptimizelyDecision{
-		UserContext:  client.OptimizelyUserContext{UserID: userID, Attributes: map[string]interface{}{}},
-		FlagKey:      featureKey,
-		RuleKey:      experimentKey,
-		Enabled:      true,
-		VariationKey: variationKey,
-		Reasons:      []string{},
+	expected := DecideOut{
+		OptimizelyDecision: client.OptimizelyDecision{
+			UserContext:  client.OptimizelyUserContext{UserID: userID, Attributes: map[string]interface{}{}},
+			FlagKey:      featureKey,
+			RuleKey:      experimentKey,
+			Enabled:      true,
+			VariationKey: variationKey,
+			Reasons:      []string{},
+		},
+		Variables:               nil,
+		IsEveryoneElseVariation: false,
 	}
 
 	suite.Equal(expected, actual)
