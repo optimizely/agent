@@ -156,10 +156,13 @@ expected_flag_keys_with_ups = r"""[
   {
     "variationKey": "16925940659",
     "enabled": true,
-    "ruleKey": "16939051724",
+    "ruleKey": "default-16943340293",
     "flagKey": "feature_4",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
-      "reasons": ["Audiences for experiment 16939051724 collectively evaluated to true."]},
+      "reasons": [
+        "Audiences for experiment default-16943340293 collectively evaluated to true.",
+        "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
+      ]},
   {
     "variationKey": "variation_1",
     "enabled": true,
@@ -177,10 +180,13 @@ expected_flag_keys_with_ups = r"""[
   {
     "variationKey": "16927890136",
     "enabled": true,
-    "ruleKey": "16932940705",
+    "ruleKey": "default-16917103311",
     "flagKey": "feature_5",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
-    "reasons": ["Audiences for experiment 16932940705 collectively evaluated to true."]},
+    "reasons": [
+      "Audiences for experiment default-16917103311 collectively evaluated to true.",
+      "User \"matjaz\" meets conditions for targeting rule \"Everyone Else\"."
+    ]},
   {
     "variationKey": "16906801184",
     "enabled": true,
