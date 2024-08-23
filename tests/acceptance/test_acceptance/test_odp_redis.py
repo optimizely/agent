@@ -14,7 +14,7 @@ expected_redis_save = {
     "enabled": True,
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
-    "isEveryoneElseVariation": false,
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz-user-1",
         "attributes": {}
@@ -27,7 +27,7 @@ expected_redis_lookup = {
     "enabled": True,
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
-    "isEveryoneElseVariation": false,
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz-user-2",
         "attributes": {}
@@ -40,7 +40,7 @@ expected_redis_reset = {
     "enabled": True,
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
-    "isEveryoneElseVariation": false,
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz-user-4",
         "attributes": {}

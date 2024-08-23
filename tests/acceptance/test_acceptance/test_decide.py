@@ -12,7 +12,7 @@ expected_forced_decision_without_rule_key = {
     "enabled": True,
     "ruleKey": "",
     "flagKey": "feature_2",
-    "isEveryoneElseVariation": false,
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -27,7 +27,7 @@ expected_forced_decision_with_rule_key = {
     "enabled": True,
     "ruleKey": "feature_2_test",
     "flagKey": "feature_2",
-    "isEveryoneElseVariation": false,
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz",
         "attributes": {
