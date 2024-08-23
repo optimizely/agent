@@ -189,7 +189,7 @@ def test_ups__save_with_invalid_payload(session_obj):
                 }
             },
             "reasons": [],
-            "isEveryoneElseVariation": False
+            "isEveryoneElseVariation": false
         }
     """
 
