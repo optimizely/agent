@@ -223,7 +223,7 @@ expected_activate_type_feat = """[
   {
     "userId": "matjaz",
     "experimentKey": "ab_test1",
-    "featureKey": "flag_ab_test1",
+    "featureKey": "GkbzTurBWXr8EtNGZj2j6e",
     "variationKey": "variation_1",
     "type": "feature",
     "enabled": true
