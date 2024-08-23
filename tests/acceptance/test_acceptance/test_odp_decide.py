@@ -12,6 +12,7 @@ expected_fetch_disabled = {
     "enabled": False,
     "ruleKey": "default-rollout-52207-23726430538",
     "flagKey": "flag1",
+    "isEveryoneElseVariation": True,
     "userContext": {
         "userId": "matjaz-user-1",
         "attributes": {}
@@ -28,6 +29,7 @@ expected_no_segments_fetched = {
     "enabled": False,
     "ruleKey": "default-rollout-52207-23726430538",
     "flagKey": "flag1",
+    "isEveryoneElseVariation": True,
     "userContext": {
         "userId": "test_user",
         "attributes": {}
@@ -44,6 +46,7 @@ expected_fetch_enabled = {
     "enabled": True,
     "ruleKey": "ab_experiment",
     "flagKey": "flag1",
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz-user-1",
         "attributes": {}
@@ -56,6 +59,7 @@ expected_fetch_enabled_default_rollout = {
     "enabled": False,
     "ruleKey": "default-rollout-52231-23726430538",
     "flagKey": "flag2",
+    "isEveryoneElseVariation": True,
     "userContext": {
         "userId": "matjaz-user-1",
         "attributes": {}

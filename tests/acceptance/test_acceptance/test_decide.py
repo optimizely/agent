@@ -12,6 +12,7 @@ expected_forced_decision_without_rule_key = {
     "enabled": True,
     "ruleKey": "",
     "flagKey": "feature_2",
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -26,6 +27,7 @@ expected_forced_decision_with_rule_key = {
     "enabled": True,
     "ruleKey": "feature_2_test",
     "flagKey": "feature_2",
+    "isEveryoneElseVariation": False,
     "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -43,6 +45,7 @@ expected_single_flag_key_with_ups = r"""
       "enabled": true,
       "ruleKey": "feature_2_test",
       "flagKey": "feature_2",
+      "isEveryoneElseVariation": false,
       "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -59,6 +62,7 @@ expected_single_flag_key_no_ups = r"""
       "enabled": true,
       "ruleKey": "feature_2_test",
       "flagKey": "feature_2",
+      "isEveryoneElseVariation": false,
       "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -75,6 +79,7 @@ expected_invalid_flag_key = r"""
       "enabled": false,
       "ruleKey": "",
       "flagKey": "invalid_flag_key",
+      "isEveryoneElseVariation": false,
       "userContext": {
         "userId": "matjaz",
         "attributes": {
@@ -157,6 +162,7 @@ expected_flag_keys_with_ups = r"""[
     "variationKey": "16925940659",
     "enabled": true,
     "ruleKey": "default-16943340293",
+    "isEveryoneElseVariation": true,
     "flagKey": "feature_4",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": [
@@ -167,6 +173,7 @@ expected_flag_keys_with_ups = r"""[
     "variationKey": "variation_1",
     "enabled": true,
     "ruleKey": "ab_test1",
+    "isEveryoneElseVariation": false,
     "flagKey": "GkbzTurBWXr8EtNGZj2j6e",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"ab_test1\"."]},
@@ -174,6 +181,7 @@ expected_flag_keys_with_ups = r"""[
     "variationKey": "variation_1",
     "enabled": true,
     "ruleKey": "feature_2_test",
+    "isEveryoneElseVariation": false,
     "flagKey": "feature_2",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
     "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"feature_2_test\"."]},
@@ -181,6 +189,7 @@ expected_flag_keys_with_ups = r"""[
     "variationKey": "16927890136",
     "enabled": true,
     "ruleKey": "default-16917103311",
+    "isEveryoneElseVariation": true,
     "flagKey": "feature_5",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
     "reasons": [
@@ -191,6 +200,7 @@ expected_flag_keys_with_ups = r"""[
     "variationKey": "16906801184",
     "enabled": true,
     "ruleKey": "16941022436",
+    "isEveryoneElseVariation": false,
     "flagKey": "feature_1",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
     "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
@@ -203,6 +213,7 @@ expected_flag_key__multiple_parameters_with_ups = r"""[
       "variationKey": "16906801184",
       "enabled": true,
       "ruleKey": "16941022436",
+      "isEveryoneElseVariation": false,
       "flagKey": "feature_1",
         "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
@@ -211,6 +222,7 @@ expected_flag_key__multiple_parameters_with_ups = r"""[
       "variationKey": "variation_1",
       "enabled": true,
       "ruleKey": "feature_2_test",
+      "isEveryoneElseVariation": false,
       "flagKey": "feature_2",
         "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"feature_2_test\"."]},
@@ -218,6 +230,7 @@ expected_flag_key__multiple_parameters_with_ups = r"""[
       "variationKey": "16925940659",
       "enabled": true,
       "ruleKey": "default-16943340293",
+      "isEveryoneElseVariation": true,
       "flagKey": "feature_4",
         "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": [
@@ -228,6 +241,7 @@ expected_flag_key__multiple_parameters_with_ups = r"""[
       "variationKey": "16927890136",
       "enabled": true,
       "ruleKey": "default-16917103311",
+      "isEveryoneElseVariation": true,
       "flagKey": "feature_5",
         "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": [
@@ -242,6 +256,7 @@ expected_flag_keys_no_ups = r"""[
     "variationKey": "16925940659",
     "enabled": true,
     "ruleKey": "16939051724",
+    "isEveryoneElseVariation": false,
     "flagKey": "feature_4",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": ["Audiences for experiment 16939051724 collectively evaluated to true."]},
@@ -249,6 +264,7 @@ expected_flag_keys_no_ups = r"""[
     "variationKey": "variation_1",
     "enabled": true,
     "ruleKey": "ab_test1",
+    "isEveryoneElseVariation": false,
     "flagKey": "GkbzTurBWXr8EtNGZj2j6e",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": ["Audiences for experiment ab_test1 collectively evaluated to true."]},
@@ -256,6 +272,7 @@ expected_flag_keys_no_ups = r"""[
     "variationKey": "variation_1",
     "enabled": true,
     "ruleKey": "feature_2_test",
+    "isEveryoneElseVariation": false,
     "flagKey": "feature_2",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
     "reasons": ["Audiences for experiment feature_2_test collectively evaluated to true."]},
@@ -263,6 +280,7 @@ expected_flag_keys_no_ups = r"""[
     "variationKey": "16927890136",
     "enabled": true,
     "ruleKey": "16932940705",
+    "isEveryoneElseVariation": false,
     "flagKey": "feature_5",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
     "reasons": ["Audiences for experiment 16932940705 collectively evaluated to true."]},
@@ -270,6 +288,7 @@ expected_flag_keys_no_ups = r"""[
     "variationKey": "16906801184",
     "enabled": true,
     "ruleKey": "16941022436",
+    "isEveryoneElseVariation": false,
     "flagKey": "feature_1",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
     "reasons": ["Audiences for experiment 16941022436 collectively evaluated to true."],
