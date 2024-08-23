@@ -496,7 +496,7 @@ expected_activate_with_config = """[
   {
     "enabled": true,
     "experimentKey": "ab_test1",
-    "featureKey": "flag_ab_test1",
+    "featureKey": "GkbzTurBWXr8EtNGZj2j6e",
     "type": "feature",
     "userId": "matjaz",
     "variationKey": "variation_1"
