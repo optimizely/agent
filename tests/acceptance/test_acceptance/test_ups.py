@@ -25,7 +25,7 @@ def test_ups__feature(session_obj):
         {
           "variationKey": "variation_1",
           "enabled": true,
-          "isEveryoneElseVariation": False,
+          "isEveryoneElseVariation": false,
           "ruleKey": "feature_2_test",
           "flagKey": "feature_2",
           "userContext": {
@@ -99,7 +99,7 @@ def test_ups__save(session_obj):
             "variationKey": "variation_2",
             "enabled": true,
             "ruleKey": "feature_2_test",
-            "isEveryoneElseVariation": False,
+            "isEveryoneElseVariation": false,
             "flagKey": "feature_2",
             "userContext": {
                 "userId": "user1",

@@ -32,7 +32,7 @@ import (
 	"github.com/optimizely/go-sdk/v2/pkg/odp/segment"
 )
 
-const DefaultRolloutPrefix = "default-rollout-"
+const DefaultRolloutPrefix = "default-"
 
 // DecideBody defines the request body for decide API
 type DecideBody struct {
@@ -102,15 +102,10 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		keys = r.Form["keys"]
 	}
 
+	featureMap := make(map[string]config.OptimizelyFeature)
 	cfg := optlyClient.GetOptimizelyConfig()
-	if cfg == nil {
-		RenderError(errors.New("optimizely config not found"), http.StatusInternalServerError, w, r)
-		return
-	}
-	featureMap := cfg.FeaturesMap
-	if featureMap == nil {
-		RenderError(errors.New("features not found in config"), http.StatusInternalServerError, w, r)
-		return
+	if cfg != nil {
+		featureMap = cfg.FeaturesMap
 	}
 
 	var decides map[string]client.OptimizelyDecision
