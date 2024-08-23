@@ -1,6 +1,6 @@
 datafile = {
     "accountId": "10845721364",
-    "anonymizeIP": "true",
+    "anonymizeIP": True,
     "attributes": [
         {
             "id": "16921322086",
@@ -19,7 +19,7 @@ datafile = {
             "name": "Optimizely-Generated Audience for Backwards Compatibility"
         }
     ],
-    "botFiltering": "false",
+    "botFiltering": False,
     "environmentKey": "production",
     "events": [
         {
@@ -57,13 +57,13 @@ datafile = {
             ],
             "variations": [
                 {
-                    "featureEnabled": "true",
+                    "featureEnabled": True,
                     "id": "16925360560",
                     "key": "variation_1",
                     "variables": []
                 },
                 {
-                    "featureEnabled": "true",
+                    "featureEnabled": True,
                     "id": "16915611472",
                     "key": "variation_2",
                     "variables": []
@@ -107,13 +107,13 @@ datafile = {
             ],
             "variations": [
                 {
-                    "featureEnabled": "true",
+                    "featureEnabled": True,
                     "id": "16905941566",
                     "key": "variation_1",
                     "variables": []
                 },
                 {
-                    "featureEnabled": "true",
+                    "featureEnabled": True,
                     "id": "16927770169",
                     "key": "variation_2",
                     "variables": []
@@ -162,7 +162,7 @@ datafile = {
                     "type": "double"
                 },
                 {
-                    "defaultValue": "true",
+                    "defaultValue": True,
                     "id": "16932993089",
                     "key": "bool_var",
                     "type": "boolean"
@@ -217,7 +217,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "false",
+                            "featureEnabled": False,
                             "id": "471185",
                             "key": "off",
                             "variables": []
@@ -245,7 +245,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "true",
+                            "featureEnabled": True,
                             "id": "16925940659",
                             "key": "16925940659",
                             "variables": []
@@ -273,7 +273,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "true",
+                            "featureEnabled": True,
                             "id": "16927890136",
                             "key": "16927890136",
                             "variables": []
@@ -306,7 +306,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "true",
+                            "featureEnabled": True,
                             "id": "16906801184",
                             "key": "16906801184",
                             "variables": [
@@ -320,7 +320,7 @@ datafile = {
                                 },
                                 {
                                     "id": "16932993089",
-                                    "value": "true"
+                                    "value": True
                                 },
                                 {
                                     "id": "16937161477",
@@ -346,7 +346,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "false",
+                            "featureEnabled": False,
                             "id": "471188",
                             "key": "off",
                             "variables": [
@@ -360,7 +360,7 @@ datafile = {
                                 },
                                 {
                                     "id": "16932993089",
-                                    "value": "true"
+                                    "value": True
                                 },
                                 {
                                     "id": "16937161477",
@@ -396,7 +396,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "true",
+                            "featureEnabled": True,
                             "id": "16931381940",
                             "key": "16931381940",
                             "variables": []
@@ -419,7 +419,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "false",
+                            "featureEnabled": False,
                             "id": "471189",
                             "key": "off",
                             "variables": []
@@ -447,7 +447,7 @@ datafile = {
                     ],
                     "variations": [
                         {
-                            "featureEnabled": "false",
+                            "featureEnabled": False,
                             "id": "471190",
                             "key": "off",
                             "variables": []
