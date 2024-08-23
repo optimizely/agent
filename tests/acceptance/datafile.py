@@ -162,7 +162,7 @@ datafile = {
                     "type": "double"
                 },
                 {
-                    "defaultValue": True,
+                    "defaultValue": "true",
                     "id": "16932993089",
                     "key": "bool_var",
                     "type": "boolean"
@@ -320,7 +320,7 @@ datafile = {
                                 },
                                 {
                                     "id": "16932993089",
-                                    "value": True
+                                    "value": "true"
                                 },
                                 {
                                     "id": "16937161477",
@@ -360,7 +360,7 @@ datafile = {
                                 },
                                 {
                                     "id": "16932993089",
-                                    "value": True
+                                    "value": "true"
                                 },
                                 {
                                     "id": "16937161477",
