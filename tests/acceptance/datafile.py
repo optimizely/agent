@@ -1,6 +1,6 @@
 datafile = {
     "accountId": "10845721364",
-    "anonymizeIP": ""true"",
+    "anonymizeIP": "true",
     "attributes": [
         {
             "id": "16921322086",
@@ -19,7 +19,7 @@ datafile = {
             "name": "Optimizely-Generated Audience for Backwards Compatibility"
         }
     ],
-    "botFiltering": ""false"",
+    "botFiltering": "false",
     "environmentKey": "production",
     "events": [
         {
@@ -162,7 +162,7 @@ datafile = {
                     "type": "double"
                 },
                 {
-                    "defaultValue": ""true"",
+                    "defaultValue": "true",
                     "id": "16932993089",
                     "key": "bool_var",
                     "type": "boolean"
@@ -320,7 +320,7 @@ datafile = {
                                 },
                                 {
                                     "id": "16932993089",
-                                    "value": ""true""
+                                    "value": "true"
                                 },
                                 {
                                     "id": "16937161477",
@@ -360,7 +360,7 @@ datafile = {
                                 },
                                 {
                                     "id": "16932993089",
-                                    "value": ""true""
+                                    "value": "true"
                                 },
                                 {
                                     "id": "16937161477",
