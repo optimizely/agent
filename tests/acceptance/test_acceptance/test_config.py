@@ -375,7 +375,7 @@ expected_config = """{
         {
             "id": "16902921321",
             "name": "\\"Audience1\\"",
-            'conditions': '["and", ["or", ["or", {"match": "exact", "name": "attr_1", "type": "custom_attribute", "value": "hola"}]]]'
+            "conditions": "[\\"and\\", [\\"or\\", [\\"or\\", {\\"match\\": \\"exact\\", \\"name\\": \\"attr_1\\", \\"type\\": \\"custom_attribute\\", \\"value\\": \\"hola\\"}]]]"
         }
     ],
     "events": [
