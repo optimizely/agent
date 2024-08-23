@@ -164,7 +164,7 @@ expected_flag_keys_with_ups = r"""[
     "variationKey": "variation_1",
     "enabled": true,
     "ruleKey": "ab_test1",
-    "flagKey": "flag_ab_test1",
+    "flagKey": "GkbzTurBWXr8EtNGZj2j6e",
       "userContext": {"userId": "matjaz", "attributes": {"attr_1": "hola"}},
       "reasons": ["User \"matjaz\" was previously bucketed into variation \"variation_1\" of experiment \"ab_test1\"."]},
   {
