@@ -157,7 +157,8 @@ odp_datafile = {
         {
             "publicKey": "ax6UV2223fD-jpOXID0BMg",
             "host": "https://api.zaius.com",
-            "key": "odp"
+            "key": "odp",
+            "pixelUrl": "https://jumbe.zaius.com",
         }
     ],
     "experiments": [
@@ -242,5 +243,5 @@ odp_datafile = {
             "key": "myevent"
         }
     ],
-    "revision": "18"
+    "revision": "19"
 }
