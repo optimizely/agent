@@ -107,7 +107,6 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
-		logger.Info().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		render.JSON(w, r, decideOut)
 		return
@@ -120,7 +119,7 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	for _, d := range decides {
 		decideOut := DecideOut{d, d.Variables.ToMap()}
 		decideOuts = append(decideOuts, decideOut)
-		logger.Info().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+		logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 	}
 	render.JSON(w, r, decideOuts)
 }
