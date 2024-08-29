@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.0.0] - January 22, 2023
+## [4.1.0] - August 29, 2024
+
+### New Features
+
+- Moderate & high CVEs are fixed. ([#414](https://github.com/optimizely/agent/pull/414),[#416](https://github.com/optimizely/agent/pull/416))
+- Log levels are changed to `Debug` and redundant info logs are removed to make `/decide` API call less noisy. ([#420](https://github.com/optimizely/agent/pull/420))
+- `isEveryoneElseVariation` field is added in `/decide` API response. ([#422](https://github.com/optimizely/agent/pull/422))
+
+## [4.0.0] - January 22, 2024
 
 ### New Features
 
