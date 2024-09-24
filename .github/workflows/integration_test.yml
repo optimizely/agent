@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      HEAD_REF: ${{ github.head_ref }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -20,11 +22,11 @@ jobs:
     - name: set SDK Branch if PR
       if: ${{ github.event_name == 'pull_request' }}
       run: |
-        echo "SDK_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+        echo "SDK_BRANCH=$HEAD_REF" >> $GITHUB_ENV
     - name: set SDK Branch if not pull request
       if: ${{ github.event_name != 'pull_request' }}
       run: |
-        echo "SDK_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "SDK_BRANCH=$HEAD_REF" >> $GITHUB_ENV
     - name: Trigger build
       env:
         SDK: agent
