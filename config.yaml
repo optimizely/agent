@@ -170,6 +170,7 @@ client:
     ## the maximum time between events being dispatched
     flushInterval: 30s
     ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
+    ## For secure environments, the datafileURLTemplate should be set to "https://config.optimizely.com/datafiles/auth/%s.json"
     datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
     ## URL for dispatching events.
     eventURL: "https://logx.optimizely.com/v1/events"
