@@ -780,6 +780,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {
 		{":", false},
 		{"abc:def:hij", false},
 		{"abc:", false},
+		{"123sdkKey:accesTokenWith=", true},
 	}
 
 	conf := config.NewDefaultConfig()
