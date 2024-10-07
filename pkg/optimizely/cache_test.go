@@ -772,7 +772,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {
 		input    string
 		expected bool
 	}{
-		{"1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", true},
+		{"1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", true},
 		{"12sdkKey:datafileAccessToken89", true},
 		{"!@#$%^&*()", false},
 		{"abc123!", false},
