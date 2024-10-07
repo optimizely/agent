@@ -6,6 +6,7 @@ if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   cd $TRAVIS_BUILD_DIR
   make -e ci_build_dockerimage
   make -e ci_build_dockerimage_alpine
+  make -e ci_build_dockerimage_distroless
 elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
   echo "we're on osx"
 else
