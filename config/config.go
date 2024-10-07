@@ -82,7 +82,7 @@ func NewDefaultConfig() *AgentConfig {
 			DatafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json",
 			EventURL:            "https://logx.optimizely.com/v1/events",
 			// https://github.com/google/re2/wiki/Syntax
-			SdkKeyRegex: "^[a-zA-Z0-9+/=]+(:[a-zA-Z0-9+/=]+)?$",
+			SdkKeyRegex: "^[a-zA-Z0-9+/=_]+(:[a-zA-Z0-9+/=_]+)?$",
 			UserProfileService: UserProfileServiceConfigs{
 				"default":  "",
 				"services": map[string]interface{}{},
