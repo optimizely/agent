@@ -82,7 +82,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 30*time.Second, conf.Client.FlushInterval)
 	assert.Equal(t, "https://cdn.optimizely.com/datafiles/%s.json", conf.Client.DatafileURLTemplate)
 	assert.Equal(t, "https://logx.optimizely.com/v1/events", conf.Client.EventURL)
-	assert.Equal(t, "^[\\w=]+(:[\\w=]+)?$", conf.Client.SdkKeyRegex)
+	assert.Equal(t, "^[a-zA-Z0-9+/=_]+(:[a-zA-Z0-9+/=_]+)?$", conf.Client.SdkKeyRegex)
 	assert.Equal(t, "", conf.Client.UserProfileService["default"])
 	assert.Equal(t, false, conf.Client.ODP.Disable)
 	assert.Equal(t, 1*time.Second, conf.Client.ODP.EventsFlushInterval)
