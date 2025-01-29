@@ -49,13 +49,13 @@ cover: check-go static ## runs test suite with coverage profiling
 cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
-setup: check-go ## installs all dev and ci dependencies, but does not install golang 
+setup: check-go ## installs all dev and ci dependencies, but does not install golang
 ## "go get" won't work for newer go versions, need to use "go install github.com/rakyll/statik"
 ifeq (,$(wildcard $(GOLINT)))
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.54.2
 endif
 ifeq (,$(wildcard $(GOPATH)/bin/statik))
-	GO111MODULE=off go get -u github.com/rakyll/statik
+	go install github.com/rakyll/statik@latest
 endif
 
 lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
