@@ -5,22 +5,8 @@ linters-settings:
     min-complexity: 16
   dupl:
     threshold: 200
-  goconst:
-    min-len: 2
-    min-occurrences: 2
   misspell:
     locale: US
-  lll:
-    line-length: 140
-  gocritic:
-    enabled-tags:
-      - performance
-      - style
-      - experimental
-    disabled-checks:
-      - wrapperFunc
-      - hugeParam
-      - rangeValCopy
   revive:
     min-confidence: 0
 
@@ -45,7 +31,6 @@ linters:
     - typecheck
     - unconvert
     - unparam
-  fast: false
 
 run:
   skip-dirs:
@@ -58,6 +43,3 @@ issues:
       linters:
         - gosec
   exclude-use-default: false
-
-service:
-  golangci-lint-version: 1.64.2

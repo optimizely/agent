@@ -53,13 +53,10 @@ setup: check-go ## installs all dev and ci dependencies, but does not install go
 ## Install golangci-lint
 ## golangci-lint is not yet fully supporting gl v1.24, need to wait a bit. Should work after some time
 ## skip linting until then
-ifeq (,$(wildcard $(GOLINT)))
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.64.2
-endif
-## "go get" won't work for newer go versions, need to use "go install github.com/rakyll/statik"
-ifeq (,$(wildcard $(GOPATH)/bin/statik))
+	@echo "Installing golangci-lint v1.64.2..."
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.64.2
+	@echo "Installing statik..."
 	go install github.com/rakyll/statik@latest
-endif
 
 lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
 	$(GOLINT) run --out-format=tab --tests=false ./...
