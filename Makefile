@@ -54,8 +54,9 @@ setup: check-go ## installs all dev and ci dependencies, but does not install go
 ifeq (,$(wildcard $(GOLINT)))
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.54.2
 endif
+## "go get" won't work for newer go versions, need to use "go install github.com/rakyll/statik"
 ifeq (,$(wildcard $(GOPATH)/bin/statik))
-	GO111MODULE=off go get -u github.com/rakyll/statik
+	go install github.com/rakyll/statik@latest
 endif
 
 lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
