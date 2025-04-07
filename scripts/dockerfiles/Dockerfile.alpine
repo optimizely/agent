@@ -1,6 +1,6 @@
 ARG GO_VERSION
 FROM golang:$GO_VERSION-alpine3.21 as builder
-# hadolint ignore=DL3018 - test comment
+# hadolint ignore=DL3018
 RUN addgroup -S agentgroup && adduser -S agentuser -G agentgroup
 RUN apk add --no-cache make gcc libc-dev git curl
 WORKDIR /go/src/github.com/optimizely/agent

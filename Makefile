@@ -36,7 +36,7 @@ build: $(TARGET) check-go ## builds and installs binary in bin/
 
 check-go:
 ifndef GOPATH
-	$(error "go is not available please install golang version 1.21.0+, https://golang.org/dl/")
+	$(error "go is not available please install golang version 1.24.0+, https://golang.org/dl/")
 endif
 
 clean: check-go ## runs `go clean` and removes the bin/ dir
@@ -50,9 +50,11 @@ cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 setup: check-go ## installs all dev and ci dependencies, but does not install golang 
-## "go get" won't work for newer go versions, need to use "go install github.com/rakyll/statik"
+## Install golangci-lint
+## golangci-lint is not yet fully supporting gl v1.24, need to wait a bit. Should work after some time
+## skip linting until then
 ifeq (,$(wildcard $(GOLINT)))
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.54.2
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.64.2
 endif
 ## "go get" won't work for newer go versions, need to use "go install github.com/rakyll/statik"
 ifeq (,$(wildcard $(GOPATH)/bin/statik))
