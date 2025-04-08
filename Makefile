@@ -44,18 +44,20 @@ clean: check-go ## runs `go clean` and removes the bin/ dir
 	rm -rf $(GOBIN)
 
 # cover: check-go static ## runs test suite with coverage profiling
-# 	$(GOTEST) ./... -coverprofile=$(COVER_FILE)
-cover: check-go static ## runs test suite with coverage profiling
-	PKGS=$$(go list ./... | grep -v "github.com/optimizely/agent/statik")
-	$(GOTEST) $${PKGS} -coverprofile=$(COVER_FILE) -coverpkg=$$(echo $${PKGS} | tr ' ' ',')
+cover: check-go static
+#	First run tests with coverage on all packages
+	$(GOTEST) ./... -coverprofile=$(COVER_FILE).tmp
+#	Exclude statik.go (generated code) from coverage metrics
+#	This is necessary because Go 1.24's coverage redesign counts generated code,
+#	which artificially lowers coverage metrics and isn't meaningful to test
+	grep -v "statik.go" $(COVER_FILE).tmp > $(COVER_FILE)
+	rm $(COVER_FILE).tmp
 
 cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 setup: check-go ## installs all dev and ci dependencies, but does not install golang 
-## Install golangci-lint
-## golangci-lint is not yet fully supporting gl v1.24, need to wait a bit. Should work after some time
-## skip linting until then
+#   Install golangci-lint
 	@echo "Installing golangci-lint v1.64.2..."
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.64.2
 	@echo "Installing statik..."
