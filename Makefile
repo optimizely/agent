@@ -43,8 +43,11 @@ clean: check-go ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN) --modcache
 	rm -rf $(GOBIN)
 
+# cover: check-go static ## runs test suite with coverage profiling
+# 	$(GOTEST) ./... -coverprofile=$(COVER_FILE)
 cover: check-go static ## runs test suite with coverage profiling
-	$(GOTEST) ./... -coverprofile=$(COVER_FILE)
+    PKGS=$$(go list ./... | grep -v "github.com/optimizely/agent/statik")
+    $(GOTEST) $${PKGS} -coverprofile=$(COVER_FILE) -coverpkg=$$(echo $${PKGS} | tr ' ' ',')
 
 cover-html: cover ## generates test coverage html report
 	$(GOCMD) tool cover -html=$(COVER_FILE)
