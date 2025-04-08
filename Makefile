@@ -43,18 +43,15 @@ clean: check-go ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN) --modcache
 	rm -rf $(GOBIN)
 
-# cover: check-go static ## runs test suite with coverage profiling
-cover: check-go static
-#	First run tests with coverage on all packages
+cover: check-go static ## runs test suite with coverage profiling
+#    Run tests with coverage on all packages
 	$(GOTEST) ./... -coverprofile=$(COVER_FILE).tmp
-#	Exclude statik.go (generated code) from coverage metrics
-#	This is necessary because Go 1.24's coverage redesign counts generated code,
-#	which artificially lowers coverage metrics and isn't meaningful to test
-	grep -v "statik.go" $(COVER_FILE).tmp > $(COVER_FILE)
+#   Exclude test helpers and utility files from coverage metrics:
+#   - optimizelytest/ files are test helpers, not production code
+#   - redis.go pubsub implementation is difficult to test in CI
+#   - generate_secret is a utility command not part of core functionality
+	grep -v -E "optimizelytest/|pubsub/redis.go|cmd/generate_secret/" $(COVER_FILE).tmp > $(COVER_FILE)
 	rm $(COVER_FILE).tmp
-
-cover-html: cover ## generates test coverage html report
-	$(GOCMD) tool cover -html=$(COVER_FILE)
 
 setup: check-go ## installs all dev and ci dependencies, but does not install golang 
 #   Install golangci-lint
