@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # example: python basic.py <SDK-Key>
-# This basic example shows how to make individual decision requests with decide api
+# This basic example shows how to make individual decision requests
+# with decide api
 
 import json
 import requests
@@ -31,7 +32,7 @@ payload = {
 
 for key in env['featuresMap']:
     params = {"keys": key}
-    resp = s.post(url = 'http://localhost:8080/v1/decide', params=params, json=payload)
+    resp = s.post(url='http://localhost:8080/v1/decide',
+                  params=params, json=payload)
     print("Flag key: {}".format(key))
     print(json.dumps(resp.json(), indent=4, sort_keys=True))
-
