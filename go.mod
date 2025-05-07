@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/render v1.0.2
 	github.com/go-kit/kit v0.12.0
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.3.1
 	github.com/lestrrat-go/jwx/v2 v2.0.20
 	github.com/optimizely/go-sdk/v2 v2.0.0
