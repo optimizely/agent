@@ -19,6 +19,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -106,7 +107,7 @@ func (suite *NotificationTestSuite) TestFeatureTestFilter() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	response := string(rec.Body.Bytes())
+	response := rec.Body.String()
 	suite.Equal(expected, response)
 }
 
@@ -170,7 +171,7 @@ func (suite *NotificationTestSuite) TestTrackAndProjectConfig() {
 	suite.Equal(http.StatusOK, rec.Code)
 
 	// Unmarshal response
-	response := string(rec.Body.Bytes())
+	response := rec.Body.String()
 	suite.Equal(expected, response)
 }
 
@@ -426,6 +427,65 @@ func TestRedisNotificationReceiver(t *testing.T) {
 			}
 		})
 	}
+}
+
+func (suite *NotificationTestSuite) TestExperimentAndVariationIDsInNotification() {
+	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
+	rec := httptest.NewRecorder()
+
+	// Create a decision notification with experiment_id and variation_id fields
+	decisionEvent := map[string]interface{}{
+		"Type": "decision",
+		"UserContext": map[string]interface{}{
+			"ID": "test_user_id",
+		},
+		"DecisionInfo": map[string]interface{}{
+			"flagKey":      "test_flag",
+			"enabled":      true,
+			"variationKey": "test_variation",
+			"ruleKey":      "test_experiment",
+			"experimentId": "exp_id_123",
+			"variationId":  "var_id_456",
+		},
+	}
+
+	// Expected output in SSE format
+	expected := `data: ` + jsonMustMarshal(decisionEvent) + "\n\n"
+
+	// Create a cancelable request context
+	ctx := req.Context()
+	ctx1, _ := context.WithTimeout(ctx, 2*time.Second)
+
+	// Create notification event with our test data
+	notifications := []syncer.Event{
+		{Type: notification.Decision, Message: decisionEvent},
+	}
+
+	// Set up the notification endpoint with our test data
+	conf := config.NewDefaultConfig()
+	suite.mux.Get("/notifications/event-stream", NotificationEventStreamHandler(
+		getMockNotificationReceiver(conf.Synchronization, false, notifications...)))
+
+	// Send the request
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx1))
+
+	// Verify response code and body
+	suite.Equal(http.StatusOK, rec.Code)
+	response := string(rec.Body.Bytes())
+	suite.Equal(expected, response)
+
+	// Explicitly check for our test fields
+	suite.Contains(response, `"experimentId":"exp_id_123"`)
+	suite.Contains(response, `"variationId":"var_id_456"`)
+}
+
+// Helper to marshal JSON without error handling in the test
+func jsonMustMarshal(v interface{}) string {
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(bytes)
 }
 
 func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg ...syncer.Event) NotificationReceiverFunc {
