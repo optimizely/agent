@@ -141,18 +141,12 @@ func NewDefaultConfig() *AgentConfig {
 			},
 		},
 		CMAB: CMABConfig{
-			Enabled:            false,
-			PredictionEndpoint: "https://prediction.cmab.optimizely.com",
+			PredictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s",
 			RequestTimeout:     10 * time.Second,
 			Cache: map[string]interface{}{
 				"type": "memory",
 				"size": 1000,
 				"ttl":  "30m",
-				"redis": map[string]interface{}{
-					"host":     "localhost:6379",
-					"password": "",
-					"database": 0,
-				},
 			},
 			RetryConfig: map[string]interface{}{
 				"maxRetries":        3,
@@ -411,9 +405,6 @@ type RuntimeConfig struct {
 
 // CMABConfig holds configuration for the Contextual Multi-Armed Bandit functionality
 type CMABConfig struct {
-	// Enabled indicates whether the CMAB functionality is enabled
-	Enabled bool `json:"enabled"`
-
 	// PredictionEndpoint is the URL for CMAB predictions
 	PredictionEndpoint string `json:"predictionEndpoint"`
 

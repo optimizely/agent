@@ -182,14 +182,12 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func assertCMAB(t *testing.T, cmab config.CMABConfig) {
 	fmt.Println("In assertCMAB, received CMAB config:")
-	fmt.Printf("  Enabled: %v\n", cmab.Enabled)
 	fmt.Printf("  PredictionEndpoint: %s\n", cmab.PredictionEndpoint)
 	fmt.Printf("  RequestTimeout: %v\n", cmab.RequestTimeout)
 	fmt.Printf("  Cache: %#v\n", cmab.Cache)
 	fmt.Printf("  RetryConfig: %#v\n", cmab.RetryConfig)
 
 	// Base assertions
-	assert.True(t, cmab.Enabled)
 	assert.Equal(t, "https://custom-cmab-endpoint.example.com", cmab.PredictionEndpoint)
 	assert.Equal(t, 15*time.Second, cmab.RequestTimeout)
 
@@ -299,7 +297,6 @@ func TestCMABEnvDebug(t *testing.T) {
 
 	// Debug: Print the parsed config
 	fmt.Println("Parsed CMAB config from JSON env var:")
-	fmt.Printf("  Enabled: %v\n", conf.CMAB.Enabled)
 	fmt.Printf("  PredictionEndpoint: %s\n", conf.CMAB.PredictionEndpoint)
 	fmt.Printf("  RequestTimeout: %v\n", conf.CMAB.RequestTimeout)
 	fmt.Printf("  Cache: %+v\n", conf.CMAB.Cache)
@@ -326,7 +323,6 @@ func TestCMABPartialConfig(t *testing.T) {
 	conf := loadConfig(v)
 
 	// Base assertions
-	assert.True(t, conf.CMAB.Enabled)
 	assert.Equal(t, "https://base-endpoint.example.com", conf.CMAB.PredictionEndpoint)
 
 	// Cache assertions

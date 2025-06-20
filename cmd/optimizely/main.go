@@ -111,9 +111,6 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	// Handle CMAB configuration using the same approach as UserProfileService
 	// Check for complete CMAB configuration first
 	if cmab := v.GetStringMap("cmab"); len(cmab) > 0 {
-		if enabled, ok := cmab["enabled"].(bool); ok {
-			conf.CMAB.Enabled = enabled
-		}
 		if endpoint, ok := cmab["predictionEndpoint"].(string); ok {
 			conf.CMAB.PredictionEndpoint = endpoint
 		}

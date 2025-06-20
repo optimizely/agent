@@ -145,23 +145,16 @@ Below is a comprehensive list of available configuration properties.
 | webhook.projects.<_projectId_>.secret             | N/A                                             | Webhook secret used to validate webhook requests originating from the respective projectId                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | webhook.projects.<_projectId_>.skipSignatureCheck | N/A                                             | Boolean to indicate whether the signature should be validated. TODO remove in favor of empty secret.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-### CMAB Configuration Examples
+### CMAB Configuration Example
 
-**Complete CMAB Configuration (OPTIMIZELY_CMAB)**:
 ```json
 {
-  "enabled": true,
-  "predictionEndpoint": "https://custom-endpoint.com",
+  "predictionEndpoint": "https://prediction.cmab.optimizely.com/predict/%s",
   "requestTimeout": "5s",
   "cache": {
-    "type": "redis",
+    "type": "memory",
     "size": 2000,
-    "ttl": "45m",
-    "redis": {
-      "host": "redis:6379",
-      "password": "",
-      "database": 0
-    }
+    "ttl": "45m"
   },
   "retryConfig": {
     "maxRetries": 3,
@@ -169,29 +162,7 @@ Below is a comprehensive list of available configuration properties.
     "maxBackoff": "10s",
     "backoffMultiplier": 2.0
   }
-}
-
-CMAB Cache Configuration (OPTIMIZELY_CMAB_CACHE):
-
-{
-  "type": "redis",
-  "size": 2000,
-  "ttl": "45m",
-  "redis": {
-    "host": "redis:6379",
-    "password": "",
-    "database": 0
-  }
-}
-
-CMAB Retry Configuration (OPTIMIZELY_CMAB_RETRYCONFIG):
-
-{
-  "maxRetries": 3,
-  "initialBackoff": "100ms",
-  "maxBackoff": "10s",
-  "backoffMultiplier": 2.0
-}
+}```
 
 More information about configuring Agent can be found in the [Advanced Configuration Notes](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/advanced-configuration).
 
