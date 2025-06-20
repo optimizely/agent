@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -98,13 +99,44 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	}
 
 	// Check if JSON string was set using OPTIMIZELY_CLIENT_USERPROFILESERVICE environment variable
-	if userProfileService := v.GetStringMap("client.userprofileservice"); userProfileService != nil {
+	if userProfileService := v.GetStringMap("client.userprofileservice"); len(userProfileService) > 0 {
 		conf.Client.UserProfileService = userProfileService
 	}
 
 	// Check if JSON string was set using OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE environment variable
-	if odpSegmentsCache := v.GetStringMap("client.odp.segmentsCache"); odpSegmentsCache != nil {
+	if odpSegmentsCache := v.GetStringMap("client.odp.segmentsCache"); len(odpSegmentsCache) > 0 {
 		conf.Client.ODP.SegmentsCache = odpSegmentsCache
+	}
+
+	// Handle CMAB configuration using the same approach as UserProfileService
+	// Check for complete CMAB configuration first
+	if cmab := v.GetStringMap("cmab"); len(cmab) > 0 {
+		if enabled, ok := cmab["enabled"].(bool); ok {
+			conf.CMAB.Enabled = enabled
+		}
+		if endpoint, ok := cmab["predictionEndpoint"].(string); ok {
+			conf.CMAB.PredictionEndpoint = endpoint
+		}
+		if timeout, ok := cmab["requestTimeout"].(string); ok {
+			if duration, err := time.ParseDuration(timeout); err == nil {
+				conf.CMAB.RequestTimeout = duration
+			}
+		}
+		if cache, ok := cmab["cache"].(map[string]interface{}); ok {
+			conf.CMAB.Cache = cache
+		}
+		if retryConfig, ok := cmab["retryConfig"].(map[string]interface{}); ok {
+			conf.CMAB.RetryConfig = retryConfig
+		}
+	}
+
+	// Check for individual map sections
+	if cmabCache := v.GetStringMap("cmab.cache"); len(cmabCache) > 0 {
+		conf.CMAB.Cache = cmabCache
+	}
+
+	if cmabRetryConfig := v.GetStringMap("cmab.retryConfig"); len(cmabRetryConfig) > 0 {
+		conf.CMAB.RetryConfig = cmabRetryConfig
 	}
 
 	return conf

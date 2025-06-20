@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
+ * Copyright 2019-2020,2022-2025, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -17,7 +17,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -176,6 +178,168 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 	assert.Equal(t, "secret-20000", actual.Projects[20000].Secret)
 	assert.Equal(t, []string{"xxx", "yyy", "zzz"}, actual.Projects[20000].SDKKeys)
 	assert.False(t, actual.Projects[20000].SkipSignatureCheck)
+}
+
+func assertCMAB(t *testing.T, cmab config.CMABConfig) {
+	fmt.Println("In assertCMAB, received CMAB config:")
+	fmt.Printf("  Enabled: %v\n", cmab.Enabled)
+	fmt.Printf("  PredictionEndpoint: %s\n", cmab.PredictionEndpoint)
+	fmt.Printf("  RequestTimeout: %v\n", cmab.RequestTimeout)
+	fmt.Printf("  Cache: %#v\n", cmab.Cache)
+	fmt.Printf("  RetryConfig: %#v\n", cmab.RetryConfig)
+
+	// Base assertions
+	assert.True(t, cmab.Enabled)
+	assert.Equal(t, "https://custom-cmab-endpoint.example.com", cmab.PredictionEndpoint)
+	assert.Equal(t, 15*time.Second, cmab.RequestTimeout)
+
+	// Check if cache map is initialized
+	cacheMap := cmab.Cache
+	if cacheMap == nil {
+		t.Fatal("Cache map is nil")
+	}
+
+	// Debug cache type
+	cacheTypeValue := cacheMap["type"]
+	fmt.Printf("Cache type: %v (%T)\n", cacheTypeValue, cacheTypeValue)
+	assert.Equal(t, "redis", cacheTypeValue)
+
+	// Debug cache size
+	cacheSizeValue := cacheMap["size"]
+	fmt.Printf("Cache size: %v (%T)\n", cacheSizeValue, cacheSizeValue)
+	sizeValue, ok := cacheSizeValue.(float64)
+	assert.True(t, ok, "Cache size should be float64")
+	assert.Equal(t, float64(2000), sizeValue)
+
+	// Cache TTL
+	cacheTTLValue := cacheMap["ttl"]
+	fmt.Printf("Cache TTL: %v (%T)\n", cacheTTLValue, cacheTTLValue)
+	assert.Equal(t, "45m", cacheTTLValue)
+
+	// Redis settings
+	redisValue := cacheMap["redis"]
+	fmt.Printf("Redis: %v (%T)\n", redisValue, redisValue)
+	redisMap, ok := redisValue.(map[string]interface{})
+	assert.True(t, ok, "Redis should be a map")
+
+	if !ok {
+		t.Fatal("Redis is not a map")
+	}
+
+	redisHost := redisMap["host"]
+	fmt.Printf("Redis host: %v (%T)\n", redisHost, redisHost)
+	assert.Equal(t, "redis.example.com:6379", redisHost)
+
+	redisPassword := redisMap["password"]
+	fmt.Printf("Redis password: %v (%T)\n", redisPassword, redisPassword)
+	assert.Equal(t, "password123", redisPassword)
+
+	redisDBValue := redisMap["database"]
+	fmt.Printf("Redis DB: %v (%T)\n", redisDBValue, redisDBValue)
+	dbValue, ok := redisDBValue.(float64)
+	assert.True(t, ok, "Redis DB should be float64")
+	assert.Equal(t, float64(2), dbValue)
+
+	// Retry settings
+	retryMap := cmab.RetryConfig
+	if retryMap == nil {
+		t.Fatal("RetryConfig map is nil")
+	}
+
+	// Max retries
+	maxRetriesValue := retryMap["maxRetries"]
+	fmt.Printf("maxRetries: %v (%T)\n", maxRetriesValue, maxRetriesValue)
+	maxRetries, ok := maxRetriesValue.(float64)
+	assert.True(t, ok, "maxRetries should be float64")
+	assert.Equal(t, float64(5), maxRetries)
+
+	// Check other retry settings
+	fmt.Printf("initialBackoff: %v (%T)\n", retryMap["initialBackoff"], retryMap["initialBackoff"])
+	assert.Equal(t, "200ms", retryMap["initialBackoff"])
+
+	fmt.Printf("maxBackoff: %v (%T)\n", retryMap["maxBackoff"], retryMap["maxBackoff"])
+	assert.Equal(t, "30s", retryMap["maxBackoff"])
+
+	fmt.Printf("backoffMultiplier: %v (%T)\n", retryMap["backoffMultiplier"], retryMap["backoffMultiplier"])
+	assert.Equal(t, 3.0, retryMap["backoffMultiplier"])
+}
+
+func TestCMABEnvDebug(t *testing.T) {
+	_ = os.Setenv("OPTIMIZELY_CMAB", `{
+		"enabled": true,
+		"predictionEndpoint": "https://custom-cmab-endpoint.example.com", 
+		"requestTimeout": "15s",
+		"cache": {
+			"type": "redis",
+			"size": 2000,
+			"ttl": "45m",
+			"redis": {
+				"host": "redis.example.com:6379",
+				"password": "password123", 
+				"database": 2
+			}
+		},
+		"retryConfig": {
+			"maxRetries": 5,
+			"initialBackoff": "200ms",
+			"maxBackoff": "30s",
+			"backoffMultiplier": 3.0
+		}
+	}`)
+
+	// Load config using Viper
+	v := viper.New()
+	v.SetEnvPrefix("optimizely")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
+	// Create config
+	assert.NoError(t, initConfig(v))
+	conf := loadConfig(v)
+
+	// Debug: Print the parsed config
+	fmt.Println("Parsed CMAB config from JSON env var:")
+	fmt.Printf("  Enabled: %v\n", conf.CMAB.Enabled)
+	fmt.Printf("  PredictionEndpoint: %s\n", conf.CMAB.PredictionEndpoint)
+	fmt.Printf("  RequestTimeout: %v\n", conf.CMAB.RequestTimeout)
+	fmt.Printf("  Cache: %+v\n", conf.CMAB.Cache)
+	fmt.Printf("  RetryConfig: %+v\n", conf.CMAB.RetryConfig)
+
+	// Call assertCMAB
+	assertCMAB(t, conf.CMAB)
+}
+
+func TestCMABPartialConfig(t *testing.T) {
+	// Clean any existing environment variables
+	os.Unsetenv("OPTIMIZELY_CMAB")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
+	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+
+	// Set partial configuration through CMAB_CACHE and CMAB_RETRYCONFIG
+	_ = os.Setenv("OPTIMIZELY_CMAB", `{"enabled": true, "predictionEndpoint": "https://base-endpoint.example.com"}`)
+	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type": "redis", "size": 3000}`)
+	_ = os.Setenv("OPTIMIZELY_CMAB_RETRYCONFIG", `{"maxRetries": 10}`)
+
+	// Load config
+	v := viper.New()
+	assert.NoError(t, initConfig(v))
+	conf := loadConfig(v)
+
+	// Base assertions
+	assert.True(t, conf.CMAB.Enabled)
+	assert.Equal(t, "https://base-endpoint.example.com", conf.CMAB.PredictionEndpoint)
+
+	// Cache assertions
+	assert.Equal(t, "redis", conf.CMAB.Cache["type"])
+	assert.Equal(t, float64(3000), conf.CMAB.Cache["size"])
+
+	// RetryConfig assertions
+	assert.Equal(t, float64(10), conf.CMAB.RetryConfig["maxRetries"])
+
+	// Clean up
+	os.Unsetenv("OPTIMIZELY_CMAB")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
+	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
 }
 
 func TestViperYaml(t *testing.T) {
@@ -392,6 +556,28 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SDKKEYS", "xxx,yyy,zzz")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
+	_ = os.Setenv("OPTIMIZELY_CMAB", `{
+		"enabled": true,
+		"predictionEndpoint": "https://custom-cmab-endpoint.example.com",
+		"requestTimeout": "15s",
+		"cache": {
+			"type": "redis",
+			"size": 2000,
+			"ttl": "45m",
+			"redis": {
+				"host": "redis.example.com:6379",
+				"password": "password123",
+				"database": 2
+			}
+		},
+		"retryConfig": {
+			"maxRetries": 5,
+			"initialBackoff": "200ms",
+			"maxBackoff": "30s",
+			"backoffMultiplier": 3.0
+		}
+	}`)
+
 	_ = os.Setenv("OPTIMIZELY_RUNTIME_BLOCKPROFILERATE", "1")
 	_ = os.Setenv("OPTIMIZELY_RUNTIME_MUTEXPROFILEFRACTION", "2")
 
@@ -407,6 +593,7 @@ func TestViperEnv(t *testing.T) {
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
 	assertRuntime(t, actual.Runtime)
+	assertCMAB(t, actual.CMAB)
 }
 
 func TestLoggingWithIncludeSdkKey(t *testing.T) {
@@ -506,4 +693,46 @@ func Test_initTracing(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCMABComplexJSON(t *testing.T) {
+	// Clean any existing environment variables for CMAB
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_TYPE")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_SIZE")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_TTL")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_HOST")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_PASSWORD")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_DATABASE")
+
+	// Set complex JSON environment variable for CMAB cache
+	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type":"redis","size":5000,"ttl":"3h","redis":{"host":"json-redis.example.com:6379","password":"json-password","database":4}}`)
+
+	defer func() {
+		// Clean up
+		os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
+	}()
+
+	v := viper.New()
+	assert.NoError(t, initConfig(v))
+	actual := loadConfig(v)
+
+	// Test cache settings from JSON environment variable
+	cacheMap := actual.CMAB.Cache
+	assert.Equal(t, "redis", cacheMap["type"])
+
+	// Account for JSON unmarshaling to float64
+	size, ok := cacheMap["size"].(float64)
+	assert.True(t, ok, "Size should be a float64")
+	assert.Equal(t, float64(5000), size)
+
+	assert.Equal(t, "3h", cacheMap["ttl"])
+
+	redisMap, ok := cacheMap["redis"].(map[string]interface{})
+	assert.True(t, ok, "Redis config should be a map")
+	assert.Equal(t, "json-redis.example.com:6379", redisMap["host"])
+	assert.Equal(t, "json-password", redisMap["password"])
+
+	db, ok := redisMap["database"].(float64)
+	assert.True(t, ok, "Database should be a float64")
+	assert.Equal(t, float64(4), db)
 }
