@@ -267,10 +267,8 @@ synchronization:
 ## cmab: Contextual Multi-Armed Bandit configuration
 ##
 cmab:
-    ## enable or disable CMAB functionality
-    enabled: false
     ## URL for CMAB prediction service
-    predictionEndpoint: "https://prediction.cmab.optimizely.com"
+    predictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s"
     ## timeout for CMAB API requests
     requestTimeout: 10s
     ## CMAB cache configuration
@@ -281,11 +279,6 @@ cmab:
         size: 1000
         ## time-to-live for cached decisions
         ttl: 30m
-        ## Redis configuration (if using redis cache)
-        redis:
-            host: "localhost:6379"
-            password: ""
-            database: 0
     ## retry configuration for CMAB API requests
     retryConfig:
         ## maximum number of retry attempts

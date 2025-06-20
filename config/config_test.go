@@ -101,8 +101,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
 
 	// CMAB configuration
-	assert.False(t, conf.CMAB.Enabled)
-	assert.Equal(t, "https://prediction.cmab.optimizely.com", conf.CMAB.PredictionEndpoint)
+	assert.Equal(t, "https://prediction.cmab.optimizely.com/predict/%s", conf.CMAB.PredictionEndpoint)
 	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
 
 	// Test cache settings as maps
@@ -110,11 +109,6 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "memory", cacheMap["type"])
 	assert.Equal(t, 1000, cacheMap["size"])
 	assert.Equal(t, "30m", cacheMap["ttl"])
-
-	redisMap := cacheMap["redis"].(map[string]interface{})
-	assert.Equal(t, "localhost:6379", redisMap["host"])
-	assert.Equal(t, "", redisMap["password"])
-	assert.Equal(t, 0, redisMap["database"])
 
 	// Test retry settings as maps
 	retryMap := conf.CMAB.RetryConfig
@@ -261,8 +255,7 @@ func TestDefaultCMABConfig(t *testing.T) {
 	conf := NewDefaultConfig()
 
 	// Test default values
-	assert.False(t, conf.CMAB.Enabled)
-	assert.Equal(t, "https://prediction.cmab.optimizely.com", conf.CMAB.PredictionEndpoint)
+	assert.Equal(t, "https://prediction.cmab.optimizely.com/predict/%s", conf.CMAB.PredictionEndpoint)
 	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
 
 	// Test default cache settings as maps
@@ -270,11 +263,6 @@ func TestDefaultCMABConfig(t *testing.T) {
 	assert.Equal(t, "memory", cacheMap["type"])
 	assert.Equal(t, 1000, cacheMap["size"])
 	assert.Equal(t, "30m", cacheMap["ttl"])
-
-	redisMap := cacheMap["redis"].(map[string]interface{})
-	assert.Equal(t, "localhost:6379", redisMap["host"])
-	assert.Equal(t, "", redisMap["password"])
-	assert.Equal(t, 0, redisMap["database"])
 
 	// Test default retry settings as maps
 	retryMap := conf.CMAB.RetryConfig
