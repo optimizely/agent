@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
+ * Copyright 2019-2020,2022-2025, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -99,6 +99,29 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
+
+	// CMAB configuration
+	assert.False(t, conf.CMAB.Enabled)
+	assert.Equal(t, "https://prediction.cmab.optimizely.com", conf.CMAB.PredictionEndpoint)
+	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
+
+	// Test cache settings as maps
+	cacheMap := conf.CMAB.Cache
+	assert.Equal(t, "memory", cacheMap["type"])
+	assert.Equal(t, 1000, cacheMap["size"])
+	assert.Equal(t, "30m", cacheMap["ttl"])
+
+	redisMap := cacheMap["redis"].(map[string]interface{})
+	assert.Equal(t, "localhost:6379", redisMap["host"])
+	assert.Equal(t, "", redisMap["password"])
+	assert.Equal(t, 0, redisMap["database"])
+
+	// Test retry settings as maps
+	retryMap := conf.CMAB.RetryConfig
+	assert.Equal(t, 3, retryMap["maxRetries"])
+	assert.Equal(t, "100ms", retryMap["initialBackoff"])
+	assert.Equal(t, "10s", retryMap["maxBackoff"])
+	assert.Equal(t, 2.0, retryMap["backoffMultiplier"])
 }
 
 type logObservation struct {
@@ -232,4 +255,31 @@ func TestServerConfig_GetAllowedHosts(t *testing.T) {
 	assert.Contains(t, allowedHosts, "127.0.0.1")
 	assert.Contains(t, allowedHosts, "localhost")
 	assert.Contains(t, allowedHosts, "special.test.host")
+}
+
+func TestDefaultCMABConfig(t *testing.T) {
+	conf := NewDefaultConfig()
+
+	// Test default values
+	assert.False(t, conf.CMAB.Enabled)
+	assert.Equal(t, "https://prediction.cmab.optimizely.com", conf.CMAB.PredictionEndpoint)
+	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
+
+	// Test default cache settings as maps
+	cacheMap := conf.CMAB.Cache
+	assert.Equal(t, "memory", cacheMap["type"])
+	assert.Equal(t, 1000, cacheMap["size"])
+	assert.Equal(t, "30m", cacheMap["ttl"])
+
+	redisMap := cacheMap["redis"].(map[string]interface{})
+	assert.Equal(t, "localhost:6379", redisMap["host"])
+	assert.Equal(t, "", redisMap["password"])
+	assert.Equal(t, 0, redisMap["database"])
+
+	// Test default retry settings as maps
+	retryMap := conf.CMAB.RetryConfig
+	assert.Equal(t, 3, retryMap["maxRetries"])
+	assert.Equal(t, "100ms", retryMap["initialBackoff"])
+	assert.Equal(t, "10s", retryMap["maxBackoff"])
+	assert.Equal(t, 2.0, retryMap["backoffMultiplier"])
 }

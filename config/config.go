@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
+ * Copyright 2019-2020,2022-2025, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -140,8 +140,28 @@ func NewDefaultConfig() *AgentConfig {
 				Default: "redis",
 			},
 		},
+		CMAB: CMABConfig{
+			Enabled:            false,
+			PredictionEndpoint: "https://prediction.cmab.optimizely.com",
+			RequestTimeout:     10 * time.Second,
+			Cache: map[string]interface{}{
+				"type": "memory",
+				"size": 1000,
+				"ttl":  "30m",
+				"redis": map[string]interface{}{
+					"host":     "localhost:6379",
+					"password": "",
+					"database": 0,
+				},
+			},
+			RetryConfig: map[string]interface{}{
+				"maxRetries":        3,
+				"initialBackoff":    "100ms",
+				"maxBackoff":        "10s",
+				"backoffMultiplier": 2.0,
+			},
+		},
 	}
-
 	return &config
 }
 
@@ -162,6 +182,7 @@ type AgentConfig struct {
 	Server          ServerConfig  `json:"server"`
 	Webhook         WebhookConfig `json:"webhook"`
 	Synchronization SyncConfig    `json:"synchronization"`
+	CMAB            CMABConfig    `json:"cmab"`
 }
 
 // SyncConfig contains Synchronization configuration for the multiple Agent nodes
@@ -386,4 +407,22 @@ type RuntimeConfig struct {
 	// To just read the current rate, pass rate < 0.
 	// (For n>1 the details of sampling may change.)
 	MutexProfileFraction int `json:"mutexProfileFraction"`
+}
+
+// CMABConfig holds configuration for the Contextual Multi-Armed Bandit functionality
+type CMABConfig struct {
+	// Enabled indicates whether the CMAB functionality is enabled
+	Enabled bool `json:"enabled"`
+
+	// PredictionEndpoint is the URL for CMAB predictions
+	PredictionEndpoint string `json:"predictionEndpoint"`
+
+	// RequestTimeout is the timeout for CMAB API requests
+	RequestTimeout time.Duration `json:"requestTimeout"`
+
+	// Cache configuration
+	Cache map[string]interface{} `json:"cache"`
+
+	// RetryConfig for CMAB API requests
+	RetryConfig map[string]interface{} `json:"retryConfig"`
 }
