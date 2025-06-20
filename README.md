@@ -162,7 +162,8 @@ Below is a comprehensive list of available configuration properties.
     "maxBackoff": "10s",
     "backoffMultiplier": 2.0
   }
-}```
+}
+```
 
 More information about configuring Agent can be found in the [Advanced Configuration Notes](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/advanced-configuration).
 
