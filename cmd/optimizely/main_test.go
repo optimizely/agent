@@ -182,13 +182,11 @@ func assertWebhook(t *testing.T, actual config.WebhookConfig) {
 
 func assertCMAB(t *testing.T, cmab config.CMABConfig) {
 	fmt.Println("In assertCMAB, received CMAB config:")
-	fmt.Printf("  PredictionEndpoint: %s\n", cmab.PredictionEndpoint)
 	fmt.Printf("  RequestTimeout: %v\n", cmab.RequestTimeout)
 	fmt.Printf("  Cache: %#v\n", cmab.Cache)
 	fmt.Printf("  RetryConfig: %#v\n", cmab.RetryConfig)
 
 	// Base assertions
-	assert.Equal(t, "https://custom-cmab-endpoint.example.com", cmab.PredictionEndpoint)
 	assert.Equal(t, 15*time.Second, cmab.RequestTimeout)
 
 	// Check if cache map is initialized
@@ -264,8 +262,6 @@ func assertCMAB(t *testing.T, cmab config.CMABConfig) {
 
 func TestCMABEnvDebug(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CMAB", `{
-		"enabled": true,
-		"predictionEndpoint": "https://custom-cmab-endpoint.example.com", 
 		"requestTimeout": "15s",
 		"cache": {
 			"type": "redis",
@@ -297,7 +293,6 @@ func TestCMABEnvDebug(t *testing.T) {
 
 	// Debug: Print the parsed config
 	fmt.Println("Parsed CMAB config from JSON env var:")
-	fmt.Printf("  PredictionEndpoint: %s\n", conf.CMAB.PredictionEndpoint)
 	fmt.Printf("  RequestTimeout: %v\n", conf.CMAB.RequestTimeout)
 	fmt.Printf("  Cache: %+v\n", conf.CMAB.Cache)
 	fmt.Printf("  RetryConfig: %+v\n", conf.CMAB.RetryConfig)
@@ -313,7 +308,6 @@ func TestCMABPartialConfig(t *testing.T) {
 	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
 
 	// Set partial configuration through CMAB_CACHE and CMAB_RETRYCONFIG
-	_ = os.Setenv("OPTIMIZELY_CMAB", `{"enabled": true, "predictionEndpoint": "https://base-endpoint.example.com"}`)
 	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type": "redis", "size": 3000}`)
 	_ = os.Setenv("OPTIMIZELY_CMAB_RETRYCONFIG", `{"maxRetries": 10}`)
 
@@ -321,9 +315,6 @@ func TestCMABPartialConfig(t *testing.T) {
 	v := viper.New()
 	assert.NoError(t, initConfig(v))
 	conf := loadConfig(v)
-
-	// Base assertions
-	assert.Equal(t, "https://base-endpoint.example.com", conf.CMAB.PredictionEndpoint)
 
 	// Cache assertions
 	assert.Equal(t, "redis", conf.CMAB.Cache["type"])
@@ -553,8 +544,6 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
 	_ = os.Setenv("OPTIMIZELY_CMAB", `{
-		"enabled": true,
-		"predictionEndpoint": "https://custom-cmab-endpoint.example.com",
 		"requestTimeout": "15s",
 		"cache": {
 			"type": "redis",

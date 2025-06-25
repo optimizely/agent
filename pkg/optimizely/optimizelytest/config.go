@@ -518,6 +518,26 @@ func (c *TestProjectConfig) GetFlagVariationsMap() map[string][]entities.Variati
 	return c.flagVariationsMap
 }
 
+// GetAttributeKeyByID returns the attribute key for the given ID
+func (c *TestProjectConfig) GetAttributeKeyByID(id string) (string, error) {
+	for _, attr := range c.AttributeMap {
+		if attr.ID == id {
+			return attr.Key, nil
+		}
+	}
+	return "", fmt.Errorf(`attribute with ID "%s" not found`, id)
+}
+
+// GetExperimentByID returns the experiment with the given ID
+func (c *TestProjectConfig) GetExperimentByID(experimentID string) (entities.Experiment, error) {
+	for _, experiment := range c.ExperimentMap {
+		if experiment.ID == experimentID {
+			return experiment, nil
+		}
+	}
+	return entities.Experiment{}, fmt.Errorf(`experiment with ID "%s" not found`, experimentID)
+}
+
 // NewConfig initializes a new datafile from a json byte array using the default JSON datafile parser
 func NewConfig() *TestProjectConfig {
 	config := &TestProjectConfig{

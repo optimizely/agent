@@ -141,8 +141,7 @@ func NewDefaultConfig() *AgentConfig {
 			},
 		},
 		CMAB: CMABConfig{
-			PredictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s",
-			RequestTimeout:     10 * time.Second,
+			RequestTimeout: 10 * time.Second,
 			Cache: map[string]interface{}{
 				"type": "memory",
 				"size": 1000,
@@ -230,6 +229,7 @@ type ClientConfig struct {
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
 	ODP                 OdpConfig                 `json:"odp"`
+	CMAB                CMABConfig                `json:"cmab" mapstructure:"cmab"`
 }
 
 // OdpConfig holds the odp configuration
@@ -405,9 +405,6 @@ type RuntimeConfig struct {
 
 // CMABConfig holds configuration for the Contextual Multi-Armed Bandit functionality
 type CMABConfig struct {
-	// PredictionEndpoint is the URL for CMAB predictions
-	PredictionEndpoint string `json:"predictionEndpoint"`
-
 	// RequestTimeout is the timeout for CMAB API requests
 	RequestTimeout time.Duration `json:"requestTimeout"`
 

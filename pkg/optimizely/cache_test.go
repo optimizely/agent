@@ -34,10 +34,10 @@ import (
 	odpCacheServices "github.com/optimizely/agent/plugins/odpcache/services"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/agent/plugins/userprofileservice/services"
+	"github.com/optimizely/go-sdk/v2/pkg/cache"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
-	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 )
 
 var counter int
@@ -793,6 +793,286 @@ func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {
 	for _, scenario := range scenarios {
 		s.Equal(scenario.expected, validator(scenario.input))
 	}
+}
+
+// Add these tests to your existing cache_test.go file
+
+func (s *DefaultLoaderTestSuite) TestCMABConfigurationParsing() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache: map[string]interface{}{
+				"size": 500,
+				"ttl":  "15m",
+			},
+			RetryConfig: map[string]interface{}{
+				"maxRetries":        5,
+				"initialBackoff":    "200ms",
+				"maxBackoff":        "30s",
+				"backoffMultiplier": 1.5,
+			},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+	// Note: We can't directly test the CMAB service since it's internal to the OptimizelyClient
+	// But we can verify the loader doesn't error with valid CMAB config
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABConfigurationDefaults() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			// Empty cache and retry config should use defaults
+			Cache:       map[string]interface{}{},
+			RetryConfig: map[string]interface{}{},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABCacheConfigInvalidTTL() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache: map[string]interface{}{
+				"size": 1000,
+				"ttl":  "invalid-duration", // This should trigger warning and use default
+			},
+			RetryConfig: map[string]interface{}{},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err) // Should not error, just use defaults
+	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABCacheConfigWrongTypes() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache: map[string]interface{}{
+				"size": "not-an-int", // Wrong type, should use default
+				"ttl":  123,          // Wrong type, should use default
+			},
+			RetryConfig: map[string]interface{}{
+				"maxRetries":        "not-an-int",  // Wrong type, should use default
+				"backoffMultiplier": "not-a-float", // Wrong type, should use default
+			},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err) // Should not error, just use defaults
+	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABRetryConfigInvalidDurations() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache:          map[string]interface{}{},
+			RetryConfig: map[string]interface{}{
+				"maxRetries":        3,
+				"initialBackoff":    "invalid-duration",
+				"maxBackoff":        "also-invalid",
+				"backoffMultiplier": 2.0,
+			},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err) // Should not error, just use defaults for invalid durations
+	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABConfigurationAllValidValues() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 10 * time.Second,
+			Cache: map[string]interface{}{
+				"size": 2000,
+				"ttl":  "45m",
+			},
+			RetryConfig: map[string]interface{}{
+				"maxRetries":        10,
+				"initialBackoff":    "500ms",
+				"maxBackoff":        "1m",
+				"backoffMultiplier": 3.0,
+			},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABWithZeroRequestTimeout() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 0, // Zero timeout
+			Cache:          map[string]interface{}{},
+			RetryConfig:    map[string]interface{}{},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABConfigurationEdgeCases() {
+	testCases := []struct {
+		name   string
+		config config.CMABConfig
+	}{
+		{
+			name: "Zero cache size",
+			config: config.CMABConfig{
+				RequestTimeout: 5 * time.Second,
+				Cache: map[string]interface{}{
+					"size": 0,
+					"ttl":  "30m",
+				},
+				RetryConfig: map[string]interface{}{},
+			},
+		},
+		{
+			name: "Zero max retries",
+			config: config.CMABConfig{
+				RequestTimeout: 5 * time.Second,
+				Cache:          map[string]interface{}{},
+				RetryConfig: map[string]interface{}{
+					"maxRetries": 0,
+				},
+			},
+		},
+		{
+			name: "Very short TTL",
+			config: config.CMABConfig{
+				RequestTimeout: 5 * time.Second,
+				Cache: map[string]interface{}{
+					"ttl": "1ms",
+				},
+				RetryConfig: map[string]interface{}{},
+			},
+		},
+		{
+			name: "Very long TTL",
+			config: config.CMABConfig{
+				RequestTimeout: 5 * time.Second,
+				Cache: map[string]interface{}{
+					"ttl": "24h",
+				},
+				RetryConfig: map[string]interface{}{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			conf := config.ClientConfig{
+				SdkKeyRegex: "sdkkey",
+				CMAB:        tc.config,
+			}
+
+			loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+			client, err := loader("sdkkey")
+
+			s.NoError(err, "Should not error for case: %s", tc.name)
+			s.NotNil(client, "Client should not be nil for case: %s", tc.name)
+		})
+	}
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABConfigurationNilMaps() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache:          nil, // nil map
+			RetryConfig:    nil, // nil map
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+}
+
+// Test that CMAB configuration doesn't interfere with existing functionality
+func (s *DefaultLoaderTestSuite) TestCMABWithExistingServices() {
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		UserProfileService: map[string]interface{}{
+			"default": "in-memory",
+			"services": map[string]interface{}{
+				"in-memory": map[string]interface{}{
+					"capacity":        100,
+					"storageStrategy": "fifo",
+				},
+			},
+		},
+		ODP: config.OdpConfig{
+			SegmentsCache: map[string]interface{}{
+				"default": "in-memory",
+				"services": map[string]interface{}{
+					"in-memory": map[string]interface{}{
+						"size":    50,
+						"timeout": "10s",
+					},
+				},
+			},
+		},
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache: map[string]interface{}{
+				"size": 1000,
+				"ttl":  "30m",
+			},
+			RetryConfig: map[string]interface{}{
+				"maxRetries": 5,
+			},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+	s.NotNil(client.UserProfileService, "UPS should still be configured")
+	s.NotNil(client.odpCache, "ODP Cache should still be configured")
 }
 
 func TestDefaultLoaderTestSuite(t *testing.T) {

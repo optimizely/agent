@@ -111,9 +111,6 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	// Handle CMAB configuration using the same approach as UserProfileService
 	// Check for complete CMAB configuration first
 	if cmab := v.GetStringMap("cmab"); len(cmab) > 0 {
-		if endpoint, ok := cmab["predictionEndpoint"].(string); ok {
-			conf.CMAB.PredictionEndpoint = endpoint
-		}
 		if timeout, ok := cmab["requestTimeout"].(string); ok {
 			if duration, err := time.ParseDuration(timeout); err == nil {
 				conf.CMAB.RequestTimeout = duration

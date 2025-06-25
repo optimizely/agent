@@ -149,7 +149,6 @@ Below is a comprehensive list of available configuration properties.
 
 ```json
 {
-  "predictionEndpoint": "https://prediction.cmab.optimizely.com/predict/%s",
   "requestTimeout": "5s",
   "cache": {
     "type": "memory",

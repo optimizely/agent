@@ -27,7 +27,7 @@ import (
 	optimizelyclient "github.com/optimizely/go-sdk/v2/pkg/client"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/entities"
-	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
+	"github.com/optimizely/go-sdk/v2/pkg/cache"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
