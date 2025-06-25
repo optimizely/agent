@@ -267,8 +267,6 @@ synchronization:
 ## cmab: Contextual Multi-Armed Bandit configuration
 ##
 cmab:
-    ## URL for CMAB prediction service
-    predictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s"
     ## timeout for CMAB API requests
     requestTimeout: 10s
     ## CMAB cache configuration

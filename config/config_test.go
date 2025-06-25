@@ -101,7 +101,6 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
 
 	// CMAB configuration
-	assert.Equal(t, "https://prediction.cmab.optimizely.com/predict/%s", conf.CMAB.PredictionEndpoint)
 	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
 
 	// Test cache settings as maps
@@ -255,7 +254,6 @@ func TestDefaultCMABConfig(t *testing.T) {
 	conf := NewDefaultConfig()
 
 	// Test default values
-	assert.Equal(t, "https://prediction.cmab.optimizely.com/predict/%s", conf.CMAB.PredictionEndpoint)
 	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
 
 	// Test default cache settings as maps
