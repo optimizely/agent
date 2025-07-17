@@ -21,9 +21,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -33,13 +35,14 @@ import (
 	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
+	odpCachePkg "github.com/optimizely/go-sdk/v2/pkg/cache"
 	"github.com/optimizely/go-sdk/v2/pkg/client"
+	cmab "github.com/optimizely/go-sdk/v2/pkg/cmab"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
 	"github.com/optimizely/go-sdk/v2/pkg/logging"
 	"github.com/optimizely/go-sdk/v2/pkg/odp"
-	odpCachePkg "github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 	odpEventPkg "github.com/optimizely/go-sdk/v2/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/v2/pkg/odp/segment"
 	"github.com/optimizely/go-sdk/v2/pkg/tracing"
@@ -311,6 +314,67 @@ func defaultLoader(
 			odp.WithEventManager(eventManager),
 		)
 		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
+
+		// Parse CMAB cache configuration
+		cacheSize := 1000            // default
+		cacheTTL := 30 * time.Minute // default
+
+		if cacheConfig, ok := clientConf.CMAB.Cache["size"].(int); ok {
+			cacheSize = cacheConfig
+		}
+
+		if cacheTTLStr, ok := clientConf.CMAB.Cache["ttl"].(string); ok {
+			if parsedTTL, err := time.ParseDuration(cacheTTLStr); err == nil {
+				cacheTTL = parsedTTL
+			} else {
+				log.Warn().Err(err).Msgf("Failed to parse CMAB cache TTL: %s, using default", cacheTTLStr)
+			}
+		}
+
+		// Parse retry configuration
+		retryConfig := &cmab.RetryConfig{
+			MaxRetries:        3,
+			InitialBackoff:    100 * time.Millisecond,
+			MaxBackoff:        10 * time.Second,
+			BackoffMultiplier: 2.0,
+		}
+
+		if maxRetries, ok := clientConf.CMAB.RetryConfig["maxRetries"].(int); ok {
+			retryConfig.MaxRetries = maxRetries
+		}
+
+		if initialBackoffStr, ok := clientConf.CMAB.RetryConfig["initialBackoff"].(string); ok {
+			if parsedBackoff, err := time.ParseDuration(initialBackoffStr); err == nil {
+				retryConfig.InitialBackoff = parsedBackoff
+			}
+		}
+
+		if maxBackoffStr, ok := clientConf.CMAB.RetryConfig["maxBackoff"].(string); ok {
+			if parsedBackoff, err := time.ParseDuration(maxBackoffStr); err == nil {
+				retryConfig.MaxBackoff = parsedBackoff
+			}
+		}
+
+		if multiplier, ok := clientConf.CMAB.RetryConfig["backoffMultiplier"].(float64); ok {
+			retryConfig.BackoffMultiplier = multiplier
+		}
+
+		// Create CMAB client and service
+		cmabClient := cmab.NewDefaultCmabClient(cmab.ClientOptions{
+			HTTPClient: &http.Client{
+				Timeout: clientConf.CMAB.RequestTimeout,
+			},
+			RetryConfig: retryConfig,
+			Logger:      logging.GetLogger(sdkKey, "CmabClient"),
+		})
+
+		cmabService := cmab.NewDefaultCmabService(cmab.ServiceOptions{
+			Logger:     logging.GetLogger(sdkKey, "CmabService"),
+			CmabCache:  odpCachePkg.NewLRUCache(cacheSize, cacheTTL),
+			CmabClient: cmabClient,
+		})
+
+		clientOptions = append(clientOptions, client.WithCmabService(cmabService))
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,

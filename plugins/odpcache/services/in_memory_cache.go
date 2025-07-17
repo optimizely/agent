@@ -20,7 +20,7 @@ package services
 import (
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/utils"
-	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
+	"github.com/optimizely/go-sdk/v2/pkg/cache"
 )
 
 // InMemoryCache represents the in-memory implementation of Cache interface
