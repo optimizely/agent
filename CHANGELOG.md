@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - July 17, 2025
+
+### New Features
+
+* [FSSDK-10665] fix: Github Actions YAML files vulnerable to script injections corrected by @FarhanAnjum-opti in https://github.com/optimizely/agent/pull/425
+* [FSSDK-10734] update regex to allow `=` character by @pulak-opti in https://github.com/optimizely/agent/pull/426
+* [FSSDK-10734] update regex to support base64 char for SDK Key & access token by @pulak-opti in https://github.com/optimizely/agent/pull/427
+* chore(deps): bump golang.org/x/crypto from 0.19.0 to 0.31.0 by @junaed-optimizely in https://github.com/optimizely/agent/pull/429
+* [FSSDK-11338] Resolve critical SCA prisma alerts by @Mat001 in https://github.com/optimizely/agent/pull/430
+* [FSSDK-11471] HIGH Dependabot Alerts- Golang/Agent by @Mat001 in https://github.com/optimizely/agent/pull/433
+* [FSSDK-11452] Agent - netspring integration - experimentID, VariationID by @Mat001 in https://github.com/optimizely/agent/pull/438
+
 ## [4.1.0] - August 29, 2024
 
 ### New Features
