@@ -795,8 +795,6 @@ func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {
 	}
 }
 
-// Add these tests to your existing cache_test.go file
-
 func (s *DefaultLoaderTestSuite) TestCMABConfigurationParsing() {
 	conf := config.ClientConfig{
 		SdkKeyRegex: "sdkkey",
