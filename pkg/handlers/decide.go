@@ -56,6 +56,7 @@ type DecideOut struct {
 	client.OptimizelyDecision
 	Variables               map[string]interface{} `json:"variables,omitempty"`
 	IsEveryoneElseVariation bool                   `json:"isEveryoneElseVariation"`
+	CmabUUID                *string                `json:"cmabUUID,omitempty"`
 }
 
 // Decide makes feature decisions for the selected query parameters
@@ -118,35 +119,39 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
-		decideOut := DecideOut{d, d.Variables.ToMap(), isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
+		var cmabUUID *string
+		if d.CmabUUID != "" {
+			cmabUUID = &d.CmabUUID
+		}
+		decideOut := DecideOut{
+			OptimizelyDecision:      d,
+			Variables:               d.Variables.ToMap(),
+			IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
+			CmabUUID:                cmabUUID,
+		}
 		render.JSON(w, r, decideOut)
 		return
-	default:
 		// Decide for Keys
 		decides = optimizelyUserContext.DecideForKeys(keys, decideOptions)
 	}
 
 	decideOuts := []DecideOut{}
 	for _, d := range decides {
-		decideOut := DecideOut{d, d.Variables.ToMap(), isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
+		var cmabUUID *string
+		if d.CmabUUID != "" {
+			cmabUUID = &d.CmabUUID
+		}
+		decideOut := DecideOut{
+			OptimizelyDecision:      d,
+			Variables:               d.Variables.ToMap(),
+			IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
+			CmabUUID:                cmabUUID,
+		}
 		decideOuts = append(decideOuts, decideOut)
 		logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
 	}
 	render.JSON(w, r, decideOuts)
-}
-
-func getUserContextWithOptions(r *http.Request) (DecideBody, error) {
-	var body DecideBody
-	err := ParseRequestBody(r, &body)
-	if err != nil {
-		return DecideBody{}, err
-	}
-
-	if body.UserID == "" {
-		return DecideBody{}, ErrEmptyUserID
-	}
-
-	return body, nil
+	return
 }
 
 func isEveryoneElseVariation(rules []config.OptimizelyExperiment, ruleKey string) bool {
