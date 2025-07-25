@@ -24,10 +24,10 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/optimizely/go-sdk/v2/pkg/cache"
 	optimizelyclient "github.com/optimizely/go-sdk/v2/pkg/client"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/entities"
-	"github.com/optimizely/go-sdk/v2/pkg/cache"
 )
 
 // ErrEntityNotFound is returned when no entity exists with a given key
