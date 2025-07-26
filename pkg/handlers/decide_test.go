@@ -550,9 +550,11 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 				Enabled:      true,
 				VariationKey: "3",
 				Reasons:      []string{},
+				CmabUUID:     nil,
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
+			CmabUUID:                nil,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -562,15 +564,19 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 				Enabled:      true,
 				VariationKey: "6",
 				Reasons:      []string{},
+				CmabUUID:     nil,
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
+			CmabUUID:                nil,
 		},
 	}
 
 	// Toggle between tracking and no tracking.
 	for _, body := range [][]byte{suite.body, suite.bodyEvent} {
 		req := httptest.NewRequest("POST", "/decide?keys=featureA&keys=featureB", bytes.NewBuffer(body))
+		fmt.Printf("Request URL: %s\n", req.URL.String())
+		fmt.Printf("Request Body: %s\n", string(body))
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
 
@@ -579,6 +585,9 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 		// Unmarshal response
 		var actual []DecideOut
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
+
+		fmt.Printf("Response Body: %s\n", rec.Body.String())
+		fmt.Printf("Unmarshalled actual: %+v\n", actual)
 
 		suite.NoError(err)
 		suite.ElementsMatch(expected, actual)
@@ -611,9 +620,11 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 				Enabled:      true,
 				VariationKey: "3",
 				Reasons:      []string{},
+				CmabUUID:     nil,
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
+			CmabUUID:                nil,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -623,9 +634,11 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 				Enabled:      true,
 				VariationKey: "6",
 				Reasons:      []string{},
+				CmabUUID:     nil,
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
+			CmabUUID:                nil,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{

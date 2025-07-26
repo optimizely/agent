@@ -109,19 +109,35 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		featureMap = cfg.FeaturesMap
 	}
 
-	var decides map[string]client.OptimizelyDecision
 	switch len(keys) {
 	case 0:
 		// Decide All
-		decides = optimizelyUserContext.DecideAll(decideOptions)
+		decides := optimizelyUserContext.DecideAll(decideOptions)
+		decideOuts := []DecideOut{}
+		for _, d := range decides {
+			var cmabUUID *string
+			if d.CmabUUID != nil && *d.CmabUUID != "" {
+				cmabUUID = d.CmabUUID
+			}
+			decideOut := DecideOut{
+				OptimizelyDecision:      d,
+				Variables:               d.Variables.ToMap(),
+				IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
+				CmabUUID:                cmabUUID,
+			}
+			decideOuts = append(decideOuts, decideOut)
+			logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+		}
+		render.JSON(w, r, decideOuts)
+		return
 	case 1:
-		// Decide
+		// Decide single key
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
 		var cmabUUID *string
-		if d.CmabUUID != "" {
-			cmabUUID = &d.CmabUUID
+		if d.CmabUUID != nil && *d.CmabUUID != "" {
+			cmabUUID = d.CmabUUID
 		}
 		decideOut := DecideOut{
 			OptimizelyDecision:      d,
@@ -131,27 +147,41 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		}
 		render.JSON(w, r, decideOut)
 		return
-		// Decide for Keys
-		decides = optimizelyUserContext.DecideForKeys(keys, decideOptions)
+	default:
+		// Decide for multiple keys
+		decides := optimizelyUserContext.DecideForKeys(keys, decideOptions)
+		decideOuts := []DecideOut{}
+		for _, d := range decides {
+			var cmabUUID *string
+			if d.CmabUUID != nil && *d.CmabUUID != "" {
+				cmabUUID = d.CmabUUID
+			}
+			decideOut := DecideOut{
+				OptimizelyDecision:      d,
+				Variables:               d.Variables.ToMap(),
+				IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
+				CmabUUID:                cmabUUID,
+			}
+			decideOuts = append(decideOuts, decideOut)
+			logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+		}
+		render.JSON(w, r, decideOuts)
+		return
+	}
+}
+
+func getUserContextWithOptions(r *http.Request) (DecideBody, error) {
+	var body DecideBody
+	err := ParseRequestBody(r, &body)
+	if err != nil {
+		return DecideBody{}, err
 	}
 
-	decideOuts := []DecideOut{}
-	for _, d := range decides {
-		var cmabUUID *string
-		if d.CmabUUID != "" {
-			cmabUUID = &d.CmabUUID
-		}
-		decideOut := DecideOut{
-			OptimizelyDecision:      d,
-			Variables:               d.Variables.ToMap(),
-			IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-			CmabUUID:                cmabUUID,
-		}
-		decideOuts = append(decideOuts, decideOut)
-		logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+	if body.UserID == "" {
+		return DecideBody{}, ErrEmptyUserID
 	}
-	render.JSON(w, r, decideOuts)
-	return
+
+	return body, nil
 }
 
 func isEveryoneElseVariation(rules []config.OptimizelyExperiment, ruleKey string) bool {
