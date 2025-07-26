@@ -554,7 +554,6 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
-			CmabUUID:                nil,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -568,7 +567,6 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
-			CmabUUID:                nil,
 		},
 	}
 
@@ -624,7 +622,6 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
-			CmabUUID:                nil,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{
@@ -638,7 +635,6 @@ func (suite *DecideTestSuite) TestDecideAllFlags() {
 			},
 			Variables:               nil,
 			IsEveryoneElseVariation: false,
-			CmabUUID:                nil,
 		},
 		{
 			OptimizelyDecision: client.OptimizelyDecision{

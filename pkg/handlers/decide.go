@@ -56,7 +56,6 @@ type DecideOut struct {
 	client.OptimizelyDecision
 	Variables               map[string]interface{} `json:"variables,omitempty"`
 	IsEveryoneElseVariation bool                   `json:"isEveryoneElseVariation"`
-	CmabUUID                *string                `json:"cmabUUID,omitempty"`
 }
 
 // Decide makes feature decisions for the selected query parameters
@@ -115,15 +114,10 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		decides := optimizelyUserContext.DecideAll(decideOptions)
 		decideOuts := []DecideOut{}
 		for _, d := range decides {
-			var cmabUUID *string
-			if d.CmabUUID != nil && *d.CmabUUID != "" {
-				cmabUUID = d.CmabUUID
-			}
 			decideOut := DecideOut{
 				OptimizelyDecision:      d,
 				Variables:               d.Variables.ToMap(),
 				IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-				CmabUUID:                cmabUUID,
 			}
 			decideOuts = append(decideOuts, decideOut)
 			logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
@@ -135,15 +129,10 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
-		var cmabUUID *string
-		if d.CmabUUID != nil && *d.CmabUUID != "" {
-			cmabUUID = d.CmabUUID
-		}
 		decideOut := DecideOut{
 			OptimizelyDecision:      d,
 			Variables:               d.Variables.ToMap(),
 			IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-			CmabUUID:                cmabUUID,
 		}
 		render.JSON(w, r, decideOut)
 		return
@@ -152,15 +141,10 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		decides := optimizelyUserContext.DecideForKeys(keys, decideOptions)
 		decideOuts := []DecideOut{}
 		for _, d := range decides {
-			var cmabUUID *string
-			if d.CmabUUID != nil && *d.CmabUUID != "" {
-				cmabUUID = d.CmabUUID
-			}
 			decideOut := DecideOut{
 				OptimizelyDecision:      d,
 				Variables:               d.Variables.ToMap(),
 				IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-				CmabUUID:                cmabUUID,
 			}
 			decideOuts = append(decideOuts, decideOut)
 			logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
