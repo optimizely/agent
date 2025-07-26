@@ -359,6 +359,11 @@ func defaultLoader(
 			retryConfig.BackoffMultiplier = multiplier
 		}
 
+		// Set CMAB prediction endpoint if configured
+		if clientConf.CMAB.PredictionEndpoint != "" {
+			cmab.CMABPredictionEndpoint = clientConf.CMAB.PredictionEndpoint
+		}
+
 		// Create CMAB client and service
 		cmabClient := cmab.NewDefaultCmabClient(cmab.ClientOptions{
 			HTTPClient: &http.Client{
