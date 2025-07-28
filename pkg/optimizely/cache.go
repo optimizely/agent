@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -37,7 +36,7 @@ import (
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	odpCachePkg "github.com/optimizely/go-sdk/v2/pkg/cache"
 	"github.com/optimizely/go-sdk/v2/pkg/client"
-	cmab "github.com/optimizely/go-sdk/v2/pkg/cmab"
+	"github.com/optimizely/go-sdk/v2/pkg/cmab"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
@@ -316,8 +315,8 @@ func defaultLoader(
 		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
 
 		// Parse CMAB cache configuration
-		cacheSize := 1000            // default
-		cacheTTL := 30 * time.Minute // default
+		cacheSize := cmab.DefaultCacheSize
+		cacheTTL := cmab.DefaultCacheTTL
 
 		if cacheConfig, ok := clientConf.CMAB.Cache["size"].(int); ok {
 			cacheSize = cacheConfig
@@ -331,55 +330,42 @@ func defaultLoader(
 			}
 		}
 
-		// Parse retry configuration
+		// Create retry config
 		retryConfig := &cmab.RetryConfig{
-			MaxRetries:        3,
-			InitialBackoff:    100 * time.Millisecond,
-			MaxBackoff:        10 * time.Second,
-			BackoffMultiplier: 2.0,
+			MaxRetries:        cmab.DefaultMaxRetries,
+			InitialBackoff:    cmab.DefaultInitialBackoff,
+			MaxBackoff:        cmab.DefaultMaxBackoff,
+			BackoffMultiplier: cmab.DefaultBackoffMultiplier,
 		}
 
+		// Parse retry configuration
 		if maxRetries, ok := clientConf.CMAB.RetryConfig["maxRetries"].(int); ok {
 			retryConfig.MaxRetries = maxRetries
 		}
-
 		if initialBackoffStr, ok := clientConf.CMAB.RetryConfig["initialBackoff"].(string); ok {
-			if parsedBackoff, err := time.ParseDuration(initialBackoffStr); err == nil {
-				retryConfig.InitialBackoff = parsedBackoff
+			if backoff, err := time.ParseDuration(initialBackoffStr); err == nil {
+				retryConfig.InitialBackoff = backoff
 			}
 		}
-
 		if maxBackoffStr, ok := clientConf.CMAB.RetryConfig["maxBackoff"].(string); ok {
-			if parsedBackoff, err := time.ParseDuration(maxBackoffStr); err == nil {
-				retryConfig.MaxBackoff = parsedBackoff
+			if backoff, err := time.ParseDuration(maxBackoffStr); err == nil {
+				retryConfig.MaxBackoff = backoff
 			}
 		}
-
 		if multiplier, ok := clientConf.CMAB.RetryConfig["backoffMultiplier"].(float64); ok {
 			retryConfig.BackoffMultiplier = multiplier
 		}
 
-		// Set CMAB prediction endpoint if configured
-		if clientConf.CMAB.PredictionEndpoint != "" {
-			cmab.CMABPredictionEndpoint = clientConf.CMAB.PredictionEndpoint
+		// Create CMAB config (NO endpoint configuration - not configurable)
+		cmabConfig := cmab.Config{
+			CacheSize:   cacheSize,
+			CacheTTL:    cacheTTL,
+			HTTPTimeout: clientConf.CMAB.RequestTimeout,
+			RetryConfig: retryConfig,
 		}
 
-		// Create CMAB client and service
-		cmabClient := cmab.NewDefaultCmabClient(cmab.ClientOptions{
-			HTTPClient: &http.Client{
-				Timeout: clientConf.CMAB.RequestTimeout,
-			},
-			RetryConfig: retryConfig,
-			Logger:      logging.GetLogger(sdkKey, "CmabClient"),
-		})
-
-		cmabService := cmab.NewDefaultCmabService(cmab.ServiceOptions{
-			Logger:     logging.GetLogger(sdkKey, "CmabService"),
-			CmabCache:  odpCachePkg.NewLRUCache(cacheSize, cacheTTL),
-			CmabClient: cmabClient,
-		})
-
-		clientOptions = append(clientOptions, client.WithCmabService(cmabService))
+		// Add to client options
+		clientOptions = append(clientOptions, client.WithCmabConfig(cmabConfig))
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,

@@ -122,9 +122,6 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		if retryConfig, ok := cmab["retryConfig"].(map[string]interface{}); ok {
 			conf.CMAB.RetryConfig = retryConfig
 		}
-		if predictionEndpoint, ok := cmab["predictionEndpoint"].(string); ok {
-			conf.CMAB.PredictionEndpoint = predictionEndpoint
-		}
 	}
 
 	// Check for individual map sections
@@ -136,10 +133,6 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		conf.CMAB.RetryConfig = cmabRetryConfig
 	}
 
-	// Check for individual predictionEndpoint field
-	if predictionEndpoint := v.GetString("cmab.predictionEndpoint"); predictionEndpoint != "" {
-		conf.CMAB.PredictionEndpoint = predictionEndpoint
-	}
 
 	return conf
 }
