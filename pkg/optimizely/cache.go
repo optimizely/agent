@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -313,6 +314,14 @@ func defaultLoader(
 			odp.WithEventManager(eventManager),
 		)
 		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
+
+		// Configure CMAB prediction endpoint from environment variable
+		// This allows FSC tests to override the endpoint by setting OPTIMIZELY_CMAB_PREDICTIONENDPOINT
+		if cmabEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT"); cmabEndpoint != "" {
+			// Set the global variable that go-sdk uses (same pattern as go-sdk FSC tests)
+			cmab.CMABPredictionEndpoint = cmabEndpoint + "/%s"
+			log.Info().Str("endpoint", cmabEndpoint).Msg("Using custom CMAB prediction endpoint")
+		}
 
 		// Parse CMAB cache configuration
 		cacheSize := cmab.DefaultCacheSize
