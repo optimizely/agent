@@ -310,6 +310,33 @@ func (suite *CacheTestSuite) TestNilCreatorAddedforODPCache() {
 	suite.Nil(odpCache)
 }
 
+func (suite *CacheTestSuite) TestResetClient() {
+	// First, get a client to put it in the cache
+	client, err := suite.cache.GetClient("test-sdk-key")
+	suite.NoError(err)
+	suite.NotNil(client)
+	
+	// Verify client is in cache
+	cachedClient, exists := suite.cache.optlyMap.Get("test-sdk-key")
+	suite.True(exists)
+	suite.NotNil(cachedClient)
+	
+	// Reset the client
+	suite.cache.ResetClient("test-sdk-key")
+	
+	// Verify client is removed from cache
+	_, exists = suite.cache.optlyMap.Get("test-sdk-key")
+	suite.False(exists)
+}
+
+func (suite *CacheTestSuite) TestResetClientNonExistent() {
+	// Reset a client that doesn't exist - should not panic
+	suite.cache.ResetClient("non-existent-key")
+	
+	// Verify no clients are in cache
+	suite.Equal(0, suite.cache.optlyMap.Count())
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCacheTestSuite(t *testing.T) {

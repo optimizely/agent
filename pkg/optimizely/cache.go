@@ -432,3 +432,24 @@ func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMa
 	}
 	return nil
 }
+
+// ResetClient removes the optimizely client from cache to ensure clean state for testing
+// This is primarily used by FSC tests to clear CMAB cache between test scenarios
+func (c *OptlyCache) ResetClient(sdkKey string) {
+	// Remove the client from the cache
+	if val, exists := c.optlyMap.Get(sdkKey); exists {
+		c.optlyMap.Remove(sdkKey)
+		
+		// Close the client to clean up resources
+		if client, ok := val.(*OptlyClient); ok {
+			client.Close()
+		}
+		
+		message := "Reset Optimizely client for testing"
+		if ShouldIncludeSDKKey {
+			log.Info().Str("sdkKey", sdkKey).Msg(message)
+		} else {
+			log.Info().Msg(message)
+		}
+	}
+}
