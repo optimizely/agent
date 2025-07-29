@@ -318,8 +318,8 @@ func defaultLoader(
 		// Configure CMAB prediction endpoint from environment variable
 		// This allows FSC tests to override the endpoint by setting OPTIMIZELY_CMAB_PREDICTIONENDPOINT
 		if cmabEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT"); cmabEndpoint != "" {
-			// Set the global variable that go-sdk uses (same pattern as go-sdk FSC tests)
-			cmab.CMABPredictionEndpoint = cmabEndpoint + "/%s"
+			// Set the global variable that go-sdk uses (FSC already includes the /%s format)
+			cmab.CMABPredictionEndpoint = cmabEndpoint
 			log.Info().Str("endpoint", cmabEndpoint).Msg("Using custom CMAB prediction endpoint")
 		}
 
