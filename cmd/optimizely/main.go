@@ -133,7 +133,6 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 		conf.CMAB.RetryConfig = cmabRetryConfig
 	}
 
-
 	return conf
 }
 

@@ -439,12 +439,12 @@ func (c *OptlyCache) ResetClient(sdkKey string) {
 	// Remove the client from the cache
 	if val, exists := c.optlyMap.Get(sdkKey); exists {
 		c.optlyMap.Remove(sdkKey)
-		
+
 		// Close the client to clean up resources
 		if client, ok := val.(*OptlyClient); ok {
 			client.Close()
 		}
-		
+
 		message := "Reset Optimizely client for testing"
 		if ShouldIncludeSDKKey {
 			log.Info().Str("sdkKey", sdkKey).Msg(message)

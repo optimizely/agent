@@ -76,7 +76,7 @@ func (suite *ResetTestSuite) SetupTest() {
 	testClient := optimizelytest.NewClient()
 	suite.tc = testClient
 	suite.oc = &optimizely.OptlyClient{OptimizelyClient: testClient.OptimizelyClient}
-	
+
 	mockCache := new(MockCache)
 	mockCache.On("ResetClient", "test-sdk-key").Return()
 	suite.cache = mockCache
@@ -97,7 +97,7 @@ func (suite *ResetTestSuite) TestResetClient() {
 	suite.Equal(http.StatusOK, recorder.Code)
 	suite.Contains(recorder.Header().Get("content-type"), "application/json")
 	suite.Contains(recorder.Body.String(), `"result":true`)
-	
+
 	// Verify ResetClient was called with correct SDK key
 	suite.cache.AssertCalled(suite.T(), "ResetClient", "test-sdk-key")
 }
