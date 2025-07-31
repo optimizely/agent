@@ -189,75 +189,18 @@ func assertCMAB(t *testing.T, cmab config.CMABConfig) {
 	// Base assertions
 	assert.Equal(t, 15*time.Second, cmab.RequestTimeout)
 
-	// Check if cache map is initialized
-	cacheMap := cmab.Cache
-	if cacheMap == nil {
-		t.Fatal("Cache map is nil")
-	}
+	// Check cache configuration
+	cache := cmab.Cache
+	assert.Equal(t, "redis", cache.Type)
+	assert.Equal(t, 2000, cache.Size)
+	assert.Equal(t, 45*time.Minute, cache.TTL)
 
-	// Debug cache type
-	cacheTypeValue := cacheMap["type"]
-	fmt.Printf("Cache type: %v (%T)\n", cacheTypeValue, cacheTypeValue)
-	assert.Equal(t, "redis", cacheTypeValue)
-
-	// Debug cache size
-	cacheSizeValue := cacheMap["size"]
-	fmt.Printf("Cache size: %v (%T)\n", cacheSizeValue, cacheSizeValue)
-	sizeValue, ok := cacheSizeValue.(float64)
-	assert.True(t, ok, "Cache size should be float64")
-	assert.Equal(t, float64(2000), sizeValue)
-
-	// Cache TTL
-	cacheTTLValue := cacheMap["ttl"]
-	fmt.Printf("Cache TTL: %v (%T)\n", cacheTTLValue, cacheTTLValue)
-	assert.Equal(t, "45m", cacheTTLValue)
-
-	// Redis settings
-	redisValue := cacheMap["redis"]
-	fmt.Printf("Redis: %v (%T)\n", redisValue, redisValue)
-	redisMap, ok := redisValue.(map[string]interface{})
-	assert.True(t, ok, "Redis should be a map")
-
-	if !ok {
-		t.Fatal("Redis is not a map")
-	}
-
-	redisHost := redisMap["host"]
-	fmt.Printf("Redis host: %v (%T)\n", redisHost, redisHost)
-	assert.Equal(t, "redis.example.com:6379", redisHost)
-
-	redisPassword := redisMap["password"]
-	fmt.Printf("Redis password: %v (%T)\n", redisPassword, redisPassword)
-	assert.Equal(t, "password123", redisPassword)
-
-	redisDBValue := redisMap["database"]
-	fmt.Printf("Redis DB: %v (%T)\n", redisDBValue, redisDBValue)
-	dbValue, ok := redisDBValue.(float64)
-	assert.True(t, ok, "Redis DB should be float64")
-	assert.Equal(t, float64(2), dbValue)
-
-	// Retry settings
-	retryMap := cmab.RetryConfig
-	if retryMap == nil {
-		t.Fatal("RetryConfig map is nil")
-	}
-
-	// Max retries
-	maxRetriesValue := retryMap["maxRetries"]
-	fmt.Printf("maxRetries: %v (%T)\n", maxRetriesValue, maxRetriesValue)
-	maxRetries, ok := maxRetriesValue.(float64)
-	assert.True(t, ok, "maxRetries should be float64")
-	assert.Equal(t, float64(5), maxRetries)
-
-	// Check other retry settings
-	fmt.Printf("initialBackoff: %v (%T)\n", retryMap["initialBackoff"], retryMap["initialBackoff"])
-	assert.Equal(t, "200ms", retryMap["initialBackoff"])
-
-	fmt.Printf("maxBackoff: %v (%T)\n", retryMap["maxBackoff"], retryMap["maxBackoff"])
-	assert.Equal(t, "30s", retryMap["maxBackoff"])
-
-	fmt.Printf("backoffMultiplier: %v (%T)\n", retryMap["backoffMultiplier"], retryMap["backoffMultiplier"])
-	assert.Equal(t, 3.0, retryMap["backoffMultiplier"])
+	// Check retry configuration
+	retry := cmab.RetryConfig
+	assert.Equal(t, 5, retry.MaxRetries)
+	assert.Equal(t, 200*time.Millisecond, retry.InitialBackoff)
+	assert.Equal(t, 30*time.Second, retry.MaxBackoff)
+	assert.Equal(t, 3.0, retry.BackoffMultiplier)
 }
 
 func TestCMABEnvDebug(t *testing.T) {
@@ -266,12 +209,7 @@ func TestCMABEnvDebug(t *testing.T) {
 		"cache": {
 			"type": "redis",
 			"size": 2000,
-			"ttl": "45m",
-			"redis": {
-				"host": "redis.example.com:6379",
-				"password": "password123", 
-				"database": 2
-			}
+			"ttl": "45m"
 		},
 		"retryConfig": {
 			"maxRetries": 5,
@@ -317,11 +255,11 @@ func TestCMABPartialConfig(t *testing.T) {
 	conf := loadConfig(v)
 
 	// Cache assertions
-	assert.Equal(t, "redis", conf.CMAB.Cache["type"])
-	assert.Equal(t, float64(3000), conf.CMAB.Cache["size"])
+	assert.Equal(t, "redis", conf.CMAB.Cache.Type)
+	assert.Equal(t, 3000, conf.CMAB.Cache.Size)
 
 	// RetryConfig assertions
-	assert.Equal(t, float64(10), conf.CMAB.RetryConfig["maxRetries"])
+	assert.Equal(t, 10, conf.CMAB.RetryConfig.MaxRetries)
 
 	// Clean up
 	os.Unsetenv("OPTIMIZELY_CMAB")
@@ -548,12 +486,7 @@ func TestViperEnv(t *testing.T) {
 		"cache": {
 			"type": "redis",
 			"size": 2000,
-			"ttl": "45m",
-			"redis": {
-				"host": "redis.example.com:6379",
-				"password": "password123",
-				"database": 2
-			}
+			"ttl": "45m"
 		},
 		"retryConfig": {
 			"maxRetries": 5,
@@ -690,7 +623,7 @@ func TestCMABComplexJSON(t *testing.T) {
 	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_DATABASE")
 
 	// Set complex JSON environment variable for CMAB cache
-	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type":"redis","size":5000,"ttl":"3h","redis":{"host":"json-redis.example.com:6379","password":"json-password","database":4}}`)
+	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type":"redis","size":5000,"ttl":"3h"}`)
 
 	defer func() {
 		// Clean up
@@ -702,22 +635,8 @@ func TestCMABComplexJSON(t *testing.T) {
 	actual := loadConfig(v)
 
 	// Test cache settings from JSON environment variable
-	cacheMap := actual.CMAB.Cache
-	assert.Equal(t, "redis", cacheMap["type"])
-
-	// Account for JSON unmarshaling to float64
-	size, ok := cacheMap["size"].(float64)
-	assert.True(t, ok, "Size should be a float64")
-	assert.Equal(t, float64(5000), size)
-
-	assert.Equal(t, "3h", cacheMap["ttl"])
-
-	redisMap, ok := cacheMap["redis"].(map[string]interface{})
-	assert.True(t, ok, "Redis config should be a map")
-	assert.Equal(t, "json-redis.example.com:6379", redisMap["host"])
-	assert.Equal(t, "json-password", redisMap["password"])
-
-	db, ok := redisMap["database"].(float64)
-	assert.True(t, ok, "Database should be a float64")
-	assert.Equal(t, float64(4), db)
+	cache := actual.CMAB.Cache
+	assert.Equal(t, "redis", cache.Type)
+	assert.Equal(t, 5000, cache.Size)
+	assert.Equal(t, 3*time.Hour, cache.TTL)
 }

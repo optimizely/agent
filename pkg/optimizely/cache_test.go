@@ -827,15 +827,16 @@ func (s *DefaultLoaderTestSuite) TestCMABConfigurationParsing() {
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache: map[string]interface{}{
-				"size": 500,
-				"ttl":  "15m",
+			Cache: config.CMABCacheConfig{
+				Type: "memory",
+				Size: 500,
+				TTL:  15 * time.Minute,
 			},
-			RetryConfig: map[string]interface{}{
-				"maxRetries":        5,
-				"initialBackoff":    "200ms",
-				"maxBackoff":        "30s",
-				"backoffMultiplier": 1.5,
+			RetryConfig: config.CMABRetryConfig{
+				MaxRetries:        5,
+				InitialBackoff:    200 * time.Millisecond,
+				MaxBackoff:        30 * time.Second,
+				BackoffMultiplier: 1.5,
 			},
 		},
 	}
@@ -855,8 +856,8 @@ func (s *DefaultLoaderTestSuite) TestCMABConfigurationDefaults() {
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
 			// Empty cache and retry config should use defaults
-			Cache:       map[string]interface{}{},
-			RetryConfig: map[string]interface{}{},
+			Cache:       config.CMABCacheConfig{},
+			RetryConfig: config.CMABRetryConfig{},
 		},
 	}
 
@@ -872,11 +873,12 @@ func (s *DefaultLoaderTestSuite) TestCMABCacheConfigInvalidTTL() {
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache: map[string]interface{}{
-				"size": 1000,
-				"ttl":  "invalid-duration", // This should trigger warning and use default
+			// Test with valid values since structured types prevent invalid input
+			Cache: config.CMABCacheConfig{
+				Size: 1000,
+				TTL:  10 * time.Minute,
 			},
-			RetryConfig: map[string]interface{}{},
+			RetryConfig: config.CMABRetryConfig{},
 		},
 	}
 
@@ -887,18 +889,21 @@ func (s *DefaultLoaderTestSuite) TestCMABCacheConfigInvalidTTL() {
 	s.NotNil(client)
 }
 
-func (s *DefaultLoaderTestSuite) TestCMABCacheConfigWrongTypes() {
+func (s *DefaultLoaderTestSuite) TestCMABCacheConfigWithValidStructuredTypes() {
 	conf := config.ClientConfig{
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache: map[string]interface{}{
-				"size": "not-an-int", // Wrong type, should use default
-				"ttl":  123,          // Wrong type, should use default
+			Cache: config.CMABCacheConfig{
+				Type: "memory",
+				Size: 1000,
+				TTL:  15 * time.Minute,
 			},
-			RetryConfig: map[string]interface{}{
-				"maxRetries":        "not-an-int",  // Wrong type, should use default
-				"backoffMultiplier": "not-a-float", // Wrong type, should use default
+			RetryConfig: config.CMABRetryConfig{
+				MaxRetries:        3,
+				InitialBackoff:    100 * time.Millisecond,
+				MaxBackoff:        10 * time.Second,
+				BackoffMultiplier: 2.0,
 			},
 		},
 	}
@@ -906,21 +911,21 @@ func (s *DefaultLoaderTestSuite) TestCMABCacheConfigWrongTypes() {
 	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 
-	s.NoError(err) // Should not error, just use defaults
+	s.NoError(err)
 	s.NotNil(client)
 }
 
-func (s *DefaultLoaderTestSuite) TestCMABRetryConfigInvalidDurations() {
+func (s *DefaultLoaderTestSuite) TestCMABRetryConfigWithValidDurations() {
 	conf := config.ClientConfig{
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache:          map[string]interface{}{},
-			RetryConfig: map[string]interface{}{
-				"maxRetries":        3,
-				"initialBackoff":    "invalid-duration",
-				"maxBackoff":        "also-invalid",
-				"backoffMultiplier": 2.0,
+			Cache:          config.CMABCacheConfig{},
+			RetryConfig: config.CMABRetryConfig{
+				MaxRetries:        3,
+				InitialBackoff:    200 * time.Millisecond,
+				MaxBackoff:        30 * time.Second,
+				BackoffMultiplier: 2.0,
 			},
 		},
 	}
@@ -928,7 +933,7 @@ func (s *DefaultLoaderTestSuite) TestCMABRetryConfigInvalidDurations() {
 	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 
-	s.NoError(err) // Should not error, just use defaults for invalid durations
+	s.NoError(err)
 	s.NotNil(client)
 }
 
@@ -937,15 +942,16 @@ func (s *DefaultLoaderTestSuite) TestCMABConfigurationAllValidValues() {
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 10 * time.Second,
-			Cache: map[string]interface{}{
-				"size": 2000,
-				"ttl":  "45m",
+			Cache: config.CMABCacheConfig{
+				Type: "memory",
+				Size: 2000,
+				TTL:  45 * time.Minute,
 			},
-			RetryConfig: map[string]interface{}{
-				"maxRetries":        10,
-				"initialBackoff":    "500ms",
-				"maxBackoff":        "1m",
-				"backoffMultiplier": 3.0,
+			RetryConfig: config.CMABRetryConfig{
+				MaxRetries:        10,
+				InitialBackoff:    500 * time.Millisecond,
+				MaxBackoff:        1 * time.Minute,
+				BackoffMultiplier: 3.0,
 			},
 		},
 	}
@@ -962,8 +968,8 @@ func (s *DefaultLoaderTestSuite) TestCMABWithZeroRequestTimeout() {
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 0, // Zero timeout
-			Cache:          map[string]interface{}{},
-			RetryConfig:    map[string]interface{}{},
+			Cache:          config.CMABCacheConfig{},
+			RetryConfig:    config.CMABRetryConfig{},
 		},
 	}
 
@@ -983,20 +989,20 @@ func (s *DefaultLoaderTestSuite) TestCMABConfigurationEdgeCases() {
 			name: "Zero cache size",
 			config: config.CMABConfig{
 				RequestTimeout: 5 * time.Second,
-				Cache: map[string]interface{}{
-					"size": 0,
-					"ttl":  "30m",
+				Cache: config.CMABCacheConfig{
+					Size: 0,
+					TTL:  30 * time.Minute,
 				},
-				RetryConfig: map[string]interface{}{},
+				RetryConfig: config.CMABRetryConfig{},
 			},
 		},
 		{
 			name: "Zero max retries",
 			config: config.CMABConfig{
 				RequestTimeout: 5 * time.Second,
-				Cache:          map[string]interface{}{},
-				RetryConfig: map[string]interface{}{
-					"maxRetries": 0,
+				Cache:          config.CMABCacheConfig{},
+				RetryConfig: config.CMABRetryConfig{
+					MaxRetries: 0,
 				},
 			},
 		},
@@ -1004,20 +1010,20 @@ func (s *DefaultLoaderTestSuite) TestCMABConfigurationEdgeCases() {
 			name: "Very short TTL",
 			config: config.CMABConfig{
 				RequestTimeout: 5 * time.Second,
-				Cache: map[string]interface{}{
-					"ttl": "1ms",
+				Cache: config.CMABCacheConfig{
+					TTL: 1 * time.Millisecond,
 				},
-				RetryConfig: map[string]interface{}{},
+				RetryConfig: config.CMABRetryConfig{},
 			},
 		},
 		{
 			name: "Very long TTL",
 			config: config.CMABConfig{
 				RequestTimeout: 5 * time.Second,
-				Cache: map[string]interface{}{
-					"ttl": "24h",
+				Cache: config.CMABCacheConfig{
+					TTL: 24 * time.Hour,
 				},
-				RetryConfig: map[string]interface{}{},
+				RetryConfig: config.CMABRetryConfig{},
 			},
 		},
 	}
@@ -1038,13 +1044,13 @@ func (s *DefaultLoaderTestSuite) TestCMABConfigurationEdgeCases() {
 	}
 }
 
-func (s *DefaultLoaderTestSuite) TestCMABConfigurationNilMaps() {
+func (s *DefaultLoaderTestSuite) TestCMABConfigurationEmptyStructs() {
 	conf := config.ClientConfig{
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache:          nil, // nil map
-			RetryConfig:    nil, // nil map
+			Cache:          config.CMABCacheConfig{}, // empty struct
+			RetryConfig:    config.CMABRetryConfig{}, // empty struct
 		},
 	}
 
@@ -1081,12 +1087,13 @@ func (s *DefaultLoaderTestSuite) TestCMABWithExistingServices() {
 		},
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache: map[string]interface{}{
-				"size": 1000,
-				"ttl":  "30m",
+			Cache: config.CMABCacheConfig{
+				Type: "memory",
+				Size: 1000,
+				TTL:  30 * time.Minute,
 			},
-			RetryConfig: map[string]interface{}{
-				"maxRetries": 5,
+			RetryConfig: config.CMABRetryConfig{
+				MaxRetries: 5,
 			},
 		},
 	}

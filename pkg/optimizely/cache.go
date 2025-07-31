@@ -25,7 +25,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	cmap "github.com/orcaman/concurrent-map"
 	"github.com/rs/zerolog/log"
@@ -324,45 +323,36 @@ func defaultLoader(
 		}
 
 		// Parse CMAB cache configuration
-		cacheSize := cmab.DefaultCacheSize
-		cacheTTL := cmab.DefaultCacheTTL
-
-		if cacheConfig, ok := clientConf.CMAB.Cache["size"].(int); ok {
-			cacheSize = cacheConfig
+		cacheSize := clientConf.CMAB.Cache.Size
+		if cacheSize == 0 {
+			cacheSize = cmab.DefaultCacheSize
 		}
 
-		if cacheTTLStr, ok := clientConf.CMAB.Cache["ttl"].(string); ok {
-			if parsedTTL, err := time.ParseDuration(cacheTTLStr); err == nil {
-				cacheTTL = parsedTTL
-			} else {
-				log.Warn().Err(err).Msgf("Failed to parse CMAB cache TTL: %s, using default", cacheTTLStr)
-			}
+		cacheTTL := clientConf.CMAB.Cache.TTL
+		if cacheTTL == 0 {
+			cacheTTL = cmab.DefaultCacheTTL
 		}
 
 		// Create retry config
 		retryConfig := &cmab.RetryConfig{
-			MaxRetries:        cmab.DefaultMaxRetries,
-			InitialBackoff:    cmab.DefaultInitialBackoff,
-			MaxBackoff:        cmab.DefaultMaxBackoff,
-			BackoffMultiplier: cmab.DefaultBackoffMultiplier,
+			MaxRetries:        clientConf.CMAB.RetryConfig.MaxRetries,
+			InitialBackoff:    clientConf.CMAB.RetryConfig.InitialBackoff,
+			MaxBackoff:        clientConf.CMAB.RetryConfig.MaxBackoff,
+			BackoffMultiplier: clientConf.CMAB.RetryConfig.BackoffMultiplier,
 		}
 
-		// Parse retry configuration
-		if maxRetries, ok := clientConf.CMAB.RetryConfig["maxRetries"].(int); ok {
-			retryConfig.MaxRetries = maxRetries
+		// Apply defaults for retry config if not set
+		if retryConfig.MaxRetries == 0 {
+			retryConfig.MaxRetries = cmab.DefaultMaxRetries
 		}
-		if initialBackoffStr, ok := clientConf.CMAB.RetryConfig["initialBackoff"].(string); ok {
-			if backoff, err := time.ParseDuration(initialBackoffStr); err == nil {
-				retryConfig.InitialBackoff = backoff
-			}
+		if retryConfig.InitialBackoff == 0 {
+			retryConfig.InitialBackoff = cmab.DefaultInitialBackoff
 		}
-		if maxBackoffStr, ok := clientConf.CMAB.RetryConfig["maxBackoff"].(string); ok {
-			if backoff, err := time.ParseDuration(maxBackoffStr); err == nil {
-				retryConfig.MaxBackoff = backoff
-			}
+		if retryConfig.MaxBackoff == 0 {
+			retryConfig.MaxBackoff = cmab.DefaultMaxBackoff
 		}
-		if multiplier, ok := clientConf.CMAB.RetryConfig["backoffMultiplier"].(float64); ok {
-			retryConfig.BackoffMultiplier = multiplier
+		if retryConfig.BackoffMultiplier == 0 {
+			retryConfig.BackoffMultiplier = cmab.DefaultBackoffMultiplier
 		}
 
 		// Create CMAB config (NO endpoint configuration - not configurable)

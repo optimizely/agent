@@ -142,16 +142,16 @@ func NewDefaultConfig() *AgentConfig {
 		},
 		CMAB: CMABConfig{
 			RequestTimeout: 10 * time.Second,
-			Cache: map[string]interface{}{
-				"type": "memory",
-				"size": 1000,
-				"ttl":  "30m",
+			Cache: CMABCacheConfig{
+				Type: "memory",
+				Size: 1000,
+				TTL:  30 * time.Minute,
 			},
-			RetryConfig: map[string]interface{}{
-				"maxRetries":        3,
-				"initialBackoff":    "100ms",
-				"maxBackoff":        "10s",
-				"backoffMultiplier": 2.0,
+			RetryConfig: CMABRetryConfig{
+				MaxRetries:        3,
+				InitialBackoff:    100 * time.Millisecond,
+				MaxBackoff:        10 * time.Second,
+				BackoffMultiplier: 2.0,
 			},
 		},
 	}
@@ -409,8 +409,30 @@ type CMABConfig struct {
 	RequestTimeout time.Duration `json:"requestTimeout"`
 
 	// Cache configuration
-	Cache map[string]interface{} `json:"cache"`
+	Cache CMABCacheConfig `json:"cache"`
 
 	// RetryConfig for CMAB API requests
-	RetryConfig map[string]interface{} `json:"retryConfig"`
+	RetryConfig CMABRetryConfig `json:"retryConfig"`
+}
+
+// CMABCacheConfig holds the CMAB cache configuration
+type CMABCacheConfig struct {
+	// Type of cache (currently only "memory" is supported)
+	Type string `json:"type"`
+	// Size is the maximum number of entries for in-memory cache
+	Size int `json:"size"`
+	// TTL is the time-to-live for cached decisions
+	TTL time.Duration `json:"ttl"`
+}
+
+// CMABRetryConfig holds the CMAB retry configuration
+type CMABRetryConfig struct {
+	// MaxRetries is the maximum number of retry attempts
+	MaxRetries int `json:"maxRetries"`
+	// InitialBackoff is the initial backoff duration
+	InitialBackoff time.Duration `json:"initialBackoff"`
+	// MaxBackoff is the maximum backoff duration
+	MaxBackoff time.Duration `json:"maxBackoff"`
+	// BackoffMultiplier is the multiplier for exponential backoff
+	BackoffMultiplier float64 `json:"backoffMultiplier"`
 }

@@ -117,20 +117,74 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 			}
 		}
 		if cache, ok := cmab["cache"].(map[string]interface{}); ok {
-			conf.CMAB.Cache = cache
+			if cacheType, ok := cache["type"].(string); ok {
+				conf.CMAB.Cache.Type = cacheType
+			}
+			if cacheSize, ok := cache["size"].(float64); ok {
+				conf.CMAB.Cache.Size = int(cacheSize)
+			}
+			if cacheTTL, ok := cache["ttl"].(string); ok {
+				if duration, err := time.ParseDuration(cacheTTL); err == nil {
+					conf.CMAB.Cache.TTL = duration
+				}
+			}
 		}
 		if retryConfig, ok := cmab["retryConfig"].(map[string]interface{}); ok {
-			conf.CMAB.RetryConfig = retryConfig
+			if maxRetries, ok := retryConfig["maxRetries"].(float64); ok {
+				conf.CMAB.RetryConfig.MaxRetries = int(maxRetries)
+			}
+			if initialBackoff, ok := retryConfig["initialBackoff"].(string); ok {
+				if duration, err := time.ParseDuration(initialBackoff); err == nil {
+					conf.CMAB.RetryConfig.InitialBackoff = duration
+				}
+			}
+			if maxBackoff, ok := retryConfig["maxBackoff"].(string); ok {
+				if duration, err := time.ParseDuration(maxBackoff); err == nil {
+					conf.CMAB.RetryConfig.MaxBackoff = duration
+				}
+			}
+			if backoffMultiplier, ok := retryConfig["backoffMultiplier"].(float64); ok {
+				conf.CMAB.RetryConfig.BackoffMultiplier = backoffMultiplier
+			}
 		}
 	}
 
 	// Check for individual map sections
 	if cmabCache := v.GetStringMap("cmab.cache"); len(cmabCache) > 0 {
-		conf.CMAB.Cache = cmabCache
+		if cacheType, ok := cmabCache["type"].(string); ok {
+			conf.CMAB.Cache.Type = cacheType
+		}
+		if cacheSize, ok := cmabCache["size"].(int); ok {
+			conf.CMAB.Cache.Size = cacheSize
+		} else if cacheSize, ok := cmabCache["size"].(float64); ok {
+			conf.CMAB.Cache.Size = int(cacheSize)
+		}
+		if cacheTTL, ok := cmabCache["ttl"].(string); ok {
+			if duration, err := time.ParseDuration(cacheTTL); err == nil {
+				conf.CMAB.Cache.TTL = duration
+			}
+		}
 	}
 
 	if cmabRetryConfig := v.GetStringMap("cmab.retryConfig"); len(cmabRetryConfig) > 0 {
-		conf.CMAB.RetryConfig = cmabRetryConfig
+		if maxRetries, ok := cmabRetryConfig["maxRetries"].(int); ok {
+			conf.CMAB.RetryConfig.MaxRetries = maxRetries
+		} else if maxRetries, ok := cmabRetryConfig["maxRetries"].(float64); ok {
+			conf.CMAB.RetryConfig.MaxRetries = int(maxRetries)
+		}
+		if initialBackoff, ok := cmabRetryConfig["initialBackoff"].(string); ok {
+			if duration, err := time.ParseDuration(initialBackoff); err == nil {
+				conf.CMAB.RetryConfig.InitialBackoff = duration
+			}
+		}
+		if maxBackoff, ok := cmabRetryConfig["maxBackoff"].(string); ok {
+			if duration, err := time.ParseDuration(maxBackoff); err == nil {
+				conf.CMAB.RetryConfig.MaxBackoff = duration
+			}
+		}
+		if backoffMultiplier, ok := cmabRetryConfig["backoffMultiplier"].(float64); ok {
+			conf.CMAB.RetryConfig.BackoffMultiplier = backoffMultiplier
+		}
 	}
 
 	return conf
