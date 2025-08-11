@@ -364,7 +364,7 @@ func defaultLoader(
 		}
 
 		// Add to client options
-		clientOptions = append(clientOptions, client.WithCmabConfig(cmabConfig))
+		clientOptions = append(clientOptions, client.WithCmabConfig(&cmabConfig))
 
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,

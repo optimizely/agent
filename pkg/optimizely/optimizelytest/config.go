@@ -117,6 +117,11 @@ func (c *TestProjectConfig) GetEnvironmentKey() string {
 	return c.environmentKey
 }
 
+// GetRegion returns the region for the project
+func (c *TestProjectConfig) GetRegion() string {
+	return "us-east-1" // default test region
+}
+
 // GetEvents returns all events
 func (c *TestProjectConfig) GetEvents() (eventList []entities.Event) {
 	for _, event := range c.EventMap {
