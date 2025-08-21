@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
+ * Copyright 2019-2020,2022-2025, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -140,8 +140,21 @@ func NewDefaultConfig() *AgentConfig {
 				Default: "redis",
 			},
 		},
+		CMAB: CMABConfig{
+			RequestTimeout: 10 * time.Second,
+			Cache: CMABCacheConfig{
+				Type: "memory",
+				Size: 1000,
+				TTL:  30 * time.Minute,
+			},
+			RetryConfig: CMABRetryConfig{
+				MaxRetries:        3,
+				InitialBackoff:    100 * time.Millisecond,
+				MaxBackoff:        10 * time.Second,
+				BackoffMultiplier: 2.0,
+			},
+		},
 	}
-
 	return &config
 }
 
@@ -162,6 +175,7 @@ type AgentConfig struct {
 	Server          ServerConfig  `json:"server"`
 	Webhook         WebhookConfig `json:"webhook"`
 	Synchronization SyncConfig    `json:"synchronization"`
+	CMAB            CMABConfig    `json:"cmab"`
 }
 
 // SyncConfig contains Synchronization configuration for the multiple Agent nodes
@@ -215,6 +229,7 @@ type ClientConfig struct {
 	SdkKeyRegex         string                    `json:"sdkKeyRegex"`
 	UserProfileService  UserProfileServiceConfigs `json:"userProfileService"`
 	ODP                 OdpConfig                 `json:"odp"`
+	CMAB                CMABConfig                `json:"cmab" mapstructure:"cmab"`
 }
 
 // OdpConfig holds the odp configuration
@@ -386,4 +401,38 @@ type RuntimeConfig struct {
 	// To just read the current rate, pass rate < 0.
 	// (For n>1 the details of sampling may change.)
 	MutexProfileFraction int `json:"mutexProfileFraction"`
+}
+
+// CMABConfig holds configuration for the Contextual Multi-Armed Bandit functionality
+type CMABConfig struct {
+	// RequestTimeout is the timeout for CMAB API requests
+	RequestTimeout time.Duration `json:"requestTimeout"`
+
+	// Cache configuration
+	Cache CMABCacheConfig `json:"cache"`
+
+	// RetryConfig for CMAB API requests
+	RetryConfig CMABRetryConfig `json:"retryConfig"`
+}
+
+// CMABCacheConfig holds the CMAB cache configuration
+type CMABCacheConfig struct {
+	// Type of cache (currently only "memory" is supported)
+	Type string `json:"type"`
+	// Size is the maximum number of entries for in-memory cache
+	Size int `json:"size"`
+	// TTL is the time-to-live for cached decisions
+	TTL time.Duration `json:"ttl"`
+}
+
+// CMABRetryConfig holds the CMAB retry configuration
+type CMABRetryConfig struct {
+	// MaxRetries is the maximum number of retry attempts
+	MaxRetries int `json:"maxRetries"`
+	// InitialBackoff is the initial backoff duration
+	InitialBackoff time.Duration `json:"initialBackoff"`
+	// MaxBackoff is the maximum backoff duration
+	MaxBackoff time.Duration `json:"maxBackoff"`
+	// BackoffMultiplier is the multiplier for exponential backoff
+	BackoffMultiplier float64 `json:"backoffMultiplier"`
 }

@@ -1,6 +1,6 @@
 module github.com/optimizely/agent
 
-go 1.24
+go 1.21.0
 
 require (
 	github.com/go-chi/chi/v5 v5.0.8
@@ -12,7 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.3.1
 	github.com/lestrrat-go/jwx/v2 v2.0.20
-	github.com/optimizely/go-sdk/v2 v2.0.0
+	github.com/optimizely/go-sdk/v2 v2.0.0-20250820180618-907917e11924
 	github.com/orcaman/concurrent-map v1.0.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rakyll/statik v0.1.7
@@ -26,8 +26,8 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.21.0
 	go.opentelemetry.io/otel/sdk v1.21.0
 	go.opentelemetry.io/otel/trace v1.21.0
-	golang.org/x/crypto v0.38.0
-	golang.org/x/sync v0.14.0
+	golang.org/x/crypto v0.21.0
+	golang.org/x/sync v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -87,8 +87,8 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twmb/murmur3 v1.1.6 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
