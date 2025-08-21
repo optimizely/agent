@@ -571,8 +571,6 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 	// Toggle between tracking and no tracking.
 	for _, body := range [][]byte{suite.body, suite.bodyEvent} {
 		req := httptest.NewRequest("POST", "/decide?keys=featureA&keys=featureB", bytes.NewBuffer(body))
-		fmt.Printf("Request URL: %s\n", req.URL.String())
-		fmt.Printf("Request Body: %s\n", string(body))
 		rec := httptest.NewRecorder()
 		suite.mux.ServeHTTP(rec, req)
 
