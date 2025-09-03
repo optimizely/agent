@@ -562,7 +562,7 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 			mockReceiver := func(ctx context.Context) (<-chan syncer.Event, error) {
 				capturedSDKKey = ctx.Value(SDKKey).(string)
 				dataChan := make(chan syncer.Event)
-				close(dataChan) // Close immediately as we don't need events
+				// Don't close the channel - let the test timeout handle cleanup
 				return dataChan, nil
 			}
 
@@ -574,6 +574,12 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 			if tc.sdkKeyHeader != "" {
 				req.Header.Set(middleware.OptlySDKHeader, tc.sdkKeyHeader)
 			}
+			
+			// Create a context with a short timeout to prevent hanging
+			ctx, cancel := context.WithTimeout(req.Context(), 100*time.Millisecond)
+			defer cancel()
+			req = req.WithContext(ctx)
+			
 			rec := httptest.NewRecorder()
 
 			// Execute request
@@ -587,11 +593,6 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 
 func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
 	// Test that secure token parsing works end-to-end with actual notification flow
-
-	// Test with secure token format
-	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
-	req.Header.Set(middleware.OptlySDKHeader, "test_sdk_key:test_api_key")
-	rec := httptest.NewRecorder()
 
 	// Create a mock receiver that verifies the SDK key context
 	mockReceiver := func(ctx context.Context) (<-chan syncer.Event, error) {
@@ -609,6 +610,11 @@ func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
 	}
 
 	suite.mux.Get("/test-secure-notifications", NotificationEventStreamHandler(mockReceiver))
+
+	// Test with secure token format
+	req := httptest.NewRequest("GET", "/test-secure-notifications", nil)
+	req.Header.Set(middleware.OptlySDKHeader, "test_sdk_key:test_api_key")
+	rec := httptest.NewRecorder()
 
 	// Create cancelable context for SSE
 	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
