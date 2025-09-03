@@ -110,6 +110,10 @@ func NotificationEventStreamHandler(notificationReceiverFn NotificationReceiverF
 		notify := r.Context().Done()
 
 		sdkKey := r.Header.Get(middleware.OptlySDKHeader)
+		// Parse out the SDK key if it includes a secure token (format: sdkKey:apiKey)
+		if idx := strings.Index(sdkKey, ":"); idx != -1 {
+			sdkKey = sdkKey[:idx]
+		}
 		ctx := context.WithValue(r.Context(), SDKKey, sdkKey)
 
 		dataChan, err := notificationReceiverFn(context.WithValue(ctx, LoggerKey, middleware.GetLogger(r)))
