@@ -266,3 +266,28 @@ synchronization:
     datafile:
         enable: false
         default: "redis"
+
+##
+## cmab: Contextual Multi-Armed Bandit configuration
+##
+cmab:
+    ## timeout for CMAB API requests
+    requestTimeout: 10s
+    ## CMAB cache configuration
+    cache:
+        ## cache type (memory or redis)
+        type: "memory"
+        ## maximum number of entries for in-memory cache
+        size: 1000
+        ## time-to-live for cached decisions
+        ttl: 30m
+    ## retry configuration for CMAB API requests
+    retryConfig:
+        ## maximum number of retry attempts
+        maxRetries: 3
+        ## initial backoff duration
+        initialBackoff: 100ms
+        ## maximum backoff duration
+        maxBackoff: 10s
+        ## multiplier for exponential backoff
+        backoffMultiplier: 2.0

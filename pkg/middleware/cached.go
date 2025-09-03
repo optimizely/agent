@@ -41,6 +41,9 @@ const OptlyFeatureKey = contextKey("featureKey")
 // OptlyExperimentKey is the context key used by ExperimentCtx for setting an Experiment
 const OptlyExperimentKey = contextKey("experimentKey")
 
+// OptlyCacheKey is the context key for the OptlyCache
+const OptlyCacheKey = contextKey("optlyCache")
+
 // OptlySDKHeader is the header key for an ad-hoc SDK key
 const OptlySDKHeader = "X-Optimizely-SDK-Key"
 
@@ -98,6 +101,7 @@ func (mw *CachedOptlyMiddleware) ClientCtx(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), OptlyClientKey, optlyClient)
+		ctx = context.WithValue(ctx, OptlyCacheKey, mw.Cache)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

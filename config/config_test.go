@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright 2019-2020,2022-2023, Optimizely, Inc. and contributors         *
+ * Copyright 2019-2020,2022-2025, Optimizely, Inc. and contributors         *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -99,6 +99,22 @@ func TestDefaultConfig(t *testing.T) {
 
 	assert.Equal(t, 0, conf.Runtime.BlockProfileRate)
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
+
+	// CMAB configuration
+	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
+
+	// Test cache settings
+	cache := conf.CMAB.Cache
+	assert.Equal(t, "memory", cache.Type)
+	assert.Equal(t, 1000, cache.Size)
+	assert.Equal(t, 30*time.Minute, cache.TTL)
+
+	// Test retry settings
+	retry := conf.CMAB.RetryConfig
+	assert.Equal(t, 3, retry.MaxRetries)
+	assert.Equal(t, 100*time.Millisecond, retry.InitialBackoff)
+	assert.Equal(t, 10*time.Second, retry.MaxBackoff)
+	assert.Equal(t, 2.0, retry.BackoffMultiplier)
 }
 
 type logObservation struct {
@@ -232,4 +248,24 @@ func TestServerConfig_GetAllowedHosts(t *testing.T) {
 	assert.Contains(t, allowedHosts, "127.0.0.1")
 	assert.Contains(t, allowedHosts, "localhost")
 	assert.Contains(t, allowedHosts, "special.test.host")
+}
+
+func TestDefaultCMABConfig(t *testing.T) {
+	conf := NewDefaultConfig()
+
+	// Test default values
+	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
+
+	// Test default cache settings
+	cache := conf.CMAB.Cache
+	assert.Equal(t, "memory", cache.Type)
+	assert.Equal(t, 1000, cache.Size)
+	assert.Equal(t, 30*time.Minute, cache.TTL)
+
+	// Test default retry settings
+	retry := conf.CMAB.RetryConfig
+	assert.Equal(t, 3, retry.MaxRetries)
+	assert.Equal(t, 100*time.Millisecond, retry.InitialBackoff)
+	assert.Equal(t, 10*time.Second, retry.MaxBackoff)
+	assert.Equal(t, 2.0, retry.BackoffMultiplier)
 }
