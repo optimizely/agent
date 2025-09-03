@@ -505,8 +505,6 @@ func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg .
 }
 
 func (suite *NotificationTestSuite) TestSecureTokenParsing() {
-	conf := config.NewDefaultConfig()
-	
 	testCases := []struct {
 		name           string
 		sdkKeyHeader   string
@@ -589,7 +587,6 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 
 func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
 	// Test that secure token parsing works end-to-end with actual notification flow
-	conf := config.NewDefaultConfig()
 	
 	// Test with secure token format
 	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
