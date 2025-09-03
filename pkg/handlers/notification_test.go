@@ -574,12 +574,12 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 			if tc.sdkKeyHeader != "" {
 				req.Header.Set(middleware.OptlySDKHeader, tc.sdkKeyHeader)
 			}
-			
+
 			// Create a context with a short timeout to prevent hanging
 			ctx, cancel := context.WithTimeout(req.Context(), 100*time.Millisecond)
 			defer cancel()
 			req = req.WithContext(ctx)
-			
+
 			rec := httptest.NewRecorder()
 
 			// Execute request
