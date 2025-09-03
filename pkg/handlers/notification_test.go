@@ -514,7 +514,7 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 		{
 			name:           "StandardSDKKey",
 			sdkKeyHeader:   "normal_sdk_key_123",
-			expectedSDKKey: "normal_sdk_key_123", 
+			expectedSDKKey: "normal_sdk_key_123",
 			description:    "Standard SDK key without secure token should remain unchanged",
 		},
 		{
@@ -531,7 +531,7 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 		},
 		{
 			name:           "EmptySDKKey",
-			sdkKeyHeader:   ":api_key_456", 
+			sdkKeyHeader:   ":api_key_456",
 			expectedSDKKey: "",
 			description:    "Empty SDK key portion should result in empty string",
 		},
@@ -542,7 +542,7 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 			description:    "Empty API key portion should extract SDK key",
 		},
 		{
-			name:           "ColonOnly", 
+			name:           "ColonOnly",
 			sdkKeyHeader:   ":",
 			expectedSDKKey: "",
 			description:    "Colon only should result in empty SDK key",
