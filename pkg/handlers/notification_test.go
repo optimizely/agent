@@ -587,7 +587,7 @@ func (suite *NotificationTestSuite) TestSecureTokenParsing() {
 
 func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
 	// Test that secure token parsing works end-to-end with actual notification flow
-	
+
 	// Test with secure token format
 	req := httptest.NewRequest("GET", "/notifications/event-stream", nil)
 	req.Header.Set(middleware.OptlySDKHeader, "test_sdk_key:test_api_key")
@@ -597,11 +597,11 @@ func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
 	mockReceiver := func(ctx context.Context) (<-chan syncer.Event, error) {
 		sdkKey := ctx.Value(SDKKey).(string)
 		suite.Equal("test_sdk_key", sdkKey, "SDK key should be extracted from secure token format")
-		
+
 		dataChan := make(chan syncer.Event, 1)
 		// Send a test event
 		dataChan <- syncer.Event{
-			Type: notification.Decision,
+			Type:    notification.Decision,
 			Message: map[string]string{"test": "event"},
 		}
 		close(dataChan)
@@ -609,7 +609,7 @@ func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
 	}
 
 	suite.mux.Get("/test-secure-notifications", NotificationEventStreamHandler(mockReceiver))
-	
+
 	// Create cancelable context for SSE
 	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
 	defer cancel()
