@@ -503,3 +503,127 @@ func getMockNotificationReceiver(conf config.SyncConfig, returnError bool, msg .
 		return dataChan, nil
 	}
 }
+
+func (suite *NotificationTestSuite) TestSecureTokenParsing() {
+	testCases := []struct {
+		name           string
+		sdkKeyHeader   string
+		expectedSDKKey string
+		description    string
+	}{
+		{
+			name:           "StandardSDKKey",
+			sdkKeyHeader:   "normal_sdk_key_123",
+			expectedSDKKey: "normal_sdk_key_123",
+			description:    "Standard SDK key without secure token should remain unchanged",
+		},
+		{
+			name:           "SecureTokenFormat",
+			sdkKeyHeader:   "sdk_key_123:api_key_456",
+			expectedSDKKey: "sdk_key_123",
+			description:    "SDK key with secure token should extract only the SDK key portion",
+		},
+		{
+			name:           "MultipleColons",
+			sdkKeyHeader:   "sdk_key:api_key:extra_part",
+			expectedSDKKey: "sdk_key",
+			description:    "Multiple colons should split at first colon only",
+		},
+		{
+			name:           "EmptySDKKey",
+			sdkKeyHeader:   ":api_key_456",
+			expectedSDKKey: "",
+			description:    "Empty SDK key portion should result in empty string",
+		},
+		{
+			name:           "EmptyAPIKey",
+			sdkKeyHeader:   "sdk_key_123:",
+			expectedSDKKey: "sdk_key_123",
+			description:    "Empty API key portion should extract SDK key",
+		},
+		{
+			name:           "ColonOnly",
+			sdkKeyHeader:   ":",
+			expectedSDKKey: "",
+			description:    "Colon only should result in empty SDK key",
+		},
+		{
+			name:           "EmptyHeader",
+			sdkKeyHeader:   "",
+			expectedSDKKey: "",
+			description:    "Empty header should remain empty",
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			// Create a mock notification receiver that captures the SDK key
+			var capturedSDKKey string
+			mockReceiver := func(ctx context.Context) (<-chan syncer.Event, error) {
+				capturedSDKKey = ctx.Value(SDKKey).(string)
+				dataChan := make(chan syncer.Event)
+				// Don't close the channel - let the test timeout handle cleanup
+				return dataChan, nil
+			}
+
+			// Setup handler
+			suite.mux.Get("/test-notifications", NotificationEventStreamHandler(mockReceiver))
+
+			// Create request with SDK key header
+			req := httptest.NewRequest("GET", "/test-notifications", nil)
+			if tc.sdkKeyHeader != "" {
+				req.Header.Set(middleware.OptlySDKHeader, tc.sdkKeyHeader)
+			}
+
+			// Create a context with a short timeout to prevent hanging
+			ctx, cancel := context.WithTimeout(req.Context(), 100*time.Millisecond)
+			defer cancel()
+			req = req.WithContext(ctx)
+
+			rec := httptest.NewRecorder()
+
+			// Execute request
+			suite.mux.ServeHTTP(rec, req)
+
+			// Verify SDK key was parsed correctly
+			suite.Equal(tc.expectedSDKKey, capturedSDKKey, tc.description)
+		})
+	}
+}
+
+func (suite *NotificationTestSuite) TestSecureTokenParsingIntegration() {
+	// Test that secure token parsing works end-to-end with actual notification flow
+
+	// Create a mock receiver that verifies the SDK key context
+	mockReceiver := func(ctx context.Context) (<-chan syncer.Event, error) {
+		sdkKey := ctx.Value(SDKKey).(string)
+		suite.Equal("test_sdk_key", sdkKey, "SDK key should be extracted from secure token format")
+
+		dataChan := make(chan syncer.Event, 1)
+		// Send a test event
+		dataChan <- syncer.Event{
+			Type:    notification.Decision,
+			Message: map[string]string{"test": "event"},
+		}
+		close(dataChan)
+		return dataChan, nil
+	}
+
+	suite.mux.Get("/test-secure-notifications", NotificationEventStreamHandler(mockReceiver))
+
+	// Test with secure token format
+	req := httptest.NewRequest("GET", "/test-secure-notifications", nil)
+	req.Header.Set(middleware.OptlySDKHeader, "test_sdk_key:test_api_key")
+	rec := httptest.NewRecorder()
+
+	// Create cancelable context for SSE
+	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
+	defer cancel()
+
+	suite.mux.ServeHTTP(rec, req.WithContext(ctx))
+
+	// Verify response
+	suite.Equal(http.StatusOK, rec.Code)
+	response := rec.Body.String()
+	suite.Contains(response, `data: {"test":"event"}`, "Should receive the test event")
+}
