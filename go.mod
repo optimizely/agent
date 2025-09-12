@@ -1,6 +1,8 @@
 module github.com/optimizely/agent
 
-go 1.23
+go 1.24.0
+
+toolchain go1.24.7
 
 require (
 	github.com/go-chi/chi/v5 v5.0.8
@@ -26,8 +28,8 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.21.0
 	go.opentelemetry.io/otel/sdk v1.21.0
 	go.opentelemetry.io/otel/trace v1.21.0
-	golang.org/x/crypto v0.21.0
-	golang.org/x/sync v0.6.0
+	golang.org/x/crypto v0.42.0
+	golang.org/x/sync v0.17.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -52,7 +54,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/grpc v1.59.0 // indirect
@@ -87,8 +89,16 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twmb/murmur3 v1.1.6 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+// Security fix for CVE-2020-9283: Force all vulnerable golang.org/x/crypto versions to use safe version
+replace (
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 => golang.org/x/crypto v0.42.0
+	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529 => golang.org/x/crypto v0.42.0
+	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5 => golang.org/x/crypto v0.42.0
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 => golang.org/x/crypto v0.42.0
 )
