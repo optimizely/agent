@@ -27,7 +27,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/rs/zerolog/log"
-	
+
 	"github.com/optimizely/agent/pkg/metrics"
 )
 
@@ -37,7 +37,7 @@ type RedisStreams struct {
 	Password string
 	Database int
 	// Stream configuration
-	MaxLen       int64
+	MaxLen        int64
 	ConsumerGroup string
 	ConsumerName  string
 	// Batching configuration
@@ -55,7 +55,7 @@ type RedisStreams struct {
 
 func (r *RedisStreams) Publish(ctx context.Context, channel string, message interface{}) error {
 	streamName := r.getStreamName(channel)
-	
+
 	// Convert message to string for consistent handling
 	var messageStr string
 	switch v := message.(type) {
@@ -71,7 +71,7 @@ func (r *RedisStreams) Publish(ctx context.Context, channel string, message inte
 		}
 		messageStr = string(jsonBytes)
 	}
-	
+
 	// Add message to stream with automatic ID generation
 	args := &redis.XAddArgs{
 		Stream: streamName,
@@ -144,26 +144,26 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 					Consumer: consumerName,
 					Streams:  []string{streamName, ">"},
 					Count:    int64(batchSize - len(batch)), // Read up to remaining batch size
-					Block:    100 * time.Millisecond,       // Short block to allow flush checking
+					Block:    100 * time.Millisecond,        // Short block to allow flush checking
 				}).Result()
 
 				if err != nil {
 					if err == redis.Nil {
 						continue // No messages, continue polling
 					}
-					
+
 					// Handle connection errors with exponential backoff reconnection
 					if r.isConnectionError(err) {
 						r.incrementCounter("connection.error")
 						log.Warn().Err(err).Msg("Redis connection error, attempting reconnection")
-						
+
 						// Apply exponential backoff for reconnection
 						if time.Since(lastReconnect) > reconnectDelay {
 							r.incrementCounter("connection.reconnect_attempt")
 							client.Close()
 							client = r.createClient()
 							lastReconnect = time.Now()
-							
+
 							// Recreate consumer group after reconnection
 							if groupErr := r.createConsumerGroupWithRetry(ctx, client, streamName, consumerGroup); groupErr != nil {
 								r.incrementCounter("connection.group_recreate_error")
@@ -171,7 +171,7 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 							} else {
 								r.incrementCounter("connection.reconnect_success")
 							}
-							
+
 							// Increase reconnect delay with exponential backoff
 							reconnectDelay = time.Duration(math.Min(float64(reconnectDelay*2), float64(maxReconnectDelay)))
 						} else {
@@ -197,12 +197,12 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 						if data, ok := message.Values["data"].(string); ok {
 							batch = append(batch, data)
 							messageCount++
-							
+
 							// Acknowledge the message with retry
 							if ackErr := r.acknowledgeMessage(ctx, client, streamName, consumerGroup, message.ID); ackErr != nil {
 								log.Warn().Err(ackErr).Str("messageID", message.ID).Msg("Failed to acknowledge message")
 							}
-							
+
 							// Send batch if it's full
 							if len(batch) >= batchSize {
 								r.incrementCounter("batch.sent")
@@ -213,7 +213,7 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 						}
 					}
 				}
-				
+
 				// Track successful message reads
 				if messageCount > 0 {
 					r.incrementCounter("messages.read")
@@ -236,7 +236,6 @@ func (r *RedisStreams) sendBatch(ch chan string, batch []string, ctx context.Con
 		}
 	}
 }
-
 
 // Helper methods
 func (r *RedisStreams) getStreamName(channel string) string {
@@ -318,13 +317,13 @@ func (r *RedisStreams) executeWithRetry(ctx context.Context, operation func(clie
 	maxRetries := r.getMaxRetries()
 	retryDelay := r.getRetryDelay()
 	maxRetryDelay := r.getMaxRetryDelay()
-	
+
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		client := r.createClient()
 		err := operation(client)
 		client.Close()
-		
+
 		if err == nil {
 			// Record successful operation metrics
 			r.incrementCounter("operations.success")
@@ -334,22 +333,22 @@ func (r *RedisStreams) executeWithRetry(ctx context.Context, operation func(clie
 			}
 			return nil // Success
 		}
-		
+
 		lastErr = err
 		r.incrementCounter("operations.error")
-		
+
 		// Don't retry on non-recoverable errors
 		if !r.isRetryableError(err) {
 			r.incrementCounter("errors.non_retryable")
 			return fmt.Errorf("non-retryable error: %w", err)
 		}
-		
+
 		// Don't sleep after the last attempt
 		if attempt < maxRetries {
 			r.incrementCounter("retries.attempt")
 			// Calculate delay with exponential backoff
 			delay := time.Duration(math.Min(float64(retryDelay)*math.Pow(2, float64(attempt)), float64(maxRetryDelay)))
-			
+
 			select {
 			case <-ctx.Done():
 				r.incrementCounter("operations.canceled")
@@ -359,7 +358,7 @@ func (r *RedisStreams) executeWithRetry(ctx context.Context, operation func(clie
 			}
 		}
 	}
-	
+
 	r.incrementCounter("retries.exhausted")
 	return fmt.Errorf("operation failed after %d retries: %w", maxRetries, lastErr)
 }
@@ -379,7 +378,7 @@ func (r *RedisStreams) createConsumerGroupWithRetry(ctx context.Context, _ *redi
 func (r *RedisStreams) acknowledgeMessage(ctx context.Context, client *redis.Client, streamName, consumerGroup, messageID string) error {
 	maxRetries := 2 // Fewer retries for ACK operations
 	retryDelay := 50 * time.Millisecond
-	
+
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		err := client.XAck(ctx, streamName, consumerGroup, messageID).Err()
@@ -390,16 +389,16 @@ func (r *RedisStreams) acknowledgeMessage(ctx context.Context, client *redis.Cli
 			}
 			return nil // Success
 		}
-		
+
 		lastErr = err
 		r.incrementCounter("ack.error")
-		
+
 		// Don't retry on non-recoverable errors
 		if !r.isRetryableError(err) {
 			r.incrementCounter("ack.non_retryable_error")
 			return fmt.Errorf("non-retryable ACK error: %w", err)
 		}
-		
+
 		// Don't sleep after the last attempt
 		if attempt < maxRetries {
 			r.incrementCounter("ack.retry_attempt")
@@ -411,7 +410,7 @@ func (r *RedisStreams) acknowledgeMessage(ctx context.Context, client *redis.Cli
 			}
 		}
 	}
-	
+
 	r.incrementCounter("ack.retry_exhausted")
 	return fmt.Errorf("ACK failed after %d retries: %w", maxRetries, lastErr)
 }
@@ -421,9 +420,9 @@ func (r *RedisStreams) isRetryableError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	errStr := err.Error()
-	
+
 	// Network/connection errors that are retryable
 	retryableErrors := []string{
 		"connection refused",
@@ -438,20 +437,20 @@ func (r *RedisStreams) isRetryableError(err error) bool {
 		"context canceled", // Handle graceful shutdowns
 		"no such host",     // DNS lookup failures
 	}
-	
+
 	for _, retryable := range retryableErrors {
 		if strings.Contains(strings.ToLower(errStr), retryable) {
 			return true
 		}
 	}
-	
+
 	// Redis-specific retryable errors
 	if strings.Contains(errStr, "LOADING") || // Redis is loading data
 		strings.Contains(errStr, "READONLY") || // Redis is in read-only mode
 		strings.Contains(errStr, "CLUSTERDOWN") { // Redis cluster is down
 		return true
 	}
-	
+
 	return false
 }
 
@@ -460,9 +459,9 @@ func (r *RedisStreams) isConnectionError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	errStr := err.Error()
-	
+
 	connectionErrors := []string{
 		"connection refused",
 		"connection reset",
@@ -471,13 +470,13 @@ func (r *RedisStreams) isConnectionError(err error) bool {
 		"eof",
 		"connection pool exhausted",
 	}
-	
+
 	for _, connErr := range connectionErrors {
 		if strings.Contains(strings.ToLower(errStr), connErr) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 

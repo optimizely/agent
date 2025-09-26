@@ -320,12 +320,12 @@ func TestNewPubSub(t *testing.T) {
 				Host:          "localhost:6379",
 				Password:      "",
 				Database:      0,
-				BatchSize:     10,                 // default
-				FlushInterval: 5000000000,        // 5s default in nanoseconds
-				MaxRetries:    3,                 // default
-				RetryDelay:    100000000,         // 100ms default in nanoseconds
-				MaxRetryDelay: 5000000000,        // 5s default in nanoseconds
-				ConnTimeout:   10000000000,       // 10s default in nanoseconds
+				BatchSize:     10,          // default
+				FlushInterval: 5000000000,  // 5s default in nanoseconds
+				MaxRetries:    3,           // default
+				RetryDelay:    100000000,   // 100ms default in nanoseconds
+				MaxRetryDelay: 5000000000,  // 5s default in nanoseconds
+				ConnTimeout:   10000000000, // 10s default in nanoseconds
 			},
 			wantErr: false,
 		},
