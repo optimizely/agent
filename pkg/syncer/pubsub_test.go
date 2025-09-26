@@ -260,6 +260,116 @@ func TestNewPubSub(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "Test with valid redis-streams config for notification",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":               "localhost:6379",
+							"password":           "",
+							"database":           0,
+							"batch_size":         20,
+							"flush_interval":     "10s",
+							"max_retries":        5,
+							"retry_delay":        "200ms",
+							"max_retry_delay":    "10s",
+							"connection_timeout": "15s",
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis-streams",
+						Enable:  true,
+					},
+				},
+				flag: SyncFeatureFlagNotificaiton,
+			},
+			want: &pubsub.RedisStreams{
+				Host:          "localhost:6379",
+				Password:      "",
+				Database:      0,
+				BatchSize:     20,
+				FlushInterval: 10000000000, // 10s in nanoseconds
+				MaxRetries:    5,
+				RetryDelay:    200000000,   // 200ms in nanoseconds
+				MaxRetryDelay: 10000000000, // 10s in nanoseconds
+				ConnTimeout:   15000000000, // 15s in nanoseconds
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test with valid redis-streams config for datafile",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
+						},
+					},
+					Datafile: config.FeatureSyncConfig{
+						Default: "redis-streams",
+						Enable:  true,
+					},
+				},
+				flag: SycnFeatureFlagDatafile,
+			},
+			want: &pubsub.RedisStreams{
+				Host:          "localhost:6379",
+				Password:      "",
+				Database:      0,
+				BatchSize:     10,          // default
+				FlushInterval: 5000000000,  // 5s default in nanoseconds
+				MaxRetries:    3,           // default
+				RetryDelay:    100000000,   // 100ms default in nanoseconds
+				MaxRetryDelay: 5000000000,  // 5s default in nanoseconds
+				ConnTimeout:   10000000000, // 10s default in nanoseconds
+			},
+			wantErr: false,
+		},
+		{
+			name: "Test with unsupported pubsub type",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "unsupported-type",
+						Enable:  true,
+					},
+				},
+				flag: SyncFeatureFlagNotificaiton,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Test with invalid feature flag",
+			args: args{
+				conf: config.SyncConfig{
+					Pubsub: map[string]interface{}{
+						"redis": map[string]interface{}{
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
+						},
+					},
+					Notification: config.FeatureSyncConfig{
+						Default: "redis",
+						Enable:  true,
+					},
+				},
+				flag: "invalid-flag",
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
