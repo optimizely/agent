@@ -523,3 +523,60 @@ func TestGetDurationFromConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestNewPubSub_DatabaseTypeConversion(t *testing.T) {
+	tests := []struct {
+		name     string
+		database interface{}
+		wantErr  bool
+	}{
+		{
+			name:     "database as int",
+			database: 0,
+			wantErr:  false,
+		},
+		{
+			name:     "database as float64 (from YAML/JSON)",
+			database: float64(0),
+			wantErr:  false,
+		},
+		{
+			name:     "database as float64 non-zero",
+			database: float64(1),
+			wantErr:  false,
+		},
+		{
+			name:     "database as string - should fail",
+			database: "0",
+			wantErr:  true,
+		},
+		{
+			name:     "database as nil - should fail",
+			database: nil,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			conf := config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": tt.database,
+					},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis",
+					Enable:  true,
+				},
+			}
+
+			_, err := newPubSub(conf, SyncFeatureFlagNotificaiton)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newPubSub() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
