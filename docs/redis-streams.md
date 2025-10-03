@@ -137,8 +137,8 @@ This architecture was designed to ensure **datafile consistency across Agent clu
                               (batch_size: 5)
                                      │
                                      ▼
-                            ┌────────────────┐
-                            │ Consumer Group │
+                            ┌──-──────────────┐
+                            │ Consumer Group  │
                             │  "notifications"│
                             └────────┬────────┘
                                      │
