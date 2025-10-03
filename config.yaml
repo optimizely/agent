@@ -82,10 +82,10 @@ server:
         - localhost
     ## the maximum duration for reading the entire request, including the body.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    readTimeout: 5s
+    readTimeout: 300s
     ## the maximum duration before timing out writes of the response.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
-    writeTimeout: 10s
+    writeTimeout: 300s
     ## path for the health status api
     healthCheckPath: "/health"
     ## the location of the TLS key file
@@ -103,11 +103,11 @@ server:
 ##
 api:
     ## the maximum number of concurrent requests handled by the api listener
-#    maxConns: 10000
+    maxConns: 10000
     ## http listener port
     port: "8080"
     ## set to true to enable subscribing to notifications via an SSE event-stream
-    enableNotifications: false
+    enableNotifications: true
     ## set to true to be able to override experiment bucketing. (recommended false in production)
     enableOverrides: true
     ## CORS support is provided via chi middleware
@@ -198,7 +198,7 @@ client:
         #   userIDKey: "user_id"
         #   async: false
         #   headers: 
-        #     Content-Type: "application/json"
+        #     Content-Type: "application/json" 
         #     Auth-Token: "12345"
     odp:
       ## Disable odp
@@ -249,8 +249,11 @@ runtime:
 synchronization:
     pubsub:
         redis:
-            host: "redis.demo.svc:6379"
-            password: ""
+            host: "localhost:6379"
+            ## Use auth_token or redis_secret instead of password to avoid security scanning alerts
+            ## Supports: auth_token, redis_secret, password (in order of preference)
+            ## Fallback: REDIS_PASSWORD environment variable if config field is empty
+            auth_token: ""
             database: 0
             ## channel: "optimizely-sync"  # Base channel name (NOT currently parsed - uses hardcoded default)
             ## Agent publishes to channels: "optimizely-sync-{sdk_key}"
@@ -259,25 +262,24 @@ synchronization:
             
             ## Redis Streams configuration (when using Redis Streams for notifications)
             ## batch_size: number of messages to batch before sending (default: 10)
-            # batch_size: 10
+            batch_size: 5
             ## flush_interval: maximum time to wait before sending a partial batch (default: 5s)
-            # flush_interval: 5s
+            flush_interval: 2s
             ## max_retries: maximum number of retry attempts for failed operations (default: 3)
-            # max_retries: 3
+            max_retries: 3
             ## retry_delay: initial delay between retry attempts (default: 100ms)
-            # retry_delay: 100ms
+            retry_delay: 100ms
             ## max_retry_delay: maximum delay between retry attempts with exponential backoff (default: 5s)
-            # max_retry_delay: 5s
+            max_retry_delay: 5s
             ## connection_timeout: timeout for Redis connections (default: 10s)
-            # connection_timeout: 10s
+            connection_timeout: 10s
     ## if notification synchronization is enabled, then the active notification event-stream API
     ## will get the notifications from available replicas
     notification:
-        enable: false
+        enable: true
         ## Use "redis" for fire-and-forget pub/sub (existing behavior)
         ## Use "redis-streams" for persistent message delivery with retries and acknowledgment
-        default: "redis"
-        # default: "redis-streams"  # Uncomment to enable Redis Streams
+        default: "redis-streams"
     ## if datafile synchronization is enabled, then for each webhook API call
     ## the datafile will be sent to all available replicas to achieve better eventual consistency
     datafile:

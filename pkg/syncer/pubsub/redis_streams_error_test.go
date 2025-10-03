@@ -350,8 +350,8 @@ func TestRedisStreams_ExecuteWithRetry_NonRetryableError(t *testing.T) {
 func TestRedisStreams_ExecuteWithRetry_SuccessAfterRetries(t *testing.T) {
 	rs := setupRedisStreamsWithRetry()
 	rs.RetryDelay = 1 * time.Millisecond // Fast retries for testing
-	// Set unique registry to avoid conflicts
-	rs.SetMetricsRegistry(metrics.NewRegistry("success_after_retries_test_" + time.Now().Format("20060102150405")))
+	// Don't set metrics registry to avoid expvar name conflicts across tests
+	// (expvar counters are global and can't be reused even with unique registry names)
 	ctx := context.Background()
 
 	attemptCount := 0
@@ -373,8 +373,8 @@ func TestRedisStreams_ExecuteWithRetry_ExhaustRetries(t *testing.T) {
 	rs := setupRedisStreamsWithRetry()
 	rs.MaxRetries = 2
 	rs.RetryDelay = 1 * time.Millisecond // Fast retries for testing
-	// Set unique registry to avoid conflicts
-	rs.SetMetricsRegistry(metrics.NewRegistry("exhaust_retries_test_" + time.Now().Format("20060102150405")))
+	// Don't set metrics registry to avoid expvar name conflicts across tests
+	// (expvar counters are global and can't be reused even with unique registry names)
 	ctx := context.Background()
 
 	attemptCount := 0
@@ -422,8 +422,8 @@ func TestRedisStreams_CreateConsumerGroupWithRetry_BusyGroupExists(t *testing.T)
 func TestRedisStreams_ErrorHandling_ContextCancellation(t *testing.T) {
 	rs := setupRedisStreamsWithRetry()
 	rs.RetryDelay = 100 * time.Millisecond
-	// Set unique registry to avoid conflicts
-	rs.SetMetricsRegistry(metrics.NewRegistry("context_cancellation_test_" + time.Now().Format("20060102150405")))
+	// Don't set metrics registry to avoid expvar name conflicts across tests
+	// (expvar counters are global and can't be reused even with unique registry names)
 
 	ctx, cancel := context.WithCancel(context.Background())
 

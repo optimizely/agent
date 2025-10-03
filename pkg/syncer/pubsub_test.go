@@ -180,7 +180,7 @@ func TestNewPubSub(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Test with invalid redis config without password",
+			name: "Test with valid redis config without password",
 			args: args{
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
@@ -196,8 +196,12 @@ func TestNewPubSub(t *testing.T) {
 				},
 				flag: SyncFeatureFlagNotificaiton,
 			},
-			want:    nil,
-			wantErr: true,
+			want: &pubsub.Redis{
+				Host:     "localhost:6379",
+				Password: "", // Empty password is valid (no auth required)
+				Database: 0,
+			},
+			wantErr: false,
 		},
 		{
 			name: "Test with invalid redis config without db",
@@ -220,13 +224,13 @@ func TestNewPubSub(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Test with invalid redis config with invalid password",
+			name: "Test with redis config with invalid password type (ignored)",
 			args: args{
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
 							"host":     "localhost:6379",
-							"password": 1234,
+							"password": 1234, // Invalid type, will be ignored
 							"database": 0,
 						},
 					},
@@ -237,8 +241,12 @@ func TestNewPubSub(t *testing.T) {
 				},
 				flag: SyncFeatureFlagNotificaiton,
 			},
-			want:    nil,
-			wantErr: true,
+			want: &pubsub.Redis{
+				Host:     "localhost:6379",
+				Password: "", // Invalid type ignored, falls back to empty string
+				Database: 0,
+			},
+			wantErr: false,
 		},
 		{
 			name: "Test with invalid redis config with invalid database",
