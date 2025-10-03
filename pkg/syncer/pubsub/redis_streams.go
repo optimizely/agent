@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 
@@ -265,7 +266,9 @@ func (r *RedisStreams) getConsumerGroup() string {
 
 func (r *RedisStreams) getConsumerName() string {
 	if r.ConsumerName == "" {
-		return fmt.Sprintf("consumer-%d", time.Now().UnixNano())
+		hostname, _ := os.Hostname()
+		pid := os.Getpid()
+		return fmt.Sprintf("consumer-%s-%d-%d", hostname, pid, time.Now().Unix())
 	}
 	return r.ConsumerName
 }
@@ -335,8 +338,11 @@ func (r *RedisStreams) executeWithRetry(ctx context.Context, operation func(clie
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		client := r.createClient()
-		err := operation(client)
-		client.Close()
+		var err error
+		func() {
+			defer client.Close() // Always executes, even on panic
+			err = operation(client)
+		}()
 
 		if err == nil {
 			// Record successful operation metrics
