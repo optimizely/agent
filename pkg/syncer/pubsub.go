@@ -36,11 +36,11 @@ const (
 	PubSubRedisStreams = "redis-streams"
 )
 
-type SycnFeatureFlag string
+type SyncFeatureFlag string
 
 const (
-	SyncFeatureFlagNotificaiton SycnFeatureFlag = "sync-feature-flag-notification"
-	SycnFeatureFlagDatafile     SycnFeatureFlag = "sync-feature-flag-datafile"
+	SyncFeatureFlagNotificaiton SyncFeatureFlag = "sync-feature-flag-notification"
+	SyncFeatureFlagDatafile     SyncFeatureFlag = "sync-feature-flag-datafile"
 )
 
 type PubSub interface {
@@ -48,7 +48,7 @@ type PubSub interface {
 	Subscribe(ctx context.Context, channel string) (chan string, error)
 }
 
-func newPubSub(conf config.SyncConfig, featureFlag SycnFeatureFlag) (PubSub, error) {
+func newPubSub(conf config.SyncConfig, featureFlag SyncFeatureFlag) (PubSub, error) {
 	if featureFlag == SyncFeatureFlagNotificaiton {
 		if conf.Notification.Default == PubSubRedis {
 			return getPubSubRedis(conf)
@@ -57,7 +57,7 @@ func newPubSub(conf config.SyncConfig, featureFlag SycnFeatureFlag) (PubSub, err
 		} else {
 			return nil, errors.New("pubsub type not supported")
 		}
-	} else if featureFlag == SycnFeatureFlagDatafile {
+	} else if featureFlag == SyncFeatureFlagDatafile {
 		if conf.Datafile.Default == PubSubRedis {
 			return getPubSubRedis(conf)
 		} else if conf.Datafile.Default == PubSubRedisStreams {
@@ -96,9 +96,15 @@ func getPubSubRedis(conf config.SyncConfig) (PubSub, error) {
 	if !found {
 		return nil, errors.New("pubsub redis database not found")
 	}
-	database, ok := databaseVal.(int)
-	if !ok {
-		return nil, errors.New("pubsub redis database not valid, database must be int")
+	// YAML/JSON unmarshals numbers as float64, convert to int
+	var database int
+	switch v := databaseVal.(type) {
+	case int:
+		database = v
+	case float64:
+		database = int(v)
+	default:
+		return nil, errors.New("pubsub redis database not valid, database must be numeric")
 	}
 
 	// Return original Redis pub/sub implementation (fire-and-forget)
@@ -136,9 +142,15 @@ func getPubSubRedisStreams(conf config.SyncConfig) (PubSub, error) {
 	if !found {
 		return nil, errors.New("pubsub redis database not found")
 	}
-	database, ok := databaseVal.(int)
-	if !ok {
-		return nil, errors.New("pubsub redis database not valid, database must be int")
+	// YAML/JSON unmarshals numbers as float64, convert to int
+	var database int
+	switch v := databaseVal.(type) {
+	case int:
+		database = v
+	case float64:
+		database = int(v)
+	default:
+		return nil, errors.New("pubsub redis database not valid, database must be numeric")
 	}
 
 	// Parse optional Redis Streams configuration parameters

@@ -29,7 +29,7 @@ import (
 func TestNewPubSub(t *testing.T) {
 	type args struct {
 		conf config.SyncConfig
-		flag SycnFeatureFlag
+		flag SyncFeatureFlag
 	}
 	tests := []struct {
 		name    string
@@ -78,7 +78,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SycnFeatureFlagDatafile,
+				flag: SyncFeatureFlagDatafile,
 			},
 			want: &pubsub.Redis{
 				Host:     "localhost:6379",
@@ -322,7 +322,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SycnFeatureFlagDatafile,
+				flag: SyncFeatureFlagDatafile,
 			},
 			want: &pubsub.RedisStreams{
 				Host:          "localhost:6379",
