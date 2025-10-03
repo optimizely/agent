@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/agent/pkg/utils/redisauth"
+	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/rs/zerolog/log"
 )

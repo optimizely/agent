@@ -34,9 +34,9 @@ func TestGetPassword(t *testing.T) {
 		{
 			name: "auth_token has highest priority",
 			config: map[string]interface{}{
-				"auth_token":    "token123",
-				"redis_secret":  "secret456",
-				"password":      "password789",
+				"auth_token":   "token123",
+				"redis_secret": "secret456",
+				"password":     "password789",
 			},
 			envVar: "TEST_ENV",
 			want:   "token123",

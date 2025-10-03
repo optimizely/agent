@@ -239,8 +239,8 @@ func TestRedisStreams_Publish_WithInvalidHost_ShouldRetry(t *testing.T) {
 	errMsg := err.Error()
 	assert.True(t,
 		strings.Contains(errMsg, "operation failed after") ||
-		strings.Contains(errMsg, "non-retryable error") ||
-		strings.Contains(errMsg, "lookup invalid-host"),
+			strings.Contains(errMsg, "non-retryable error") ||
+			strings.Contains(errMsg, "lookup invalid-host"),
 		"Expected retry or DNS error, got: %s", errMsg)
 }
 
