@@ -453,7 +453,7 @@ func TestRedisStreams_Subscribe_ErrorRecovery_Integration(t *testing.T) {
 	rs := setupRedisStreamsWithRetry()
 	rs.MaxRetries = 1 // Limit retries for faster test
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	channel := "test-error-recovery"
@@ -471,10 +471,11 @@ func TestRedisStreams_Subscribe_ErrorRecovery_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Should receive the message despite any internal error recovery
+	// Wait longer than flush interval (5 seconds) to ensure batch is flushed
 	select {
 	case received := <-ch:
 		assert.Equal(t, "test message", received)
-	case <-time.After(2 * time.Second):
+	case <-time.After(6 * time.Second):
 		t.Fatal("Timeout waiting for message")
 	}
 }

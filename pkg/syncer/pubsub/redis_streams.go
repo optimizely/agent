@@ -98,6 +98,7 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 	consumerName := r.getConsumerName()
 
 	ch := make(chan string)
+	ready := make(chan error, 1) // Signal when consumer group is ready
 
 	go func() {
 		defer close(ch)
@@ -119,8 +120,12 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 		// Create consumer group with retry
 		if err := r.createConsumerGroupWithRetry(ctx, client, streamName, consumerGroup); err != nil {
 			log.Error().Err(err).Str("stream", streamName).Str("group", consumerGroup).Msg("Failed to create consumer group")
+			ready <- err // Signal initialization failure
 			return
 		}
+
+		// Signal that consumer group is ready
+		ready <- nil
 
 		for {
 			select {
@@ -222,7 +227,16 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 		}
 	}()
 
-	return ch, nil
+	// Wait for consumer group initialization before returning
+	select {
+	case err := <-ready:
+		if err != nil {
+			return nil, err
+		}
+		return ch, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 // Helper method to send batch to channel
@@ -364,14 +378,40 @@ func (r *RedisStreams) executeWithRetry(ctx context.Context, operation func(clie
 }
 
 // createConsumerGroupWithRetry creates a consumer group with retry logic
-func (r *RedisStreams) createConsumerGroupWithRetry(ctx context.Context, _ *redis.Client, streamName, consumerGroup string) error {
-	return r.executeWithRetry(ctx, func(retryClient *redis.Client) error {
-		_, err := retryClient.XGroupCreateMkStream(ctx, streamName, consumerGroup, "$").Result()
-		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-			return fmt.Errorf("failed to create consumer group: %w", err)
+func (r *RedisStreams) createConsumerGroupWithRetry(ctx context.Context, client *redis.Client, streamName, consumerGroup string) error {
+	maxRetries := r.getMaxRetries()
+	retryDelay := r.getRetryDelay()
+	maxRetryDelay := r.getMaxRetryDelay()
+
+	var lastErr error
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		_, err := client.XGroupCreateMkStream(ctx, streamName, consumerGroup, "$").Result()
+		if err == nil || err.Error() == "BUSYGROUP Consumer Group name already exists" {
+			return nil // Success
 		}
-		return nil
-	})
+
+		lastErr = err
+
+		// Don't retry on non-recoverable errors
+		if !r.isRetryableError(err) {
+			return fmt.Errorf("non-retryable error creating consumer group: %w", err)
+		}
+
+		// Don't sleep after the last attempt
+		if attempt < maxRetries {
+			// Calculate delay with exponential backoff
+			delay := time.Duration(math.Min(float64(retryDelay)*math.Pow(2, float64(attempt)), float64(maxRetryDelay)))
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+				// Continue to next retry
+			}
+		}
+	}
+
+	return fmt.Errorf("failed to create consumer group after %d retries: %w", maxRetries, lastErr)
 }
 
 // acknowledgeMessage acknowledges a message with retry logic
