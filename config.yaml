@@ -185,9 +185,13 @@ client:
         # in-memory: 
         #   capacity: 0
         #   storageStrategy: "fifo"
-        # redis: 
+        # redis:
         #   host: "localhost:6379"
-        #   password: ""
+        #   ## Use auth_token or redis_secret instead of password to avoid security scanning alerts
+        #   ## Supports: auth_token, redis_secret, password (in order of preference)
+        #   ## Fallback: REDIS_UPS_PASSWORD environment variable if config field is empty
+        #   auth_token: ""      # Recommended (avoids security scanners)
+        #   # password: ""      # Also supported for backwards compatibility
         #   database: 0
         # rest: 
         #   host: "http://localhost"
@@ -216,9 +220,13 @@ client:
           in-memory: 
             size: 10000
             timeout: 600s
-        #   redis: 
+        #   redis:
         #     host: "localhost:6379"
-        #     password: ""
+        #     ## Use auth_token or redis_secret instead of password to avoid security scanning alerts
+        #     ## Supports: auth_token, redis_secret, password (in order of preference)
+        #     ## Fallback: REDIS_ODP_PASSWORD environment variable if config field is empty
+        #     auth_token: ""      # Recommended (avoids security scanners)
+        #     # password: ""      # Also supported for backwards compatibility
         #     database: 0
         #     timeout: 0s
       

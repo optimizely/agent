@@ -1,4 +1,4 @@
-# Redis Streams for Notification Delivery
+# Redis Streams for Notification Delivery (beta)
 
 Redis Streams provides persistent, reliable message delivery for Agent notifications with guaranteed delivery, message acknowledgment, and automatic recovery.
 
@@ -23,6 +23,14 @@ Redis Streams extends Redis with a log data structure that provides:
 - **Consumer groups** - Load distribution across multiple Agent instances
 - **Automatic recovery** - Unacknowledged messages are redelivered
 - **Batching** - Efficient processing of multiple messages
+
+### Prerequisites
+
+**Redis Version:** Redis **5.0 or higher** is required for Redis Streams support.
+
+- Redis Streams were introduced in Redis 5.0
+- Recommended: Redis 6.0+ for improved performance and stability
+- Verify your version: `redis-cli --version`
 
 ### When to Use Redis Streams
 
@@ -163,6 +171,8 @@ This architecture was designed to ensure **datafile consistency across Agent clu
 5. **Retry** - Unacknowledged messages automatically redelivered
 
 ## Configuration
+
+> **⚠️ Prerequisites:** Requires Redis 5.0 or higher. Redis Streams are not available in Redis 4.x or earlier.
 
 ### Quick Start Setup
 

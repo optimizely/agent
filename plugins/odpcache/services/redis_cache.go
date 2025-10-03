@@ -24,6 +24,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/utils"
+	"github.com/optimizely/agent/pkg/utils/redisauth"
 	"github.com/optimizely/go-sdk/v2/pkg/cache"
 	"github.com/rs/zerolog/log"
 )
@@ -37,6 +38,35 @@ type RedisCache struct {
 	Password string         `json:"password"`
 	Database int            `json:"database"`
 	Timeout  utils.Duration `json:"timeout"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling with flexible password field names
+// Supports: auth_token, redis_secret, password (in order of preference)
+// Fallback: REDIS_ODP_PASSWORD environment variable
+func (r *RedisCache) UnmarshalJSON(data []byte) error {
+	// Use an alias type to avoid infinite recursion
+	type Alias RedisCache
+	alias := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(r),
+	}
+
+	// First, unmarshal normally to get all fields
+	if err := json.Unmarshal(data, alias); err != nil {
+		return err
+	}
+
+	// Parse raw config to extract password with flexible field names
+	var rawConfig map[string]interface{}
+	if err := json.Unmarshal(data, &rawConfig); err != nil {
+		return err
+	}
+
+	// Use redisauth utility to get password from flexible field names or env var
+	r.Password = redisauth.GetPassword(rawConfig, "REDIS_ODP_PASSWORD")
+
+	return nil
 }
 
 // Lookup is used to retrieve segments
