@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -34,14 +33,13 @@ import (
 	"github.com/optimizely/agent/pkg/syncer"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
-	odpCachePkg "github.com/optimizely/go-sdk/v2/pkg/cache"
 	"github.com/optimizely/go-sdk/v2/pkg/client"
-	"github.com/optimizely/go-sdk/v2/pkg/cmab"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
 	"github.com/optimizely/go-sdk/v2/pkg/logging"
 	"github.com/optimizely/go-sdk/v2/pkg/odp"
+	odpCachePkg "github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 	odpEventPkg "github.com/optimizely/go-sdk/v2/pkg/odp/event"
 	odpSegmentPkg "github.com/optimizely/go-sdk/v2/pkg/odp/segment"
 	"github.com/optimizely/go-sdk/v2/pkg/tracing"
@@ -314,58 +312,6 @@ func defaultLoader(
 		)
 		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
 
-		// Configure CMAB prediction endpoint from environment variable
-		// This allows FSC tests to override the endpoint by setting OPTIMIZELY_CMAB_PREDICTIONENDPOINT
-		if cmabEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT"); cmabEndpoint != "" {
-			// Set the global variable that go-sdk uses (FSC already includes the /%s format)
-			cmab.CMABPredictionEndpoint = cmabEndpoint
-			log.Info().Str("endpoint", cmabEndpoint).Msg("Using custom CMAB prediction endpoint")
-		}
-
-		// Parse CMAB cache configuration
-		cacheSize := clientConf.CMAB.Cache.Size
-		if cacheSize == 0 {
-			cacheSize = cmab.DefaultCacheSize
-		}
-
-		cacheTTL := clientConf.CMAB.Cache.TTL
-		if cacheTTL == 0 {
-			cacheTTL = cmab.DefaultCacheTTL
-		}
-
-		// Create retry config
-		retryConfig := &cmab.RetryConfig{
-			MaxRetries:        clientConf.CMAB.RetryConfig.MaxRetries,
-			InitialBackoff:    clientConf.CMAB.RetryConfig.InitialBackoff,
-			MaxBackoff:        clientConf.CMAB.RetryConfig.MaxBackoff,
-			BackoffMultiplier: clientConf.CMAB.RetryConfig.BackoffMultiplier,
-		}
-
-		// Apply defaults for retry config if not set
-		if retryConfig.MaxRetries == 0 {
-			retryConfig.MaxRetries = cmab.DefaultMaxRetries
-		}
-		if retryConfig.InitialBackoff == 0 {
-			retryConfig.InitialBackoff = cmab.DefaultInitialBackoff
-		}
-		if retryConfig.MaxBackoff == 0 {
-			retryConfig.MaxBackoff = cmab.DefaultMaxBackoff
-		}
-		if retryConfig.BackoffMultiplier == 0 {
-			retryConfig.BackoffMultiplier = cmab.DefaultBackoffMultiplier
-		}
-
-		// Create CMAB config (NO endpoint configuration - not configurable)
-		cmabConfig := cmab.Config{
-			CacheSize:   cacheSize,
-			CacheTTL:    cacheTTL,
-			HTTPTimeout: clientConf.CMAB.RequestTimeout,
-			RetryConfig: retryConfig,
-		}
-
-		// Add to client options
-		clientOptions = append(clientOptions, client.WithCmabConfig(&cmabConfig))
-
 		optimizelyClient, err := optimizelyFactory.Client(
 			clientOptions...,
 		)
@@ -421,25 +367,4 @@ func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMa
 		return intializeServiceWithName(defaultServiceName)
 	}
 	return nil
-}
-
-// ResetClient removes the optimizely client from cache to ensure clean state for testing
-// This is primarily used by FSC tests to clear CMAB cache between test scenarios
-func (c *OptlyCache) ResetClient(sdkKey string) {
-	// Remove the client from the cache
-	if val, exists := c.optlyMap.Get(sdkKey); exists {
-		c.optlyMap.Remove(sdkKey)
-
-		// Close the client to clean up resources
-		if client, ok := val.(*OptlyClient); ok {
-			client.Close()
-		}
-
-		message := "Reset Optimizely client for testing"
-		if ShouldIncludeSDKKey {
-			log.Info().Str("sdkKey", sdkKey).Msg(message)
-		} else {
-			log.Info().Msg(message)
-		}
-	}
 }

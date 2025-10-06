@@ -12,7 +12,7 @@ GOBIN=bin
 GOPATH:=$(shell $(GOCMD) env GOPATH 2> /dev/null)
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test -race -mod=mod
+GOTEST=$(GOCMD) test -race
 GOGET=$(GOCMD) get
 GOLINT=$(GOPATH)/bin/golangci-lint
 BINARY_UNIX=$(TARGET)_unix
@@ -35,7 +35,9 @@ build: $(TARGET) check-go ## builds and installs binary in bin/
 	@true
 
 check-go:
-	@which go > /dev/null || (echo "go is not available please install golang version 1.21.0+, https://golang.org/dl/" && exit 1)
+ifndef GOPATH
+	$(error "go is not available please install golang version 1.24.0+, https://golang.org/dl/")
+endif
 
 clean: check-go ## runs `go clean` and removes the bin/ dir
 	$(GOCLEAN) --modcache
@@ -73,7 +75,7 @@ static: check-go
 	$(GOPATH)/bin/statik -src=web/static -f
 
 test: check-go static ## recursively tests all .go files
-	$(GOTEST) -count=1 ./...
+	$(GOTEST) ./...
 
 include scripts/Makefile.ci
 

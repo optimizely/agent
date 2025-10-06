@@ -108,50 +108,31 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		featureMap = cfg.FeaturesMap
 	}
 
+	var decides map[string]client.OptimizelyDecision
 	switch len(keys) {
 	case 0:
 		// Decide All
-		decides := optimizelyUserContext.DecideAll(decideOptions)
-		decideOuts := []DecideOut{}
-		for _, d := range decides {
-			decideOut := DecideOut{
-				OptimizelyDecision:      d,
-				Variables:               d.Variables.ToMap(),
-				IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-			}
-			decideOuts = append(decideOuts, decideOut)
-			logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
-		}
-		render.JSON(w, r, decideOuts)
-		return
+		decides = optimizelyUserContext.DecideAll(decideOptions)
 	case 1:
-		// Decide single key
+		// Decide
 		key := keys[0]
 		logger.Debug().Str("featureKey", key).Msg("fetching feature decision")
 		d := optimizelyUserContext.Decide(key, decideOptions)
-		decideOut := DecideOut{
-			OptimizelyDecision:      d,
-			Variables:               d.Variables.ToMap(),
-			IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-		}
+		decideOut := DecideOut{d, d.Variables.ToMap(), isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
 		render.JSON(w, r, decideOut)
 		return
 	default:
-		// Decide for multiple keys
-		decides := optimizelyUserContext.DecideForKeys(keys, decideOptions)
-		decideOuts := []DecideOut{}
-		for _, d := range decides {
-			decideOut := DecideOut{
-				OptimizelyDecision:      d,
-				Variables:               d.Variables.ToMap(),
-				IsEveryoneElseVariation: isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey),
-			}
-			decideOuts = append(decideOuts, decideOut)
-			logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
-		}
-		render.JSON(w, r, decideOuts)
-		return
+		// Decide for Keys
+		decides = optimizelyUserContext.DecideForKeys(keys, decideOptions)
 	}
+
+	decideOuts := []DecideOut{}
+	for _, d := range decides {
+		decideOut := DecideOut{d, d.Variables.ToMap(), isEveryoneElseVariation(featureMap[d.FlagKey].DeliveryRules, d.RuleKey)}
+		decideOuts = append(decideOuts, decideOut)
+		logger.Debug().Msgf("Feature %q is enabled for user %s? %t", d.FlagKey, d.UserContext.UserID, d.Enabled)
+	}
+	render.JSON(w, r, decideOuts)
 }
 
 func getUserContextWithOptions(r *http.Request) (DecideBody, error) {

@@ -20,7 +20,7 @@ package odpcache
 import (
 	"testing"
 
-	"github.com/optimizely/go-sdk/v2/pkg/cache"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 	"github.com/stretchr/testify/assert"
 )
 

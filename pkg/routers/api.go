@@ -49,7 +49,6 @@ type APIOptions struct {
 	overrideHandler     http.HandlerFunc
 	lookupHandler       http.HandlerFunc
 	saveHandler         http.HandlerFunc
-	resetHandler        http.HandlerFunc
 	sendOdpEventHandler http.HandlerFunc
 	nStreamHandler      http.HandlerFunc
 	oAuthHandler        http.HandlerFunc
@@ -81,7 +80,6 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.AgentConfig, m
 	if !conf.API.EnableOverrides {
 		overrideHandler = forbiddenHandler("Overrides not enabled")
 	}
-	resetHandler := handlers.ResetClient
 
 	nStreamHandler := forbiddenHandler("Notification stream not enabled")
 	if conf.API.EnableNotifications {
@@ -104,7 +102,6 @@ func NewDefaultAPIRouter(optlyCache optimizely.Cache, conf config.AgentConfig, m
 		overrideHandler:     overrideHandler,
 		lookupHandler:       handlers.Lookup,
 		saveHandler:         handlers.Save,
-		resetHandler:        resetHandler,
 		trackHandler:        handlers.TrackEvent,
 		sendOdpEventHandler: handlers.SendOdpEvent,
 		sdkMiddleware:       mw.ClientCtx,
@@ -134,7 +131,6 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	overrideTimer := middleware.Metricize("override", opt.metricsRegistry)
 	lookupTimer := middleware.Metricize("lookup", opt.metricsRegistry)
 	saveTimer := middleware.Metricize("save", opt.metricsRegistry)
-	resetTimer := middleware.Metricize("reset", opt.metricsRegistry)
 	trackTimer := middleware.Metricize("track-event", opt.metricsRegistry)
 	sendOdpEventTimer := middleware.Metricize("send-odp-event", opt.metricsRegistry)
 	createAccesstokenTimer := middleware.Metricize("create-api-access-token", opt.metricsRegistry)
@@ -148,7 +144,6 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 	overrideTracer := middleware.AddTracing("overrideHandler", "Override")
 	lookupTracer := middleware.AddTracing("lookupHandler", "Lookup")
 	saveTracer := middleware.AddTracing("saveHandler", "Save")
-	resetTracer := middleware.AddTracing("resetHandler", "Reset")
 	sendOdpEventTracer := middleware.AddTracing("sendOdpEventHandler", "SendOdpEvent")
 	nStreamTracer := middleware.AddTracing("notificationHandler", "SendNotificationEvent")
 	authTracer := middleware.AddTracing("authHandler", "AuthToken")
@@ -169,7 +164,6 @@ func WithAPIRouter(opt *APIOptions, r chi.Router) {
 		r.With(decideTimer, opt.oAuthMiddleware, contentTypeMiddleware, decideTracer).Post("/decide", opt.decideHandler)
 		r.With(trackTimer, opt.oAuthMiddleware, contentTypeMiddleware, trackTracer).Post("/track", opt.trackHandler)
 		r.With(overrideTimer, opt.oAuthMiddleware, contentTypeMiddleware, overrideTracer).Post("/override", opt.overrideHandler)
-		r.With(resetTimer, opt.oAuthMiddleware, contentTypeMiddleware, resetTracer).Post("/reset", opt.resetHandler)
 		r.With(lookupTimer, opt.oAuthMiddleware, contentTypeMiddleware, lookupTracer).Post("/lookup", opt.lookupHandler)
 		r.With(saveTimer, opt.oAuthMiddleware, contentTypeMiddleware, saveTracer).Post("/save", opt.saveHandler)
 		r.With(sendOdpEventTimer, opt.oAuthMiddleware, contentTypeMiddleware, sendOdpEventTracer).Post("/send-odp-event", opt.sendOdpEventHandler)

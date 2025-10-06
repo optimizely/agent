@@ -24,7 +24,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/utils"
-	"github.com/optimizely/go-sdk/v2/pkg/cache"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 	"github.com/rs/zerolog/log"
 )
 

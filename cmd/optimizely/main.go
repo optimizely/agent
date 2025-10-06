@@ -25,7 +25,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -99,92 +98,13 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 	}
 
 	// Check if JSON string was set using OPTIMIZELY_CLIENT_USERPROFILESERVICE environment variable
-	if userProfileService := v.GetStringMap("client.userprofileservice"); len(userProfileService) > 0 {
+	if userProfileService := v.GetStringMap("client.userprofileservice"); userProfileService != nil {
 		conf.Client.UserProfileService = userProfileService
 	}
 
 	// Check if JSON string was set using OPTIMIZELY_CLIENT_ODP_SEGMENTSCACHE environment variable
-	if odpSegmentsCache := v.GetStringMap("client.odp.segmentsCache"); len(odpSegmentsCache) > 0 {
+	if odpSegmentsCache := v.GetStringMap("client.odp.segmentsCache"); odpSegmentsCache != nil {
 		conf.Client.ODP.SegmentsCache = odpSegmentsCache
-	}
-
-	// Handle CMAB configuration using the same approach as UserProfileService
-	// Check for complete CMAB configuration first
-	if cmab := v.GetStringMap("cmab"); len(cmab) > 0 {
-		if timeout, ok := cmab["requestTimeout"].(string); ok {
-			if duration, err := time.ParseDuration(timeout); err == nil {
-				conf.CMAB.RequestTimeout = duration
-			}
-		}
-		if cache, ok := cmab["cache"].(map[string]interface{}); ok {
-			if cacheType, ok := cache["type"].(string); ok {
-				conf.CMAB.Cache.Type = cacheType
-			}
-			if cacheSize, ok := cache["size"].(float64); ok {
-				conf.CMAB.Cache.Size = int(cacheSize)
-			}
-			if cacheTTL, ok := cache["ttl"].(string); ok {
-				if duration, err := time.ParseDuration(cacheTTL); err == nil {
-					conf.CMAB.Cache.TTL = duration
-				}
-			}
-		}
-		if retryConfig, ok := cmab["retryConfig"].(map[string]interface{}); ok {
-			if maxRetries, ok := retryConfig["maxRetries"].(float64); ok {
-				conf.CMAB.RetryConfig.MaxRetries = int(maxRetries)
-			}
-			if initialBackoff, ok := retryConfig["initialBackoff"].(string); ok {
-				if duration, err := time.ParseDuration(initialBackoff); err == nil {
-					conf.CMAB.RetryConfig.InitialBackoff = duration
-				}
-			}
-			if maxBackoff, ok := retryConfig["maxBackoff"].(string); ok {
-				if duration, err := time.ParseDuration(maxBackoff); err == nil {
-					conf.CMAB.RetryConfig.MaxBackoff = duration
-				}
-			}
-			if backoffMultiplier, ok := retryConfig["backoffMultiplier"].(float64); ok {
-				conf.CMAB.RetryConfig.BackoffMultiplier = backoffMultiplier
-			}
-		}
-	}
-
-	// Check for individual map sections
-	if cmabCache := v.GetStringMap("cmab.cache"); len(cmabCache) > 0 {
-		if cacheType, ok := cmabCache["type"].(string); ok {
-			conf.CMAB.Cache.Type = cacheType
-		}
-		if cacheSize, ok := cmabCache["size"].(int); ok {
-			conf.CMAB.Cache.Size = cacheSize
-		} else if cacheSize, ok := cmabCache["size"].(float64); ok {
-			conf.CMAB.Cache.Size = int(cacheSize)
-		}
-		if cacheTTL, ok := cmabCache["ttl"].(string); ok {
-			if duration, err := time.ParseDuration(cacheTTL); err == nil {
-				conf.CMAB.Cache.TTL = duration
-			}
-		}
-	}
-
-	if cmabRetryConfig := v.GetStringMap("cmab.retryConfig"); len(cmabRetryConfig) > 0 {
-		if maxRetries, ok := cmabRetryConfig["maxRetries"].(int); ok {
-			conf.CMAB.RetryConfig.MaxRetries = maxRetries
-		} else if maxRetries, ok := cmabRetryConfig["maxRetries"].(float64); ok {
-			conf.CMAB.RetryConfig.MaxRetries = int(maxRetries)
-		}
-		if initialBackoff, ok := cmabRetryConfig["initialBackoff"].(string); ok {
-			if duration, err := time.ParseDuration(initialBackoff); err == nil {
-				conf.CMAB.RetryConfig.InitialBackoff = duration
-			}
-		}
-		if maxBackoff, ok := cmabRetryConfig["maxBackoff"].(string); ok {
-			if duration, err := time.ParseDuration(maxBackoff); err == nil {
-				conf.CMAB.RetryConfig.MaxBackoff = duration
-			}
-		}
-		if backoffMultiplier, ok := cmabRetryConfig["backoffMultiplier"].(float64); ok {
-			conf.CMAB.RetryConfig.BackoffMultiplier = backoffMultiplier
-		}
 	}
 
 	return conf

@@ -20,7 +20,7 @@ package odpcache
 import (
 	"fmt"
 
-	"github.com/optimizely/go-sdk/v2/pkg/cache"
+	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 )
 
 // Creator type defines a function for creating an instance of a Cache
