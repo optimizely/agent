@@ -34,10 +34,10 @@ import (
 	odpCacheServices "github.com/optimizely/agent/plugins/odpcache/services"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/agent/plugins/userprofileservice/services"
+	"github.com/optimizely/go-sdk/v2/pkg/cache"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
-	"github.com/optimizely/go-sdk/v2/pkg/odp/cache"
 )
 
 var counter int
