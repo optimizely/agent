@@ -580,3 +580,153 @@ func TestNewPubSub_DatabaseTypeConversion(t *testing.T) {
 		})
 	}
 }
+
+func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
+	tests := []struct {
+		name    string
+		conf    config.SyncConfig
+		wantErr bool
+	}{
+		{
+			name: "redis-streams config not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"not-redis": map[string]interface{}{},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "redis-streams config not valid (not a map)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": "invalid-config",
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "redis-streams host not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"password": "",
+						"database": 0,
+					},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "redis-streams host not valid (not a string)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     123,
+						"password": "",
+						"database": 0,
+					},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "redis-streams database not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+					},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "redis-streams database as float64 (valid)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": float64(1),
+					},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "redis-streams database invalid type",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": "invalid",
+					},
+				},
+				Notification: config.FeatureSyncConfig{
+					Default: "redis-streams",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "datafile with unsupported pubsub type",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": 0,
+					},
+				},
+				Datafile: config.FeatureSyncConfig{
+					Default: "unsupported-type",
+					Enable:  true,
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var err error
+			if tt.conf.Notification.Default != "" {
+				_, err = newPubSub(tt.conf, SyncFeatureFlagNotificaiton)
+			} else {
+				_, err = newPubSub(tt.conf, SyncFeatureFlagDatafile)
+			}
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newPubSub() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
