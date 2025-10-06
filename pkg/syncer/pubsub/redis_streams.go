@@ -100,9 +100,11 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 
 	ch := make(chan string)
 	ready := make(chan error, 1) // Signal when consumer group is ready
+	stop := make(chan struct{})   // Signal to stop goroutine
 
 	go func() {
 		defer close(ch)
+		defer close(ready) // Ensure ready is closed
 
 		batchSize := r.getBatchSize()
 		flushTicker := time.NewTicker(r.getFlushInterval())
@@ -123,7 +125,7 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 			log.Error().Err(err).Str("stream", streamName).Str("group", consumerGroup).Msg("Failed to create consumer group")
 			select {
 			case ready <- err: // Signal initialization failure
-			case <-ctx.Done(): // Main function already returned
+			case <-stop: // Main function signaled stop
 			}
 			return
 		}
@@ -131,12 +133,15 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 		// Signal that consumer group is ready
 		select {
 		case ready <- nil:
-		case <-ctx.Done(): // Main function already returned
+		case <-stop: // Main function signaled stop
 			return
 		}
 
 		for {
 			select {
+			case <-stop:
+				// Main function requested stop
+				return
 			case <-ctx.Done():
 				// Send any remaining batch before closing
 				if len(batch) > 0 {
@@ -239,10 +244,13 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 	select {
 	case err := <-ready:
 		if err != nil {
+			close(stop) // Signal goroutine to stop on initialization error
 			return nil, err
 		}
+		// Success - goroutine continues running
 		return ch, nil
 	case <-ctx.Done():
+		close(stop) // Signal goroutine to stop on context cancellation
 		return nil, ctx.Err()
 	}
 }
