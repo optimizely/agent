@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.3.0-beta.1] - October 6, 2025
+
+### New Features (Beta)
+
+* **Redis Streams for Persistent Notification Delivery** ([#444](https://github.com/optimizely/agent/pull/444)): Added Redis Streams implementation as an alternative to Redis Pub/Sub for notification synchronization across Agent nodes. Redis Streams provides:
+  - Persistent message delivery with acknowledgment
+  - Automatic retries with exponential backoff
+  - Consumer groups for load balancing
+  - Configurable batching and flush intervals
+  - Connection error recovery with reconnection logic
+  - Comprehensive metrics tracking
+
+  Configure via `synchronization.notification.default: "redis-streams"` in config.yaml. See documentation for configuration options including batch_size, flush_interval, max_retries, and connection_timeout.
+
+### Fixed
+
+* Fixed flexible Redis password configuration to support auth_token, redis_secret, and password fields with environment variable fallback ([#444](https://github.com/optimizely/agent/pull/444))
+
 ## [4.2.1] - September 3, 2025
 
 ### Fixed
