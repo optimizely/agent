@@ -183,11 +183,11 @@ func TestRedisStreams_Subscribe_BasicFlow(t *testing.T) {
 	err = rs.Publish(ctx, channel, testMessage)
 	require.NoError(t, err)
 
-	// Wait for message
+	// Wait for message (longer than flush interval to ensure batch is flushed)
 	select {
 	case received := <-ch:
 		assert.Equal(t, testMessage, received)
-	case <-time.After(5 * time.Second):
+	case <-time.After(6 * time.Second):
 		t.Fatal("Timeout waiting for message")
 	}
 }
@@ -215,8 +215,9 @@ func TestRedisStreams_Subscribe_MultipleMessages(t *testing.T) {
 	}
 
 	// Collect received messages
+	// Wait longer than flush interval (5 seconds) to ensure batch is flushed
 	var received []string
-	timeout := time.After(5 * time.Second)
+	timeout := time.After(6 * time.Second)
 
 	for i := 0; i < len(messages); i++ {
 		select {
