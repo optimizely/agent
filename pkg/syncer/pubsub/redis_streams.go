@@ -121,12 +121,19 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 		// Create consumer group with retry
 		if err := r.createConsumerGroupWithRetry(ctx, client, streamName, consumerGroup); err != nil {
 			log.Error().Err(err).Str("stream", streamName).Str("group", consumerGroup).Msg("Failed to create consumer group")
-			ready <- err // Signal initialization failure
+			select {
+			case ready <- err: // Signal initialization failure
+			case <-ctx.Done(): // Main function already returned
+			}
 			return
 		}
 
 		// Signal that consumer group is ready
-		ready <- nil
+		select {
+		case ready <- nil:
+		case <-ctx.Done(): // Main function already returned
+			return
+		}
 
 		for {
 			select {
