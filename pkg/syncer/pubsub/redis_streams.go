@@ -100,7 +100,7 @@ func (r *RedisStreams) Subscribe(ctx context.Context, channel string) (chan stri
 
 	ch := make(chan string)
 	ready := make(chan error, 1) // Signal when consumer group is ready
-	stop := make(chan struct{})   // Signal to stop goroutine
+	stop := make(chan struct{})  // Signal to stop goroutine
 
 	go func() {
 		defer close(ch)
