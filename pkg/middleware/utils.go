@@ -47,16 +47,6 @@ func GetOptlyClient(r *http.Request) (*optimizely.OptlyClient, error) {
 	return optlyClient, nil
 }
 
-// GetOptlyCache is a utility to extract the OptlyCache from the http request context.
-func GetOptlyCache(r *http.Request) (optimizely.Cache, error) {
-	cache, ok := r.Context().Value(OptlyCacheKey).(optimizely.Cache)
-	if !ok || cache == nil {
-		return nil, fmt.Errorf("optlyCache not available")
-	}
-
-	return cache, nil
-}
-
 // GetLogger gets the logger with some info coming from http request
 func GetLogger(r *http.Request) *zerolog.Logger {
 	reqID := r.Header.Get(OptlyRequestHeader)

@@ -580,9 +580,6 @@ func (suite *DecideTestSuite) TestDecideMultipleFlags() {
 		var actual []DecideOut
 		err := json.Unmarshal(rec.Body.Bytes(), &actual)
 
-		fmt.Printf("Response Body: %s\n", rec.Body.String())
-		fmt.Printf("Unmarshalled actual: %+v\n", actual)
-
 		suite.NoError(err)
 		suite.ElementsMatch(expected, actual)
 	}
