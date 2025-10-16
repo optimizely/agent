@@ -171,9 +171,7 @@ client:
     flushInterval: 30s
     ## Template URL for SDK datafile location. The template should specify a "%s" token for SDK key substitution.
     ## For secure environments, the datafileURLTemplate should be set to "https://config.optimizely.com/datafiles/auth/%s.json"
-    # datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
-    # datafileURLTemplate: "https://dev.cdn.optimizely.com/datafiles/%s.json"
-    datafileURLTemplate: "https://optimizely-staging.s3.amazonaws.com/datafiles/%s.json"
+    datafileURLTemplate: "https://cdn.optimizely.com/datafiles/%s.json"
     ## URL for dispatching events.
     eventURL: "https://logx.optimizely.com/v1/events"
     ## Validation Regex on the request SDK Key
