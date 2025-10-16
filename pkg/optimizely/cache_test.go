@@ -20,6 +20,7 @@ package optimizely
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -1105,6 +1106,37 @@ func (s *DefaultLoaderTestSuite) TestCMABWithExistingServices() {
 	s.NotNil(client)
 	s.NotNil(client.UserProfileService, "UPS should still be configured")
 	s.NotNil(client.odpCache, "ODP Cache should still be configured")
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABEndpointEnvironmentVariable() {
+	// Save original value and restore after test
+	originalEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
+	defer func() {
+		if originalEndpoint == "" {
+			os.Unsetenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
+		} else {
+			os.Setenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT", originalEndpoint)
+		}
+	}()
+
+	// Set custom endpoint
+	testEndpoint := "https://test.prediction.endpoint.com/predict/%s"
+	os.Setenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT", testEndpoint)
+
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout: 5 * time.Second,
+			Cache:          config.CMABCacheConfig{},
+			RetryConfig:    config.CMABRetryConfig{},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
 }
 
 func TestDefaultLoaderTestSuite(t *testing.T) {
