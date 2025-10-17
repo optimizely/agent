@@ -333,34 +333,11 @@ func defaultLoader(
 			cacheTTL = cmab.DefaultCacheTTL
 		}
 
-		// Create retry config
-		retryConfig := &cmab.RetryConfig{
-			MaxRetries:        clientConf.CMAB.RetryConfig.MaxRetries,
-			InitialBackoff:    clientConf.CMAB.RetryConfig.InitialBackoff,
-			MaxBackoff:        clientConf.CMAB.RetryConfig.MaxBackoff,
-			BackoffMultiplier: clientConf.CMAB.RetryConfig.BackoffMultiplier,
-		}
-
-		// Apply defaults for retry config if not set
-		if retryConfig.MaxRetries == 0 {
-			retryConfig.MaxRetries = cmab.DefaultMaxRetries
-		}
-		if retryConfig.InitialBackoff == 0 {
-			retryConfig.InitialBackoff = cmab.DefaultInitialBackoff
-		}
-		if retryConfig.MaxBackoff == 0 {
-			retryConfig.MaxBackoff = cmab.DefaultMaxBackoff
-		}
-		if retryConfig.BackoffMultiplier == 0 {
-			retryConfig.BackoffMultiplier = cmab.DefaultBackoffMultiplier
-		}
-
-		// Create CMAB config (NO endpoint configuration - not configurable)
-		cmabConfig := cmab.Config{
+		// Create CMAB config using client API (RetryConfig now handled internally by go-sdk)
+		cmabConfig := client.CmabConfig{
 			CacheSize:   cacheSize,
 			CacheTTL:    cacheTTL,
 			HTTPTimeout: clientConf.CMAB.RequestTimeout,
-			RetryConfig: retryConfig,
 		}
 
 		// Add to client options
