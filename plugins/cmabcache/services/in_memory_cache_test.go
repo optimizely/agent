@@ -48,9 +48,9 @@ func (im *InMemoryCacheTestSuite) TestSaveInitializesCacheAndSaves() {
 
 	// Test with CMAB decision object
 	decision := map[string]interface{}{
-		"variationID": "variation_1",
+		"variationID":    "variation_1",
 		"attributesHash": "hash123",
-		"cmabUUID": "uuid-456",
+		"cmabUUID":       "uuid-456",
 	}
 
 	im.cache.Save("user123:exp456", decision)
@@ -108,11 +108,11 @@ func (im *InMemoryCacheTestSuite) TestResetAfterSave() {
 
 func (im *InMemoryCacheTestSuite) TestMultipleDecisions() {
 	decision1 := map[string]interface{}{
-		"variationID": "var1",
+		"variationID":    "var1",
 		"attributesHash": "hash1",
 	}
 	decision2 := map[string]interface{}{
-		"variationID": "var2",
+		"variationID":    "var2",
 		"attributesHash": "hash2",
 	}
 

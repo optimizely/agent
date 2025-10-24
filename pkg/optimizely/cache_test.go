@@ -397,11 +397,11 @@ var doOnce sync.Once // required since we only need to read datafile once
 
 type DefaultLoaderTestSuite struct {
 	suite.Suite
-	registry                           *MetricsRegistry
-	bp                                 *event.BatchEventProcessor
+	registry                          *MetricsRegistry
+	bp                                *event.BatchEventProcessor
 	upsMap, odpCacheMap, cmabCacheMap cmap.ConcurrentMap
-	bpFactory                          func(options ...event.BPOptionConfig) *event.BatchEventProcessor
-	pcFactory                          func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
+	bpFactory                         func(options ...event.BPOptionConfig) *event.BatchEventProcessor
+	pcFactory                         func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
 }
 
 func (s *DefaultLoaderTestSuite) SetupTest() {
@@ -1035,4 +1035,3 @@ func (suite *CacheTestSuite) TestCMABRedisCacheCreator() {
 	suite.Equal(2, redisCache.Database)
 	suite.Equal(300*time.Second, redisCache.Timeout.Duration)
 }
-
