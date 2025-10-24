@@ -189,11 +189,20 @@ func assertCMAB(t *testing.T, cmab config.CMABConfig) {
 	// Base assertions
 	assert.Equal(t, 15*time.Second, cmab.RequestTimeout)
 
-	// Check cache configuration
+	// Check cache configuration (now a map[string]interface{})
 	cache := cmab.Cache
-	assert.Equal(t, "redis", cache.Type)
-	assert.Equal(t, 2000, cache.Size)
-	assert.Equal(t, 45*time.Minute, cache.TTL)
+	assert.NotNil(t, cache)
+	assert.Equal(t, "redis", cache["default"])
+
+	// Check services configuration
+	if services, ok := cache["services"].(map[string]interface{}); ok {
+		if redisConfig, ok := services["redis"].(map[string]interface{}); ok {
+			// Redis config should have host, database, and timeout fields
+			assert.NotNil(t, redisConfig["host"])
+			assert.NotNil(t, redisConfig["database"])
+			assert.NotNil(t, redisConfig["timeout"])
+		}
+	}
 
 	// Check retry configuration
 	retry := cmab.RetryConfig
@@ -207,9 +216,14 @@ func TestCMABEnvDebug(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CMAB", `{
 		"requestTimeout": "15s",
 		"cache": {
-			"type": "redis",
-			"size": 2000,
-			"ttl": "45m"
+			"default": "redis",
+			"services": {
+				"redis": {
+					"host": "localhost:6379",
+					"database": 0,
+					"timeout": "45m"
+				}
+			}
 		},
 		"retryConfig": {
 			"maxRetries": 5,
@@ -246,7 +260,8 @@ func TestCMABPartialConfig(t *testing.T) {
 	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
 
 	// Set partial configuration through CMAB_CACHE and CMAB_RETRYCONFIG
-	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type": "redis", "size": 3000}`)
+	// Note: Cache is now a service-based map config
+	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"default": "redis", "services": {"redis": {"host": "localhost:6379", "database": 0}}}`)
 	_ = os.Setenv("OPTIMIZELY_CMAB_RETRYCONFIG", `{"maxRetries": 10}`)
 
 	// Load config
@@ -254,9 +269,11 @@ func TestCMABPartialConfig(t *testing.T) {
 	assert.NoError(t, initConfig(v))
 	conf := loadConfig(v)
 
-	// Cache assertions
-	assert.Equal(t, "redis", conf.CMAB.Cache.Type)
-	assert.Equal(t, 3000, conf.CMAB.Cache.Size)
+	// Cache assertions (cache is now map[string]interface{})
+	assert.NotNil(t, conf.CMAB.Cache)
+	if defaultCache, ok := conf.CMAB.Cache["default"].(string); ok {
+		assert.Equal(t, "redis", defaultCache)
+	}
 
 	// RetryConfig assertions
 	assert.Equal(t, 10, conf.CMAB.RetryConfig.MaxRetries)
@@ -265,6 +282,50 @@ func TestCMABPartialConfig(t *testing.T) {
 	os.Unsetenv("OPTIMIZELY_CMAB")
 	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
 	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+}
+
+func TestCMABRetryConfigAllFields(t *testing.T) {
+	// Clean any existing environment variables
+	os.Unsetenv("OPTIMIZELY_CMAB")
+	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
+	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+
+	// Set all retry config fields via CMAB_RETRYCONFIG to cover lines 154-165
+	_ = os.Setenv("OPTIMIZELY_CMAB_RETRYCONFIG", `{
+		"maxRetries": 5,
+		"initialBackoff": "500ms",
+		"maxBackoff": "45s",
+		"backoffMultiplier": 2.5
+	}`)
+
+	defer func() {
+		os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+	}()
+
+	v := viper.New()
+	assert.NoError(t, initConfig(v))
+	conf := loadConfig(v)
+
+	// Verify all retry config fields were parsed correctly
+	assert.Equal(t, 5, conf.CMAB.RetryConfig.MaxRetries)
+	assert.Equal(t, 500*time.Millisecond, conf.CMAB.RetryConfig.InitialBackoff)
+	assert.Equal(t, 45*time.Second, conf.CMAB.RetryConfig.MaxBackoff)
+	assert.Equal(t, 2.5, conf.CMAB.RetryConfig.BackoffMultiplier)
+}
+
+func TestCMABRetryConfigIntMaxRetries(t *testing.T) {
+	// Test the int type path for maxRetries (line 150) by using viper's Set method
+	// which will preserve the int type instead of converting to float64
+	v := viper.New()
+	assert.NoError(t, initConfig(v))
+
+	// Set via viper directly to ensure it's an int, not float64
+	v.Set("cmab.retryConfig.maxRetries", 7)
+
+	conf := loadConfig(v)
+
+	// Verify maxRetries was parsed as int
+	assert.Equal(t, 7, conf.CMAB.RetryConfig.MaxRetries)
 }
 
 func TestViperYaml(t *testing.T) {
@@ -484,9 +545,14 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_CMAB", `{
 		"requestTimeout": "15s",
 		"cache": {
-			"type": "redis",
-			"size": 2000,
-			"ttl": "45m"
+			"default": "redis",
+			"services": {
+				"redis": {
+					"host": "localhost:6379",
+					"database": 0,
+					"timeout": "45m"
+				}
+			}
 		},
 		"retryConfig": {
 			"maxRetries": 5,
@@ -622,8 +688,8 @@ func TestCMABComplexJSON(t *testing.T) {
 	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_PASSWORD")
 	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_DATABASE")
 
-	// Set complex JSON environment variable for CMAB cache
-	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"type":"redis","size":5000,"ttl":"3h"}`)
+	// Set complex JSON environment variable for CMAB cache (using new service-based format)
+	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"default":"redis","services":{"redis":{"host":"localhost:6379","database":0,"timeout":"3h"}}}`)
 
 	defer func() {
 		// Clean up
@@ -634,9 +700,13 @@ func TestCMABComplexJSON(t *testing.T) {
 	assert.NoError(t, initConfig(v))
 	actual := loadConfig(v)
 
-	// Test cache settings from JSON environment variable
+	// Test cache settings from JSON environment variable (cache is now map[string]interface{})
 	cache := actual.CMAB.Cache
-	assert.Equal(t, "redis", cache.Type)
-	assert.Equal(t, 5000, cache.Size)
-	assert.Equal(t, 3*time.Hour, cache.TTL)
+	assert.NotNil(t, cache)
+	if defaultCache, ok := cache["default"].(string); ok {
+		assert.Equal(t, "redis", defaultCache)
+	}
+	if services, ok := cache["services"].(map[string]interface{}); ok {
+		assert.NotNil(t, services["redis"])
+	}
 }

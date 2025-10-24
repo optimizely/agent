@@ -31,6 +31,8 @@ import (
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/metrics"
 	"github.com/optimizely/agent/pkg/optimizely/optimizelytest"
+	"github.com/optimizely/agent/plugins/cmabcache"
+	cmabCacheServices "github.com/optimizely/agent/plugins/cmabcache/services"
 	"github.com/optimizely/agent/plugins/odpcache"
 	odpCacheServices "github.com/optimizely/agent/plugins/odpcache/services"
 	"github.com/optimizely/agent/plugins/userprofileservice"
@@ -57,6 +59,7 @@ func (suite *CacheTestSuite) SetupTest() {
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: cmap.New(),
 		odpCacheMap:           cmap.New(),
+		cmabCacheMap:          cmap.New(),
 		ctx:                   ctx,
 	}
 
@@ -394,11 +397,11 @@ var doOnce sync.Once // required since we only need to read datafile once
 
 type DefaultLoaderTestSuite struct {
 	suite.Suite
-	registry            *MetricsRegistry
-	bp                  *event.BatchEventProcessor
-	upsMap, odpCacheMap cmap.ConcurrentMap
-	bpFactory           func(options ...event.BPOptionConfig) *event.BatchEventProcessor
-	pcFactory           func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
+	registry                           *MetricsRegistry
+	bp                                 *event.BatchEventProcessor
+	upsMap, odpCacheMap, cmabCacheMap cmap.ConcurrentMap
+	bpFactory                          func(options ...event.BPOptionConfig) *event.BatchEventProcessor
+	pcFactory                          func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager
 }
 
 func (s *DefaultLoaderTestSuite) SetupTest() {
@@ -408,6 +411,7 @@ func (s *DefaultLoaderTestSuite) SetupTest() {
 	})
 	s.upsMap = cmap.New()
 	s.odpCacheMap = cmap.New()
+	s.cmabCacheMap = cmap.New()
 	s.bpFactory = func(options ...event.BPOptionConfig) *event.BatchEventProcessor {
 		s.bp = event.NewBatchEventProcessor(options...)
 		return s.bp
@@ -446,7 +450,7 @@ func (s *DefaultLoaderTestSuite) TestDefaultLoader() {
 		},
 	}
 
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -500,7 +504,7 @@ func (s *DefaultLoaderTestSuite) TestUPSAndODPCacheHeaderOverridesDefaultKey() {
 	tmpOdpCacheMap := cmap.New()
 	tmpOdpCacheMap.Set("sdkkey", "in-memory")
 
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, tmpUPSMap, tmpOdpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, tmpUPSMap, tmpOdpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -564,7 +568,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresClientForRedisUPSAndODPC
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -622,7 +626,7 @@ func (s *DefaultLoaderTestSuite) TestFirstSaveConfiguresLRUCacheForInMemoryCache
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.odpCache)
@@ -653,7 +657,7 @@ func (s *DefaultLoaderTestSuite) TestHttpClientInitializesByDefaultRestUPS() {
 			"rest": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.NotNil(client.UserProfileService)
@@ -681,7 +685,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidUserProfileServices() {
 			},
 		}},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -712,7 +716,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithValidODPCache() {
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 
@@ -735,7 +739,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyUserProfileServices() {
 	conf := config.ClientConfig{
 		UserProfileService: map[string]interface{}{},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
@@ -752,7 +756,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithEmptyODPCache() {
 			SegmentsCache: map[string]interface{}{},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.odpCache)
@@ -769,7 +773,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultUserProfileServices() {
 			"mock3": map[string]interface{}{},
 		}},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.UserProfileService)
@@ -788,7 +792,7 @@ func (s *DefaultLoaderTestSuite) TestLoaderWithNoDefaultODPCache() {
 			}},
 		},
 	}
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 	s.NoError(err)
 	s.Nil(client.odpCache)
@@ -823,291 +827,6 @@ func (s *DefaultLoaderTestSuite) TestDefaultRegexValidator() {
 	}
 }
 
-func (s *DefaultLoaderTestSuite) TestCMABConfigurationParsing() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			Cache: config.CMABCacheConfig{
-				Type: "memory",
-				Size: 500,
-				TTL:  15 * time.Minute,
-			},
-			RetryConfig: config.CMABRetryConfig{
-				MaxRetries:        5,
-				InitialBackoff:    200 * time.Millisecond,
-				MaxBackoff:        30 * time.Second,
-				BackoffMultiplier: 1.5,
-			},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-	// Note: We can't directly test the CMAB service since it's internal to the OptimizelyClient
-	// But we can verify the loader doesn't error with valid CMAB config
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABConfigurationDefaults() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			// Empty cache and retry config should use defaults
-			Cache:       config.CMABCacheConfig{},
-			RetryConfig: config.CMABRetryConfig{},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABCacheConfigInvalidTTL() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			// Test with valid values since structured types prevent invalid input
-			Cache: config.CMABCacheConfig{
-				Size: 1000,
-				TTL:  10 * time.Minute,
-			},
-			RetryConfig: config.CMABRetryConfig{},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err) // Should not error, just use defaults
-	s.NotNil(client)
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABCacheConfigWithValidStructuredTypes() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			Cache: config.CMABCacheConfig{
-				Type: "memory",
-				Size: 1000,
-				TTL:  15 * time.Minute,
-			},
-			RetryConfig: config.CMABRetryConfig{
-				MaxRetries:        3,
-				InitialBackoff:    100 * time.Millisecond,
-				MaxBackoff:        10 * time.Second,
-				BackoffMultiplier: 2.0,
-			},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABRetryConfigWithValidDurations() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			Cache:          config.CMABCacheConfig{},
-			RetryConfig: config.CMABRetryConfig{
-				MaxRetries:        3,
-				InitialBackoff:    200 * time.Millisecond,
-				MaxBackoff:        30 * time.Second,
-				BackoffMultiplier: 2.0,
-			},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABConfigurationAllValidValues() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 10 * time.Second,
-			Cache: config.CMABCacheConfig{
-				Type: "memory",
-				Size: 2000,
-				TTL:  45 * time.Minute,
-			},
-			RetryConfig: config.CMABRetryConfig{
-				MaxRetries:        10,
-				InitialBackoff:    500 * time.Millisecond,
-				MaxBackoff:        1 * time.Minute,
-				BackoffMultiplier: 3.0,
-			},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABWithZeroRequestTimeout() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 0, // Zero timeout
-			Cache:          config.CMABCacheConfig{},
-			RetryConfig:    config.CMABRetryConfig{},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABConfigurationEdgeCases() {
-	testCases := []struct {
-		name   string
-		config config.CMABConfig
-	}{
-		{
-			name: "Zero cache size",
-			config: config.CMABConfig{
-				RequestTimeout: 5 * time.Second,
-				Cache: config.CMABCacheConfig{
-					Size: 0,
-					TTL:  30 * time.Minute,
-				},
-				RetryConfig: config.CMABRetryConfig{},
-			},
-		},
-		{
-			name: "Zero max retries",
-			config: config.CMABConfig{
-				RequestTimeout: 5 * time.Second,
-				Cache:          config.CMABCacheConfig{},
-				RetryConfig: config.CMABRetryConfig{
-					MaxRetries: 0,
-				},
-			},
-		},
-		{
-			name: "Very short TTL",
-			config: config.CMABConfig{
-				RequestTimeout: 5 * time.Second,
-				Cache: config.CMABCacheConfig{
-					TTL: 1 * time.Millisecond,
-				},
-				RetryConfig: config.CMABRetryConfig{},
-			},
-		},
-		{
-			name: "Very long TTL",
-			config: config.CMABConfig{
-				RequestTimeout: 5 * time.Second,
-				Cache: config.CMABCacheConfig{
-					TTL: 24 * time.Hour,
-				},
-				RetryConfig: config.CMABRetryConfig{},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			conf := config.ClientConfig{
-				SdkKeyRegex: "sdkkey",
-				CMAB:        tc.config,
-			}
-
-			loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-			client, err := loader("sdkkey")
-
-			s.NoError(err, "Should not error for case: %s", tc.name)
-			s.NotNil(client, "Client should not be nil for case: %s", tc.name)
-		})
-	}
-}
-
-func (s *DefaultLoaderTestSuite) TestCMABConfigurationEmptyStructs() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			Cache:          config.CMABCacheConfig{}, // empty struct
-			RetryConfig:    config.CMABRetryConfig{}, // empty struct
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-}
-
-// Test that CMAB configuration doesn't interfere with existing functionality
-func (s *DefaultLoaderTestSuite) TestCMABWithExistingServices() {
-	conf := config.ClientConfig{
-		SdkKeyRegex: "sdkkey",
-		UserProfileService: map[string]interface{}{
-			"default": "in-memory",
-			"services": map[string]interface{}{
-				"in-memory": map[string]interface{}{
-					"capacity":        100,
-					"storageStrategy": "fifo",
-				},
-			},
-		},
-		ODP: config.OdpConfig{
-			SegmentsCache: map[string]interface{}{
-				"default": "in-memory",
-				"services": map[string]interface{}{
-					"in-memory": map[string]interface{}{
-						"size":    50,
-						"timeout": "10s",
-					},
-				},
-			},
-		},
-		CMAB: config.CMABConfig{
-			RequestTimeout: 5 * time.Second,
-			Cache: config.CMABCacheConfig{
-				Type: "memory",
-				Size: 1000,
-				TTL:  30 * time.Minute,
-			},
-			RetryConfig: config.CMABRetryConfig{
-				MaxRetries: 5,
-			},
-		},
-	}
-
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
-	client, err := loader("sdkkey")
-
-	s.NoError(err)
-	s.NotNil(client)
-	s.NotNil(client.UserProfileService, "UPS should still be configured")
-	s.NotNil(client.odpCache, "ODP Cache should still be configured")
-}
-
 func (s *DefaultLoaderTestSuite) TestCMABEndpointEnvironmentVariable() {
 	// Save original value and restore after test
 	originalEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
@@ -1127,12 +846,20 @@ func (s *DefaultLoaderTestSuite) TestCMABEndpointEnvironmentVariable() {
 		SdkKeyRegex: "sdkkey",
 		CMAB: config.CMABConfig{
 			RequestTimeout: 5 * time.Second,
-			Cache:          config.CMABCacheConfig{},
-			RetryConfig:    config.CMABRetryConfig{},
+			Cache: map[string]interface{}{
+				"default": "in-memory",
+				"services": map[string]interface{}{
+					"in-memory": map[string]interface{}{
+						"size":    10000,
+						"timeout": "30m",
+					},
+				},
+			},
+			RetryConfig: config.CMABRetryConfig{},
 		},
 	}
 
-	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.pcFactory, s.bpFactory)
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
 	client, err := loader("sdkkey")
 
 	s.NoError(err)
@@ -1142,3 +869,170 @@ func (s *DefaultLoaderTestSuite) TestCMABEndpointEnvironmentVariable() {
 func TestDefaultLoaderTestSuite(t *testing.T) {
 	suite.Run(t, new(DefaultLoaderTestSuite))
 }
+
+// CMAB Cache Tests
+
+func (suite *CacheTestSuite) TestSetCMABCache() {
+	suite.cache.SetCMABCache("one", "a")
+
+	actual, ok := suite.cache.cmabCacheMap.Get("one")
+	suite.True(ok)
+	suite.Equal("a", actual)
+
+	suite.cache.SetCMABCache("one", "b")
+	actual, ok = suite.cache.cmabCacheMap.Get("one")
+	suite.True(ok)
+	suite.Equal("a", actual)
+}
+
+func (suite *CacheTestSuite) TestGetCMABCacheJSONErrorCases() {
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{"services": map[string]interface{}{
+				"in-memory": map[string]interface{}{
+					"size": []string{"dummy"},
+				}},
+			},
+		},
+	}
+
+	// json unmarshal error case
+	suite.cache.SetCMABCache("one", "in-memory")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.Nil(cmabCache)
+
+	// json marshal error case
+	conf.CMAB.Cache = map[string]interface{}{"services": map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size": make(chan int),
+		}},
+	}
+	cmabCache = getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.Nil(cmabCache)
+}
+
+func (suite *CacheTestSuite) TestNoCMABCacheProvidedInConfig() {
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{},
+		},
+	}
+
+	suite.cache.SetCMABCache("one", "in-memory")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.Nil(cmabCache)
+}
+
+func (suite *CacheTestSuite) TestCMABCacheForSDKKeyNotProvidedInConfig() {
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{"default": "in-memory", "services": map[string]interface{}{
+				"in-memory": map[string]interface{}{
+					"size":    0,
+					"timeout": "0s",
+				}},
+			},
+		},
+	}
+	suite.cache.SetCMABCache("one", "dummy")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.Nil(cmabCache)
+}
+
+func (suite *CacheTestSuite) TestNoCreatorAddedforCMABCache() {
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+				"dummy": map[string]interface{}{
+					"size":    0,
+					"timeout": "0s",
+				}},
+			},
+		},
+	}
+
+	suite.cache.SetCMABCache("one", "dummy")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.Nil(cmabCache)
+}
+
+func (suite *CacheTestSuite) TestNilCreatorAddedforCMABCache() {
+	cacheCreator := func() cache.Cache {
+		return nil
+	}
+	cmabcache.Add("dummy", cacheCreator)
+
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{"default": "dummy", "services": map[string]interface{}{
+				"dummy": map[string]interface{}{
+					"size":    0,
+					"timeout": "0s",
+				}},
+			},
+		},
+	}
+
+	suite.cache.SetCMABCache("one", "dummy")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.Nil(cmabCache)
+}
+
+func (suite *CacheTestSuite) TestCMABInMemoryCacheCreator() {
+	inMemoryCacheCreator := func() cache.Cache {
+		return &cmabCacheServices.InMemoryCache{}
+	}
+	cmabcache.Add("in-memory-test", inMemoryCacheCreator)
+
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{"default": "in-memory-test", "services": map[string]interface{}{
+				"in-memory-test": map[string]interface{}{
+					"size":    10000,
+					"timeout": "600s",
+				}},
+			},
+		},
+	}
+
+	suite.cache.SetCMABCache("one", "in-memory-test")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.NotNil(cmabCache)
+
+	inMemoryCache, ok := cmabCache.(*cmabCacheServices.InMemoryCache)
+	suite.True(ok)
+	suite.Equal(10000, inMemoryCache.Size)
+	suite.Equal(600*time.Second, inMemoryCache.Timeout.Duration)
+}
+
+func (suite *CacheTestSuite) TestCMABRedisCacheCreator() {
+	redisCacheCreator := func() cache.Cache {
+		return &cmabCacheServices.RedisCache{}
+	}
+	cmabcache.Add("redis-test", redisCacheCreator)
+
+	conf := config.ClientConfig{
+		CMAB: config.CMABConfig{
+			Cache: map[string]interface{}{"default": "redis-test", "services": map[string]interface{}{
+				"redis-test": map[string]interface{}{
+					"host":     "localhost:6379",
+					"password": "test-pass",
+					"database": 2,
+					"timeout":  "300s",
+				}},
+			},
+		},
+	}
+
+	suite.cache.SetCMABCache("one", "redis-test")
+	cmabCache := getServiceWithType(cmabCachePlugin, "one", suite.cache.cmabCacheMap, conf.CMAB.Cache)
+	suite.NotNil(cmabCache)
+
+	redisCache, ok := cmabCache.(*cmabCacheServices.RedisCache)
+	suite.True(ok)
+	suite.Equal("localhost:6379", redisCache.Address)
+	suite.Equal("test-pass", redisCache.Password)
+	suite.Equal(2, redisCache.Database)
+	suite.Equal(300*time.Second, redisCache.Timeout.Duration)
+}
+

@@ -48,6 +48,7 @@ import (
 	"github.com/optimizely/agent/pkg/optimizely"
 	"github.com/optimizely/agent/pkg/routers"
 	"github.com/optimizely/agent/pkg/server"
+	_ "github.com/optimizely/agent/plugins/cmabcache/all"          // Initiate the loading of the cmabCache plugins
 	_ "github.com/optimizely/agent/plugins/interceptors/all"       // Initiate the loading of the userprofileservice plugins
 	_ "github.com/optimizely/agent/plugins/odpcache/all"           // Initiate the loading of the odpCache plugins
 	_ "github.com/optimizely/agent/plugins/userprofileservice/all" // Initiate the loading of the interceptor plugins
@@ -117,17 +118,7 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 			}
 		}
 		if cache, ok := cmab["cache"].(map[string]interface{}); ok {
-			if cacheType, ok := cache["type"].(string); ok {
-				conf.CMAB.Cache.Type = cacheType
-			}
-			if cacheSize, ok := cache["size"].(float64); ok {
-				conf.CMAB.Cache.Size = int(cacheSize)
-			}
-			if cacheTTL, ok := cache["ttl"].(string); ok {
-				if duration, err := time.ParseDuration(cacheTTL); err == nil {
-					conf.CMAB.Cache.TTL = duration
-				}
-			}
+			conf.CMAB.Cache = cache
 		}
 		if retryConfig, ok := cmab["retryConfig"].(map[string]interface{}); ok {
 			if maxRetries, ok := retryConfig["maxRetries"].(float64); ok {
@@ -151,19 +142,7 @@ func loadConfig(v *viper.Viper) *config.AgentConfig {
 
 	// Check for individual map sections
 	if cmabCache := v.GetStringMap("cmab.cache"); len(cmabCache) > 0 {
-		if cacheType, ok := cmabCache["type"].(string); ok {
-			conf.CMAB.Cache.Type = cacheType
-		}
-		if cacheSize, ok := cmabCache["size"].(int); ok {
-			conf.CMAB.Cache.Size = cacheSize
-		} else if cacheSize, ok := cmabCache["size"].(float64); ok {
-			conf.CMAB.Cache.Size = int(cacheSize)
-		}
-		if cacheTTL, ok := cmabCache["ttl"].(string); ok {
-			if duration, err := time.ParseDuration(cacheTTL); err == nil {
-				conf.CMAB.Cache.TTL = duration
-			}
-		}
+		conf.CMAB.Cache = cmabCache
 	}
 
 	if cmabRetryConfig := v.GetStringMap("cmab.retryConfig"); len(cmabRetryConfig) > 0 {

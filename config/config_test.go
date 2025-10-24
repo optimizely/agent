@@ -103,11 +103,14 @@ func TestDefaultConfig(t *testing.T) {
 	// CMAB configuration
 	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
 
-	// Test cache settings
-	cache := conf.CMAB.Cache
-	assert.Equal(t, "memory", cache.Type)
-	assert.Equal(t, 1000, cache.Size)
-	assert.Equal(t, 30*time.Minute, cache.TTL)
+	// Test cache settings (cache is now map[string]interface{})
+	assert.Equal(t, "in-memory", conf.CMAB.Cache["default"])
+	assert.Equal(t, map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size":    10000,
+			"timeout": "30m",
+		},
+	}, conf.CMAB.Cache["services"])
 
 	// Test retry settings
 	retry := conf.CMAB.RetryConfig
@@ -256,11 +259,14 @@ func TestDefaultCMABConfig(t *testing.T) {
 	// Test default values
 	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
 
-	// Test default cache settings
-	cache := conf.CMAB.Cache
-	assert.Equal(t, "memory", cache.Type)
-	assert.Equal(t, 1000, cache.Size)
-	assert.Equal(t, 30*time.Minute, cache.TTL)
+	// Test default cache settings (cache is now map[string]interface{})
+	assert.Equal(t, "in-memory", conf.CMAB.Cache["default"])
+	assert.Equal(t, map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size":    10000,
+			"timeout": "30m",
+		},
+	}, conf.CMAB.Cache["services"])
 
 	// Test default retry settings
 	retry := conf.CMAB.RetryConfig

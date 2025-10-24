@@ -274,13 +274,24 @@ cmab:
     ## timeout for CMAB API requests
     requestTimeout: 10s
     ## CMAB cache configuration
+    ## Supports both in-memory (single instance) and Redis (multi-instance) caching
     cache:
-        ## cache type (memory or redis)
-        type: "memory"
-        ## maximum number of entries for in-memory cache
-        size: 1000
-        ## time-to-live for cached decisions
-        ttl: 30m
+        ## default cache service to use
+        default: "in-memory"
+        services:
+            ## in-memory cache (fast, isolated per Agent instance)
+            in-memory:
+                ## maximum number of entries for in-memory cache
+                size: 10000
+                ## time-to-live for cached decisions
+                timeout: 30m
+            ## Redis cache (shared across multiple Agent instances)
+            ## Uncomment and configure for multi-instance deployments
+            # redis:
+            #     host: "localhost:6379"
+            #     password: ""
+            #     database: 0
+            #     timeout: 30m
     ## retry configuration for CMAB API requests
     retryConfig:
         ## maximum number of retry attempts

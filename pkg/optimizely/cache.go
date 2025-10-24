@@ -32,9 +32,10 @@ import (
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/syncer"
+	"github.com/optimizely/agent/plugins/cmabcache"
 	"github.com/optimizely/agent/plugins/odpcache"
 	"github.com/optimizely/agent/plugins/userprofileservice"
-	odpCachePkg "github.com/optimizely/go-sdk/v2/pkg/cache"
+	cachePkg "github.com/optimizely/go-sdk/v2/pkg/cache"
 	"github.com/optimizely/go-sdk/v2/pkg/client"
 	"github.com/optimizely/go-sdk/v2/pkg/cmab"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
@@ -52,6 +53,7 @@ import (
 const (
 	userProfileServicePlugin = "UserProfileService"
 	odpCachePlugin           = "ODP Cache"
+	cmabCachePlugin          = "CMAB Cache"
 )
 
 // OptlyCache implements the Cache interface backed by a concurrent map.
@@ -61,6 +63,7 @@ type OptlyCache struct {
 	optlyMap              cmap.ConcurrentMap
 	userProfileServiceMap cmap.ConcurrentMap
 	odpCacheMap           cmap.ConcurrentMap
+	cmabCacheMap          cmap.ConcurrentMap
 	ctx                   context.Context
 	wg                    sync.WaitGroup
 }
@@ -75,13 +78,15 @@ func NewCache(ctx context.Context, conf config.AgentConfig, metricsRegistry *Met
 
 	userProfileServiceMap := cmap.New()
 	odpCacheMap := cmap.New()
+	cmabCacheMap := cmap.New()
 	cache := &OptlyCache{
 		ctx:                   ctx,
 		wg:                    sync.WaitGroup{},
-		loader:                defaultLoader(conf, metricsRegistry, tracer, userProfileServiceMap, odpCacheMap, cmLoader, event.NewBatchEventProcessor),
+		loader:                defaultLoader(conf, metricsRegistry, tracer, userProfileServiceMap, odpCacheMap, cmabCacheMap, cmLoader, event.NewBatchEventProcessor),
 		optlyMap:              cmap.New(),
 		userProfileServiceMap: userProfileServiceMap,
 		odpCacheMap:           odpCacheMap,
+		cmabCacheMap:          cmabCacheMap,
 	}
 
 	return cache
@@ -155,6 +160,11 @@ func (c *OptlyCache) SetODPCache(sdkKey, odpCache string) {
 	c.odpCacheMap.SetIfAbsent(sdkKey, odpCache)
 }
 
+// SetCMABCache sets CMAB cache for the given sdkKey
+func (c *OptlyCache) SetCMABCache(sdkKey, cmabCache string) {
+	c.cmabCacheMap.SetIfAbsent(sdkKey, cmabCache)
+}
+
 // Wait for all optimizely clients to gracefully shutdown
 func (c *OptlyCache) Wait() {
 	c.wg.Wait()
@@ -178,6 +188,7 @@ func defaultLoader(
 	tracer trace.Tracer,
 	userProfileServiceMap cmap.ConcurrentMap,
 	odpCacheMap cmap.ConcurrentMap,
+	cmabCacheMap cmap.ConcurrentMap,
 	pcFactory func(sdkKey string, options ...sdkconfig.OptionFunc) SyncedConfigManager,
 	bpFactory func(options ...event.BPOptionConfig) *event.BatchEventProcessor) func(clientKey string) (*OptlyClient, error) {
 	clientConf := agentConf.Client
@@ -276,12 +287,12 @@ func defaultLoader(
 			}
 		}
 
-		var clientODPCache odpCachePkg.Cache
+		var clientODPCache cachePkg.Cache
 		var rawODPCache = getServiceWithType(odpCachePlugin, sdkKey, odpCacheMap, clientConf.ODP.SegmentsCache)
 		// Check if odp cache was provided by user
 		if rawODPCache != nil {
 			// convert odpCache to Cache interface
-			if convertedODPCache, ok := rawODPCache.(odpCachePkg.Cache); ok && convertedODPCache != nil {
+			if convertedODPCache, ok := rawODPCache.(cachePkg.Cache); ok && convertedODPCache != nil {
 				clientODPCache = convertedODPCache
 			}
 		}
@@ -322,21 +333,20 @@ func defaultLoader(
 			log.Info().Str("endpoint", cmabEndpoint).Msg("Using custom CMAB prediction endpoint")
 		}
 
-		// Parse CMAB cache configuration
-		cacheSize := clientConf.CMAB.Cache.Size
-		if cacheSize == 0 {
-			cacheSize = cmab.DefaultCacheSize
+		// Get CMAB cache from service configuration
+		var clientCMABCache cachePkg.CacheWithRemove
+		var rawCMABCache = getServiceWithType(cmabCachePlugin, sdkKey, cmabCacheMap, clientConf.CMAB.Cache)
+		// Check if CMAB cache was provided by user
+		if rawCMABCache != nil {
+			// convert cmabCache to CacheWithRemove interface
+			if convertedCMABCache, ok := rawCMABCache.(cachePkg.CacheWithRemove); ok && convertedCMABCache != nil {
+				clientCMABCache = convertedCMABCache
+			}
 		}
 
-		cacheTTL := clientConf.CMAB.Cache.TTL
-		if cacheTTL == 0 {
-			cacheTTL = cmab.DefaultCacheTTL
-		}
-
-		// Create CMAB config using client API (RetryConfig now handled internally by go-sdk)
+		// Create CMAB config using client API with custom cache
 		cmabConfig := client.CmabConfig{
-			CacheSize:   cacheSize,
-			CacheTTL:    cacheTTL,
+			Cache:       clientCMABCache,
 			HTTPTimeout: clientConf.CMAB.RequestTimeout,
 		}
 
@@ -365,6 +375,10 @@ func getServiceWithType(serviceType, sdkKey string, serviceMap cmap.ConcurrentMa
 				case odpCachePlugin:
 					if odpCreator, ok := odpcache.Creators[serviceName]; ok {
 						serviceInstance = odpCreator()
+					}
+				case cmabCachePlugin:
+					if cmabCreator, ok := cmabcache.Creators[serviceName]; ok && cmabCreator != nil {
+						serviceInstance = cmabCreator()
 					}
 				default:
 				}

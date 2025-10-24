@@ -143,9 +143,13 @@ func NewDefaultConfig() *AgentConfig {
 		CMAB: CMABConfig{
 			RequestTimeout: 10 * time.Second,
 			Cache: CMABCacheConfig{
-				Type: "memory",
-				Size: 1000,
-				TTL:  30 * time.Minute,
+				"default": "in-memory",
+				"services": map[string]interface{}{
+					"in-memory": map[string]interface{}{
+						"size":    10000,
+						"timeout": "30m",
+					},
+				},
 			},
 			RetryConfig: CMABRetryConfig{
 				MaxRetries:        3,
@@ -415,15 +419,8 @@ type CMABConfig struct {
 	RetryConfig CMABRetryConfig `json:"retryConfig"`
 }
 
-// CMABCacheConfig holds the CMAB cache configuration
-type CMABCacheConfig struct {
-	// Type of cache (currently only "memory" is supported)
-	Type string `json:"type"`
-	// Size is the maximum number of entries for in-memory cache
-	Size int `json:"size"`
-	// TTL is the time-to-live for cached decisions
-	TTL time.Duration `json:"ttl"`
-}
+// CMABCacheConfig holds the CMAB cache configuration (service-based)
+type CMABCacheConfig map[string]interface{}
 
 // CMABRetryConfig holds the CMAB retry configuration
 type CMABRetryConfig struct {
