@@ -102,6 +102,24 @@ func NewDefaultConfig() *AgentConfig {
 					},
 				},
 			},
+			CMAB: CMABConfig{
+				RequestTimeout: 10 * time.Second,
+				Cache: CMABCacheConfig{
+					"default": "in-memory",
+					"services": map[string]interface{}{
+						"in-memory": map[string]interface{}{
+							"size":    10000,
+							"timeout": "30m",
+						},
+					},
+				},
+				RetryConfig: CMABRetryConfig{
+					MaxRetries:        1,
+					InitialBackoff:    100 * time.Millisecond,
+					MaxBackoff:        10 * time.Second,
+					BackoffMultiplier: 2.0,
+				},
+			},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -140,24 +158,6 @@ func NewDefaultConfig() *AgentConfig {
 				Default: "redis",
 			},
 		},
-		CMAB: CMABConfig{
-			RequestTimeout: 10 * time.Second,
-			Cache: CMABCacheConfig{
-				"default": "in-memory",
-				"services": map[string]interface{}{
-					"in-memory": map[string]interface{}{
-						"size":    10000,
-						"timeout": "30m",
-					},
-				},
-			},
-			RetryConfig: CMABRetryConfig{
-				MaxRetries:        3,
-				InitialBackoff:    100 * time.Millisecond,
-				MaxBackoff:        10 * time.Second,
-				BackoffMultiplier: 2.0,
-			},
-		},
 	}
 	return &config
 }
@@ -179,7 +179,6 @@ type AgentConfig struct {
 	Server          ServerConfig  `json:"server"`
 	Webhook         WebhookConfig `json:"webhook"`
 	Synchronization SyncConfig    `json:"synchronization"`
-	CMAB            CMABConfig    `json:"cmab"`
 }
 
 // SyncConfig contains Synchronization configuration for the multiple Agent nodes

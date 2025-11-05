@@ -213,7 +213,7 @@ func assertCMAB(t *testing.T, cmab config.CMABConfig) {
 }
 
 func TestCMABEnvDebug(t *testing.T) {
-	_ = os.Setenv("OPTIMIZELY_CMAB", `{
+	_ = os.Setenv("OPTIMIZELY_CLIENT_CMAB", `{
 		"requestTimeout": "15s",
 		"cache": {
 			"default": "redis",
@@ -245,24 +245,24 @@ func TestCMABEnvDebug(t *testing.T) {
 
 	// Debug: Print the parsed config
 	fmt.Println("Parsed CMAB config from JSON env var:")
-	fmt.Printf("  RequestTimeout: %v\n", conf.CMAB.RequestTimeout)
-	fmt.Printf("  Cache: %+v\n", conf.CMAB.Cache)
-	fmt.Printf("  RetryConfig: %+v\n", conf.CMAB.RetryConfig)
+	fmt.Printf("  RequestTimeout: %v\n", conf.Client.CMAB.RequestTimeout)
+	fmt.Printf("  Cache: %+v\n", conf.Client.CMAB.Cache)
+	fmt.Printf("  RetryConfig: %+v\n", conf.Client.CMAB.RetryConfig)
 
 	// Call assertCMAB
-	assertCMAB(t, conf.CMAB)
+	assertCMAB(t, conf.Client.CMAB)
 }
 
 func TestCMABPartialConfig(t *testing.T) {
 	// Clean any existing environment variables
-	os.Unsetenv("OPTIMIZELY_CMAB")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
-	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_RETRYCONFIG")
 
 	// Set partial configuration through CMAB_CACHE and CMAB_RETRYCONFIG
 	// Note: Cache is now a service-based map config
-	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"default": "redis", "services": {"redis": {"host": "localhost:6379", "database": 0}}}`)
-	_ = os.Setenv("OPTIMIZELY_CMAB_RETRYCONFIG", `{"maxRetries": 10}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_CMAB_CACHE", `{"default": "redis", "services": {"redis": {"host": "localhost:6379", "database": 0}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_CMAB_RETRYCONFIG", `{"maxRetries": 10}`)
 
 	// Load config
 	v := viper.New()
@@ -270,28 +270,28 @@ func TestCMABPartialConfig(t *testing.T) {
 	conf := loadConfig(v)
 
 	// Cache assertions (cache is now map[string]interface{})
-	assert.NotNil(t, conf.CMAB.Cache)
-	if defaultCache, ok := conf.CMAB.Cache["default"].(string); ok {
+	assert.NotNil(t, conf.Client.CMAB.Cache)
+	if defaultCache, ok := conf.Client.CMAB.Cache["default"].(string); ok {
 		assert.Equal(t, "redis", defaultCache)
 	}
 
 	// RetryConfig assertions
-	assert.Equal(t, 10, conf.CMAB.RetryConfig.MaxRetries)
+	assert.Equal(t, 10, conf.Client.CMAB.RetryConfig.MaxRetries)
 
 	// Clean up
-	os.Unsetenv("OPTIMIZELY_CMAB")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
-	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_RETRYCONFIG")
 }
 
 func TestCMABRetryConfigAllFields(t *testing.T) {
 	// Clean any existing environment variables
-	os.Unsetenv("OPTIMIZELY_CMAB")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
-	os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_RETRYCONFIG")
 
 	// Set all retry config fields via CMAB_RETRYCONFIG to cover lines 154-165
-	_ = os.Setenv("OPTIMIZELY_CMAB_RETRYCONFIG", `{
+	_ = os.Setenv("OPTIMIZELY_CLIENT_CMAB_RETRYCONFIG", `{
 		"maxRetries": 5,
 		"initialBackoff": "500ms",
 		"maxBackoff": "45s",
@@ -299,7 +299,7 @@ func TestCMABRetryConfigAllFields(t *testing.T) {
 	}`)
 
 	defer func() {
-		os.Unsetenv("OPTIMIZELY_CMAB_RETRYCONFIG")
+		os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_RETRYCONFIG")
 	}()
 
 	v := viper.New()
@@ -307,10 +307,10 @@ func TestCMABRetryConfigAllFields(t *testing.T) {
 	conf := loadConfig(v)
 
 	// Verify all retry config fields were parsed correctly
-	assert.Equal(t, 5, conf.CMAB.RetryConfig.MaxRetries)
-	assert.Equal(t, 500*time.Millisecond, conf.CMAB.RetryConfig.InitialBackoff)
-	assert.Equal(t, 45*time.Second, conf.CMAB.RetryConfig.MaxBackoff)
-	assert.Equal(t, 2.5, conf.CMAB.RetryConfig.BackoffMultiplier)
+	assert.Equal(t, 5, conf.Client.CMAB.RetryConfig.MaxRetries)
+	assert.Equal(t, 500*time.Millisecond, conf.Client.CMAB.RetryConfig.InitialBackoff)
+	assert.Equal(t, 45*time.Second, conf.Client.CMAB.RetryConfig.MaxBackoff)
+	assert.Equal(t, 2.5, conf.Client.CMAB.RetryConfig.BackoffMultiplier)
 }
 
 func TestCMABRetryConfigIntMaxRetries(t *testing.T) {
@@ -320,12 +320,12 @@ func TestCMABRetryConfigIntMaxRetries(t *testing.T) {
 	assert.NoError(t, initConfig(v))
 
 	// Set via viper directly to ensure it's an int, not float64
-	v.Set("cmab.retryConfig.maxRetries", 7)
+	v.Set("client.cmab.retryConfig.maxRetries", 7)
 
 	conf := loadConfig(v)
 
 	// Verify maxRetries was parsed as int
-	assert.Equal(t, 7, conf.CMAB.RetryConfig.MaxRetries)
+	assert.Equal(t, 7, conf.Client.CMAB.RetryConfig.MaxRetries)
 }
 
 func TestViperYaml(t *testing.T) {
@@ -542,7 +542,7 @@ func TestViperEnv(t *testing.T) {
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SDKKEYS", "xxx,yyy,zzz")
 	_ = os.Setenv("OPTIMIZELY_WEBHOOK_PROJECTS_20000_SKIPSIGNATURECHECK", "false")
 
-	_ = os.Setenv("OPTIMIZELY_CMAB", `{
+	_ = os.Setenv("OPTIMIZELY_CLIENT_CMAB", `{
 		"requestTimeout": "15s",
 		"cache": {
 			"default": "redis",
@@ -577,7 +577,7 @@ func TestViperEnv(t *testing.T) {
 	assertAPI(t, actual.API)
 	//assertWebhook(t, actual.Webhook) // Maps don't appear to be supported
 	assertRuntime(t, actual.Runtime)
-	assertCMAB(t, actual.CMAB)
+	assertCMAB(t, actual.Client.CMAB)
 }
 
 func TestLoggingWithIncludeSdkKey(t *testing.T) {
@@ -681,19 +681,19 @@ func Test_initTracing(t *testing.T) {
 
 func TestCMABComplexJSON(t *testing.T) {
 	// Clean any existing environment variables for CMAB
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_TYPE")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_SIZE")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_TTL")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_HOST")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_PASSWORD")
-	os.Unsetenv("OPTIMIZELY_CMAB_CACHE_REDIS_DATABASE")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE_TYPE")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE_SIZE")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE_TTL")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE_REDIS_HOST")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE_REDIS_PASSWORD")
+	os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE_REDIS_DATABASE")
 
 	// Set complex JSON environment variable for CMAB cache (using new service-based format)
-	_ = os.Setenv("OPTIMIZELY_CMAB_CACHE", `{"default":"redis","services":{"redis":{"host":"localhost:6379","database":0,"timeout":"3h"}}}`)
+	_ = os.Setenv("OPTIMIZELY_CLIENT_CMAB_CACHE", `{"default":"redis","services":{"redis":{"host":"localhost:6379","database":0,"timeout":"3h"}}}`)
 
 	defer func() {
 		// Clean up
-		os.Unsetenv("OPTIMIZELY_CMAB_CACHE")
+		os.Unsetenv("OPTIMIZELY_CLIENT_CMAB_CACHE")
 	}()
 
 	v := viper.New()
@@ -701,7 +701,7 @@ func TestCMABComplexJSON(t *testing.T) {
 	actual := loadConfig(v)
 
 	// Test cache settings from JSON environment variable (cache is now map[string]interface{})
-	cache := actual.CMAB.Cache
+	cache := actual.Client.CMAB.Cache
 	assert.NotNil(t, cache)
 	if defaultCache, ok := cache["default"].(string); ok {
 		assert.Equal(t, "redis", defaultCache)
