@@ -104,6 +104,7 @@ func NewDefaultConfig() *AgentConfig {
 			},
 			CMAB: CMABConfig{
 				RequestTimeout: 10 * time.Second,
+				PredictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s",
 				Cache: CMABCacheConfig{
 					"default": "in-memory",
 					"services": map[string]interface{}{
@@ -410,6 +411,9 @@ type RuntimeConfig struct {
 type CMABConfig struct {
 	// RequestTimeout is the timeout for CMAB API requests
 	RequestTimeout time.Duration `json:"requestTimeout"`
+
+	// PredictionEndpoint is the URL template for CMAB prediction API with %s placeholder for experimentId
+	PredictionEndpoint string `json:"predictionEndpoint"`
 
 	// Cache configuration
 	Cache CMABCacheConfig `json:"cache"`

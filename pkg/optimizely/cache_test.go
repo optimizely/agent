@@ -38,6 +38,7 @@ import (
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/agent/plugins/userprofileservice/services"
 	"github.com/optimizely/go-sdk/v2/pkg/cache"
+	"github.com/optimizely/go-sdk/v2/pkg/cmab"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
@@ -864,6 +865,88 @@ func (s *DefaultLoaderTestSuite) TestCMABEndpointEnvironmentVariable() {
 
 	s.NoError(err)
 	s.NotNil(client)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABEndpointFromConfig() {
+	// Ensure environment variable is not set
+	originalEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
+	os.Unsetenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
+	defer func() {
+		if originalEndpoint != "" {
+			os.Setenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT", originalEndpoint)
+		}
+	}()
+
+	// Set endpoint in config
+	configEndpoint := "https://config.prediction.endpoint.com/predict/%s"
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout:     5 * time.Second,
+			PredictionEndpoint: configEndpoint,
+			Cache: map[string]interface{}{
+				"default": "in-memory",
+				"services": map[string]interface{}{
+					"in-memory": map[string]interface{}{
+						"size":    10000,
+						"timeout": "30m",
+					},
+				},
+			},
+			RetryConfig: config.CMABRetryConfig{},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+	// Verify that the CMAB prediction endpoint was set from config
+	s.Equal(configEndpoint, cmab.CMABPredictionEndpoint)
+}
+
+func (s *DefaultLoaderTestSuite) TestCMABEndpointEnvironmentOverridesConfig() {
+	// Save original value and restore after test
+	originalEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
+	defer func() {
+		if originalEndpoint == "" {
+			os.Unsetenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT")
+		} else {
+			os.Setenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT", originalEndpoint)
+		}
+	}()
+
+	// Set both environment and config endpoints
+	envEndpoint := "https://env.prediction.endpoint.com/predict/%s"
+	configEndpoint := "https://config.prediction.endpoint.com/predict/%s"
+	os.Setenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT", envEndpoint)
+
+	conf := config.ClientConfig{
+		SdkKeyRegex: "sdkkey",
+		CMAB: config.CMABConfig{
+			RequestTimeout:     5 * time.Second,
+			PredictionEndpoint: configEndpoint,
+			Cache: map[string]interface{}{
+				"default": "in-memory",
+				"services": map[string]interface{}{
+					"in-memory": map[string]interface{}{
+						"size":    10000,
+						"timeout": "30m",
+					},
+				},
+			},
+			RetryConfig: config.CMABRetryConfig{},
+		},
+	}
+
+	loader := defaultLoader(config.AgentConfig{Client: conf}, s.registry, nil, s.upsMap, s.odpCacheMap, s.cmabCacheMap, s.pcFactory, s.bpFactory)
+	client, err := loader("sdkkey")
+
+	s.NoError(err)
+	s.NotNil(client)
+	// Verify that the environment variable takes priority
+	s.Equal(envEndpoint, cmab.CMABPredictionEndpoint)
 }
 
 func TestDefaultLoaderTestSuite(t *testing.T) {

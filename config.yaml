@@ -226,6 +226,8 @@ client:
     cmab:
         ## timeout for CMAB API requests
         requestTimeout: 10s
+        ## URL template for CMAB prediction API with %s placeholder for experimentId
+        predictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s"
         ## CMAB cache configuration
         ## Supports both in-memory (single instance) and Redis (multi-instance) caching
         cache:
