@@ -102,6 +102,25 @@ func NewDefaultConfig() *AgentConfig {
 					},
 				},
 			},
+			CMAB: CMABConfig{
+				RequestTimeout: 10 * time.Second,
+				PredictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s",
+				Cache: CMABCacheConfig{
+					"default": "in-memory",
+					"services": map[string]interface{}{
+						"in-memory": map[string]interface{}{
+							"size":    10000,
+							"timeout": "30m",
+						},
+					},
+				},
+				RetryConfig: CMABRetryConfig{
+					MaxRetries:        1,
+					InitialBackoff:    100 * time.Millisecond,
+					MaxBackoff:        10 * time.Second,
+					BackoffMultiplier: 2.0,
+				},
+			},
 		},
 		Runtime: RuntimeConfig{
 			BlockProfileRate:     0, // 0 is disabled
@@ -140,20 +159,6 @@ func NewDefaultConfig() *AgentConfig {
 				Default: "redis",
 			},
 		},
-		CMAB: CMABConfig{
-			RequestTimeout: 10 * time.Second,
-			Cache: CMABCacheConfig{
-				Type: "memory",
-				Size: 1000,
-				TTL:  30 * time.Minute,
-			},
-			RetryConfig: CMABRetryConfig{
-				MaxRetries:        3,
-				InitialBackoff:    100 * time.Millisecond,
-				MaxBackoff:        10 * time.Second,
-				BackoffMultiplier: 2.0,
-			},
-		},
 	}
 	return &config
 }
@@ -175,7 +180,6 @@ type AgentConfig struct {
 	Server          ServerConfig  `json:"server"`
 	Webhook         WebhookConfig `json:"webhook"`
 	Synchronization SyncConfig    `json:"synchronization"`
-	CMAB            CMABConfig    `json:"cmab"`
 }
 
 // SyncConfig contains Synchronization configuration for the multiple Agent nodes
@@ -408,6 +412,9 @@ type CMABConfig struct {
 	// RequestTimeout is the timeout for CMAB API requests
 	RequestTimeout time.Duration `json:"requestTimeout"`
 
+	// PredictionEndpoint is the URL template for CMAB prediction API with %s placeholder for experimentId
+	PredictionEndpoint string `json:"predictionEndpoint"`
+
 	// Cache configuration
 	Cache CMABCacheConfig `json:"cache"`
 
@@ -415,15 +422,8 @@ type CMABConfig struct {
 	RetryConfig CMABRetryConfig `json:"retryConfig"`
 }
 
-// CMABCacheConfig holds the CMAB cache configuration
-type CMABCacheConfig struct {
-	// Type of cache (currently only "memory" is supported)
-	Type string `json:"type"`
-	// Size is the maximum number of entries for in-memory cache
-	Size int `json:"size"`
-	// TTL is the time-to-live for cached decisions
-	TTL time.Duration `json:"ttl"`
-}
+// CMABCacheConfig holds the CMAB cache configuration (service-based)
+type CMABCacheConfig map[string]interface{}
 
 // CMABRetryConfig holds the CMAB retry configuration
 type CMABRetryConfig struct {

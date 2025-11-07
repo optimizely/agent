@@ -213,15 +213,51 @@ client:
       segmentsCache:
         default: "in-memory"
         services:
-          in-memory: 
+          in-memory:
             size: 10000
             timeout: 600s
-        #   redis: 
+        #   redis:
         #     host: "localhost:6379"
         #     password: ""
         #     database: 0
         #     timeout: 0s
-      
+
+    ## Contextual Multi-Armed Bandit configuration
+    cmab:
+        ## timeout for CMAB API requests
+        requestTimeout: 10s
+        ## URL template for CMAB prediction API with %s placeholder for experimentId
+        predictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s"
+        ## CMAB cache configuration
+        ## Supports both in-memory (single instance) and Redis (multi-instance) caching
+        cache:
+            ## default cache service to use
+            default: "in-memory"
+            services:
+                ## in-memory cache (fast, isolated per Agent instance)
+                in-memory:
+                    ## maximum number of entries for in-memory cache
+                    size: 10000
+                    ## time-to-live for cached decisions
+                    timeout: 30m
+                ## Redis cache (shared across multiple Agent instances)
+                ## Uncomment and configure for multi-instance deployments
+                # redis:
+                #     host: "localhost:6379"
+                #     password: ""
+                #     database: 0
+                #     timeout: 30m
+        ## retry configuration for CMAB API requests
+        retryConfig:
+            ## maximum number of retry attempts (in addition to the initial request)
+            ## maxRetries: 1 means up to 2 total attempts (1 initial + 1 retry)
+            maxRetries: 1
+            ## initial backoff duration
+            initialBackoff: 100ms
+            ## maximum backoff duration
+            maxBackoff: 10s
+            ## multiplier for exponential backoff
+            backoffMultiplier: 2.0
 
 ##
 ## optimizely runtime configuration can be used for debugging and profiling the go runtime.
@@ -266,28 +302,3 @@ synchronization:
     datafile:
         enable: false
         default: "redis"
-
-##
-## cmab: Contextual Multi-Armed Bandit configuration
-##
-cmab:
-    ## timeout for CMAB API requests
-    requestTimeout: 10s
-    ## CMAB cache configuration
-    cache:
-        ## cache type (memory or redis)
-        type: "memory"
-        ## maximum number of entries for in-memory cache
-        size: 1000
-        ## time-to-live for cached decisions
-        ttl: 30m
-    ## retry configuration for CMAB API requests
-    retryConfig:
-        ## maximum number of retry attempts
-        maxRetries: 3
-        ## initial backoff duration
-        initialBackoff: 100ms
-        ## maximum backoff duration
-        maxBackoff: 10s
-        ## multiplier for exponential backoff
-        backoffMultiplier: 2.0

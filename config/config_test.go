@@ -101,17 +101,20 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, 0, conf.Runtime.MutexProfileFraction)
 
 	// CMAB configuration
-	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
+	assert.Equal(t, 10*time.Second, conf.Client.CMAB.RequestTimeout)
 
-	// Test cache settings
-	cache := conf.CMAB.Cache
-	assert.Equal(t, "memory", cache.Type)
-	assert.Equal(t, 1000, cache.Size)
-	assert.Equal(t, 30*time.Minute, cache.TTL)
+	// Test cache settings (cache is now map[string]interface{})
+	assert.Equal(t, "in-memory", conf.Client.CMAB.Cache["default"])
+	assert.Equal(t, map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size":    10000,
+			"timeout": "30m",
+		},
+	}, conf.Client.CMAB.Cache["services"])
 
 	// Test retry settings
-	retry := conf.CMAB.RetryConfig
-	assert.Equal(t, 3, retry.MaxRetries)
+	retry := conf.Client.CMAB.RetryConfig
+	assert.Equal(t, 1, retry.MaxRetries)
 	assert.Equal(t, 100*time.Millisecond, retry.InitialBackoff)
 	assert.Equal(t, 10*time.Second, retry.MaxBackoff)
 	assert.Equal(t, 2.0, retry.BackoffMultiplier)
@@ -254,17 +257,20 @@ func TestDefaultCMABConfig(t *testing.T) {
 	conf := NewDefaultConfig()
 
 	// Test default values
-	assert.Equal(t, 10*time.Second, conf.CMAB.RequestTimeout)
+	assert.Equal(t, 10*time.Second, conf.Client.CMAB.RequestTimeout)
 
-	// Test default cache settings
-	cache := conf.CMAB.Cache
-	assert.Equal(t, "memory", cache.Type)
-	assert.Equal(t, 1000, cache.Size)
-	assert.Equal(t, 30*time.Minute, cache.TTL)
+	// Test default cache settings (cache is now map[string]interface{})
+	assert.Equal(t, "in-memory", conf.Client.CMAB.Cache["default"])
+	assert.Equal(t, map[string]interface{}{
+		"in-memory": map[string]interface{}{
+			"size":    10000,
+			"timeout": "30m",
+		},
+	}, conf.Client.CMAB.Cache["services"])
 
 	// Test default retry settings
-	retry := conf.CMAB.RetryConfig
-	assert.Equal(t, 3, retry.MaxRetries)
+	retry := conf.Client.CMAB.RetryConfig
+	assert.Equal(t, 1, retry.MaxRetries)
 	assert.Equal(t, 100*time.Millisecond, retry.InitialBackoff)
 	assert.Equal(t, 10*time.Second, retry.MaxBackoff)
 	assert.Equal(t, 2.0, retry.BackoffMultiplier)

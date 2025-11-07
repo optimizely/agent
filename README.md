@@ -127,6 +127,7 @@ Below is a comprehensive list of available configuration properties.
 | sdkKeys                                           | OPTIMIZELY_SDKKEYS                              | Comma delimited list of SDK keys used to initialize on startup                                                                         | 
 | cmab               | OPTIMIZELY_CMAB           | Complete JSON configuration for CMAB. Format: see example below                                     |
 | cmab.cache         | OPTIMIZELY_CMAB_CACHE     | JSON configuration for just the CMAB cache section. Format: see example below                       |
+| cmab.predictionEndpoint | OPTIMIZELY_CMAB_PREDICTIONENDPOINT | URL template for CMAB prediction API with %s placeholder for experimentId. Default: https://prediction.cmab.optimizely.com/predict/%s |
 | cmab.retryConfig   | OPTIMIZELY_CMAB_RETRYCONFIG | JSON configuration for just the CMAB retry settings. Format: see example below                    |                                                                                                                                                                        
 | server.allowedHosts                               | OPTIMIZELY_SERVER_ALLOWEDHOSTS                  | List of allowed request host values. Requests whose host value does not match either the configured server.host, or one of these, will be rejected with a 404 response. To match all subdomains, you can use a leading dot (for example `.example.com` matches `my.example.com`, `hello.world.example.com`, etc.). You can use the value `.` to disable allowed host checking, allowing requests with any host. Request host is determined in the following priority order: 1. X-Forwarded-Host header value, 2. Forwarded header host= directive value, 3. Host property of request (see Host under https://pkg.go.dev/net/http#Request). Note: don't include port in these hosts values - port is stripped from the request host before comparing against these. |
 | server.batchRequests.maxConcurrency               | OPTIMIZELY_SERVER_BATCHREQUESTS_MAXCONCURRENCY  | Number of requests running in parallel. Default: 10                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -150,6 +151,7 @@ Below is a comprehensive list of available configuration properties.
 ```json
 {
   "requestTimeout": "5s",
+  "predictionEndpoint": "https://prediction.cmab.optimizely.com/predict/%s",
   "cache": {
     "type": "memory",
     "size": 2000,
