@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### New Features
+
+* **Redis Streams for Persistent Notification Delivery**: Added Redis Streams implementation as an alternative to Redis Pub/Sub for notification synchronization across Agent nodes. Redis Streams provides:
+  - Persistent message delivery with acknowledgment
+  - Automatic retries with exponential backoff
+  - Consumer groups for load balancing
+  - Configurable batching and flush intervals
+  - Connection error recovery with reconnection logic
+  - Comprehensive metrics tracking
+
+  Configure via `synchronization.notification.default: "redis-streams"` in config.yaml. See [docs/redis-streams.md](docs/redis-streams.md) for configuration options including batch_size, flush_interval, max_retries, and connection_timeout.
+
+* **CMAB Redis Cache Support** ([#447](https://github.com/optimizely/agent/pull/447)): Added Redis cache support for Contextual Multi-Armed Bandit (CMAB) decisions following the same plugin-based architecture as ODP cache:
+  - In-memory LRU cache (default, size: 10000, TTL: 30m)
+  - Redis cache for multi-instance deployments with shared caching
+  - Configurable via `client.cmab.cache` in config.yaml
+  - Supports both in-memory and Redis cache backends
+
+* **Flexible Redis Authentication**: Added support for flexible Redis password field names across all Redis clients (ODP cache, UPS, CMAB cache, and synchronization):
+  - Supports `auth_token`, `redis_secret`, and `password` fields (in order of preference)
+  - Falls back to environment variables: `REDIS_PASSWORD`, `REDIS_ODP_PASSWORD`, `REDIS_UPS_PASSWORD`, `REDIS_CMAB_PASSWORD`
+  - Avoids security scanning alerts from hardcoded "password" field names
+
+* **CMAB Prediction Endpoint Configuration**: Added configurable CMAB prediction endpoint via `client.cmab.predictionEndpoint` in config.yaml or `OPTIMIZELY_CMAB_PREDICTIONENDPOINT` environment variable for testing/staging environments
+
+### Changed
+
+* Updated Redis configuration in `synchronization.pubsub.redis` to use `auth_token` instead of `password` field (backwards compatible)
+* CMAB configuration moved from top-level to `client.cmab` section for consistency with other client-related settings (ODP, UPS)
+
+### Fixed
+
+* Improved Redis connection error handling and recovery across all Redis clients
+* Added comprehensive test coverage for Redis authentication and CMAB caching
+
 ## [4.2.2] - October 7, 2025
 
 ### Fixed

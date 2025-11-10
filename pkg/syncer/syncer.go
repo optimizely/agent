@@ -132,7 +132,7 @@ type DatafileSyncer struct {
 }
 
 func NewDatafileSyncer(conf config.SyncConfig) (*DatafileSyncer, error) {
-	pubsub, err := newPubSub(conf, SycnFeatureFlagDatafile)
+	pubsub, err := newPubSub(conf, SyncFeatureFlagDatafile)
 	if err != nil {
 		return nil, err
 	}

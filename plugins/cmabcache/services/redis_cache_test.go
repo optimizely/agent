@@ -18,6 +18,7 @@
 package services
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -95,6 +96,69 @@ func (r *RedisCacheTestSuite) TestClientConfiguration() {
 	r.Equal("invalid-redis-host:6379", r.cache.Client.Options().Addr)
 	r.Equal("test-password", r.cache.Client.Options().Password)
 	r.Equal(1, r.cache.Client.Options().DB)
+}
+
+func TestRedisCache_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name         string
+		json         string
+		wantPassword string
+		wantErr      bool
+	}{
+		{
+			name:         "auth_token has priority",
+			json:         `{"host":"localhost:6379","auth_token":"token123","password":"pass456","database":0}`,
+			wantPassword: "token123",
+			wantErr:      false,
+		},
+		{
+			name:         "redis_secret when auth_token missing",
+			json:         `{"host":"localhost:6379","redis_secret":"secret789","password":"pass456","database":0}`,
+			wantPassword: "secret789",
+			wantErr:      false,
+		},
+		{
+			name:         "password when others missing",
+			json:         `{"host":"localhost:6379","password":"pass456","database":0}`,
+			wantPassword: "pass456",
+			wantErr:      false,
+		},
+		{
+			name:         "empty when no password fields",
+			json:         `{"host":"localhost:6379","database":0}`,
+			wantPassword: "",
+			wantErr:      false,
+		},
+		{
+			name:         "invalid json",
+			json:         `{invalid}`,
+			wantPassword: "",
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var cache RedisCache
+			err := json.Unmarshal([]byte(tt.json), &cache)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("UnmarshalJSON() error = nil, wantErr %v", tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("UnmarshalJSON() unexpected error = %v", err)
+				return
+			}
+
+			if cache.Password != tt.wantPassword {
+				t.Errorf("UnmarshalJSON() Password = %v, want %v", cache.Password, tt.wantPassword)
+			}
+		})
+	}
 }
 
 func TestRedisCacheTestSuite(t *testing.T) {
