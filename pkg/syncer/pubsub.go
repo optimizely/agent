@@ -22,9 +22,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/syncer/pubsub"
 	"github.com/optimizely/agent/pkg/utils/redisauth"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -49,24 +51,36 @@ type PubSub interface {
 }
 
 func newPubSub(conf config.SyncConfig, featureFlag SyncFeatureFlag) (PubSub, error) {
+	var defaultPubSub string
+
 	if featureFlag == SyncFeatureFlagNotificaiton {
-		if conf.Notification.Default == PubSubRedis {
-			return getPubSubRedis(conf)
-		} else if conf.Notification.Default == PubSubRedisStreams {
-			return getPubSubRedisStreams(conf)
-		} else {
-			return nil, errors.New("pubsub type not supported")
-		}
+		defaultPubSub = conf.Notification.Default
 	} else if featureFlag == SyncFeatureFlagDatafile {
-		if conf.Datafile.Default == PubSubRedis {
-			return getPubSubRedis(conf)
-		} else if conf.Datafile.Default == PubSubRedisStreams {
-			return getPubSubRedisStreams(conf)
-		} else {
-			return nil, errors.New("pubsub type not supported")
-		}
+		defaultPubSub = conf.Datafile.Default
+	} else {
+		return nil, errors.New("provided feature flag not supported")
 	}
-	return nil, errors.New("provided feature flag not supported")
+
+	// Handle explicit implementation choice
+	if defaultPubSub == PubSubRedisStreams {
+		return getPubSubRedisStreams(conf)
+	} else if defaultPubSub == PubSubRedis {
+		// Check if user wants to force a specific implementation
+		forceImpl := getForceImplementation(conf)
+
+		if forceImpl == "streams" {
+			log.Info().Msg("force_implementation=streams - using Redis Streams (bypassing auto-detection)")
+			return getPubSubRedisStreams(conf)
+		} else if forceImpl == "pubsub" {
+			log.Info().Msg("force_implementation=pubsub - using Redis Pub/Sub (bypassing auto-detection)")
+			return getPubSubRedis(conf)
+		}
+
+		// No force - use auto-detection
+		return getPubSubWithAutoDetect(conf)
+	}
+
+	return nil, errors.New("pubsub type not supported")
 }
 
 func getPubSubRedis(conf config.SyncConfig) (PubSub, error) {
@@ -195,4 +209,84 @@ func getDurationFromConfig(config map[string]interface{}, key string, defaultVal
 		}
 	}
 	return defaultValue
+}
+
+// getForceImplementation extracts the force_implementation config value if present
+// Returns "streams", "pubsub", or empty string if not set
+func getForceImplementation(conf config.SyncConfig) string {
+	pubsubConf, found := conf.Pubsub[PubSubRedis]
+	if !found {
+		return ""
+	}
+
+	redisConf, ok := pubsubConf.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	if val, found := redisConf["force_implementation"]; found {
+		if strVal, ok := val.(string); ok {
+			return strVal
+		}
+	}
+
+	return ""
+}
+
+// getPubSubWithAutoDetect creates a PubSub instance using Redis version auto-detection
+// Falls back to Pub/Sub (safe default) if detection fails for any reason
+func getPubSubWithAutoDetect(conf config.SyncConfig) (PubSub, error) {
+	pubsubConf, found := conf.Pubsub[PubSubRedis]
+	if !found {
+		return nil, errors.New("pubsub redis config not found")
+	}
+
+	redisConf, ok := pubsubConf.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("pubsub redis config not valid")
+	}
+
+	// Get connection details
+	hostVal, found := redisConf["host"]
+	if !found {
+		return nil, errors.New("pubsub redis host not found")
+	}
+	host, ok := hostVal.(string)
+	if !ok {
+		return nil, errors.New("pubsub redis host not valid, host must be string")
+	}
+
+	password := redisauth.GetPassword(redisConf, "REDIS_PASSWORD")
+
+	databaseVal, found := redisConf["database"]
+	if !found {
+		return nil, errors.New("pubsub redis database not found")
+	}
+	var database int
+	switch v := databaseVal.(type) {
+	case int:
+		database = v
+	case float64:
+		database = int(v)
+	default:
+		return nil, errors.New("pubsub redis database not valid, database must be numeric")
+	}
+
+	// Create temporary Redis client for version detection
+	client := redis.NewClient(&redis.Options{
+		Addr:     host,
+		Password: password,
+		DB:       database,
+	})
+	defer client.Close()
+
+	// Attempt version detection
+	log.Info().Msg("Auto-detecting Redis version to choose best notification implementation...")
+	if pubsub.SupportsRedisStreams(client) {
+		// Redis >= 5.0 - Use Streams
+		return getPubSubRedisStreams(conf)
+	}
+
+	// Redis < 5.0 or detection failed - Use Pub/Sub (safe default)
+	return getPubSubRedis(conf)
 }

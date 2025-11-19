@@ -32,18 +32,22 @@ Redis Streams extends Redis with a log data structure that provides:
 - Recommended: Redis 6.0+ for improved performance and stability
 - Verify your version: `redis-cli --version`
 
-### When to Use Redis Streams
+### Redis Streams vs Redis Pub/Sub
 
-**Use Redis Streams when:**
+Agent automatically chooses the best implementation based on your Redis version:
+
+**Redis Streams (Redis >= 5.0):**
 - Message delivery is critical (notifications must reach clients)
 - Running multiple Agent instances (high availability)
 - Need to recover from Agent restarts without message loss
 - Want visibility into message delivery status
 
-**Consider Redis Pub/Sub when:**
+**Redis Pub/Sub (Redis < 5.0 or detection fails):**
 - Message loss is acceptable (fire-and-forget)
 - Running single Agent instance
 - Need absolute minimum latency (no persistence overhead)
+
+> **Note:** You don't need to choose - Agent detects your Redis version and uses the appropriate implementation automatically.
 
 ## Why Redis for Notifications?
 
@@ -189,8 +193,13 @@ api:
 synchronization:
     notification:
         enable: true
-        default: "redis-streams"  # Switch from "redis" to "redis-streams"
+        default: "redis"  # Agent auto-detects Redis version and uses best option
 ```
+
+> **Note:** Agent automatically detects your Redis version:
+> - **Redis >= 5.0:** Uses Redis Streams (persistent, batched delivery)
+> - **Redis < 5.0:** Falls back to Redis Pub/Sub (fire-and-forget)
+> - **Detection fails:** Safely falls back to Redis Pub/Sub
 
 **Step 3 - Configure Redis connection:**
 
@@ -204,21 +213,24 @@ synchronization:
             database: 0
 ```
 
-**Step 4 - (Optional) Tune performance:**
+**Step 4 - (Optional) Tune Redis Streams performance:**
+
+> **Note:** These parameters only apply when Redis Streams is used (Redis >= 5.0).
+> They are ignored if Redis Pub/Sub is used. Leave these out to use sensible defaults.
 
 ```yaml
 synchronization:
     pubsub:
         redis:
-            # Batching configuration
-            batch_size: 10          # Messages per batch
-            flush_interval: 2s      # Max wait for partial batch
+            # Batching configuration (optional - defaults shown)
+            batch_size: 10          # Messages per batch (default: 10)
+            flush_interval: 5s      # Max wait for partial batch (default: 5s)
 
-            # Retry configuration
-            max_retries: 3
-            retry_delay: 100ms
-            max_retry_delay: 5s
-            connection_timeout: 10s
+            # Retry configuration (optional - defaults shown)
+            max_retries: 3          # Retry attempts (default: 3)
+            retry_delay: 100ms      # Initial retry delay (default: 100ms)
+            max_retry_delay: 5s     # Max retry delay (default: 5s)
+            connection_timeout: 10s # Connection timeout (default: 10s)
 ```
 
 **Step 5 - (Optional) Increase HTTP timeouts to prevent SSE disconnects:**
@@ -258,17 +270,23 @@ synchronization:
                            # Fallback: REDIS_PASSWORD environment variable
             database: 0
 
-            # Redis Streams configuration
-            batch_size: 5           # Messages per batch
-            flush_interval: 2s      # Max wait before sending partial batch
-            max_retries: 3          # Retry attempts for failed operations
-            retry_delay: 100ms      # Initial retry delay
-            max_retry_delay: 5s     # Max retry delay (exponential backoff)
-            connection_timeout: 10s # Redis connection timeout
+            # Optional: Redis Streams tuning (only applies if Redis >= 5.0)
+            # Uncomment to override defaults
+            batch_size: 5           # Messages per batch (default: 10)
+            flush_interval: 2s      # Max wait before sending (default: 5s)
+            max_retries: 3          # Retry attempts (default: 3)
+            retry_delay: 100ms      # Initial retry delay (default: 100ms)
+            max_retry_delay: 5s     # Max retry delay (default: 5s)
+            connection_timeout: 10s # Connection timeout (default: 10s)
+
+            # Optional: Force specific implementation (bypasses auto-detection)
+            # Only use if auto-detection fails or you need explicit control
+            # Options: "streams" (requires Redis >= 5.0) or "pubsub" (any Redis)
+            # force_implementation: "streams"
 
     notification:
         enable: true
-        default: "redis-streams"  # Use Redis Streams for notifications
+        default: "redis"  # Agent auto-detects best option based on Redis version
 ```
 
 ### Security: Password Configuration
@@ -291,7 +309,61 @@ password: "your-redis-password"
 
 The Agent checks fields in this order: `auth_token` → `redis_secret` → `password` → `REDIS_PASSWORD` env var.
 
+### Automatic Redis Version Detection
+
+Agent automatically detects your Redis version at startup and chooses the best notification implementation:
+
+**Detection Flow:**
+1. Agent connects to Redis
+2. Runs `INFO server` command to get Redis version
+3. Parses `redis_version` field (e.g., `6.2.5`)
+4. If major version >= 5: Uses Redis Streams
+5. If major version < 5: Uses Redis Pub/Sub
+6. If detection fails: Falls back to Redis Pub/Sub (safe default)
+
+**Logging Examples:**
+
+Redis 6.x detected:
+```
+INFO Auto-detecting Redis version to choose best notification implementation...
+INFO Redis Streams supported - will use Streams for notifications redis_version=6
+```
+
+Redis 4.x detected:
+```
+INFO Auto-detecting Redis version to choose best notification implementation...
+INFO Redis Streams not supported - will use Pub/Sub for notifications redis_version=4 min_required=5
+```
+
+Detection failed:
+```
+INFO Auto-detecting Redis version to choose best notification implementation...
+WARN Could not detect Redis version - will use Pub/Sub as safe fallback error="NOPERM"
+```
+
+**Manual Override:**
+
+If auto-detection fails (e.g., `INFO` command is restricted), you can force a specific implementation:
+
+```yaml
+synchronization:
+    pubsub:
+        redis:
+            force_implementation: "streams"  # or "pubsub"
+```
+
+- `"streams"` - Always use Redis Streams (fails if Redis < 5.0)
+- `"pubsub"` - Always use Redis Pub/Sub (works with any Redis version)
+
+**When to use manual override:**
+- Auto-detection fails due to restricted Redis permissions
+- Testing specific implementation behavior
+- Debugging issues with auto-detection
+- Explicit control over implementation choice
+
 ### Configuration Parameters
+
+> **Note:** These parameters only apply when Redis Streams is used (Redis >= 5.0).
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -335,21 +407,43 @@ flush_interval: 1s
 | **Latency** | Lowest (~1ms) | Low (~2-5ms) |
 | **Memory usage** | Minimal | Higher (persistence) |
 | **Complexity** | Simple | Moderate |
+| **Redis version** | 2.0+ | 5.0+ required |
+| **Selection** | Auto-detected (< 5.0) | Auto-detected (>= 5.0) |
+
+> **Note:** Agent automatically detects your Redis version and uses the appropriate implementation. You don't need to choose manually.
 
 ### Migration Path
 
-**Currently using Redis Pub/Sub?** Switching to Redis Streams is a one-line config change:
+**Currently using Redis Pub/Sub?** Switching to Redis Streams is automatic if you upgrade Redis:
 
+**Scenario 1: Already using `default: "redis"` (auto-detect)**
 ```yaml
-# Before (Redis Pub/Sub)
+synchronization:
+    notification:
+        default: "redis"  # Already using auto-detection
+```
+- **Redis 4.x:** Currently using Pub/Sub
+- **Upgrade Redis to 6.x:** Automatically switches to Streams (no config change needed!)
+
+**Scenario 2: Explicitly set to `default: "redis"` (legacy Pub/Sub)**
+```yaml
+# Old config (explicit Pub/Sub, no auto-detection)
 synchronization:
     notification:
         default: "redis"
+```
+- This now uses auto-detection
+- Redis 5+ will automatically use Streams
+- No breaking changes
 
-# After (Redis Streams)
+**Scenario 3: Want to force Streams on Redis 5+**
+```yaml
 synchronization:
+    pubsub:
+        redis:
+            force_implementation: "streams"  # Explicit Streams
     notification:
-        default: "redis-streams"
+        default: "redis"
 ```
 
 All Redis Streams configuration is backward compatible - existing `pubsub.redis` settings are reused.
@@ -468,28 +562,38 @@ DEL stream:optimizely-sync-{SDK_KEY}
 
 ## Migration Guide
 
-### From Redis Pub/Sub to Redis Streams
+### Upgrading Redis Version (4.x → 5.x+)
 
-**1. Update configuration:**
+When you upgrade your Redis server from version 4.x to 5.x or higher, Agent will **automatically** start using Redis Streams on the next restart—no configuration changes needed.
 
-```yaml
-synchronization:
-    notification:
-        enable: true
-        default: "redis-streams"  # Change from "redis" to "redis-streams"
+**1. Upgrade Redis:**
+
+```bash
+# Example: Docker upgrade from Redis 4.x to 6.x
+docker stop my-redis
+docker run -d --name my-redis -p 6379:6379 redis:6.2
 ```
 
-**2. (Optional) Add performance tuning:**
+**2. Restart Agent:**
+
+Agent will detect the new Redis version and automatically use Streams:
+
+```
+INFO Auto-detecting Redis version to choose best notification implementation...
+INFO Redis Streams supported - will use Streams for notifications redis_version=6
+```
+
+**3. (Optional) Add performance tuning:**
+
+If you want to customize batch size or flush interval for high-traffic scenarios:
 
 ```yaml
 synchronization:
     pubsub:
         redis:
-            batch_size: 10
-            flush_interval: 2s
+            batch_size: 50          # Larger batches for high traffic
+            flush_interval: 10s     # Longer interval for efficiency
 ```
-
-**3. Restart Agent**
 
 **4. Verify operation:**
 
@@ -504,20 +608,34 @@ redis-cli monitor | grep -E "xadd|xreadgroup|xack"
 **5. Clean up old pub/sub channels (optional):**
 
 ```bash
-# List old channels
+# List old channels from previous Pub/Sub usage
 redis-cli PUBSUB CHANNELS "optimizely-sync-*"
 
 # They will expire naturally when no longer used
 ```
 
-### Rollback Plan
+---
 
-If you need to rollback to Redis Pub/Sub:
+### Manual Override (Force Specific Implementation)
+
+If auto-detection fails or you need explicit control:
+
+**Force Redis Streams (Redis >= 5.0):**
 
 ```yaml
 synchronization:
-    notification:
-        default: "redis"  # Rollback to pub/sub
+    pubsub:
+        redis:
+            force_implementation: "streams"
+```
+
+**Force Redis Pub/Sub (any Redis version):**
+
+```yaml
+synchronization:
+    pubsub:
+        redis:
+            force_implementation: "pubsub"
 ```
 
 Restart Agent. No data migration needed.

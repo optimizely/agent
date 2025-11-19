@@ -65,9 +65,10 @@ func TestNewSyncedNotificationCenter(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":     "localhost:6379",
-							"password": "",
-							"database": 0,
+							"host":                 "localhost:6379",
+							"password":             "",
+							"database":             0,
+							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
 						},
 					},
 					Notification: config.FeatureSyncConfig{
@@ -149,9 +150,10 @@ func TestNewDatafileSyncer(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":     "localhost:6379",
-							"password": "",
-							"database": 0,
+							"host":                 "localhost:6379",
+							"password":             "",
+							"database":             0,
+							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
 						},
 					},
 					Datafile: config.FeatureSyncConfig{
