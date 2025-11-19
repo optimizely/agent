@@ -46,26 +46,15 @@ type RedisCache struct {
 func (r *RedisCache) UnmarshalJSON(data []byte) error {
 	// Use an alias type to avoid infinite recursion
 	type Alias RedisCache
-	alias := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(r),
-	}
+	alias := (*Alias)(r)
 
-	// First, unmarshal normally to get all fields
-	if err := json.Unmarshal(data, alias); err != nil {
+	// Use shared unmarshal logic with password extraction
+	password, err := redisauth.UnmarshalWithPasswordExtraction(data, alias, "REDIS_CMAB_PASSWORD")
+	if err != nil {
 		return err
 	}
 
-	// Parse raw config to extract password with flexible field names
-	var rawConfig map[string]interface{}
-	if err := json.Unmarshal(data, &rawConfig); err != nil {
-		return err
-	}
-
-	// Use redisauth utility to get password from flexible field names or env var
-	r.Password = redisauth.GetPassword(rawConfig, "REDIS_CMAB_PASSWORD")
-
+	r.Password = password
 	return nil
 }
 

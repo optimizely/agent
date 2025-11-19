@@ -54,7 +54,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want: &pubsub.Redis{
 				Host:     "localhost:6379",
@@ -101,7 +101,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -118,7 +118,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -135,7 +135,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -156,7 +156,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -176,7 +176,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -197,7 +197,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want: &pubsub.Redis{
 				Host:     "localhost:6379",
@@ -221,7 +221,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -243,7 +243,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want: &pubsub.Redis{
 				Host:     "localhost:6379",
@@ -268,7 +268,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -295,7 +295,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want: &pubsub.RedisStreams{
 				Host:          "localhost:6379",
@@ -357,7 +357,7 @@ func TestNewPubSub(t *testing.T) {
 						Enable:  true,
 					},
 				},
-				flag: SyncFeatureFlagNotificaiton,
+				flag: SyncFeatureFlagNotification,
 			},
 			want:    nil,
 			wantErr: true,
@@ -577,7 +577,7 @@ func TestNewPubSub_DatabaseTypeConversion(t *testing.T) {
 				},
 			}
 
-			_, err := newPubSub(conf, SyncFeatureFlagNotificaiton)
+			_, err := newPubSub(conf, SyncFeatureFlagNotification)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newPubSub() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -723,7 +723,7 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var err error
 			if tt.conf.Notification.Default != "" {
-				_, err = newPubSub(tt.conf, SyncFeatureFlagNotificaiton)
+				_, err = newPubSub(tt.conf, SyncFeatureFlagNotification)
 			} else {
 				_, err = newPubSub(tt.conf, SyncFeatureFlagDatafile)
 			}

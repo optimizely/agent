@@ -75,7 +75,7 @@ func NewSyncedNotificationCenter(ctx context.Context, sdkKey string, conf config
 		logger = &log.Logger
 	}
 
-	pubsub, err := newPubSub(conf, SyncFeatureFlagNotificaiton)
+	pubsub, err := newPubSub(conf, SyncFeatureFlagNotification)
 	if err != nil {
 		return nil, err
 	}

@@ -17,10 +17,12 @@
 package redisauth
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetPassword(t *testing.T) {
@@ -177,4 +179,225 @@ func TestGetPassword_RealWorldScenarios(t *testing.T) {
 		got := GetPassword(config, "REDIS_PASSWORD")
 		assert.Equal(t, "legacy-pass", got)
 	})
+}
+
+func TestUnmarshalWithPasswordExtraction(t *testing.T) {
+	// Test struct to unmarshal into
+	type TestRedisConfig struct {
+		Host     string `json:"host"`
+		Password string `json:"password"`
+		Database int    `json:"database"`
+	}
+
+	tests := []struct {
+		name         string
+		jsonData     string
+		envVar       string
+		envValue     string
+		wantPassword string
+		wantErr      bool
+		wantHost     string
+		wantDatabase int
+	}{
+		{
+			name:         "unmarshal with auth_token field",
+			jsonData:     `{"host":"localhost:6379","auth_token":"token123","database":0}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "token123",
+			wantErr:      false,
+			wantHost:     "localhost:6379",
+			wantDatabase: 0,
+		},
+		{
+			name:         "unmarshal with redis_secret field",
+			jsonData:     `{"host":"localhost:6379","redis_secret":"secret456","database":1}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "secret456",
+			wantErr:      false,
+			wantHost:     "localhost:6379",
+			wantDatabase: 1,
+		},
+		{
+			name:         "unmarshal with password field",
+			jsonData:     `{"host":"localhost:6379","password":"pass789","database":2}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "pass789",
+			wantErr:      false,
+			wantHost:     "localhost:6379",
+			wantDatabase: 2,
+		},
+		{
+			name:         "unmarshal with env var fallback",
+			jsonData:     `{"host":"localhost:6379","database":0}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			envValue:     "env_password",
+			wantPassword: "env_password",
+			wantErr:      false,
+			wantHost:     "localhost:6379",
+			wantDatabase: 0,
+		},
+		{
+			name:         "unmarshal with no password configured",
+			jsonData:     `{"host":"localhost:6379","database":0}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "",
+			wantErr:      false,
+			wantHost:     "localhost:6379",
+			wantDatabase: 0,
+		},
+		{
+			name:         "priority: auth_token over redis_secret",
+			jsonData:     `{"host":"localhost:6379","auth_token":"token","redis_secret":"secret","password":"pass","database":0}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "token",
+			wantErr:      false,
+			wantHost:     "localhost:6379",
+			wantDatabase: 0,
+		},
+		{
+			name:         "invalid JSON returns error",
+			jsonData:     `{"host":"localhost:6379","invalid json`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "",
+			wantErr:      true,
+		},
+		{
+			name:         "empty JSON object",
+			jsonData:     `{}`,
+			envVar:       "TEST_REDIS_PASSWORD",
+			wantPassword: "",
+			wantErr:      false,
+			wantHost:     "",
+			wantDatabase: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set environment variable if needed
+			if tt.envValue != "" {
+				os.Setenv(tt.envVar, tt.envValue)
+				defer os.Unsetenv(tt.envVar)
+			} else {
+				os.Unsetenv(tt.envVar)
+			}
+
+			// Create target struct
+			var config TestRedisConfig
+
+			// Call the function
+			password, err := UnmarshalWithPasswordExtraction([]byte(tt.jsonData), &config, tt.envVar)
+
+			// Check error
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			// Verify password extraction
+			assert.Equal(t, tt.wantPassword, password)
+
+			// Verify other fields were unmarshaled correctly
+			assert.Equal(t, tt.wantHost, config.Host)
+			assert.Equal(t, tt.wantDatabase, config.Database)
+		})
+	}
+}
+
+func TestUnmarshalWithPasswordExtraction_AliasPattern(t *testing.T) {
+	// This test verifies that the alias pattern works correctly
+	// and prevents infinite recursion
+
+	type RedisConfig struct {
+		Host     string `json:"host"`
+		Password string `json:"-"` // Not unmarshaled from JSON
+		Database int    `json:"database"`
+	}
+
+	// Simulate the alias pattern used in actual implementations
+	jsonData := `{"host":"localhost:6379","auth_token":"secret123","database":1}`
+
+	var config RedisConfig
+	type Alias RedisConfig
+	alias := (*Alias)(&config)
+
+	// This should not cause infinite recursion
+	password, err := UnmarshalWithPasswordExtraction([]byte(jsonData), alias, "TEST_PASSWORD")
+
+	require.NoError(t, err)
+	assert.Equal(t, "secret123", password)
+	assert.Equal(t, "localhost:6379", config.Host)
+	assert.Equal(t, 1, config.Database)
+}
+
+func TestUnmarshalWithPasswordExtraction_StructWithNestedFields(t *testing.T) {
+	// Test with a more complex struct to ensure general unmarshaling works
+
+	type ComplexRedisConfig struct {
+		Host     string         `json:"host"`
+		Password string         `json:"password"`
+		Database int            `json:"database"`
+		Options  map[string]int `json:"options"`
+	}
+
+	jsonData := `{
+		"host":"redis.example.com:6379",
+		"auth_token":"complex_token",
+		"database":5,
+		"options":{"maxRetries":3,"timeout":30}
+	}`
+
+	var config ComplexRedisConfig
+	password, err := UnmarshalWithPasswordExtraction([]byte(jsonData), &config, "")
+
+	require.NoError(t, err)
+	assert.Equal(t, "complex_token", password)
+	assert.Equal(t, "redis.example.com:6379", config.Host)
+	assert.Equal(t, 5, config.Database)
+	assert.Equal(t, 3, config.Options["maxRetries"])
+	assert.Equal(t, 30, config.Options["timeout"])
+}
+
+func TestUnmarshalWithPasswordExtraction_MalformedJSON(t *testing.T) {
+	type RedisConfig struct {
+		Host     string `json:"host"`
+		Database int    `json:"database"`
+	}
+
+	tests := []struct {
+		name     string
+		jsonData string
+	}{
+		{
+			name:     "incomplete JSON",
+			jsonData: `{"host":"localhost:6379"`,
+		},
+		{
+			name:     "invalid syntax",
+			jsonData: `{host:localhost}`,
+		},
+		{
+			name:     "trailing comma",
+			jsonData: `{"host":"localhost:6379",}`,
+		},
+		{
+			name:     "empty string",
+			jsonData: ``,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var config RedisConfig
+			_, err := UnmarshalWithPasswordExtraction([]byte(tt.jsonData), &config, "TEST_PASSWORD")
+			assert.Error(t, err, "Expected error for malformed JSON")
+
+			// Verify it's a JSON unmarshal error
+			var jsonErr *json.SyntaxError
+			var jsonTypeErr *json.UnmarshalTypeError
+			isJSONError := assert.ErrorAs(t, err, &jsonErr) || assert.ErrorAs(t, err, &jsonTypeErr) || err.Error() == "unexpected end of JSON input"
+			assert.True(t, isJSONError, "Error should be a JSON unmarshal error")
+		})
+	}
 }

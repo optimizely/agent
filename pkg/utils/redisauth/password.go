@@ -17,7 +17,10 @@
 // Package redisauth provides utilities for Redis authentication configuration
 package redisauth
 
-import "os"
+import (
+	"encoding/json"
+	"os"
+)
 
 // GetPassword safely extracts Redis password from config with flexible field names and env var fallback
 //
@@ -56,4 +59,51 @@ func GetPassword(config map[string]interface{}, envVar string) string {
 
 	// Return empty string if not found (for Redis, empty password is valid)
 	return ""
+}
+
+// UnmarshalWithPasswordExtraction provides shared logic for unmarshaling Redis configurations
+// with flexible password field name support.
+//
+// This helper function handles the common pattern used across Redis cache implementations:
+// 1. Unmarshal JSON data into the provided target struct (using alias to avoid recursion)
+// 2. Extract password from flexible field names (auth_token, redis_secret, password)
+// 3. Return the extracted password for the caller to set on their struct
+//
+// Parameters:
+//   - data: JSON bytes to unmarshal
+//   - target: pointer to the struct to unmarshal into (should be an alias type to avoid recursion)
+//   - envVar: environment variable name for password fallback (e.g., "REDIS_ODP_PASSWORD")
+//
+// Returns:
+//   - password: extracted password string (may be empty)
+//   - error: any error from unmarshaling
+//
+// Example usage in a struct's UnmarshalJSON method:
+//
+//	func (r *RedisCache) UnmarshalJSON(data []byte) error {
+//	    type Alias RedisCache
+//	    alias := (*Alias)(r)
+//	    password, err := redisauth.UnmarshalWithPasswordExtraction(data, alias, "REDIS_PASSWORD")
+//	    if err != nil {
+//	        return err
+//	    }
+//	    r.Password = password
+//	    return nil
+//	}
+func UnmarshalWithPasswordExtraction(data []byte, target interface{}, envVar string) (string, error) {
+	// Unmarshal normally to get all fields
+	if err := json.Unmarshal(data, target); err != nil {
+		return "", err
+	}
+
+	// Parse raw config to extract password with flexible field names
+	var rawConfig map[string]interface{}
+	if err := json.Unmarshal(data, &rawConfig); err != nil {
+		return "", err
+	}
+
+	// Use GetPassword to extract password from flexible field names or env var
+	password := GetPassword(rawConfig, envVar)
+
+	return password, nil
 }

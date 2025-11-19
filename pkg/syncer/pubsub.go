@@ -41,7 +41,7 @@ const (
 type SyncFeatureFlag string
 
 const (
-	SyncFeatureFlagNotificaiton SyncFeatureFlag = "sync-feature-flag-notification"
+	SyncFeatureFlagNotification SyncFeatureFlag = "sync-feature-flag-notification"
 	SyncFeatureFlagDatafile     SyncFeatureFlag = "sync-feature-flag-datafile"
 )
 
@@ -53,7 +53,7 @@ type PubSub interface {
 func newPubSub(conf config.SyncConfig, featureFlag SyncFeatureFlag) (PubSub, error) {
 	var defaultPubSub string
 
-	if featureFlag == SyncFeatureFlagNotificaiton {
+	if featureFlag == SyncFeatureFlagNotification {
 		defaultPubSub = conf.Notification.Default
 	} else if featureFlag == SyncFeatureFlagDatafile {
 		defaultPubSub = conf.Datafile.Default
