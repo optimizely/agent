@@ -605,6 +605,251 @@ func TestNewPubSub_DatabaseTypeConversion(t *testing.T) {
 	}
 }
 
+func TestGetPubSubRedis_DirectCall(t *testing.T) {
+	tests := []struct {
+		name    string
+		conf    config.SyncConfig
+		want    PubSub
+		wantErr bool
+	}{
+		{
+			name: "Valid Pub/Sub config",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
+			want: &pubsub.Redis{
+				Host:     "localhost:6379",
+				Password: "",
+				Database: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Pub/Sub with database as float64",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "secret",
+						"database": float64(1),
+					},
+				},
+			},
+			want: &pubsub.Redis{
+				Host:     "localhost:6379",
+				Password: "secret",
+				Database: 1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Pub/Sub config not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"not-redis": map[string]interface{}{},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Pub/Sub config not valid (not a map)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": "invalid-config",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Pub/Sub host not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Pub/Sub host not valid (not a string)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     123,
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Pub/Sub database not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Pub/Sub database invalid type",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": "invalid",
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getPubSubRedis(tt.conf)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getPubSubRedis() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getPubSubRedis() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetPubSubRedisStreams_DirectCall(t *testing.T) {
+	tests := []struct {
+		name    string
+		conf    config.SyncConfig
+		wantErr bool
+	}{
+		{
+			name: "Streams config not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"not-redis": map[string]interface{}{},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Streams config not valid (not a map)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": "invalid-config",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Streams host not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Streams host not valid (not a string)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     123,
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Streams database not found",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Streams database as float64 (valid)",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": float64(1),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Streams database invalid type",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": "invalid",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Streams with valid config",
+			conf: config.SyncConfig{
+				Pubsub: map[string]interface{}{
+					"redis": map[string]interface{}{
+						"host":     "localhost:6379",
+						"password": "",
+						"database": 0,
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := getPubSubRedisStreams(tt.conf)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getPubSubRedisStreams() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 	tests := []struct {
 		name    string
