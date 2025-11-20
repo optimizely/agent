@@ -294,7 +294,7 @@ func TestNewPubSub(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Test with valid redis-streams config for notification",
+			name: "Test with auto-detected redis-streams with custom config",
 			args: args{
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
@@ -311,7 +311,7 @@ func TestNewPubSub(t *testing.T) {
 						},
 					},
 					Notification: config.FeatureSyncConfig{
-						Default: "redis-streams",
+						Default: "redis",
 						Enable:  true,
 					},
 				},
@@ -331,7 +331,7 @@ func TestNewPubSub(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test with valid redis-streams config for datafile",
+			name: "Test with auto-detected redis-streams for datafile",
 			args: args{
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
@@ -342,7 +342,7 @@ func TestNewPubSub(t *testing.T) {
 						},
 					},
 					Datafile: config.FeatureSyncConfig{
-						Default: "redis-streams",
+						Default: "redis",
 						Enable:  true,
 					},
 				},
@@ -612,33 +612,33 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "redis-streams config not found",
+			name: "redis config not found",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"not-redis": map[string]interface{}{},
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "redis-streams config not valid (not a map)",
+			name: "redis config not valid (not a map)",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"redis": "invalid-config",
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "redis-streams host not found",
+			name: "redis host not found",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"redis": map[string]interface{}{
@@ -647,14 +647,14 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 					},
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "redis-streams host not valid (not a string)",
+			name: "redis host not valid (not a string)",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"redis": map[string]interface{}{
@@ -664,14 +664,14 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 					},
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "redis-streams database not found",
+			name: "redis database not found",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"redis": map[string]interface{}{
@@ -680,14 +680,14 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 					},
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "redis-streams database as float64 (valid)",
+			name: "redis database as float64 (valid)",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"redis": map[string]interface{}{
@@ -697,14 +697,14 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 					},
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "redis-streams database invalid type",
+			name: "redis database invalid type",
 			conf: config.SyncConfig{
 				Pubsub: map[string]interface{}{
 					"redis": map[string]interface{}{
@@ -714,7 +714,7 @@ func TestGetPubSubRedisStreams_ErrorPaths(t *testing.T) {
 					},
 				},
 				Notification: config.FeatureSyncConfig{
-					Default: "redis-streams",
+					Default: "redis",
 					Enable:  true,
 				},
 			},

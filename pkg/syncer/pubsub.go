@@ -61,10 +61,8 @@ func newPubSub(conf config.SyncConfig, featureFlag SyncFeatureFlag) (PubSub, err
 		return nil, errors.New("provided feature flag not supported")
 	}
 
-	// Handle explicit implementation choice
-	if defaultPubSub == PubSubRedisStreams {
-		return getPubSubRedisStreams(conf)
-	} else if defaultPubSub == PubSubRedis {
+	// Only support auto-detection
+	if defaultPubSub == PubSubRedis {
 		// Use auto-detection (with fallback to Pub/Sub if detection fails)
 		return getPubSubWithAutoDetect(conf)
 	}
