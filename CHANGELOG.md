@@ -6,27 +6,43 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.3.0] - November 20, 2025
+
+This release introduces production-ready support for Contextual Multi-Armed Bandit (CMAB), enabling AI-powered experimentation that learns and adapts in real-time based on user context.
+
 ### New Features
 
-* **Redis Streams for Persistent Notification Delivery**: Added Redis Streams implementation as an alternative to Redis Pub/Sub for notification synchronization across Agent nodes. Redis Streams provides:
+* **Contextual Multi-Armed Bandit (CMAB) Support** ([#446](https://github.com/optimizely/agent/pull/446), [#447](https://github.com/optimizely/agent/pull/447)): Agent now fully supports Optimizely's Contextual Multi-Armed Bandit feature for intelligent experiment variation selection. Features include:
+  - Full CMAB decision API integration using go-sdk v2.1.1 client.CmabConfig API
+  - In-memory LRU cache (default, size: 10000, TTL: 30m) for single-instance deployments
+  - Redis cache for multi-instance deployments with shared decision caching
+  - Configurable via `client.cmab.cache` in config.yaml
+  - Configurable prediction endpoint via `client.cmab.predictionEndpoint` for testing/staging environments
+  - Flexible Redis authentication support (auth_token, redis_secret, password fields)
+  - Follows the same plugin-based architecture as ODP cache for consistency
+
+  This enables efficient scaling of CMAB-powered feature experiments across multiple Agent instances with shared caching and real-time learning.
+
+* **Redis Version Auto-Detection for Notifications** ([#448](https://github.com/optimizely/agent/pull/448)): Agent now automatically detects Redis version at startup and selects the optimal notification implementation:
+  - Redis >= 5.0: Uses Redis Streams (persistent, batched delivery with acknowledgment)
+  - Redis < 5.0: Uses Redis Pub/Sub (fire-and-forget)
+  - Detection fails: Falls back to Redis Pub/Sub (safe default)
+
+  Simply configure `synchronization.notification.default: "redis"` and Agent handles the rest. No configuration changes needed when upgrading Redis versions.
+
+* **Redis Streams for Persistent Notification Delivery** ([#448](https://github.com/optimizely/agent/pull/448)): Added Redis Streams implementation for notification synchronization across Agent nodes. Redis Streams provides:
   - Persistent message delivery with acknowledgment
   - Automatic retries with exponential backoff
   - Consumer groups for load balancing
-  - Configurable batching and flush intervals
+  - Configurable batching and flush intervals (batch_size, flush_interval)
   - Connection error recovery with reconnection logic
   - Comprehensive metrics tracking
 
-  Configure via `synchronization.notification.default: "redis-streams"` in config.yaml. See [docs/redis-streams.md](docs/redis-streams.md) for configuration options including batch_size, flush_interval, max_retries, and connection_timeout.
-
-* **CMAB Redis Cache Support** ([#447](https://github.com/optimizely/agent/pull/447)): Added Redis cache support for Contextual Multi-Armed Bandit (CMAB) decisions following the same plugin-based architecture as ODP cache:
-  - In-memory LRU cache (default, size: 10000, TTL: 30m)
-  - Redis cache for multi-instance deployments with shared caching
-  - Configurable via `client.cmab.cache` in config.yaml
-  - Supports both in-memory and Redis cache backends
+  Automatically enabled when Redis >= 5.0 is detected. See [docs/redis-streams.md](docs/redis-streams.md) for advanced configuration options.
 
 * **Flexible Redis Authentication**: Added support for flexible Redis password field names across all Redis clients (ODP cache, UPS, CMAB cache, and synchronization):
   - Supports `auth_token`, `redis_secret`, and `password` fields (in order of preference)
-  - Falls back to environment variables: `REDIS_PASSWORD`, `REDIS_ODP_PASSWORD`, `REDIS_UPS_PASSWORD`, `REDIS_CMAB_PASSWORD`
+  - Falls back to environment variables: `REDIS_PASSWORD`, `REDIS_ODP_PASSWORD`, `REDIS_UPS_PASSWORD`, `REDIS_CMAB_PASSWORD`, `REDIS_PUBSUB_PASSWORD`
   - Avoids security scanning alerts from hardcoded "password" field names
 
 * **CMAB Prediction Endpoint Configuration**: Added configurable CMAB prediction endpoint via `client.cmab.predictionEndpoint` in config.yaml or `OPTIMIZELY_CMAB_PREDICTIONENDPOINT` environment variable for testing/staging environments
@@ -40,6 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 * Improved Redis connection error handling and recovery across all Redis clients
 * Added comprehensive test coverage for Redis authentication and CMAB caching
+* Added SSE timeout warning in config.yaml to help users configure proper timeouts for notification streams
 
 ## [4.2.2] - October 7, 2025
 
