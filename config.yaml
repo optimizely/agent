@@ -80,6 +80,9 @@ server:
     ## Note: don't include port in these hosts values - port is stripped from the request host before comparing against these.
     allowedHosts:
         - localhost
+
+    ## If using notifications API (/v1/notifications/event-stream),
+    ## increase these timeouts to prevent SSE disconnects.
     ## the maximum duration for reading the entire request, including the body.
     ## Value can be set in seconds (e.g. "5s") or milliseconds (e.g. "5000ms")
     readTimeout: 5s
@@ -309,7 +312,7 @@ synchronization:
     ## if notification synchronization is enabled, then the active notification event-stream API
     ## will get the notifications from available replicas
     notification:
-        enable: true
+        enable: false
         ## Agent auto-detects best option based on Redis version
         default: "redis"
 
