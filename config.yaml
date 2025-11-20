@@ -306,11 +306,6 @@ synchronization:
             # max_retry_delay: 5s      # Max retry delay with backoff (default: 5s)
             # connection_timeout: 10s  # Redis connection timeout (default: 10s)
 
-            ## Manual override (optional): Force specific implementation, bypassing auto-detection
-            ## Only use if auto-detection fails or you need explicit control
-            ## Options: "streams" (requires Redis >= 5.0) or "pubsub" (works with any Redis)
-            # force_implementation: "streams"
-
     ## if notification synchronization is enabled, then the active notification event-stream API
     ## will get the notifications from available replicas
     notification:

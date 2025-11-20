@@ -65,18 +65,7 @@ func newPubSub(conf config.SyncConfig, featureFlag SyncFeatureFlag) (PubSub, err
 	if defaultPubSub == PubSubRedisStreams {
 		return getPubSubRedisStreams(conf)
 	} else if defaultPubSub == PubSubRedis {
-		// Check if user wants to force a specific implementation
-		forceImpl := getForceImplementation(conf)
-
-		if forceImpl == "streams" {
-			log.Info().Msg("force_implementation=streams - using Redis Streams (bypassing auto-detection)")
-			return getPubSubRedisStreams(conf)
-		} else if forceImpl == "pubsub" {
-			log.Info().Msg("force_implementation=pubsub - using Redis Pub/Sub (bypassing auto-detection)")
-			return getPubSubRedis(conf)
-		}
-
-		// No force - use auto-detection
+		// Use auto-detection (with fallback to Pub/Sub if detection fails)
 		return getPubSubWithAutoDetect(conf)
 	}
 
@@ -209,28 +198,6 @@ func getDurationFromConfig(config map[string]interface{}, key string, defaultVal
 		}
 	}
 	return defaultValue
-}
-
-// getForceImplementation extracts the force_implementation config value if present
-// Returns "streams", "pubsub", or empty string if not set
-func getForceImplementation(conf config.SyncConfig) string {
-	pubsubConf, found := conf.Pubsub[PubSubRedis]
-	if !found {
-		return ""
-	}
-
-	redisConf, ok := pubsubConf.(map[string]interface{})
-	if !ok {
-		return ""
-	}
-
-	if val, found := redisConf["force_implementation"]; found {
-		if strVal, ok := val.(string); ok {
-			return strVal
-		}
-	}
-
-	return ""
 }
 
 // getPubSubWithAutoDetect creates a PubSub instance using Redis version auto-detection

@@ -43,10 +43,9 @@ func TestNewPubSub(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":                 "localhost:6379",
-							"password":             "",
-							"database":             0,
-							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
 						},
 					},
 					Notification: config.FeatureSyncConfig{
@@ -56,10 +55,16 @@ func TestNewPubSub(t *testing.T) {
 				},
 				flag: SyncFeatureFlagNotification,
 			},
-			want: &pubsub.Redis{
-				Host:     "localhost:6379",
-				Password: "",
-				Database: 0,
+			want: &pubsub.RedisStreams{
+				Host:          "localhost:6379",
+				Password:      "",
+				Database:      0,
+				BatchSize:     10,
+				FlushInterval: 5 * time.Second,
+				MaxRetries:    3,
+				RetryDelay:    100 * time.Millisecond,
+				MaxRetryDelay: 5 * time.Second,
+				ConnTimeout:   10 * time.Second,
 			},
 			wantErr: false,
 		},
@@ -69,10 +74,9 @@ func TestNewPubSub(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":                 "localhost:6379",
-							"password":             "",
-							"database":             0,
-							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
 						},
 					},
 					Datafile: config.FeatureSyncConfig{
@@ -82,10 +86,16 @@ func TestNewPubSub(t *testing.T) {
 				},
 				flag: SyncFeatureFlagDatafile,
 			},
-			want: &pubsub.Redis{
-				Host:     "localhost:6379",
-				Password: "",
-				Database: 0,
+			want: &pubsub.RedisStreams{
+				Host:          "localhost:6379",
+				Password:      "",
+				Database:      0,
+				BatchSize:     10,
+				FlushInterval: 5 * time.Second,
+				MaxRetries:    3,
+				RetryDelay:    100 * time.Millisecond,
+				MaxRetryDelay: 5 * time.Second,
+				ConnTimeout:   10 * time.Second,
 			},
 			wantErr: false,
 		},
@@ -187,9 +197,8 @@ func TestNewPubSub(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":                 "localhost:6379",
-							"database":             0,
-							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
+							"host":     "localhost:6379",
+							"database": 0,
 						},
 					},
 					Notification: config.FeatureSyncConfig{
@@ -199,10 +208,16 @@ func TestNewPubSub(t *testing.T) {
 				},
 				flag: SyncFeatureFlagNotification,
 			},
-			want: &pubsub.Redis{
-				Host:     "localhost:6379",
-				Password: "", // Empty password is valid (no auth required)
-				Database: 0,
+			want: &pubsub.RedisStreams{
+				Host:          "localhost:6379",
+				Password:      "", // Empty password is valid (no auth required)
+				Database:      0,
+				BatchSize:     10,
+				FlushInterval: 5 * time.Second,
+				MaxRetries:    3,
+				RetryDelay:    100 * time.Millisecond,
+				MaxRetryDelay: 5 * time.Second,
+				ConnTimeout:   10 * time.Second,
 			},
 			wantErr: false,
 		},
@@ -232,10 +247,9 @@ func TestNewPubSub(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":                 "localhost:6379",
-							"password":             1234, // Invalid type, will be ignored
-							"database":             0,
-							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
+							"host":     "localhost:6379",
+							"password": 1234, // Invalid type, will be ignored
+							"database": 0,
 						},
 					},
 					Notification: config.FeatureSyncConfig{
@@ -245,10 +259,16 @@ func TestNewPubSub(t *testing.T) {
 				},
 				flag: SyncFeatureFlagNotification,
 			},
-			want: &pubsub.Redis{
-				Host:     "localhost:6379",
-				Password: "", // Invalid type ignored, falls back to empty string
-				Database: 0,
+			want: &pubsub.RedisStreams{
+				Host:          "localhost:6379",
+				Password:      "", // Invalid type ignored, falls back to empty string
+				Database:      0,
+				BatchSize:     10,
+				FlushInterval: 5 * time.Second,
+				MaxRetries:    3,
+				RetryDelay:    100 * time.Millisecond,
+				MaxRetryDelay: 5 * time.Second,
+				ConnTimeout:   10 * time.Second,
 			},
 			wantErr: false,
 		},

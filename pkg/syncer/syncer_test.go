@@ -21,6 +21,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/syncer/pubsub"
@@ -65,10 +66,9 @@ func TestNewSyncedNotificationCenter(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":                 "localhost:6379",
-							"password":             "",
-							"database":             0,
-							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
 						},
 					},
 					Notification: config.FeatureSyncConfig{
@@ -81,10 +81,16 @@ func TestNewSyncedNotificationCenter(t *testing.T) {
 				ctx:    context.Background(),
 				logger: &log.Logger,
 				sdkKey: "123",
-				pubsub: &pubsub.Redis{
-					Host:     "localhost:6379",
-					Password: "",
-					Database: 0,
+				pubsub: &pubsub.RedisStreams{
+					Host:          "localhost:6379",
+					Password:      "",
+					Database:      0,
+					BatchSize:     10,
+					FlushInterval: 5 * time.Second,
+					MaxRetries:    3,
+					RetryDelay:    100 * time.Millisecond,
+					MaxRetryDelay: 5 * time.Second,
+					ConnTimeout:   10 * time.Second,
 				},
 			},
 			wantErr: false,
@@ -150,10 +156,9 @@ func TestNewDatafileSyncer(t *testing.T) {
 				conf: config.SyncConfig{
 					Pubsub: map[string]interface{}{
 						"redis": map[string]interface{}{
-							"host":                 "localhost:6379",
-							"password":             "",
-							"database":             0,
-							"force_implementation": "pubsub", // Force Pub/Sub for deterministic test
+							"host":     "localhost:6379",
+							"password": "",
+							"database": 0,
 						},
 					},
 					Datafile: config.FeatureSyncConfig{
@@ -163,10 +168,16 @@ func TestNewDatafileSyncer(t *testing.T) {
 				},
 			},
 			want: &DatafileSyncer{
-				pubsub: &pubsub.Redis{
-					Host:     "localhost:6379",
-					Password: "",
-					Database: 0,
+				pubsub: &pubsub.RedisStreams{
+					Host:          "localhost:6379",
+					Password:      "",
+					Database:      0,
+					BatchSize:     10,
+					FlushInterval: 5 * time.Second,
+					MaxRetries:    3,
+					RetryDelay:    100 * time.Millisecond,
+					MaxRetryDelay: 5 * time.Second,
+					ConnTimeout:   10 * time.Second,
 				},
 			},
 			wantErr: false,

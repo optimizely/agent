@@ -279,11 +279,6 @@ synchronization:
             max_retry_delay: 5s     # Max retry delay (default: 5s)
             connection_timeout: 10s # Connection timeout (default: 10s)
 
-            # Optional: Force specific implementation (bypasses auto-detection)
-            # Only use if auto-detection fails or you need explicit control
-            # Options: "streams" (requires Redis >= 5.0) or "pubsub" (any Redis)
-            # force_implementation: "streams"
-
     notification:
         enable: true
         default: "redis"  # Agent auto-detects best option based on Redis version
@@ -341,25 +336,7 @@ INFO Auto-detecting Redis version to choose best notification implementation...
 WARN Could not detect Redis version - will use Pub/Sub as safe fallback error="NOPERM"
 ```
 
-**Manual Override:**
-
-If auto-detection fails (e.g., `INFO` command is restricted), you can force a specific implementation:
-
-```yaml
-synchronization:
-    pubsub:
-        redis:
-            force_implementation: "streams"  # or "pubsub"
-```
-
-- `"streams"` - Always use Redis Streams (fails if Redis < 5.0)
-- `"pubsub"` - Always use Redis Pub/Sub (works with any Redis version)
-
-**When to use manual override:**
-- Auto-detection fails due to restricted Redis permissions
-- Testing specific implementation behavior
-- Debugging issues with auto-detection
-- Explicit control over implementation choice
+> **Note:** If auto-detection fails, Agent safely falls back to Redis Pub/Sub (compatible with all Redis versions).
 
 ### Configuration Parameters
 
@@ -435,16 +412,6 @@ synchronization:
 - This now uses auto-detection
 - Redis 5+ will automatically use Streams
 - No breaking changes
-
-**Scenario 3: Want to force Streams on Redis 5+**
-```yaml
-synchronization:
-    pubsub:
-        redis:
-            force_implementation: "streams"  # Explicit Streams
-    notification:
-        default: "redis"
-```
 
 All Redis Streams configuration is backward compatible - existing `pubsub.redis` settings are reused.
 
@@ -613,32 +580,6 @@ redis-cli PUBSUB CHANNELS "optimizely-sync-*"
 
 # They will expire naturally when no longer used
 ```
-
----
-
-### Manual Override (Force Specific Implementation)
-
-If auto-detection fails or you need explicit control:
-
-**Force Redis Streams (Redis >= 5.0):**
-
-```yaml
-synchronization:
-    pubsub:
-        redis:
-            force_implementation: "streams"
-```
-
-**Force Redis Pub/Sub (any Redis version):**
-
-```yaml
-synchronization:
-    pubsub:
-        redis:
-            force_implementation: "pubsub"
-```
-
-Restart Agent. No data migration needed.
 
 ## Troubleshooting
 
