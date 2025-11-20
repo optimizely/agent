@@ -21,6 +21,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/optimizely/agent/config"
 	"github.com/optimizely/agent/pkg/syncer/pubsub"
@@ -80,10 +81,16 @@ func TestNewSyncedNotificationCenter(t *testing.T) {
 				ctx:    context.Background(),
 				logger: &log.Logger,
 				sdkKey: "123",
-				pubsub: &pubsub.Redis{
-					Host:     "localhost:6379",
-					Password: "",
-					Database: 0,
+				pubsub: &pubsub.RedisStreams{
+					Host:          "localhost:6379",
+					Password:      "",
+					Database:      0,
+					BatchSize:     10,
+					FlushInterval: 5 * time.Second,
+					MaxRetries:    3,
+					RetryDelay:    100 * time.Millisecond,
+					MaxRetryDelay: 5 * time.Second,
+					ConnTimeout:   10 * time.Second,
 				},
 			},
 			wantErr: false,
@@ -161,10 +168,16 @@ func TestNewDatafileSyncer(t *testing.T) {
 				},
 			},
 			want: &DatafileSyncer{
-				pubsub: &pubsub.Redis{
-					Host:     "localhost:6379",
-					Password: "",
-					Database: 0,
+				pubsub: &pubsub.RedisStreams{
+					Host:          "localhost:6379",
+					Password:      "",
+					Database:      0,
+					BatchSize:     10,
+					FlushInterval: 5 * time.Second,
+					MaxRetries:    3,
+					RetryDelay:    100 * time.Millisecond,
+					MaxRetryDelay: 5 * time.Second,
+					ConnTimeout:   10 * time.Second,
 				},
 			},
 			wantErr: false,
@@ -383,4 +396,90 @@ func TestSyncedNotificationCenter_Subscribe(t *testing.T) {
 			assert.True(t, tt.fields.pubsub.(*testPubSub).subscribeCalled)
 		})
 	}
+}
+
+func TestNewSyncedNotificationCenter_CacheHit(t *testing.T) {
+	// Clear cache before test
+	ncCache = make(map[string]NotificationSyncer)
+
+	conf := config.SyncConfig{
+		Pubsub: map[string]interface{}{
+			"redis": map[string]interface{}{
+				"host":     "localhost:6379",
+				"password": "",
+				"database": 0,
+			},
+		},
+		Notification: config.FeatureSyncConfig{
+			Default: "redis",
+			Enable:  true,
+		},
+	}
+
+	sdkKey := "test-sdk-key"
+	ctx := context.Background()
+
+	// First call - should create new instance
+	nc1, err := NewSyncedNotificationCenter(ctx, sdkKey, conf)
+	assert.NoError(t, err)
+	assert.NotNil(t, nc1)
+
+	// Second call with same sdkKey - should return cached instance
+	nc2, err := NewSyncedNotificationCenter(ctx, sdkKey, conf)
+	assert.NoError(t, err)
+	assert.NotNil(t, nc2)
+
+	// Should be the same instance (cache hit)
+	assert.Equal(t, nc1, nc2)
+}
+
+func TestSyncedNotificationCenter_AddHandler(t *testing.T) {
+	nc := &SyncedNotificationCenter{
+		ctx:    context.Background(),
+		logger: &log.Logger,
+		sdkKey: "test",
+		pubsub: &testPubSub{},
+	}
+
+	id, err := nc.AddHandler(notification.Decision, func(interface{}) {})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, id)
+}
+
+func TestSyncedNotificationCenter_RemoveHandler(t *testing.T) {
+	nc := &SyncedNotificationCenter{
+		ctx:    context.Background(),
+		logger: &log.Logger,
+		sdkKey: "test",
+		pubsub: &testPubSub{},
+	}
+
+	err := nc.RemoveHandler(0, notification.Decision)
+	assert.NoError(t, err)
+}
+
+func TestSyncedNotificationCenter_Send_MarshalError(t *testing.T) {
+	nc := &SyncedNotificationCenter{
+		ctx:    context.Background(),
+		logger: &log.Logger,
+		sdkKey: "test",
+		pubsub: &testPubSub{},
+	}
+
+	// Pass a channel which cannot be marshaled to JSON
+	ch := make(chan int)
+	err := nc.Send(notification.Decision, ch)
+	assert.Error(t, err)
+}
+
+func TestGetDatafileSyncChannel(t *testing.T) {
+	result := GetDatafileSyncChannel()
+	expected := "optimizely-sync-datafile"
+	assert.Equal(t, expected, result)
+}
+
+func TestGetChannelForSDKKey(t *testing.T) {
+	result := GetChannelForSDKKey("test-channel", "sdk-123")
+	expected := "test-channel-sdk-123"
+	assert.Equal(t, expected, result)
 }

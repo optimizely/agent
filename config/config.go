@@ -103,7 +103,7 @@ func NewDefaultConfig() *AgentConfig {
 				},
 			},
 			CMAB: CMABConfig{
-				RequestTimeout: 10 * time.Second,
+				RequestTimeout:     10 * time.Second,
 				PredictionEndpoint: "https://prediction.cmab.optimizely.com/predict/%s",
 				Cache: CMABCacheConfig{
 					"default": "in-memory",

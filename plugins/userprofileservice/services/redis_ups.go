@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/optimizely/agent/pkg/utils/redisauth"
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/rs/zerolog/log"
@@ -37,6 +38,24 @@ type RedisUserProfileService struct {
 	Address    string `json:"host"`
 	Password   string `json:"password"`
 	Database   int    `json:"database"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling with flexible password field names
+// Supports: auth_token, redis_secret, password (in order of preference)
+// Fallback: REDIS_UPS_PASSWORD environment variable
+func (u *RedisUserProfileService) UnmarshalJSON(data []byte) error {
+	// Use an alias type to avoid infinite recursion
+	type Alias RedisUserProfileService
+	alias := (*Alias)(u)
+
+	// Use shared unmarshal logic with password extraction
+	password, err := redisauth.UnmarshalWithPasswordExtraction(data, alias, "REDIS_UPS_PASSWORD")
+	if err != nil {
+		return err
+	}
+
+	u.Password = password
+	return nil
 }
 
 // Lookup is used to retrieve past bucketing decisions for users

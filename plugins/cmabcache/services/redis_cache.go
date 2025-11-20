@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/optimizely/agent/pkg/utils/redisauth"
 	"github.com/optimizely/agent/plugins/cmabcache"
 	"github.com/optimizely/agent/plugins/utils"
 	"github.com/optimizely/go-sdk/v2/pkg/cache"
@@ -37,6 +38,24 @@ type RedisCache struct {
 	Password string         `json:"password"`
 	Database int            `json:"database"`
 	Timeout  utils.Duration `json:"timeout"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling with flexible password field names
+// Supports: auth_token, redis_secret, password (in order of preference)
+// Fallback: REDIS_CMAB_PASSWORD environment variable
+func (r *RedisCache) UnmarshalJSON(data []byte) error {
+	// Use an alias type to avoid infinite recursion
+	type Alias RedisCache
+	alias := (*Alias)(r)
+
+	// Use shared unmarshal logic with password extraction
+	password, err := redisauth.UnmarshalWithPasswordExtraction(data, alias, "REDIS_CMAB_PASSWORD")
+	if err != nil {
+		return err
+	}
+
+	r.Password = password
+	return nil
 }
 
 // Lookup is used to retrieve cached CMAB decisions
