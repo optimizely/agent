@@ -70,68 +70,6 @@ expected_config = """{
         }
     },
     "featuresMap": {
-        "cmab_flag": {
-            "id": "496419",
-            "key": "cmab_flag",
-            "experimentRules": [
-                {
-                    "id": "9300002877087",
-                    "key": "cmab-rule_1",
-                    "audiences": "\\"Audience1\\"",
-                    "variationsMap": {
-                        "off": {
-                            "id": "1579277",
-                            "key": "off",
-                            "featureEnabled": false,
-                            "variablesMap": {}
-                        },
-                        "on": {
-                            "id": "1579278",
-                            "key": "on",
-                            "featureEnabled": true,
-                            "variablesMap": {}
-                        }
-                    }
-                }
-            ],
-            "deliveryRules": [
-                {
-                    "id": "default-rollout-496419-16935023792",
-                    "key": "default-rollout-496419-16935023792",
-                    "audiences": "",
-                    "variationsMap": {
-                        "off": {
-                            "id": "1579279",
-                            "key": "off",
-                            "featureEnabled": false,
-                            "variablesMap": {}
-                        }
-                    }
-                }
-            ],
-            "variablesMap": {},
-            "experimentsMap": {
-                "cmab-rule_1": {
-                    "id": "9300002877087",
-                    "key": "cmab-rule_1",
-                    "audiences": "\\"Audience1\\"",
-                    "variationsMap": {
-                        "off": {
-                            "id": "1579277",
-                            "key": "off",
-                            "featureEnabled": false,
-                            "variablesMap": {}
-                        },
-                        "on": {
-                            "id": "1579278",
-                            "key": "on",
-                            "featureEnabled": true,
-                            "variablesMap": {}
-                        }
-                    }
-                }
-            }
-        },
         "GkbzTurBWXr8EtNGZj2j6e": {
             "id": "147680",
             "key": "GkbzTurBWXr8EtNGZj2j6e",
