@@ -25,6 +25,7 @@ datafile = {
         {
             "experimentIds": [
                 "16911963060",
+                "9300002877087",
                 "16910084756"
             ],
             "id": "16911532385",
@@ -119,9 +120,53 @@ datafile = {
                     "variables": []
                 }
             ]
+        },
+        {
+            "audienceConditions": [
+                "or",
+                "16902921321"
+            ],
+            "audienceIds": [
+                "16902921321"
+            ],
+            "cmab": {
+                "attributeIds": [
+                    "16921322086"
+                ],
+                "trafficAllocation": 10000
+            },
+            "forcedVariations": {},
+            "id": "9300002877087",
+            "key": "cmab-rule_1",
+            "layerId": "9300002131372",
+            "status": "Running",
+            "trafficAllocation": [],
+            "variations": [
+                {
+                    "featureEnabled": False,
+                    "id": "1579277",
+                    "key": "off",
+                    "variables": []
+                },
+                {
+                    "featureEnabled": True,
+                    "id": "1579278",
+                    "key": "on",
+                    "variables": []
+                }
+            ]
         }
     ],
     "featureFlags": [
+        {
+            "experimentIds": [
+                "9300002877087"
+            ],
+            "id": "496419",
+            "key": "cmab_flag",
+            "rolloutId": "rollout-496419-16935023792",
+            "variables": []
+        },
         {
             "experimentIds": [],
             "id": "16907463855",
@@ -197,8 +242,36 @@ datafile = {
     "groups": [],
     "integrations": [],
     "projectId": "16931203314",
-    "revision": "137",
+    "revision": "139",
     "rollouts": [
+        {
+            "experiments": [
+                {
+                    "audienceConditions": [],
+                    "audienceIds": [],
+                    "forcedVariations": {},
+                    "id": "default-rollout-496419-16935023792",
+                    "key": "default-rollout-496419-16935023792",
+                    "layerId": "rollout-496419-16935023792",
+                    "status": "Running",
+                    "trafficAllocation": [
+                        {
+                            "endOfRange": 10000,
+                            "entityId": "1579279"
+                        }
+                    ],
+                    "variations": [
+                        {
+                            "featureEnabled": False,
+                            "id": "1579279",
+                            "key": "off",
+                            "variables": []
+                        }
+                    ]
+                }
+            ],
+            "id": "rollout-496419-16935023792"
+        },
         {
             "experiments": [
                 {
