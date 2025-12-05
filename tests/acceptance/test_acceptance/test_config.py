@@ -33,7 +33,7 @@ expected_config = """{
         "cmab-rule_1": {
             "id": "9300002877087",
             "key": "cmab-rule_1",
-            "audiences": "Audience1",
+            "audiences": "\"Audience1\"",
             "variationsMap": {
                 "off": {
                     "id": "1579277",
@@ -52,7 +52,7 @@ expected_config = """{
         "feature_2_test": {
             "id": "16910084756",
             "key": "feature_2_test",
-            "audiences": "Audience1",
+            "audiences": "\"Audience1\"",
             "variationsMap": {
                 "variation_1": {
                     "id": "16925360560",
@@ -77,7 +77,7 @@ expected_config = """{
                 {
                     "id": "16911963060",
                     "key": "ab_test1",
-                    "audiences": "Audience1",
+                    "audiences": "\"Audience1\"",
                     "variationsMap": {
                         "variation_1": {
                             "id": "16905941566",
@@ -114,7 +114,7 @@ expected_config = """{
                 "ab_test1": {
                     "id": "16911963060",
                     "key": "ab_test1",
-                    "audiences": "Audience1",
+                    "audiences": "\"Audience1\"",
                     "variationsMap": {
                         "variation_1": {
                             "id": "16905941566",
@@ -140,7 +140,7 @@ expected_config = """{
                 {
                     "id": "16941022436",
                     "key": "16941022436",
-                    "audiences": "Audience1",
+                    "audiences": "\"Audience1\"",
                     "variationsMap": {
                         "16906801184": {
                             "id": "16906801184",
@@ -249,7 +249,7 @@ expected_config = """{
                 {
                     "id": "16910084756",
                     "key": "feature_2_test",
-                    "audiences": "Audience1",
+                    "audiences": "\"Audience1\"",
                     "variationsMap": {
                         "variation_1": {
                             "id": "16925360560",
@@ -270,7 +270,7 @@ expected_config = """{
                 {
                     "id": "16924931120",
                     "key": "16924931120",
-                    "audiences": "Audience1",
+                    "audiences": "\"Audience1\"",
                     "variationsMap": {
                         "16931381940": {
                             "id": "16931381940",
@@ -299,7 +299,7 @@ expected_config = """{
                 "feature_2_test": {
                     "id": "16910084756",
                     "key": "feature_2_test",
-                    "audiences": "Audience1",
+                    "audiences": "\"Audience1\"",
                     "variationsMap": {
                         "variation_1": {
                             "id": "16925360560",
