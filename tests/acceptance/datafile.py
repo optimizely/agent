@@ -240,8 +240,10 @@ datafile = {
         }
     ],
     "groups": [],
+    "holdouts": [],
     "integrations": [],
     "projectId": "16931203314",
+    "region": "US",
     "revision": "139",
     "rollouts": [
         {
