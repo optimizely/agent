@@ -154,7 +154,7 @@ def test_activate__feature(session_obj, feature_key, expected_response,
     assert resp.status_code == expected_status_code, resp.text
 
 
-expected_activate_type_exper = """[
+expected_activate_type_exper_base = """[
   {
     "userId": "matjaz",
     "experimentKey": "feature_2_test",
@@ -173,7 +173,7 @@ expected_activate_type_exper = """[
   }
 ]"""
 
-expected_activate_type_feat = """[
+expected_activate_type_feat_base = """[
   {
     "userId": "matjaz",
     "experimentKey": "feature_2_test",
@@ -232,8 +232,8 @@ expected_activate_type_feat = """[
 
 
 @pytest.mark.parametrize("decision_type, expected_response, expected_status_code, bypass_validation_request", [
-    ("experiment", expected_activate_type_exper, 200, False),
-    ("feature", expected_activate_type_feat, 200, False),
+    ("experiment", expected_activate_type_exper_base, 200, False),
+    ("feature", expected_activate_type_feat_base, 200, False),
     ("invalid decision type", {'error': 'type "invalid decision type" not supported'}, 400, True),
     ("", {'error': 'type "" not supported'}, 400, True)
 ], ids=["experiment decision type", "feature decision type", "invalid decision type", "empty decision type"])
@@ -255,10 +255,47 @@ def test_activate__type(session_obj, decision_type, expected_response,
     resp = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, bypass_validation_request,
                                                     payload=payload, params=params)
 
-    if decision_type in ['experiment', 'feature']:
-        sorted_actual = sort_response(
-            resp.json(), 'experimentKey', 'featureKey')
-        sorted_expected = sort_response(json.loads(expected_response), 'experimentKey', 'featureKey')
+    if decision_type == 'experiment':
+        # For experiment type, verify base experiments plus CMAB experiment
+        actual_results = resp.json()
+        expected_base = json.loads(expected_response)
+
+        # Check we have the expected count (2 base + 1 CMAB)
+        assert len(actual_results) == 3, f"Expected 3 experiments, got {len(actual_results)}"
+
+        # Find and verify CMAB experiment
+        cmab_result = next((r for r in actual_results if r['experimentKey'] == 'cmab-rule_1'), None)
+        assert cmab_result is not None, "CMAB experiment not found"
+        assert cmab_result['userId'] == 'matjaz'
+        assert cmab_result['featureKey'] == ''
+        assert cmab_result['variationKey'] in ['on', 'off'], f"Unexpected CMAB variation: {cmab_result['variationKey']}"
+        assert cmab_result['type'] == 'experiment'
+
+        # Verify base experiments (excluding CMAB)
+        base_results = [r for r in actual_results if r['experimentKey'] != 'cmab-rule_1']
+        sorted_actual = sort_response(base_results, 'experimentKey', 'featureKey')
+        sorted_expected = sort_response(expected_base, 'experimentKey', 'featureKey')
+        assert sorted_actual == sorted_expected
+    elif decision_type == 'feature':
+        # For feature type, verify base features plus CMAB feature
+        actual_results = resp.json()
+        expected_base = json.loads(expected_response)
+
+        # Check we have the expected count (6 base + 1 CMAB)
+        assert len(actual_results) == 7, f"Expected 7 features, got {len(actual_results)}"
+
+        # Find and verify CMAB feature
+        cmab_result = next((r for r in actual_results if r['featureKey'] == 'cmab_flag'), None)
+        assert cmab_result is not None, "CMAB feature not found"
+        assert cmab_result['userId'] == 'matjaz'
+        assert cmab_result['experimentKey'] == 'cmab-rule_1'
+        assert cmab_result['variationKey'] in ['on', 'off'], f"Unexpected CMAB variation: {cmab_result['variationKey']}"
+        assert cmab_result['type'] == 'feature'
+
+        # Verify base features (excluding CMAB)
+        base_results = [r for r in actual_results if r['featureKey'] != 'cmab_flag']
+        sorted_actual = sort_response(base_results, 'experimentKey', 'featureKey')
+        sorted_expected = sort_response(expected_base, 'experimentKey', 'featureKey')
         assert sorted_actual == sorted_expected
     elif resp.json()['error']:
         with pytest.raises(requests.exceptions.HTTPError):
@@ -476,7 +513,7 @@ def test_activate__enabled(session_obj, enabled, experimentKey, featureKey,
 # #######################################################
 
 
-expected_activate_with_config = """[
+expected_activate_with_config_base = """[
   {
     "userId": "matjaz",
     "experimentKey": "ab_test1",
@@ -556,8 +593,8 @@ def test_activate_with_config(session_obj):
     validates against the whole response body.
 
     In "activate"
-    Request payload defines the “who” (user id and attributes)
-    while the query parameters define the “what” (feature, experiment, etc)
+    Request payload defines the "who" (user id and attributes)
+    while the query parameters define the "what" (feature, experiment, etc)
 
     Request parameter is a list of experiment keys or feature keys.
     If you want both add both and separate them with comma.
@@ -594,9 +631,29 @@ def test_activate_with_config(session_obj):
     resp_activate = create_and_validate_request_and_response(ENDPOINT_ACTIVATE, 'post', session_obj, payload=payload,
                                                              params=params)
 
-    sorted_actual = sort_response(resp_activate.json(), 'experimentKey', 'featureKey')
-    sorted_expected = sort_response(json.loads(expected_activate_with_config),
-                                    'experimentKey',
-                                    'featureKey')
+    actual_results = resp_activate.json()
+    expected_base = json.loads(expected_activate_with_config_base)
+
+    # Find CMAB entries (experiment and feature versions)
+    cmab_experiment = next((r for r in actual_results if r.get('experimentKey') == 'cmab-rule_1' and r.get('featureKey') == ''), None)
+    cmab_feature = next((r for r in actual_results if r.get('featureKey') == 'cmab_flag'), None)
+
+    # Verify CMAB experiment entry exists and is valid
+    assert cmab_experiment is not None, "CMAB experiment not found"
+    assert cmab_experiment['variationKey'] in ['on', 'off']
+    assert cmab_experiment['type'] == 'experiment'
+
+    # Verify CMAB feature entry exists and is valid
+    assert cmab_feature is not None, "CMAB feature not found"
+    assert cmab_feature['experimentKey'] == 'cmab-rule_1'
+    assert cmab_feature['variationKey'] in ['on', 'off']
+    assert cmab_feature['type'] == 'feature'
+
+    # Verify base results (excluding CMAB entries)
+    base_results = [r for r in actual_results if r.get('experimentKey') != 'cmab-rule_1' or r.get('featureKey') != '']
+    base_results = [r for r in base_results if r.get('featureKey') != 'cmab_flag']
+
+    sorted_actual = sort_response(base_results, 'experimentKey', 'featureKey')
+    sorted_expected = sort_response(expected_base, 'experimentKey', 'featureKey')
 
     assert sorted_actual == sorted_expected

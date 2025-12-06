@@ -9,7 +9,7 @@ from tests.acceptance.helpers import create_and_validate_request_and_response
 expected_config = """{
     "environmentKey": "production",
     "sdkKey": "KZbunNn9bVfBWLpZPq2XC4",
-    "revision": "137",
+    "revision": "139",
     "experimentsMap": {
         "ab_test1": {
             "id": "16911963060",
@@ -25,6 +25,25 @@ expected_config = """{
                 "variation_2": {
                     "id": "16927770169",
                     "key": "variation_2",
+                    "featureEnabled": true,
+                    "variablesMap": {}
+                }
+            }
+        },
+        "cmab-rule_1": {
+            "id": "9300002877087",
+            "key": "cmab-rule_1",
+            "audiences": "\\"Audience1\\"",
+            "variationsMap": {
+                "off": {
+                    "id": "1579277",
+                    "key": "off",
+                    "featureEnabled": false,
+                    "variablesMap": {}
+                },
+                "on": {
+                    "id": "1579278",
+                    "key": "on",
                     "featureEnabled": true,
                     "variablesMap": {}
                 }
@@ -106,6 +125,68 @@ expected_config = """{
                         "variation_2": {
                             "id": "16927770169",
                             "key": "variation_2",
+                            "featureEnabled": true,
+                            "variablesMap": {}
+                        }
+                    }
+                }
+            }
+        },
+        "cmab_flag": {
+            "id": "496419",
+            "key": "cmab_flag",
+            "experimentRules": [
+                {
+                    "id": "9300002877087",
+                    "key": "cmab-rule_1",
+                    "audiences": "\\"Audience1\\"",
+                    "variationsMap": {
+                        "off": {
+                            "id": "1579277",
+                            "key": "off",
+                            "featureEnabled": false,
+                            "variablesMap": {}
+                        },
+                        "on": {
+                            "id": "1579278",
+                            "key": "on",
+                            "featureEnabled": true,
+                            "variablesMap": {}
+                        }
+                    }
+                }
+            ],
+            "deliveryRules": [
+                {
+                    "id": "default-rollout-496419-16935023792",
+                    "key": "default-rollout-496419-16935023792",
+                    "audiences": "",
+                    "variationsMap": {
+                        "off": {
+                            "id": "1579277",
+                            "key": "off",
+                            "featureEnabled": false,
+                            "variablesMap": {}
+                        }
+                    }
+                }
+            ],
+            "variablesMap": {},
+            "experimentsMap": {
+                "cmab-rule_1": {
+                    "id": "9300002877087",
+                    "key": "cmab-rule_1",
+                    "audiences": "\\"Audience1\\"",
+                    "variationsMap": {
+                        "off": {
+                            "id": "1579277",
+                            "key": "off",
+                            "featureEnabled": false,
+                            "variablesMap": {}
+                        },
+                        "on": {
+                            "id": "1579278",
+                            "key": "on",
                             "featureEnabled": true,
                             "variablesMap": {}
                         }
@@ -384,6 +465,7 @@ expected_config = """{
             "key": "myevent",
             "experimentIds": [
                 "16911963060",
+                "9300002877087",
                 "16910084756"
             ]
         }

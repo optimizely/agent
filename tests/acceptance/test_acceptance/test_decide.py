@@ -157,7 +157,7 @@ def test_decide__feature_no_ups(session_obj, flag_key, expected_response, expect
     resp.raise_for_status()
 
 
-expected_flag_keys_with_ups = r"""[
+expected_flag_keys_with_ups_base = r"""[
   {
     "variationKey": "16925940659",
     "enabled": true,
@@ -251,7 +251,7 @@ expected_flag_key__multiple_parameters_with_ups = r"""[
     }
 ]"""
 
-expected_flag_keys_no_ups = r"""[
+expected_flag_keys_no_ups_base = r"""[
   {
     "variationKey": "16925940659",
     "enabled": true,
@@ -331,16 +331,16 @@ expected_flag_key__multiple_parameters_no_ups = r"""[
 
 
 @pytest.mark.parametrize(
-    "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
-        ({}, expected_flag_keys_with_ups, 200, True, True),
-        ({"keys": []}, expected_flag_keys_with_ups, 200, True, True),
+    "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response, is_decide_all", [
+        ({}, expected_flag_keys_with_ups_base, 200, True, True, True),
+        ({"keys": []}, expected_flag_keys_with_ups_base, 200, True, True, True),
         ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]},
-         expected_flag_key__multiple_parameters_with_ups, 200, True, True),
+         expected_flag_key__multiple_parameters_with_ups, 200, True, True, False),
     ],
     ids=["missig_flagkey_parameter", "no flag key specified", "multiple parameters"])
 def test_decide__flag_key_parameter_with_ups(session_obj, parameters, expected_response, expected_status_code,
                                              bypass_validation_request,
-                                             bypass_validation_response):
+                                             bypass_validation_response, is_decide_all):
     """
     Test validates:
     That no required parameter and empty param return identical response.
@@ -352,6 +352,7 @@ def test_decide__flag_key_parameter_with_ups(session_obj, parameters, expected_r
     :param parameters:  sesison obj, params, expected, expected status code
     :param expected_response: expected_flag_keys
     :param expected_status_code: 200
+    :param is_decide_all: whether this is decide all (needs CMAB handling)
     """
     payload = """
             {
@@ -370,23 +371,44 @@ def test_decide__flag_key_parameter_with_ups(session_obj, parameters, expected_r
                                                     payload=payload,
                                                     params=params)
 
-    sorted_actual = sort_response(resp.json(), "flagKey")
-    sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+    if is_decide_all:
+        # For decide all, handle CMAB flag separately
+        actual_results = resp.json()
+        expected_base = json.loads(expected_response)
 
-    assert sorted_actual == sorted_expected
+        # Find CMAB flag (may not be present if ENABLED_FLAGS_ONLY and variation is "off")
+        cmab_result = next((r for r in actual_results if r['flagKey'] == 'cmab_flag'), None)
+        if cmab_result is not None:
+            # If CMAB is present, verify it's valid
+            assert cmab_result['variationKey'] in ['on', 'off']
+            assert cmab_result['ruleKey'] == 'cmab-rule_1'
+            assert 'userContext' in cmab_result
+            # CMAB should only appear if enabled=true (when using ENABLED_FLAGS_ONLY)
+            assert cmab_result.get('enabled') is True, "CMAB flag should be enabled when present in ENABLED_FLAGS_ONLY response"
+
+        # Verify base flags (excluding CMAB)
+        base_results = [r for r in actual_results if r['flagKey'] != 'cmab_flag']
+        sorted_actual = sort_response(base_results, "flagKey")
+        sorted_expected = sort_response(expected_base, "flagKey")
+        assert sorted_actual == sorted_expected
+    else:
+        # For specific flag keys, exact match
+        sorted_actual = sort_response(resp.json(), "flagKey")
+        sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+        assert sorted_actual == sorted_expected
 
 
 @pytest.mark.parametrize(
-    "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response", [
-        ({}, expected_flag_keys_no_ups, 200, True, True),
-        ({"keys": []}, expected_flag_keys_no_ups, 200, True, True),
+    "parameters, expected_response, expected_status_code, bypass_validation_request, bypass_validation_response, is_decide_all", [
+        ({}, expected_flag_keys_no_ups_base, 200, True, True, True),
+        ({"keys": []}, expected_flag_keys_no_ups_base, 200, True, True, True),
         ({"keys": ["feature_1", "feature_2", "feature_4", "feature_5"]},
-         expected_flag_key__multiple_parameters_no_ups, 200, True, True),
+         expected_flag_key__multiple_parameters_no_ups, 200, True, True, False),
     ],
     ids=["missig_flagkey_parameter_no_ups", "no flag key specified_no_ups", "multiple parameters_no_ups"])
 def test_decide__flag_key_parameter_no_ups(session_obj, parameters, expected_response, expected_status_code,
                                            bypass_validation_request,
-                                           bypass_validation_response):
+                                           bypass_validation_response, is_decide_all):
     """
     This test is required to be run on Agent on Amazon Web Services.
     It is only used there. And it is excluded from the test run in this repo.
@@ -394,6 +416,7 @@ def test_decide__flag_key_parameter_no_ups(session_obj, parameters, expected_res
     :param parameters:  sesison obj, params, expected, expected status code
     :param expected_response: expected_flag_keys
     :param expected_status_code: 200
+    :param is_decide_all: whether this is decide all (needs CMAB handling)
     """
     payload = """
         {
@@ -412,10 +435,31 @@ def test_decide__flag_key_parameter_no_ups(session_obj, parameters, expected_res
                                                     payload=payload,
                                                     params=params)
 
-    sorted_actual = sort_response(resp.json(), "flagKey")
-    sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+    if is_decide_all:
+        # For decide all, handle CMAB flag separately
+        actual_results = resp.json()
+        expected_base = json.loads(expected_response)
 
-    assert sorted_actual == sorted_expected
+        # Find CMAB flag (may not be present if ENABLED_FLAGS_ONLY and variation is "off")
+        cmab_result = next((r for r in actual_results if r['flagKey'] == 'cmab_flag'), None)
+        if cmab_result is not None:
+            # If CMAB is present, verify it's valid
+            assert cmab_result['variationKey'] in ['on', 'off']
+            assert cmab_result['ruleKey'] == 'cmab-rule_1'
+            assert 'userContext' in cmab_result
+            # CMAB should only appear if enabled=true (when using ENABLED_FLAGS_ONLY)
+            assert cmab_result.get('enabled') is True, "CMAB flag should be enabled when present in ENABLED_FLAGS_ONLY response"
+
+        # Verify base flags (excluding CMAB)
+        base_results = [r for r in actual_results if r['flagKey'] != 'cmab_flag']
+        sorted_actual = sort_response(base_results, "flagKey")
+        sorted_expected = sort_response(expected_base, "flagKey")
+        assert sorted_actual == sorted_expected
+    else:
+        # For specific flag keys, exact match
+        sorted_actual = sort_response(resp.json(), "flagKey")
+        sorted_expected = sort_response(json.loads(expected_response), "flagKey")
+        assert sorted_actual == sorted_expected
 
 
 @pytest.mark.parametrize(
