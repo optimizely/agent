@@ -96,6 +96,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+// Use local go-sdk for holdouts development
+replace github.com/optimizely/go-sdk/v2 => ../go-sdk
+
 // Security fix for CVE-2020-9283: Force all vulnerable golang.org/x/crypto versions to use safe version
 replace (
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 => golang.org/x/crypto v0.45.0
