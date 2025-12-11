@@ -9,6 +9,9 @@ sdk_key = "KZbunNn9bVfBWLpZPq2XC4"
 # sdk key of the project "Agent Acceptance w ODP", under QA account
 sdk_key_odp = "91GuiKYH8ZF1hLLXR7DR1"
 
+# sdk key for holdouts datafile
+sdk_key_holdouts = "BLsSFScP7tSY5SCYuKn8c"
+
 @pytest.fixture
 def session_obj():
     """
@@ -44,6 +47,17 @@ def session_override_sdk_key(session_obj):
     :return: updated session object
     """
     session_obj.headers['X-Optimizely-SDK-Key'] = 'xxx_invalid_sdk_key_xxx'
+    return session_obj
+
+
+@pytest.fixture(scope='function')
+def session_override_sdk_key_holdouts(session_obj):
+    """
+    Override session_obj fixture with holdouts SDK key.
+    :param session_obj: session fixture object
+    :return: updated session object
+    """
+    session_obj.headers['X-Optimizely-SDK-Key'] = sdk_key_holdouts
     return session_obj
 
 

@@ -77,6 +77,24 @@ func (suite *OptimizelyConfigTestSuite) TestConfig() {
 	suite.Equal(*suite.oc.GetOptimizelyConfig(), actual)
 }
 
+func (suite *OptimizelyConfigTestSuite) TestConfigIncludesHoldouts() {
+	req := httptest.NewRequest("GET", "/config", nil)
+	rec := httptest.NewRecorder()
+	suite.mux.ServeHTTP(rec, req)
+	suite.Equal(http.StatusOK, rec.Code)
+
+	// Unmarshal response
+	var actual config.OptimizelyConfig
+	err := json.Unmarshal(rec.Body.Bytes(), &actual)
+	suite.NoError(err)
+
+	// Verify holdouts field is present
+	suite.NotNil(actual.Holdouts, "Holdouts field should be present in config")
+
+	// Verify it's an empty array (test datafile has no holdouts)
+	suite.Empty(actual.Holdouts, "Holdouts should be empty for test datafile")
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestOptimizelyConfigTestSuite(t *testing.T) {
