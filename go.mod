@@ -15,7 +15,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.3.1
 	github.com/lestrrat-go/jwx/v2 v2.0.20
-	github.com/optimizely/go-sdk/v2 v2.3.1-0.20251212231147-e70a8f37a76a
+	github.com/optimizely/go-sdk/v2 v2.3.0
 	github.com/orcaman/concurrent-map v1.0.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rakyll/statik v0.1.7
@@ -95,9 +95,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Use local go-sdk for holdouts development
-replace github.com/optimizely/go-sdk/v2 => ../go-sdk
 
 // Security fix for CVE-2020-9283: Force all vulnerable golang.org/x/crypto versions to use safe version
 replace (
