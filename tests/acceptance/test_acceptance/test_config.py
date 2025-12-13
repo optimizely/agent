@@ -5,6 +5,7 @@ import requests
 
 from tests.acceptance.helpers import ENDPOINT_CONFIG
 from tests.acceptance.helpers import create_and_validate_request_and_response
+from tests.acceptance.holdouts_datafile import holdouts_datafile
 
 expected_config = """{
     "environmentKey": "production",

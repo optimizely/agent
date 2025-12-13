@@ -523,6 +523,16 @@ func (c *TestProjectConfig) GetFlagVariationsMap() map[string][]entities.Variati
 	return c.flagVariationsMap
 }
 
+// GetHoldoutList returns an array of all holdouts
+func (c *TestProjectConfig) GetHoldoutList() []entities.Holdout {
+	return []entities.Holdout{}
+}
+
+// GetHoldoutsForFlag returns all holdouts applicable to the given feature flag
+func (c *TestProjectConfig) GetHoldoutsForFlag(featureKey string) []entities.Holdout {
+	return []entities.Holdout{}
+}
+
 // GetAttributeKeyByID returns the attribute key for the given ID
 func (c *TestProjectConfig) GetAttributeKeyByID(id string) (string, error) {
 	for _, attr := range c.AttributeMap {
