@@ -14,7 +14,7 @@ This release adds support for Holdouts, allowing you to measure the incremental 
 
 * **Holdouts Support** ([#452](https://github.com/optimizely/agent/pull/452)): Agent now fully supports Optimizely's Holdouts feature for measuring incremental impact of flags and experiments. Features include:
   - Full holdouts evaluation through go-sdk v2.3.0
-  - Support for both global (project-level) and flag-specific holdouts
+  - Support for global (project-level) holdouts
   - Holdouts evaluated before experiments and rollouts in decision flow
   - Holdout decisions return `enabled: false`, `variationKey: "off"`, and `ruleKey` containing the holdout identifier
   - Forced decisions correctly override holdout bucketing
