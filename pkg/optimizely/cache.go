@@ -37,7 +37,6 @@ import (
 	"github.com/optimizely/agent/plugins/userprofileservice"
 	cachePkg "github.com/optimizely/go-sdk/v2/pkg/cache"
 	"github.com/optimizely/go-sdk/v2/pkg/client"
-	"github.com/optimizely/go-sdk/v2/pkg/cmab"
 	sdkconfig "github.com/optimizely/go-sdk/v2/pkg/config"
 	"github.com/optimizely/go-sdk/v2/pkg/decision"
 	"github.com/optimizely/go-sdk/v2/pkg/event"
@@ -325,18 +324,6 @@ func defaultLoader(
 		)
 		clientOptions = append(clientOptions, client.WithOdpManager(odpManager))
 
-		// Configure CMAB prediction endpoint with priority: env var > config > default
-		// Environment variable allows test/runtime overrides
-		if cmabEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT"); cmabEndpoint != "" {
-			// Environment variable takes highest priority
-			cmab.CMABPredictionEndpoint = cmabEndpoint
-			log.Info().Str("endpoint", cmabEndpoint).Str("source", "environment").Msg("Using CMAB prediction endpoint")
-		} else if clientConf.CMAB.PredictionEndpoint != "" {
-			// Use config value if environment variable not set
-			cmab.CMABPredictionEndpoint = clientConf.CMAB.PredictionEndpoint
-			log.Info().Str("endpoint", clientConf.CMAB.PredictionEndpoint).Str("source", "config").Msg("Using CMAB prediction endpoint")
-		}
-
 		// Get CMAB cache from service configuration
 		var clientCMABCache cachePkg.CacheWithRemove
 		var rawCMABCache = getServiceWithType(cmabCachePlugin, sdkKey, cmabCacheMap, clientConf.CMAB.Cache)
@@ -348,10 +335,23 @@ func defaultLoader(
 			}
 		}
 
-		// Create CMAB config using client API with custom cache
+		// Configure CMAB prediction endpoint with priority: env var > config > default
+		var predictionEndpoint string
+		if cmabEndpoint := os.Getenv("OPTIMIZELY_CMAB_PREDICTIONENDPOINT"); cmabEndpoint != "" {
+			// Environment variable takes highest priority
+			predictionEndpoint = cmabEndpoint
+			log.Info().Str("endpoint", cmabEndpoint).Str("source", "environment").Msg("Using CMAB prediction endpoint")
+		} else if clientConf.CMAB.PredictionEndpoint != "" {
+			// Use config value if environment variable not set
+			predictionEndpoint = clientConf.CMAB.PredictionEndpoint
+			log.Info().Str("endpoint", clientConf.CMAB.PredictionEndpoint).Str("source", "config").Msg("Using CMAB prediction endpoint")
+		}
+
+		// Create CMAB config using client API with custom cache and endpoint
 		cmabConfig := client.CmabConfig{
-			Cache:       clientCMABCache,
-			HTTPTimeout: clientConf.CMAB.RequestTimeout,
+			Cache:                      clientCMABCache,
+			HTTPTimeout:                clientConf.CMAB.RequestTimeout,
+			PredictionEndpointTemplate: predictionEndpoint,
 		}
 
 		// Add to client options
