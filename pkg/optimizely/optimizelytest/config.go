@@ -523,12 +523,14 @@ func (c *TestProjectConfig) GetFlagVariationsMap() map[string][]entities.Variati
 	return c.flagVariationsMap
 }
 
-// GetHoldoutList returns an array of all holdouts
+// GetHoldoutList returns an array of all holdouts in the project
 func (c *TestProjectConfig) GetHoldoutList() []entities.Holdout {
 	return []entities.Holdout{}
 }
 
-// GetHoldoutsForFlag returns all holdouts applicable to the given feature flag
+// GetHoldoutsForFlag returns all holdouts applicable to the given feature flag.
+// In production, this would return a filtered list based on the flag's includedFlags/excludedFlags.
+// For this test mock, we return an empty list since no tests currently require holdout logic.
 func (c *TestProjectConfig) GetHoldoutsForFlag(featureKey string) []entities.Holdout {
 	return []entities.Holdout{}
 }
