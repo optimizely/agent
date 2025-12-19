@@ -12,7 +12,7 @@ from tests.acceptance.helpers import create_and_validate_request_and_response
 
 
 # SDK key from holdouts_datafile - points to a project with holdouts
-HOLDOUTS_SDK_KEY = 'BLsSFScP7tSY5SCYuKn8c'
+HOLDOUTS_SDK_KEY = 'DU8sE5a6Wh6BD14sV8zAe'
 
 
 def test_decide_returns_valid_decision(session_obj):

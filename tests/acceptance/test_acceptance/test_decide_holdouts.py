@@ -18,7 +18,7 @@ def holdouts_session(session_obj):
     This SDK key points to a project with holdouts configured.
     """
     # SDK key from holdouts_datafile.py
-    session_obj.headers['X-Optimizely-SDK-Key'] = 'BLsSFScP7tSY5SCYuKn8c'
+    session_obj.headers['X-Optimizely-SDK-Key'] = 'DU8sE5a6Wh6BD14sV8zAe'
     return session_obj
 
 
