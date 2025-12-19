@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.4.0] - December 18, 2025
+
+This release adds support for Holdouts, allowing you to measure the incremental impact of feature flags and experiments by holding back a percentage of users from seeing any changes.
+
+### New Features
+
+* **Holdouts Support** ([#452](https://github.com/optimizely/agent/pull/452)): Agent now fully supports Optimizely's Holdouts feature for measuring incremental impact of flags and experiments. Features include:
+  - Full holdouts evaluation through go-sdk v2.3.0
+  - Support for global (project-level) holdouts
+  - Holdouts evaluated before experiments and rollouts in decision flow
+  - Holdout decisions return `enabled: false`, `variationKey: "off"`, and `ruleKey` containing the holdout identifier
+  - Forced decisions correctly override holdout bucketing
+  - Zero Agent code changes required - all holdout logic handled by go-sdk
+  - Comprehensive acceptance test coverage with real project datafile
+
+  This enables accurate measurement of feature impact by comparing users held out from experiments against those receiving variations.
+
+* **CMAB Acceptance Tests** ([#451](https://github.com/optimizely/agent/pull/451)): Added comprehensive acceptance tests for Contextual Multi-Armed Bandit (CMAB) functionality to ensure reliable AI-powered experimentation
+
+### Changed
+
+* Updated to go-sdk v2.3.0 with holdouts support and CMAB improvements
+* Updated CMAB API migration to use `CmabConfig.PredictionEndpointTemplate` field
+
+### Fixed
+
+* Fixed Prisma security scanning issues ([#450](https://github.com/optimizely/agent/pull/450))
+
 ## [4.3.0] - November 20, 2025
 
 This release introduces production-ready support for Contextual Multi-Armed Bandit (CMAB), enabling AI-powered experimentation that learns and adapts in real-time based on user context.
