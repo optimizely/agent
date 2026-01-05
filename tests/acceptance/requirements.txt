@@ -1,6 +1,6 @@
 pytest==7.0.0
 pytest-clarity==1.0.1
-requests==2.31.0
+requests==2.32.4
 openapi_core==0.17.1
 openapi_spec_validator==0.5.6
 redis==4.4.4
