@@ -27,6 +27,19 @@ jobs:
         make -e setup build
         test -z "$(go fmt ./pkg/...)"
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.24.0'
+        check-latest: true
+    - name: lint
+      run: |
+        make -e setup
+        make lint
+
   lint-docker:
     runs-on: ubuntu-latest
     env:
