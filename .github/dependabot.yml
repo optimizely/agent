@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Monitor go-sdk releases and auto-create PRs
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    # Only watch the go-sdk dependency
+    allow:
+      - dependency-name: "github.com/optimizely/go-sdk/v2"
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "go-sdk"
+    reviewers:
+      - "optimizely/fullstack-devs"
+    open-pull-requests-limit: 5
