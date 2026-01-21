@@ -69,7 +69,7 @@ func getRequestOdpEvent(r *http.Request) (event.Event, error) {
 		return event.Event{}, errors.New(`missing "action" in request payload`)
 	}
 
-	if body.Identifiers == nil || len(body.Identifiers) == 0 {
+	if len(body.Identifiers) == 0 {
 		return event.Event{}, errors.New(`missing or empty "identifiers" in request payload`)
 	}
 

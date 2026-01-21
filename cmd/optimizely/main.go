@@ -229,7 +229,7 @@ func getOTELTraceClient(conf config.OTELTracingConfig) (otlptrace.Client, error)
 			otlptracegrpc.WithEndpoint(conf.Services.Remote.Endpoint),
 		), nil
 	default:
-		return nil, errors.New("unknown remote tracing protocal")
+		return nil, errors.New("unknown remote tracing protocol")
 	}
 }
 

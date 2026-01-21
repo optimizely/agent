@@ -189,8 +189,6 @@ func BatchRouter(batchRequests config.BatchRequestsConfig) func(http.Handler) ht
 				ch := make(chan struct{}, batchRequests.MaxConcurrency)
 
 				for _, op := range req.Operations {
-					op := op
-
 					ch <- struct{}{}
 					eg.Go(func() error {
 						defer func() { <-ch }()

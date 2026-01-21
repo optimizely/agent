@@ -198,16 +198,11 @@ func DefaultNotificationReceiver(ctx context.Context) (<-chan syncer.Event, erro
 	}
 
 	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				for _, id := range ids {
-					err := nc.RemoveHandler(id.int, id.Type)
-					if err != nil {
-						logger.Err(err).AnErr("error in removing notification handler", err)
-					}
-				}
-				return
+		<-ctx.Done()
+		for _, id := range ids {
+			err := nc.RemoveHandler(id.int, id.Type)
+			if err != nil {
+				logger.Err(err).AnErr("error in removing notification handler", err)
 			}
 		}
 	}()
