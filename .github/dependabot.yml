@@ -16,4 +16,8 @@ updates:
       - "go-sdk"
     reviewers:
       - "optimizely/fullstack-devs"
+      - "Mat001"
+      - "jaeopt"
+      - "junaed-optimizely"
+      - "esrakartalOpt"
     open-pull-requests-limit: 5
