@@ -60,8 +60,8 @@ python override.py <SDK-Key> <Experiment-Key> <Variation-Key>
 ### Auth
 
 Optimizely Agent supports a [client_credentials](https://www.oauth.com/oauth2-servers/access-tokens/client-credentials/)
-grant type for applications to requests access tokens for a set of SDK resources. The `auth.py` script demonstrates
-how to request an authorization token and use it in subsequent API requests. Please refer to [auth.md](../docs/auth.md)
+grant type for applications to request access tokens for a set of SDK resources. The `auth.py` script demonstrates
+how to request an authorization token and use it in subsequent API requests. Please refer to the [Authorization Guide](https://docs.developers.optimizely.com/feature-experimentation/docs/authorization)
 for a complete overview of the authentication modes supported by Agent.
 
 Example usage:
@@ -72,7 +72,7 @@ python auth.py <Your SDK Key> clientid1 0bfLVX9U3Lpr6Qe4X3DSSIWNqEkEQ4bkX1WZ5Km6
 
 ### Activate
 
-##### Activate is currently still widely used, but it will be gradually superseeded by Decide.
+##### Activate is currently still widely used, but it will be gradually superseded by Decide.
 
 The `/activate` endpoint returns a decision of the requested experiment or feature for a given user context.
 For single decisions please refer to [basic_activate.py](./basic_activate.py) which demonstrates how to iterate through the configuration for
