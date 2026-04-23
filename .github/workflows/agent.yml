@@ -59,7 +59,7 @@ jobs:
         ignore: "DL3018"
         dockerfile: scripts/dockerfiles/Dockerfile.*
 
-  tests_coveralls:
+  unit_test_coverage:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
