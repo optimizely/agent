@@ -59,10 +59,8 @@ jobs:
         ignore: "DL3018"
         dockerfile: scripts/dockerfiles/Dockerfile.*
 
-  tests_coveralls:
+  unit_test_coverage:
     runs-on: ubuntu-latest
-    env:
-      COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -75,16 +73,10 @@ jobs:
       uses: supercharge/redis-github-action@1.5.0
       with:
         redis-version: 5
-    - name: coveralls
-      id: coveralls
+    - name: test
       run: |
         make -e setup build
         make -e cover COVER_FILE=coverage.txt
-    - name: success
-      if: steps.coveralls.outcome == 'success'
-      run: |
-        go install github.com/mattn/goveralls@latest
-        goveralls -coverprofile=coverage.txt -service=github
 
   tests_windows_build_ps1:
     runs-on: windows-2022
