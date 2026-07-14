@@ -528,10 +528,17 @@ func (c *TestProjectConfig) GetHoldoutList() []entities.Holdout {
 	return []entities.Holdout{}
 }
 
-// GetHoldoutsForFlag returns all holdouts applicable to the given feature flag.
-// In production, this would return a filtered list based on the flag's includedFlags/excludedFlags.
+// GetGlobalHoldouts returns all global holdouts (those with IncludedRules == nil),
+// evaluated at flag level before any per-rule evaluation.
 // For this test mock, we return an empty list since no tests currently require holdout logic.
-func (c *TestProjectConfig) GetHoldoutsForFlag(featureKey string) []entities.Holdout {
+func (c *TestProjectConfig) GetGlobalHoldouts() []entities.Holdout {
+	return []entities.Holdout{}
+}
+
+// GetHoldoutsForRule returns all local holdouts targeting the given rule ID,
+// evaluated per-rule after forced decisions and before audience/traffic checks.
+// For this test mock, we return an empty list since no tests currently require holdout logic.
+func (c *TestProjectConfig) GetHoldoutsForRule(ruleID string) []entities.Holdout {
 	return []entities.Holdout{}
 }
 
