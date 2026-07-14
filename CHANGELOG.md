@@ -6,6 +6,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.5.0] - July 14, 2026
+
+This release adds support for **local (per-rule) holdouts** and **Feature Rollouts**, delivered by upgrading the embedded go-sdk from v2.3.0 to v2.5.0. It builds on the global holdouts support introduced in 4.4.0.
+
+### New Features
+
+* **Local Holdouts Support** ([#464](https://github.com/optimizely/agent/pull/464)): Agent now supports local (per-rule) holdouts in addition to global holdouts, via go-sdk v2.5.0. Local holdouts target specific rules and are evaluated per-rule, after forced decisions and before audience/traffic checks. Held-out decisions return `enabled: false`, `variationKey: "ho_off_key"`, and `ruleKey` set to the holdout identifier, with impression `rule_type: "holdout"`. As with global holdouts, all decision logic is handled by go-sdk — no Agent code changes are required beyond updating the `ProjectConfig` test mock.
+* **Feature Rollout Support** ([#463](https://github.com/optimizely/agent/pull/463)): Via go-sdk v2.4.0, Agent now supports Feature Rollouts — a rule type combining Targeted Delivery with A/B test measurement capabilities.
+
+### Behavior Changes
+
+These changes come from the go-sdk v2.4.0 → v2.5.0 upgrade:
+
+* **Decision event ID normalization**: decision event `campaign_id` and `entity_id` fall back to `experiment_id` when empty, and `variation_id` serializes as `null` when non-numeric, for cross-SDK consistency.
+* **ODP identify guard**: ODP identify events carrying only a single identifier are now blocked.
+* **Removed legacy flag-level holdout fields** from datafile parsing.
+
+### Maintenance
+
+* Upgrade go-sdk v2.3.0 → v2.5.0 ([#459](https://github.com/optimizely/agent/pull/459), [#463](https://github.com/optimizely/agent/pull/463), [#464](https://github.com/optimizely/agent/pull/464))
+* Add Dependabot to auto-update the go-sdk dependency ([#458](https://github.com/optimizely/agent/pull/458))
+* Remove Coveralls from CI checks ([#462](https://github.com/optimizely/agent/pull/462))
+* Add Agent developer documentation ([#461](https://github.com/optimizely/agent/pull/461))
+* Fix Arnica security vulnerabilities ([#460](https://github.com/optimizely/agent/pull/460))
+* Synchronize linters between go-sdk and agent ([#457](https://github.com/optimizely/agent/pull/457))
+* Fix Dependabot alerts ([#455](https://github.com/optimizely/agent/pull/455), [#456](https://github.com/optimizely/agent/pull/456))
+
+### Dependencies
+
+* Upgraded `github.com/optimizely/go-sdk/v2` from v2.3.0 to **v2.5.0**
+
 ## [4.4.0] - December 18, 2025
 
 This release adds support for Holdouts, allowing you to measure the incremental impact of feature flags and experiments by holding back a percentage of users from seeing any changes.
