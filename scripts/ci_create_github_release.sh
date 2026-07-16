@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -o pipefail
+set -eo pipefail
 
 # Creates a draft GitHub release for the given tag, using the latest
 # CHANGELOG.md entry as the release description.
@@ -12,9 +12,6 @@ set -o pipefail
 
 CHANGELOG="CHANGELOG.md"
 
-# the tag being released, e.g. v4.6.0
-GIT_TAG="$1"
-
 # set to true for debugging
 debug=false
 
@@ -22,6 +19,9 @@ if [ $# -ne 1 ]; then
   echo "example: $0 v3.1.1"
   exit 1
 fi
+
+# the tag being released, e.g. v4.6.0
+GIT_TAG="$1"
 
 # VERSION is the git tag with the "v" prefix removed
 VERSION=${GIT_TAG#v}
@@ -34,9 +34,14 @@ if gh release view "${GIT_TAG}" >/dev/null 2>&1; then
   exit 0
 fi
 
+if [[ ! -f "${CHANGELOG}" ]]; then
+  echo "ERROR: ${CHANGELOG} not found in $(pwd)."
+  exit 1
+fi
+
 # check that CHANGELOG.md has been updated
 # (first version entry in the changelog should match our VERSION argument)
-NEW_VERSION_CHECK=$(grep -P '^## \[\d+\.\d+\.\d+\]' ${CHANGELOG} | cut -d[ -f2 | cut -d] -f1 | awk 'NR==1')
+NEW_VERSION_CHECK=$(grep -P '^## \[\d+\.\d+\.\d+\]' "${CHANGELOG}" | cut -d[ -f2 | cut -d] -f1 | awk 'NR==1')
 
 $debug && echo "NEW_VERSION_CHECK $NEW_VERSION_CHECK"
 $debug && echo "VERSION $VERSION"
@@ -46,8 +51,8 @@ if [[ "${NEW_VERSION_CHECK}" != "${VERSION}" ]]; then
   exit 1
 fi
 
-NEW_VERSION=$(grep -P '^## \[\d+\.\d+\.\d+\]' ${CHANGELOG} | awk 'NR==1' | sed -e 's/\[/\\\[/' | sed -e 's/\]/\\\]/')
-LAST_VERSION=$(grep -P '^## \[\d+\.\d+\.\d+\]' ${CHANGELOG} | awk 'NR==2' | sed -e 's/\[/\\\[/' | sed -e 's/\]/\\\]/')
+NEW_VERSION=$(grep -P '^## \[\d+\.\d+\.\d+\]' "${CHANGELOG}" | awk 'NR==1' | sed -e 's/\[/\\\[/' | sed -e 's/\]/\\\]/')
+LAST_VERSION=$(grep -P '^## \[\d+\.\d+\.\d+\]' "${CHANGELOG}" | awk 'NR==2' | sed -e 's/\[/\\\[/' | sed -e 's/\]/\\\]/')
 
 DESCRIPTION=$(awk "/^${NEW_VERSION}$/,/^${LAST_VERSION:-nothingmatched}$/" "${CHANGELOG}" | grep -v "^${LAST_VERSION:-nothingmatched}$")
 
@@ -55,5 +60,11 @@ $debug && echo "NEW_VERSION $NEW_VERSION"
 $debug && echo "LAST_VERSION $LAST_VERSION"
 $debug && echo "DESCRIPTION $DESCRIPTION"
 
+# Write the notes to a temp file and pass via --notes-file. This avoids the shell
+# re-parsing backticks / $ that can appear in changelog bodies (which --notes would).
+NOTES_FILE=$(mktemp)
+trap 'rm -f "${NOTES_FILE}"' EXIT
+printf '%s\n' "${DESCRIPTION}" > "${NOTES_FILE}"
+
 # --draft creates a draft release; the tag already exists (release is triggered by the tag push)
-gh release create "${GIT_TAG}" --draft --title "Release ${VERSION}" --notes "${DESCRIPTION}"
+gh release create "${GIT_TAG}" --draft --title "Release ${VERSION}" --notes-file "${NOTES_FILE}"
