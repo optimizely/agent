@@ -9,7 +9,7 @@ on:
     branches: [ master ]
 
 env:
-  GIMME_GO_VERSION: 1.24.0
+  GIMME_GO_VERSION: 1.26.11
   GIMME_OS: linux
   GIMME_ARCH: amd64
 
@@ -22,7 +22,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: fmt
       run: |
@@ -37,7 +37,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: lint
       run: |
@@ -67,7 +67,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: Start Redis
       uses: supercharge/redis-github-action@1.5.0
@@ -104,7 +104,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: Set up Python 3.9
       uses: actions/setup-python@v3
@@ -135,7 +135,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: Get the version
       id: get_version
@@ -168,7 +168,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: Get the version
       id: get_version
@@ -225,7 +225,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.24.0'
+        go-version: '1.26.11'
         check-latest: true
     - name: Get the version
       id: get_version
