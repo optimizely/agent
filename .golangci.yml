@@ -51,6 +51,12 @@ linters:
 
 run:
   concurrency: 4
+  # The module now builds with the Go 1.26 toolchain (see go.mod), but the
+  # pinned golangci-lint v1.64.2 is built with Go 1.24 and refuses to analyze a
+  # module targeting a newer Go. The code uses no post-1.24 language features,
+  # so we pin the analysis target to 1.24. Drop this once golangci-lint is
+  # upgraded to a v2 release built with Go 1.26+.
+  go: "1.24"
 
 issues:
   exclude-dirs:
