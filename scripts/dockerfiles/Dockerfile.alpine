@@ -1,5 +1,5 @@
 ARG GO_VERSION
-FROM golang:$GO_VERSION-alpine3.21 as builder
+FROM golang:$GO_VERSION-alpine3.23 as builder
 # hadolint ignore=DL3018
 RUN addgroup -S agentgroup && adduser -S agentuser -G agentgroup
 RUN apk add --no-cache make gcc libc-dev git curl
@@ -7,9 +7,14 @@ WORKDIR /go/src/github.com/optimizely/agent
 COPY . .
 RUN make setup build
 
-FROM alpine:3.21
+FROM alpine:3.23
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/src/github.com/optimizely/agent/bin/optimizely /optimizely
 COPY --from=builder /etc/passwd /etc/passwd
 USER agentuser
+# Health probe hits the admin listener's /health endpoint (default port 8088).
+# busybox wget (bundled in the alpine base image) is used; adjust the port if
+# admin.port is overridden at runtime.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:8088/health || exit 1
 CMD ["/optimizely"]

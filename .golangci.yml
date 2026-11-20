@@ -1,79 +1,73 @@
-linters-settings:
-  govet:
-    enable:
-      - shadow
-  gocyclo:
-    min-complexity: 30  # Increased to allow existing complex functions
-  dupl:
-    threshold: 200
-  misspell:
-    locale: US
-  revive:
-    min-confidence: 0
-    rules:
-      # Disabled: Would require breaking API changes (Ids -> IDs)
-      - name: var-naming
-        disabled: true
-      # Disabled: Parameters often required for interface compliance
-      - name: unused-parameter
-        disabled: true
-      # Disabled: Style preference, not a bug
-      - name: superfluous-else
-        disabled: true
-      # Disabled: Would require breaking API changes (stuttering names)
-      - name: exported
-        disabled: true
-      # Disabled: Style preference for context key types
-      - name: context-keys-type
-        disabled: true
-
+version: "2"
+run:
+  concurrency: 4
 linters:
-  disable-all: true
+  default: none
   enable:
-    - unused
+    - copyloopvar
     - dupl
-    - gosec
-    # - gocritic  # Temporarily disabled due to compatibility issues with Go 1.24
     - gocyclo
-    - revive
-    - gosimple
+    - gosec
     - govet
     - ineffassign
-    - staticcheck
     - misspell
     - nakedret
     - prealloc
-    - copyloopvar
-    - stylecheck
-    - typecheck
+    - revive
+    - staticcheck
     - unconvert
     - unparam
-
-run:
-  concurrency: 4
-
-issues:
-  exclude-dirs:
-    - vendor
-  exclude-rules:
-    - text: "weak cryptographic primitive"
-      linters:
-        - gosec
-    # Suppress unhandled errors in Redis cleanup code (non-critical)
-    - path: pkg/syncer/pubsub/redis.*\.go
-      linters:
-        - gosec
-      text: "G104"
-    # Suppress context key type warnings (would require refactoring)
-    - linters:
-        - staticcheck
-      text: "SA1029"
-    # Suppress comment format warnings (style preference)
-    - linters:
-        - stylecheck
-      text: "ST1020|ST1021"
-    # Suppress naked return warnings in rest_ups.go (existing code, refactoring is risky)
-    - path: plugins/userprofileservice/services/rest_ups\.go
-      linters:
-        - nakedret
-  exclude-use-default: false
+    - unused
+  settings:
+    dupl:
+      threshold: 200
+    gocyclo:
+      min-complexity: 30
+    govet:
+      enable:
+        - shadow
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+        - name: unused-parameter
+          disabled: true
+        - name: superfluous-else
+          disabled: true
+        - name: exported
+          disabled: true
+        - name: context-keys-type
+          disabled: true
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - gosec
+        text: weak cryptographic primitive
+      - linters:
+          - gosec
+        path: pkg/syncer/pubsub/redis.*\.go
+        text: G104
+      - linters:
+          - staticcheck
+        text: SA1029
+      - linters:
+          - staticcheck
+        text: ST1020|ST1021
+      - linters:
+          - nakedret
+        path: plugins/userprofileservice/services/rest_ups\.go
+    paths:
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

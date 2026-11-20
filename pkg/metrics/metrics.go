@@ -233,11 +233,11 @@ func (m *Registry) getPackageSupportedName(name string) string {
 }
 
 func toSnakeCase(name string) string {
-	v := strings.Replace(name, "-", "_", -1)
+	v := strings.ReplaceAll(name, "-", "_")
 	strArray := strings.Split(v, ".")
 	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
-	convertedArray := []string{}
+	convertedArray := make([]string, 0, len(strArray))
 
 	for _, v := range strArray {
 		snake := matchFirstCap.ReplaceAllString(v, "${1}_${2}")
