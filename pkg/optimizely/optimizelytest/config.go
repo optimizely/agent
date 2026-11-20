@@ -364,7 +364,7 @@ func (c *TestProjectConfig) AddExperiment(experimentKey string, variations []ent
 
 	variationMap := map[string]entities.Variation{}
 	variationKeyTOIDMap := make(map[string]string)
-	trafficAllocation := []entities.Range{}
+	trafficAllocation := make([]entities.Range, 0, len(variations))
 	for i, variation := range variations {
 		variationMap[variation.ID] = variation
 		variationKeyTOIDMap[variation.Key] = variation.ID

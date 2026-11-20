@@ -53,11 +53,12 @@ type PubSub interface {
 func newPubSub(conf config.SyncConfig, featureFlag SyncFeatureFlag) (PubSub, error) {
 	var defaultPubSub string
 
-	if featureFlag == SyncFeatureFlagNotification {
+	switch featureFlag {
+	case SyncFeatureFlagNotification:
 		defaultPubSub = conf.Notification.Default
-	} else if featureFlag == SyncFeatureFlagDatafile {
+	case SyncFeatureFlagDatafile:
 		defaultPubSub = conf.Datafile.Default
-	} else {
+	default:
 		return nil, errors.New("provided feature flag not supported")
 	}
 
