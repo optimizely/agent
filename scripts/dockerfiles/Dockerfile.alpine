@@ -1,5 +1,10 @@
 ARG GO_VERSION
 FROM golang:$GO_VERSION-alpine3.23 as builder
+# The official golang images set GOTOOLCHAIN=local, which blocks the Go
+# toolchain declared in go.mod from being fetched when the base image's Go is
+# older than go.mod's `go`/`toolchain` directives (e.g. external builders that
+# pass an older GO_VERSION). Allow the pinned toolchain to be downloaded.
+ENV GOTOOLCHAIN=auto
 # hadolint ignore=DL3018
 RUN addgroup -S agentgroup && adduser -S agentuser -G agentgroup
 RUN apk add --no-cache make gcc libc-dev git curl
