@@ -56,6 +56,9 @@ jobs:
         check-latest: true
     - name: govulncheck
       run: |
+        # Generate the statik package so all imports resolve for analysis.
+        go install github.com/rakyll/statik@latest
+        make static
         go install golang.org/x/vuln/cmd/govulncheck@latest
         govulncheck ./...
 
