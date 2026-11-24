@@ -17,9 +17,12 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/src/github.com/optimizely/agent/bin/optimizely /optimizely
 COPY --from=builder /etc/passwd /etc/passwd
 USER agentuser
-# Health probe hits the admin listener's /health endpoint (default port 8088).
-# busybox wget (bundled in the alpine base image) is used; adjust the port if
-# admin.port is overridden at runtime.
+# Health probe hits the admin listener's /health endpoint. Shell form is used so
+# the port follows OPTIMIZELY_ADMIN_PORT when overridden at runtime (defaults to
+# 8088). Uses busybox wget (bundled in the alpine base image).
+# Note: this probes over plain HTTP. If the admin listener is configured for TLS
+# (server.keyFile / server.certFile) it serves HTTPS and this probe will fail —
+# override or drop the HEALTHCHECK in that case.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD wget -q --spider http://127.0.0.1:8088/health || exit 1
+    CMD wget -q --spider "http://127.0.0.1:${OPTIMIZELY_ADMIN_PORT:-8088}/health" || exit 1
 CMD ["/optimizely"]

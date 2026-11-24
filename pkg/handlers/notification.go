@@ -139,10 +139,8 @@ func NotificationEventStreamHandler(notificationReceiverFn NotificationReceiverF
 					continue
 				}
 
-				// jsonEvent is already JSON-encoded (json.Marshal escapes its
-				// output), and it is written verbatim with w.Write rather than
-				// through a format string, so no user-controlled value reaches a
-				// formatting verb on the ResponseWriter.
+				// jsonEvent is already JSON-encoded; write the bytes directly
+				// instead of through a format string.
 				if raw {
 					// Raw JSON events, one per line
 					_, _ = w.Write(jsonEvent)

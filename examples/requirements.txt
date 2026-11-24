@@ -3,7 +3,7 @@ charset-normalizer==3.4.1
 idna==3.20
 requests==2.34.2
 six==1.17.0
-# sseclient 0.0.27 is the latest release of this package; its Arnica findings
-# are transitive (via requests/urllib3), cleared by the pins above.
+# sseclient 0.0.27 is the latest published release; pinned as-is. Its transitive
+# dependencies (requests, urllib3) are pinned to current versions above.
 sseclient==0.0.27
 urllib3==2.8.0
