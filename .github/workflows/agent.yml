@@ -57,9 +57,12 @@ jobs:
     - name: govulncheck
       run: |
         # Generate the statik package so all imports resolve for analysis.
-        go install github.com/rakyll/statik@latest
+        # Tool versions are pinned (statik matches go.mod) and bumped deliberately
+        # so a govulncheck release can't flip this job independently of the code;
+        # the vulnerability database is still fetched live at run time.
+        go install github.com/rakyll/statik@v0.1.7
         make static
-        go install golang.org/x/vuln/cmd/govulncheck@latest
+        go install golang.org/x/vuln/cmd/govulncheck@v1.10.0
         govulncheck ./...
 
   lint-docker:
