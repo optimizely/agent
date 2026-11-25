@@ -107,7 +107,7 @@ func (r *RestUserProfileService) getUserIDKey() string {
 }
 
 func (r *RestUserProfileService) performRequest(requestURL, method string, parameters map[string]interface{}) (success bool, response []byte) {
-	fHeaders := []utils.Header{}
+	fHeaders := make([]utils.Header, 0, len(r.Headers))
 	for n, v := range r.Headers {
 		fHeaders = append(fHeaders, utils.Header{Name: n, Value: v})
 	}

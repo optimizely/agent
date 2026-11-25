@@ -55,13 +55,13 @@ cover: check-go static ## runs test suite with coverage profiling
 
 setup: check-go ## installs all dev and ci dependencies, but does not install golang 
 #   Install golangci-lint
-	@echo "Installing golangci-lint v1.64.2..."
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.64.2
+	@echo "Installing golangci-lint v2.15.0..."
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/v2.15.0/install.sh | sh -s -- -b $(GOPATH)/bin v2.15.0
 	@echo "Installing statik..."
 	go install github.com/rakyll/statik@latest
 
 lint: check-go static ## runs `golangci-lint` linters defined in `.golangci.yml` file
-	$(GOLINT) run --out-format=tab --tests=false ./...
+	$(GOLINT) run --output.tab.path=stdout --tests=false ./...
 
 run: $(TARGET) ## builds and executes the TARGET binary
 	$(GOBIN)/$(TARGET)

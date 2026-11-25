@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -140,12 +139,17 @@ func NotificationEventStreamHandler(notificationReceiverFn NotificationReceiverF
 					continue
 				}
 
+				// jsonEvent is already JSON-encoded; write the bytes directly
+				// instead of through a format string.
 				if raw {
 					// Raw JSON events, one per line
-					_, _ = fmt.Fprintf(w, "%s\n", string(jsonEvent))
+					_, _ = w.Write(jsonEvent)
+					_, _ = w.Write([]byte("\n"))
 				} else {
 					// Server Sent Events compatible
-					_, _ = fmt.Fprintf(w, "data: %s\n\n", string(jsonEvent))
+					_, _ = w.Write([]byte("data: "))
+					_, _ = w.Write(jsonEvent)
+					_, _ = w.Write([]byte("\n\n"))
 				}
 				// Flush the data immediately instead of buffering it for later.
 				// The flush will fail if the connection is closed.  That will cause the handler to exit.

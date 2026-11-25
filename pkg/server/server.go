@@ -146,9 +146,8 @@ func makeTLSConfig(conf config.ServerConfig) (*tls.Config, error) {
 	ciphers := blacklistCiphers(conf.DisabledCiphers, defaultCiphers)
 
 	return &tls.Config{
-		PreferServerCipherSuites: true,
-		CipherSuites:             ciphers,
-		MinVersion:               tls.VersionTLS12,
+		CipherSuites: ciphers,
+		MinVersion:   tls.VersionTLS12,
 		CurvePreferences: []tls.CurveID{
 			tls.CurveP256,
 			tls.X25519,

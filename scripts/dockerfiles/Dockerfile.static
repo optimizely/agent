@@ -1,5 +1,10 @@
 ARG GO_VERSION
 FROM golang:$GO_VERSION as builder
+# The official golang images set GOTOOLCHAIN=local, which blocks the Go
+# toolchain declared in go.mod from being fetched when the base image's Go is
+# older than go.mod's `go`/`toolchain` directives (e.g. external builders that
+# pass an older GO_VERSION). Allow the pinned toolchain to be downloaded.
+ENV GOTOOLCHAIN=auto
 RUN addgroup -u 1000 agentgroup &&\
     useradd -u 1000 agentuser -g agentgroup
 WORKDIR /go/src/github.com/optimizely/agent
@@ -12,5 +17,13 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/optimizely/agent/bin/optimizely /optimizely
 COPY --from=builder /etc/passwd /etc/passwd
 USER agentuser
+# No HEALTHCHECK instruction is defined here on purpose. This is a `scratch`
+# image: it contains only the statically linked `optimizely` binary and CA
+# certificates, with no shell, wget, or curl for a HEALTHCHECK command to run,
+# and the binary exposes no health subcommand. Health must instead be checked
+# over HTTP via the agent's /health endpoint (served on the api/webhook/admin
+# listeners, admin defaults to port 8088), e.g. a Kubernetes liveness/readiness
+# probe. The alpine image (Dockerfile.alpine) carries a wget-based HEALTHCHECK
+# for environments that rely on Docker's native healthcheck.
 CMD ["/optimizely"]
 
